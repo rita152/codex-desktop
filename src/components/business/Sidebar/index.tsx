@@ -1,3 +1,5 @@
+import { useState, useRef, useCallback, useEffect } from 'react';
+
 import './Sidebar.css';
 
 import { List } from '../../ui/data-display/List';
@@ -12,6 +14,10 @@ import {
 
 import type { SidebarProps } from './types';
 
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 400;
+const DEFAULT_WIDTH = 260;
+
 export function Sidebar({
   sessions,
   selectedSessionId,
@@ -19,10 +25,64 @@ export function Sidebar({
   onNewChat,
   onMenuClick,
   onSplitViewClick,
+  width: controlledWidth,
+  onWidthChange,
   className = '',
 }: SidebarProps) {
+  const [internalWidth, setInternalWidth] = useState(DEFAULT_WIDTH);
+  const [isDragging, setIsDragging] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  const width = controlledWidth ?? internalWidth;
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (!isDragging || !sidebarRef.current) return;
+
+      const sidebarRect = sidebarRef.current.getBoundingClientRect();
+      const newWidth = e.clientX - sidebarRect.left;
+      const clampedWidth = Math.min(Math.max(newWidth, MIN_WIDTH), MAX_WIDTH);
+
+      if (onWidthChange) {
+        onWidthChange(clampedWidth);
+      } else {
+        setInternalWidth(clampedWidth);
+      }
+    },
+    [isDragging, onWidthChange]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+  }, [isDragging, handleMouseMove, handleMouseUp]);
+
   return (
-    <aside className={`sidebar ${className}`}>
+    <aside
+      ref={sidebarRef}
+      className={`sidebar ${isDragging ? 'sidebar--dragging' : ''} ${className}`}
+      style={{ width }}
+    >
       <div className="sidebar__header">
         <IconButton
           icon={<SidebarLeftIcon size={18} />}
@@ -65,6 +125,13 @@ export function Sidebar({
           <MenuIcon size={20} />
         </button>
       </div>
+
+      <div
+        className="sidebar__resize-handle"
+        onMouseDown={handleMouseDown}
+        role="separator"
+        aria-orientation="vertical"
+      />
     </aside>
   );
 }

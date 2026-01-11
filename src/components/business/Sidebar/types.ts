@@ -10,5 +10,7 @@ export interface SidebarProps {
   onNewChat?: () => void;
   onMenuClick?: () => void;
   onSplitViewClick?: () => void;
+  width?: number;
+  onWidthChange?: (width: number) => void;
   className?: string;
 }
