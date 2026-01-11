@@ -31,6 +31,7 @@
 }
 
 .chat-message--assistant .chat-message__bubble {
+  border-color: transparent;
   border-bottom-left-radius: var(--radius-sm);
 }
 
