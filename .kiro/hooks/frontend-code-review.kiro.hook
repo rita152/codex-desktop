@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "前端代码检查",
+  "description": "当前端代码文件编辑完成后，自动按照 frontend-checklist.md 中的标准进行代码检查和验收",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "src/**/*.tsx",
+      "src/**/*.ts",
+      "src/**/*.css"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "请根据 /Users/zp/Desktop/codex-desktop/.kiro/steering/frontend-checklist.md 中的检查标准，对刚刚修改的前端代码进行验收检查。逐项核对清单中的要求，指出不符合标准的地方并给出改进建议。"
+  }
+}
