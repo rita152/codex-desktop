@@ -286,13 +286,13 @@ await listen('codex:message', (event) => {
 - `src/types/codex.ts`
 
 **内容**：
-- [ ] `CodexAuthMethod` 类型
-- [ ] `CodexSession` 接口
-- [ ] `CodexEvent` 联合类型
-- [ ] `MessageChunk` 接口
-- [ ] `ToolCall` 接口
-- [ ] `ApprovalRequest` 接口
-- [ ] `ApprovalDecision` 类型
+- [x] `CodexAuthMethod` 类型
+- [x] `CodexSession` 接口
+- [x] `CodexEvent` 联合类型
+- [x] `MessageChunk` 接口
+- [x] `ToolCall` 接口
+- [x] `ApprovalRequest` 接口
+- [x] `ApprovalDecision` 类型
 
 **验收标准**：
 ```bash
@@ -310,14 +310,14 @@ npm run build
 - `src/api/codex.ts`
 
 **内容**：
-- [ ] `initCodex()` - 初始化
-- [ ] `authenticate(method, apiKey?)` - 认证
-- [ ] `createSession(cwd)` - 创建会话
-- [ ] `sendPrompt(sessionId, content)` - 发送消息
-- [ ] `cancelPrompt(sessionId)` - 取消
-- [ ] `approveRequest(sessionId, requestId, decision)` - 审批
-- [ ] `subscribeToEvents(handlers)` - 订阅事件
-- [ ] （补充）`setSessionMode(sessionId, modeId)` / `setSessionModel(sessionId, modelId)` / `setSessionConfigOption(sessionId, configId, valueId)`
+- [x] `initCodex()` - 初始化
+- [x] `authenticate(method, apiKey?)` - 认证
+- [x] `createSession(cwd)` - 创建会话
+- [x] `sendPrompt(sessionId, content)` - 发送消息
+- [x] `cancelPrompt(sessionId)` - 取消
+- [x] `approveRequest(sessionId, requestId, decision)` - 审批
+- [x] `subscribeToEvents(handlers)` - 订阅事件
+- [x] （补充）`setSessionMode(sessionId, modeId)` / `setSessionModel(sessionId, modelId)` / `setSessionConfigOption(sessionId, configId, valueId)`
 
 **验收标准**：
 ```typescript
@@ -336,18 +336,18 @@ const sessionId = await createSession('/path/to/project');
 - `src/hooks/useCodex.ts`
 
 **内容**：
-- [ ] 管理连接状态（disconnected, connecting, connected, authenticated）
-- [ ] 管理当前会话 ID
-- [ ] 管理消息流缓冲
-- [ ] 管理待处理的审批请求
-- [ ] 管理可用 slash commands（用于 `/` 自动补全）
-- [ ] 管理会话配置项（modes/models/config options）并支持更新
-- [ ] `connect()` 方法
-- [ ] `authenticate()` 方法
-- [ ] `sendMessage()` 方法
-- [ ] `approve()` 方法
-- [ ] `cancel()` 方法
-- [ ] 自动清理事件监听
+- [x] 管理连接状态（disconnected, connecting, connected, authenticated）
+- [x] 管理当前会话 ID
+- [x] 管理消息流缓冲
+- [x] 管理待处理的审批请求
+- [x] 管理可用 slash commands（用于 `/` 自动补全）
+- [x] 管理会话配置项（modes/models/config options）并支持更新
+- [x] `connect()` 方法
+- [x] `authenticate()` 方法
+- [x] `sendMessage()` 方法
+- [x] `approve()` 方法
+- [x] `cancel()` 方法
+- [x] 自动清理事件监听
 
 **验收标准**：
 ```typescript
