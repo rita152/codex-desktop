@@ -36,7 +36,6 @@
 }
 
 .select__trigger--disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -56,7 +55,7 @@
 /* 尺寸 */
 .select--sm .select__trigger {
   padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .select--md .select__trigger {
@@ -72,13 +71,14 @@
 .select__prefix-icon {
   display: flex;
   align-items: center;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
 .select__value {
   color: var(--color-text);
   text-align: left;
   flex: 1;
+  font-weight: 500;
 }
 
 .select__placeholder {
@@ -88,7 +88,7 @@
 }
 
 .select__icon {
-  color: var(--color-text-secondary);
+  color: var(--color-text);
   transition: transform 0.2s ease;
   flex-shrink: 0;
 }

@@ -4,11 +4,13 @@
   border: none;
   background: transparent;
   color: var(--color-text);
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
   resize: none;
   outline: none;
   font-family: inherit;
+  text-align: left;
+  vertical-align: top;
 }
 
 .textarea:focus-visible {
@@ -17,6 +19,7 @@
 
 .textarea::placeholder {
   color: var(--color-text-secondary);
+  text-align: left;
 }
 
 .textarea:disabled {

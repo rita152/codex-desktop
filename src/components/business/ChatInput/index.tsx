@@ -74,7 +74,7 @@ export function ChatInput({
       <div className="chat-input__toolbar">
         <div className="chat-input__toolbar-left">
           <IconButton
-            icon={<PlusIcon size={18} />}
+            icon={<PlusIcon size={20} />}
             onClick={onAddClick}
             aria-label="添加"
             size="sm"
@@ -87,14 +87,14 @@ export function ChatInput({
             onClick={onSettingsClick}
             disabled={disabled || !onSettingsClick}
           >
-            <SlidersIcon size={16} />
-            工具
+            <SlidersIcon size={18} />
+            <span className="chat-input__tool-text">工具</span>
           </button>
           <Select
             options={agentOptions}
             value={selectedAgent}
             onChange={onAgentChange}
-            icon={<RobotIcon size={16} />}
+            icon={<RobotIcon size={18} />}
             borderless
             size="sm"
             disabled={disabled}
@@ -112,7 +112,7 @@ export function ChatInput({
             aria-label="选择模型"
           />
           <IconButton
-            icon={<MicrophoneIcon size={18} />}
+            icon={<MicrophoneIcon size={20} />}
             onClick={onVoiceClick}
             aria-label="语音输入"
             size="sm"
@@ -120,7 +120,7 @@ export function ChatInput({
             disabled={disabled || !onVoiceClick}
           />
           <IconButton
-            icon={<SendIcon size={18} />}
+            icon={<SendIcon size={20} />}
             onClick={handleSend}
             aria-label="发送"
             size="sm"

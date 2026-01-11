@@ -2,6 +2,7 @@
   display: flex;
   height: 100vh;
   width: 100%;
+  min-width: 500px;
   background-color: var(--color-bg);
   overflow: hidden;
   position: relative;
@@ -30,7 +31,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  min-width: 300px;
   height: 100%;
   position: relative;
   transition: flex 0.2s ease;
@@ -57,6 +58,7 @@
 
 .chat-container__input {
   max-width: 768px;
+  min-width: 200px;
   margin: 0 auto;
   transition: max-width 0.2s ease;
 }

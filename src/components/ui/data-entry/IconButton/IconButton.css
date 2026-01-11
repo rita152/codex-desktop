@@ -21,7 +21,6 @@
 }
 
 .icon-button:disabled {
-  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -42,6 +41,10 @@
 }
 
 /* Variants */
+.icon-button--default {
+  color: var(--color-text-secondary);
+}
+
 .icon-button--primary {
   background-color: var(--color-primary);
   color: var(--color-text-inverse);
@@ -52,8 +55,9 @@
   color: var(--color-text-inverse);
 }
 
-.icon-button--ghost {
+.icon-button.icon-button--ghost {
   background: transparent;
+  color: var(--color-text);
 }
 
 .icon-button--ghost:hover:not(:disabled) {
