@@ -375,10 +375,10 @@ const {
 - `src/components/business/ChatMessageList/index.tsx`（修改）
 
 **内容**：
-- [ ] `Message` 类型添加 `isStreaming` 字段
-- [ ] `Message` 类型添加 `toolCalls` 字段
-- [ ] 流式消息显示光标动画
-- [ ] 消息内容增量更新
+- [x] `Message` 类型添加 `isStreaming` 字段
+- [x] `Message` 类型添加 `toolCalls` 字段
+- [x] 流式消息显示光标动画
+- [x] 消息内容增量更新
 
 **验收标准**：
 - 消息可以逐字显示

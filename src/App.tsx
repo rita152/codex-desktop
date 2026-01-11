@@ -45,12 +45,12 @@ function App() {
               m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
-              content: String(m.content ?? '') + event.payload.text,
+              content: m.content + event.payload.text,
               isStreaming: true,
               thinking: m.thinking
                 ? {
-                    ...m.thinking,
-                    isStreaming: false,
+                  ...m.thinking,
+                  isStreaming: false,
                     duration: m.thinking.duration ?? thinkingDuration,
                   }
                 : m.thinking,
@@ -73,7 +73,7 @@ function App() {
             return {
               ...m,
               thinking: {
-                content: String(m.thinking?.content ?? '') + event.payload.text,
+                content: (m.thinking?.content ?? '') + event.payload.text,
                 isStreaming: true,
                 startTime,
               },
