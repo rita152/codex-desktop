@@ -1,0 +1,100 @@
+.card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* 背景颜色 */
+.card--bg-default {
+  background-color: var(--color-bg);
+}
+
+.card--bg-secondary {
+  background-color: var(--color-bg-secondary);
+}
+
+.card--bg-elevated {
+  background-color: var(--color-bg-elevated);
+}
+
+.card--bg-muted {
+  background-color: var(--color-bg-muted);
+}
+
+.card--bg-subtle {
+  background-color: var(--color-bg-subtle);
+}
+
+.card--bordered {
+  border-style: solid;
+  border-color: var(--color-border);
+}
+
+.card--border-thin {
+  border-width: var(--border-width-thin);
+}
+
+.card--border-medium {
+  border-width: var(--border-width-medium);
+}
+
+.card--border-thick {
+  border-width: var(--border-width-thick);
+}
+
+.card--border-bold {
+  border-width: var(--border-width-bold);
+}
+
+.card--shadow {
+  box-shadow: var(--shadow-md);
+}
+
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* 圆角 */
+.card--radius-none {
+  border-radius: var(--radius-none);
+}
+
+.card--radius-sm {
+  border-radius: var(--radius-sm);
+}
+
+.card--radius-md {
+  border-radius: var(--radius-md);
+}
+
+.card--radius-lg {
+  border-radius: var(--radius-lg);
+}
+
+.card--radius-xl {
+  border-radius: var(--radius-xl);
+}
+
+.card--radius-full {
+  border-radius: var(--radius-full);
+}
+
+/* 内边距 */
+.card--padding-none {
+  padding: var(--spacing-none);
+}
+
+.card--padding-sm {
+  padding: var(--spacing-md);
+}
+
+.card--padding-md {
+  padding: var(--spacing-lg);
+}
+
+.card--padding-lg {
+  padding: var(--spacing-xl);
+}
