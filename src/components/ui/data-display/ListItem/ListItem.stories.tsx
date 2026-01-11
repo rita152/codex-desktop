@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { ListItem } from './index';
+import { List } from '../List';
 import { CommentIcon } from '../Icon';
 
 const meta: Meta<typeof ListItem> = {
@@ -23,4 +24,9 @@ export const Default: Story = {
     selected: false,
     disabled: false,
   },
+  render: (args) => (
+    <List>
+      <ListItem {...args} />
+    </List>
+  ),
 };

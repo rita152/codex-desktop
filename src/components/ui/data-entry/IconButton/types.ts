@@ -1,9 +1,8 @@
-import type { ReactNode } from 'react';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-export interface IconButtonProps {
+export interface IconButtonProps
+  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'type'> {
   icon: ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'primary' | 'ghost';
   className?: string;

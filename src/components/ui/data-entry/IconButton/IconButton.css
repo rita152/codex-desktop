@@ -10,6 +10,11 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
+.icon-button:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
+}
+
 .icon-button:hover:not(:disabled) {
   background-color: var(--color-bg-muted);
   color: var(--color-text);

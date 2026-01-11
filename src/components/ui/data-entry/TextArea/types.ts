@@ -1,11 +1,14 @@
-export interface TextAreaProps {
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  TextareaHTMLAttributes,
+} from 'react';
+
+export interface TextAreaProps
+  extends Omit<TextareaHTMLAttributes<HTMLTextAreaElement>, 'value' | 'onChange' | 'rows'> {
   value: string;
   onChange: (value: string) => void;
-  placeholder?: string;
-  disabled?: boolean;
   maxRows?: number;
   minRows?: number;
-  autoFocus?: boolean;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onKeyDown?: (e: ReactKeyboardEvent<HTMLTextAreaElement>) => void;
   className?: string;
 }

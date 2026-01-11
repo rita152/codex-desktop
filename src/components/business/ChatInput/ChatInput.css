@@ -58,6 +58,21 @@
   color: var(--color-text);
 }
 
+.chat-input__tool-button:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
+}
+
+.chat-input__tool-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-input__tool-button:disabled:hover {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
 .chat-input__send-button {
   color: var(--color-text-secondary);
 }

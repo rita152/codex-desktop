@@ -9,6 +9,7 @@ export function ListItem({
   disabled = false,
   onClick,
   className = '',
+  ...buttonProps
 }: ListItemProps) {
   const classes = [
     'list-item',
@@ -26,10 +27,19 @@ export function ListItem({
   };
 
   return (
-    <button type="button" className={classes} onClick={handleClick} disabled={disabled}>
-      {icon && <span className="list-item__icon">{icon}</span>}
-      <span className="list-item__content">{children}</span>
-    </button>
+    <li className="list-item__wrapper">
+      <button
+        {...buttonProps}
+        type="button"
+        className={classes}
+        onClick={handleClick}
+        disabled={disabled}
+        aria-current={selected ? 'true' : undefined}
+      >
+        {icon && <span className="list-item__icon">{icon}</span>}
+        <span className="list-item__content">{children}</span>
+      </button>
+    </li>
   );
 }
 

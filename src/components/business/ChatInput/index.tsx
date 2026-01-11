@@ -33,6 +33,11 @@ export function ChatInput({
   className = '',
 }: ChatInputProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (disabled) return;
+    const nativeEvent = e.nativeEvent as unknown as { isComposing?: boolean; keyCode?: number };
+    const isComposing = nativeEvent.isComposing || nativeEvent.keyCode === 229;
+    if (isComposing) return;
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       if (value.trim()) {
@@ -42,6 +47,7 @@ export function ChatInput({
   };
 
   const handleSend = () => {
+    if (disabled) return;
     if (value.trim()) {
       onSend(value.trim());
     }
@@ -73,27 +79,37 @@ export function ChatInput({
             aria-label="添加"
             size="sm"
             variant="ghost"
+            disabled={disabled || !onAddClick}
           />
-          <button type="button" className="chat-input__tool-button" onClick={onSettingsClick}>
+          <button
+            type="button"
+            className="chat-input__tool-button"
+            onClick={onSettingsClick}
+            disabled={disabled || !onSettingsClick}
+          >
             <SlidersIcon size={16} />
             工具
           </button>
           <Select
             options={agentOptions}
             value={selectedAgent}
-            onChange={onAgentChange || (() => {})}
+            onChange={onAgentChange}
             icon={<RobotIcon size={16} />}
             borderless
             size="sm"
+            disabled={disabled}
+            aria-label="选择智能体"
           />
         </div>
         <div className="chat-input__toolbar-right">
           <Select
             options={modelOptions}
             value={selectedModel}
-            onChange={onModelChange || (() => {})}
+            onChange={onModelChange}
             borderless
             size="sm"
+            disabled={disabled}
+            aria-label="选择模型"
           />
           <IconButton
             icon={<MicrophoneIcon size={18} />}
@@ -101,6 +117,7 @@ export function ChatInput({
             aria-label="语音输入"
             size="sm"
             variant="ghost"
+            disabled={disabled || !onVoiceClick}
           />
           <IconButton
             icon={<SendIcon size={18} />}
@@ -108,7 +125,7 @@ export function ChatInput({
             aria-label="发送"
             size="sm"
             variant="ghost"
-            disabled={!hasContent}
+            disabled={disabled || !hasContent}
             className={`chat-input__send-button ${hasContent ? 'chat-input__send-button--active' : ''}`}
           />
         </div>

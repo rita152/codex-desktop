@@ -1,16 +1,20 @@
+import { forwardRef } from 'react';
+
 import type { IconButtonProps } from './types';
 
 import './IconButton.css';
 
-export function IconButton({
-  icon,
-  onClick,
-  disabled = false,
-  size = 'md',
-  variant = 'default',
-  className = '',
-  'aria-label': ariaLabel,
-}: IconButtonProps) {
+export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(function IconButton(
+  {
+    icon,
+    size = 'md',
+    variant = 'default',
+    className = '',
+    'aria-label': ariaLabel,
+    ...buttonProps
+  },
+  ref
+) {
   const classes = [
     'icon-button',
     `icon-button--${size}`,
@@ -21,16 +25,10 @@ export function IconButton({
     .join(' ');
 
   return (
-    <button
-      type="button"
-      className={classes}
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={ariaLabel}
-    >
+    <button ref={ref} type="button" className={classes} {...buttonProps} aria-label={ariaLabel}>
       {icon}
     </button>
   );
-}
+});
 
 export type { IconButtonProps } from './types';

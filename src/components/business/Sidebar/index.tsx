@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useId } from 'react';
 
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
@@ -33,7 +33,23 @@ export function Sidebar({
   const [isDragging, setIsDragging] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
 
+  const generatedId = useId();
+  const safeId = generatedId.replace(/:/g, '');
+  const sidebarId = `sidebar-${safeId}`;
+
   const width = controlledWidth ?? internalWidth;
+
+  const setWidth = useCallback(
+    (nextWidth: number) => {
+      const clampedWidth = Math.min(Math.max(nextWidth, MIN_WIDTH), MAX_WIDTH);
+      if (onWidthChange) {
+        onWidthChange(clampedWidth);
+      } else {
+        setInternalWidth(clampedWidth);
+      }
+    },
+    [onWidthChange]
+  );
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
@@ -46,20 +62,37 @@ export function Sidebar({
 
       const sidebarRect = sidebarRef.current.getBoundingClientRect();
       const newWidth = e.clientX - sidebarRect.left;
-      const clampedWidth = Math.min(Math.max(newWidth, MIN_WIDTH), MAX_WIDTH);
-
-      if (onWidthChange) {
-        onWidthChange(clampedWidth);
-      } else {
-        setInternalWidth(clampedWidth);
-      }
+      setWidth(newWidth);
     },
-    [isDragging, onWidthChange]
+    [isDragging, setWidth]
   );
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
+
+  const handleResizeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const step = e.shiftKey ? 40 : 10;
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        e.preventDefault();
+        setWidth(width - step);
+        break;
+      case 'ArrowRight':
+        e.preventDefault();
+        setWidth(width + step);
+        break;
+      case 'Home':
+        e.preventDefault();
+        setWidth(MIN_WIDTH);
+        break;
+      case 'End':
+        e.preventDefault();
+        setWidth(MAX_WIDTH);
+        break;
+    }
+  };
 
   useEffect(() => {
     if (isDragging) {
@@ -79,6 +112,7 @@ export function Sidebar({
 
   return (
     <aside
+      id={sidebarId}
       ref={sidebarRef}
       className={`sidebar ${isDragging ? 'sidebar--dragging' : ''} ${className}`}
       style={{ width }}
@@ -90,6 +124,7 @@ export function Sidebar({
           aria-label="切换分栏"
           size="sm"
           variant="ghost"
+          disabled={!onSplitViewClick}
         />
         <IconButton
           icon={<EditIcon size={18} />}
@@ -97,6 +132,7 @@ export function Sidebar({
           aria-label="新建对话"
           size="sm"
           variant="ghost"
+          disabled={!onNewChat}
         />
       </div>
 
@@ -121,6 +157,7 @@ export function Sidebar({
           className="sidebar__menu-button"
           onClick={onMenuClick}
           aria-label="菜单"
+          disabled={!onMenuClick}
         >
           <MenuIcon size={20} />
         </button>
@@ -129,8 +166,15 @@ export function Sidebar({
       <div
         className="sidebar__resize-handle"
         onMouseDown={handleMouseDown}
+        onKeyDown={handleResizeKeyDown}
         role="separator"
         aria-orientation="vertical"
+        aria-label="调整侧边栏宽度"
+        aria-valuemin={MIN_WIDTH}
+        aria-valuemax={MAX_WIDTH}
+        aria-valuenow={Math.round(width)}
+        aria-controls={sidebarId}
+        tabIndex={0}
       />
     </aside>
   );

@@ -8,6 +8,8 @@ export interface SelectOption {
 }
 
 export interface SelectProps {
+  /** 触发器 id */
+  id?: string;
   /** 选项列表 */
   options: SelectOption[];
   /** 当前选中值 */
@@ -28,4 +30,8 @@ export interface SelectProps {
   icon?: ReactNode;
   /** 自定义类名 */
   className?: string;
+  /** 无可见 label 时提供 */
+  'aria-label'?: string;
+  /** 与外部 label 关联 */
+  'aria-labelledby'?: string;
 }

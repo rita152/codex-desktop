@@ -1,21 +1,22 @@
-import { useRef, useEffect } from 'react';
+import { forwardRef, useRef, useEffect } from 'react';
 
 import type { TextAreaProps } from './types';
 
 import './TextArea.css';
 
-export function TextArea({
-  value,
-  onChange,
-  placeholder = '',
-  disabled = false,
-  maxRows = 6,
-  minRows = 1,
-  autoFocus = false,
-  onKeyDown,
-  className = '',
-}: TextAreaProps) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextArea(
+  {
+    value,
+    onChange,
+    maxRows = 6,
+    minRows = 1,
+    onKeyDown,
+    className = '',
+    ...textareaProps
+  },
+  ref
+) {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     const textarea = textareaRef.current;
@@ -36,17 +37,22 @@ export function TextArea({
 
   return (
     <textarea
-      ref={textareaRef}
+      ref={(node) => {
+        textareaRef.current = node;
+        if (typeof ref === 'function') {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
+        }
+      }}
       className={`textarea ${className}`}
       value={value}
       onChange={handleChange}
-      placeholder={placeholder}
-      disabled={disabled}
-      autoFocus={autoFocus}
+      {...textareaProps}
       onKeyDown={onKeyDown}
       rows={minRows}
     />
   );
-}
+});
 
 export type { TextAreaProps } from './types';

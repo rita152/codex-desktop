@@ -16,6 +16,14 @@ export function Card({
   style,
   onClick,
 }: CardProps) {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   const classNames = [
     'card',
     `card--padding-${padding}`,
@@ -36,7 +44,14 @@ export function Card({
   };
 
   return (
-    <div className={classNames} style={cardStyle} onClick={onClick}>
+    <div
+      className={classNames}
+      style={cardStyle}
+      onClick={onClick}
+      onKeyDown={handleKeyDown}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+    >
       {children}
     </div>
   );

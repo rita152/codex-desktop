@@ -7,6 +7,8 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  appearance: none;
+  font: inherit;
   background-color: var(--color-bg);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-md);
@@ -15,13 +17,22 @@
 }
 
 .select__trigger:hover:not(.select__trigger--disabled) {
-  border-color: transparent;
+  border-color: var(--color-border-hover);
 }
 
 .select__trigger:focus {
   outline: none;
-  border-color: transparent;
-  box-shadow: none;
+}
+
+.select__trigger:focus-visible {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+}
+
+@supports (color: color-mix(in srgb, black 50%, white)) {
+  .select__trigger:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  }
 }
 
 .select__trigger--disabled {
@@ -39,7 +50,7 @@
 }
 
 .select__trigger--open {
-  border-color: transparent;
+  border-color: var(--color-border-hover);
 }
 
 /* 尺寸 */

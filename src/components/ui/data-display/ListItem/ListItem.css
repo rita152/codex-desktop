@@ -1,3 +1,9 @@
+.list-item__wrapper {
+  margin: 0;
+  padding: 0;
+  display: block;
+}
+
 .list-item {
   display: flex;
   align-items: center;
@@ -13,6 +19,11 @@
   text-align: left;
   font-size: 14px;
   line-height: 1.4;
+}
+
+.list-item:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
 }
 
 .list-item:hover {
