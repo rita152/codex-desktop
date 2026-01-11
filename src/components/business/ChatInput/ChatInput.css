@@ -1,7 +1,7 @@
 .chat-input {
   display: flex;
   flex-direction: column;
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-bg);
   border-radius: var(--radius-xl);
   padding: var(--spacing-lg);
   padding-bottom: var(--spacing-md);

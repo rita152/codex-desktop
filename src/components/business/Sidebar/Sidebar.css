@@ -8,7 +8,7 @@
   height: calc(100% - var(--spacing-sm) * 2);
   margin: var(--spacing-sm);
   margin-right: 0;
-  background-color: var(--color-bg-sidebar);
+  background-color: var(--color-bg);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
