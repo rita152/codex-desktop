@@ -40,17 +40,7 @@ export function ChatContainer({
 
   const classNames = cn('chat-container', className);
 
-  const sidebarClassNames = cn(
-    'chat-container__sidebar',
-    !sidebarVisible && 'chat-container__sidebar--hidden'
-  );
-
   const showWelcome = messages.length === 0;
-
-  // 动态计算 sidebar 容器的样式，收起时使用实际宽度
-  const sidebarStyle = !sidebarVisible
-    ? { marginLeft: `-${sidebarWidth}px` }
-    : undefined;
 
   return (
     <div className={classNames}>
@@ -66,19 +56,21 @@ export function ChatContainer({
           />
         </div>
       )}
-      <div className={sidebarClassNames} style={sidebarStyle}>
-        <Sidebar
-          sessions={sessions}
-          selectedSessionId={selectedSessionId}
-          onSessionSelect={onSessionSelect}
-          onNewChat={onNewChat}
-          onSplitViewClick={onSidebarToggle}
-          onSessionDelete={onSessionDelete}
-          onSessionRename={onSessionRename}
-          width={sidebarWidth}
-          onWidthChange={setSidebarWidth}
-        />
-      </div>
+      {sidebarVisible && (
+        <div className="chat-container__sidebar">
+          <Sidebar
+            sessions={sessions}
+            selectedSessionId={selectedSessionId}
+            onSessionSelect={onSessionSelect}
+            onNewChat={onNewChat}
+            onSplitViewClick={onSidebarToggle}
+            onSessionDelete={onSessionDelete}
+            onSessionRename={onSessionRename}
+            width={sidebarWidth}
+            onWidthChange={setSidebarWidth}
+          />
+        </div>
+      )}
 
       <div className="chat-container__main">
         {showWelcome ? (
