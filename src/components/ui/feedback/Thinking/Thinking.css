@@ -2,7 +2,7 @@
   border: 1px solid transparent;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background-color: var(--color-bg);
+  background-color: var(--color-bg-secondary);
 }
 
 .thinking__trigger {
