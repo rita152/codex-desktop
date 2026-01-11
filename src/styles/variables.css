@@ -1,0 +1,52 @@
+:root {
+  /* 主色 */
+  --color-primary: #396cd8;
+  --color-primary-hover: #535bf2;
+  --color-primary-active: #646cff;
+
+  /* 品牌色 */
+  --color-brand-tauri: #24c8db;
+  --color-brand-vite: #747bff;
+  --color-brand-react: #61dafb;
+
+  /* 文字 */
+  --color-text: #0f0f0f;
+  --color-text-secondary: #6b7280;
+  --color-text-inverse: #f6f6f6;
+
+  /* 背景 */
+  --color-bg: #f6f6f6;
+  --color-bg-secondary: #ffffff;
+  --color-bg-elevated: #ffffff;
+
+  /* 边框 */
+  --color-border: transparent;
+  --color-border-hover: #396cd8;
+  --color-border-active: #396cd8;
+
+  /* 阴影 */
+  --color-shadow: rgba(0, 0, 0, 0.2);
+
+  /* 状态 */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 文字 */
+    --color-text: #f6f6f6;
+    --color-text-inverse: #0f0f0f;
+
+    /* 背景 */
+    --color-bg: #2f2f2f;
+    --color-bg-secondary: #0f0f0f98;
+    --color-bg-elevated: #0f0f0f69;
+
+    /* 主色（暗色模式调整） */
+    --color-primary-hover: #24c8db;
+  }
+}
