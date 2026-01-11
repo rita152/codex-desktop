@@ -13,12 +13,14 @@ import {
   MenuIcon,
   MicrophoneIcon,
   NotebookIcon,
+  PlusIcon,
   RobotIcon,
   SendIcon,
   SettingsIcon,
   SidebarLeftIcon,
   SidebarRightIcon,
   SlashIcon,
+  SlidersIcon,
 } from './index';
 
 const meta: Meta<typeof CopyIcon> = {
@@ -53,12 +55,14 @@ export const Default: Story = {
       <MenuIcon {...args} />
       <MicrophoneIcon {...args} />
       <NotebookIcon {...args} />
+      <PlusIcon {...args} />
       <RobotIcon {...args} />
       <SendIcon {...args} />
       <SettingsIcon {...args} />
       <SidebarLeftIcon {...args} />
       <SidebarRightIcon {...args} />
       <SlashIcon {...args} />
+      <SlidersIcon {...args} />
     </div>
   ),
 };
