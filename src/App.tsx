@@ -38,12 +38,22 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+            const thinkingDuration =
+              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
               content: String(m.content ?? '') + event.payload.text,
               isStreaming: true,
+              thinking: m.thinking
+                ? {
+                    ...m.thinking,
+                    isStreaming: false,
+                    duration: m.thinking.duration ?? thinkingDuration,
+                  }
+                : m.thinking,
             };
           });
           return { ...prev, [sessionId]: next };
