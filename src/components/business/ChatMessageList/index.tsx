@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react';
 
 import { ChatMessage } from '../ChatMessage';
+import { cn } from '../../../utils/cn';
 
 import type { ChatMessageListProps } from './types';
 
@@ -39,7 +40,7 @@ export function ChatMessageList({
     }
   }, [messages, autoScroll]);
 
-  const classNames = ['chat-message-list', className].filter(Boolean).join(' ');
+  const classNames = cn('chat-message-list', className);
 
   if (messages.length === 0) {
     return (

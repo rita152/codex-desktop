@@ -1,4 +1,5 @@
 import { Thinking } from '../../ui/feedback/Thinking';
+import { cn } from '../../../utils/cn';
 
 import type { ChatMessageProps } from './types';
 
@@ -19,14 +20,12 @@ export function ChatMessage({
     });
   };
 
-  const classNames = [
+  const classNames = cn(
     'chat-message',
     `chat-message--${role}`,
     isStreaming && 'chat-message--streaming',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   return (
     <div className={classNames}>

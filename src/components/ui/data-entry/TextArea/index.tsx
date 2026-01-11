@@ -1,4 +1,6 @@
-import { forwardRef, useRef, useEffect } from 'react';
+import { forwardRef, useRef, useLayoutEffect } from 'react';
+
+import { cn } from '../../../../utils/cn';
 
 import type { TextAreaProps } from './types';
 
@@ -18,7 +20,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
 ) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -45,7 +47,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
           ref.current = node;
         }
       }}
-      className={`textarea ${className}`}
+      className={cn('textarea', className)}
       value={value}
       onChange={handleChange}
       {...textareaProps}
@@ -54,5 +56,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function 
     />
   );
 });
+
+TextArea.displayName = 'TextArea';
 
 export type { TextAreaProps } from './types';

@@ -1,3 +1,5 @@
+import { cn } from '../../../../utils/cn';
+
 import type { ListProps } from './types';
 
 import './List.css';
@@ -8,13 +10,7 @@ export function List({
   className = '',
   ...listProps
 }: ListProps) {
-  const classes = [
-    'list',
-    scrollable && 'list--scrollable',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const classes = cn('list', scrollable && 'list--scrollable', className);
 
   return (
     <ul {...listProps} className={classes} role={listProps.role ?? 'list'}>

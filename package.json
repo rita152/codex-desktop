@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "test": "vitest --browser --run",
     "preview": "vite preview",
     "tauri": "tauri",
     "storybook": "storybook dev -p 6006",

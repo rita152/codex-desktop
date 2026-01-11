@@ -1,3 +1,5 @@
+import { cn } from '../../../../utils/cn';
+
 import type { CardProps } from './types';
 
 import './Card.css';
@@ -24,7 +26,7 @@ export function Card({
     }
   };
 
-  const classNames = [
+  const classNames = cn(
     'card',
     `card--padding-${padding}`,
     `card--radius-${radius}`,
@@ -32,10 +34,8 @@ export function Card({
     shadow && 'card--shadow',
     bordered && `card--bordered card--border-${borderWidth}`,
     onClick && 'card--clickable',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   const cardStyle: React.CSSProperties = {
     ...style,

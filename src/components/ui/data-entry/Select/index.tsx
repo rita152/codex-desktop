@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
 
 import { ChevronDownIcon } from '../../data-display/Icon';
+import { cn } from '../../../../utils/cn';
 
 import type { SelectProps } from './types';
 
@@ -65,6 +66,12 @@ export function Select({
     switch (event.key) {
       case 'Enter':
       case ' ':
+        if (!isOpen) {
+          event.preventDefault();
+          setIsOpen(true);
+          setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
+          break;
+        }
         if (isOpen && highlightedIndex >= 0) {
           event.preventDefault();
           handleSelect(options[highlightedIndex].value);
@@ -123,14 +130,12 @@ export function Select({
     optionRefs.current[highlightedIndex]?.scrollIntoView({ block: 'nearest' });
   }, [highlightedIndex, isOpen]);
 
-  const triggerClasses = [
+  const triggerClasses = cn(
     'select__trigger',
     isOpen && 'select__trigger--open',
     isDisabled && 'select__trigger--disabled',
-    borderless && 'select__trigger--borderless',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    borderless && 'select__trigger--borderless'
+  );
 
   const containerStyle: React.CSSProperties = {
     width: typeof width === 'number' ? `${width}px` : width,
@@ -168,13 +173,11 @@ export function Select({
       {isOpen && (
         <div className="select__dropdown" role="listbox" id={listboxId} aria-labelledby={triggerId}>
           {options.map((option, index) => {
-            const optionClasses = [
+            const optionClasses = cn(
               'select__option',
               option.value === value && 'select__option--selected',
-              index === highlightedIndex && 'select__option--highlighted',
-            ]
-              .filter(Boolean)
-              .join(' ');
+              index === highlightedIndex && 'select__option--highlighted'
+            );
 
             return (
               <div

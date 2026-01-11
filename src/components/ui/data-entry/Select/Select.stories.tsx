@@ -47,6 +47,7 @@ export const Default: Story = {
     disabled: false,
     borderless: false,
     width: 200,
+    'aria-label': '选择水果',
   },
   render: (args) => {
     const [value, setValue] = useState<string>();

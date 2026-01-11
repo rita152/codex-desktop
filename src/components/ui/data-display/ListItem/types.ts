@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 
 export interface ListItemAction {
   icon: ReactNode;
@@ -7,10 +7,11 @@ export interface ListItemAction {
 }
 
 export interface ListItemProps
-  extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'onClick' | 'type'> {
+  extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'onClick'> {
   icon?: ReactNode;
   children: ReactNode;
   selected?: boolean;
+  disabled?: boolean;
   onClick?: () => void;
   actions?: ListItemAction[];
   editing?: boolean;

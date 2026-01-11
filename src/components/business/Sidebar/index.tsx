@@ -10,6 +10,7 @@ import {
   MenuIcon,
   TrashIcon,
 } from '../../ui/data-display/Icon';
+import { cn } from '../../../utils/cn';
 
 import type { SidebarProps } from './types';
 import type { ListItemAction } from '../../ui/data-display/ListItem/types';
@@ -121,7 +122,7 @@ export function Sidebar({
   const getSessionActions = useCallback(
     (sessionId: string, title: string): ListItemAction[] => {
       const actions: ListItemAction[] = [];
-      
+
       if (onSessionRename) {
         actions.push({
           icon: <EditIcon size={14} />,
@@ -129,7 +130,7 @@ export function Sidebar({
           onClick: () => handleStartRename(sessionId, title),
         });
       }
-      
+
       if (onSessionDelete) {
         actions.push({
           icon: <TrashIcon size={14} />,
@@ -137,7 +138,7 @@ export function Sidebar({
           onClick: () => onSessionDelete(sessionId),
         });
       }
-      
+
       return actions;
     },
     [onSessionDelete, onSessionRename, handleStartRename]
@@ -163,7 +164,7 @@ export function Sidebar({
     <aside
       id={sidebarId}
       ref={sidebarRef}
-      className={`sidebar ${isDragging ? 'sidebar--dragging' : ''} ${className}`}
+      className={cn('sidebar', isDragging && 'sidebar--dragging', className)}
       style={{ width }}
     >
       <div className="sidebar__header">

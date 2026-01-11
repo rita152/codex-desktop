@@ -1,5 +1,7 @@
 import { useRef, useEffect } from 'react';
 
+import { cn } from '../../../../utils/cn';
+
 import type { ListItemProps } from './types';
 
 import './ListItem.css';
@@ -17,19 +19,19 @@ export function ListItem({
   onEditConfirm,
   onEditCancel,
   className = '',
-  ...buttonProps
+  ...containerProps
 }: ListItemProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const isClickable = Boolean(onClick) && !editing;
+  const isFocusable = isClickable && !disabled;
 
-  const classes = [
+  const classes = cn(
     'list-item',
     selected && 'list-item--selected',
     disabled && 'list-item--disabled',
     actions && actions.length > 0 && 'list-item--has-actions',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   const handleClick = () => {
     if (!disabled && onClick && !editing) {
@@ -40,6 +42,14 @@ export function ListItem({
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation();
     action();
+  };
+
+  const handleRowKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!onClick || disabled || editing) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick();
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -60,7 +70,7 @@ export function ListItem({
   if (editing) {
     return (
       <li className="list-item__wrapper">
-        <div className={`${classes} list-item--editing`}>
+        <div className={cn(classes, 'list-item--editing')}>
           {icon && <span className="list-item__icon">{icon}</span>}
           <input
             ref={inputRef}
@@ -78,13 +88,15 @@ export function ListItem({
 
   return (
     <li className="list-item__wrapper">
-      <button
-        {...buttonProps}
-        type="button"
+      <div
+        {...containerProps}
         className={classes}
         onClick={handleClick}
-        disabled={disabled}
+        onKeyDown={handleRowKeyDown}
+        role={isClickable ? 'button' : undefined}
+        tabIndex={isFocusable ? 0 : isClickable ? -1 : undefined}
         aria-current={selected ? 'true' : undefined}
+        aria-disabled={disabled || undefined}
       >
         {icon && <span className="list-item__icon">{icon}</span>}
         <span className="list-item__content">{children}</span>
@@ -97,13 +109,14 @@ export function ListItem({
                 className="list-item__action"
                 onClick={(e) => handleActionClick(e, action.onClick)}
                 aria-label={action.label}
+                disabled={disabled}
               >
                 {action.icon}
               </button>
             ))}
           </span>
         )}
-      </button>
+      </div>
     </li>
   );
 }

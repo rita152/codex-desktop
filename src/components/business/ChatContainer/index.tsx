@@ -5,6 +5,7 @@ import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarLeftIcon } from '../../ui/data-display/Icon';
+import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
 
@@ -35,14 +36,12 @@ export function ChatContainer({
     setInputValue('');
   };
 
-  const classNames = ['chat-container', className].filter(Boolean).join(' ');
+  const classNames = cn('chat-container', className);
 
-  const sidebarClassNames = [
+  const sidebarClassNames = cn(
     'chat-container__sidebar',
-    !sidebarVisible && 'chat-container__sidebar--hidden',
-  ]
-    .filter(Boolean)
-    .join(' ');
+    !sidebarVisible && 'chat-container__sidebar--hidden'
+  );
 
   const showWelcome = messages.length === 0;
 

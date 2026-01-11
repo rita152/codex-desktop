@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+import { cn } from '../../../../utils/cn';
+
 import type { ThinkingProps } from './types';
 
 import './Thinking.css';
@@ -107,14 +109,12 @@ export function Thinking({
     return '思考过程';
   };
 
-  const classNames = [
+  const classNames = cn(
     'thinking',
     isOpen && 'thinking--open',
     isStreaming && 'thinking--streaming',
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   return (
     <div className={classNames}>

@@ -1,5 +1,7 @@
 import { forwardRef } from 'react';
 
+import { cn } from '../../../../utils/cn';
+
 import type { IconButtonProps } from './types';
 
 import './IconButton.css';
@@ -15,14 +17,12 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   },
   ref
 ) {
-  const classes = [
+  const classes = cn(
     'icon-button',
     `icon-button--${size}`,
     `icon-button--${variant}`,
-    className,
-  ]
-    .filter(Boolean)
-    .join(' ');
+    className
+  );
 
   return (
     <button ref={ref} type="button" className={classes} {...buttonProps} aria-label={ariaLabel}>
@@ -30,5 +30,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     </button>
   );
 });
+
+IconButton.displayName = 'IconButton';
 
 export type { IconButtonProps } from './types';
