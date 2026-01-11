@@ -47,6 +47,7 @@
 
 .chat-message__thinking {
   max-width: 80%;
+  margin-left: 4px;
 }
 
 .chat-message__timestamp {
