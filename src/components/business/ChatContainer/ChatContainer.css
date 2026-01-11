@@ -4,6 +4,16 @@
   width: 100%;
   background-color: var(--color-bg);
   overflow: hidden;
+  position: relative;
+}
+
+.chat-container__drag-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  z-index: 100;
 }
 
 .chat-container__sidebar {
@@ -13,7 +23,7 @@
 }
 
 .chat-container__sidebar--hidden {
-  margin-left: -260px;
+  /* margin-left 由内联样式动态设置，基于实际 sidebar 宽度 */
 }
 
 .chat-container__main {
@@ -26,11 +36,10 @@
 }
 
 .chat-container__header {
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border);
-  background-color: var(--color-bg);
+  position: absolute;
+  top: 11px;
+  left: 80px;
+  z-index: 101;
 }
 
 .chat-container__messages {

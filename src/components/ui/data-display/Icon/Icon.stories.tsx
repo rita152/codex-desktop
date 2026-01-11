@@ -3,9 +3,11 @@ import type { Meta, StoryObj } from '@storybook/react';
 import {
   BoltIcon,
   ChatIcon,
+  CheckIcon,
+  ChevronDownIcon,
+  CloseIcon,
   CommentIcon,
   CopyIcon,
-  ChevronDownIcon,
   EditIcon,
   FolderIcon,
   ForwardIcon,
@@ -21,6 +23,7 @@ import {
   SidebarRightIcon,
   SlashIcon,
   SlidersIcon,
+  TrashIcon,
 } from './index';
 
 const meta: Meta<typeof CopyIcon> = {
@@ -45,9 +48,11 @@ export const Default: Story = {
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
       <BoltIcon {...args} />
       <ChatIcon {...args} />
+      <CheckIcon {...args} />
+      <ChevronDownIcon {...args} />
+      <CloseIcon {...args} />
       <CommentIcon {...args} />
       <CopyIcon {...args} />
-      <ChevronDownIcon {...args} />
       <EditIcon {...args} />
       <FolderIcon {...args} />
       <ForwardIcon {...args} />
@@ -63,6 +68,7 @@ export const Default: Story = {
       <SidebarRightIcon {...args} />
       <SlashIcon {...args} />
       <SlidersIcon {...args} />
+      <TrashIcon {...args} />
     </div>
   ),
 };

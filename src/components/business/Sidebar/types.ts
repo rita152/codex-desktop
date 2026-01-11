@@ -10,6 +10,8 @@ export interface SidebarProps {
   onNewChat?: () => void;
   onMenuClick?: () => void;
   onSplitViewClick?: () => void;
+  onSessionDelete?: (sessionId: string) => void;
+  onSessionRename?: (sessionId: string, newTitle: string) => void;
   width?: number;
   onWidthChange?: (width: number) => void;
   className?: string;

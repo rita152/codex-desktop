@@ -20,6 +20,10 @@ export interface ChatContainerProps {
   onSendMessage?: (message: string) => void;
   /** 停止生成回调 */
   onStopGenerate?: () => void;
+  /** 删除会话回调 */
+  onSessionDelete?: (sessionId: string) => void;
+  /** 重命名会话回调 */
+  onSessionRename?: (sessionId: string, newTitle: string) => void;
   /** 侧边栏是否显示 */
   sidebarVisible?: boolean;
   /** 侧边栏显示切换回调 */

@@ -8,9 +8,11 @@ import {
   SidebarLeftIcon,
   EditIcon,
   MenuIcon,
+  TrashIcon,
 } from '../../ui/data-display/Icon';
 
 import type { SidebarProps } from './types';
+import type { ListItemAction } from '../../ui/data-display/ListItem/types';
 
 import './Sidebar.css';
 
@@ -25,12 +27,16 @@ export function Sidebar({
   onNewChat,
   onMenuClick,
   onSplitViewClick,
+  onSessionDelete,
+  onSessionRename,
   width: controlledWidth,
   onWidthChange,
   className = '',
 }: SidebarProps) {
   const [internalWidth, setInternalWidth] = useState(DEFAULT_WIDTH);
   const [isDragging, setIsDragging] = useState(false);
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
   const sidebarRef = useRef<HTMLElement>(null);
 
   const generatedId = useId();
@@ -94,6 +100,49 @@ export function Sidebar({
     }
   };
 
+  const handleStartRename = useCallback((sessionId: string, currentTitle: string) => {
+    setEditingSessionId(sessionId);
+    setEditValue(currentTitle);
+  }, []);
+
+  const handleConfirmRename = useCallback(() => {
+    if (editingSessionId && editValue.trim()) {
+      onSessionRename?.(editingSessionId, editValue.trim());
+    }
+    setEditingSessionId(null);
+    setEditValue('');
+  }, [editingSessionId, editValue, onSessionRename]);
+
+  const handleCancelRename = useCallback(() => {
+    setEditingSessionId(null);
+    setEditValue('');
+  }, []);
+
+  const getSessionActions = useCallback(
+    (sessionId: string, title: string): ListItemAction[] => {
+      const actions: ListItemAction[] = [];
+      
+      if (onSessionRename) {
+        actions.push({
+          icon: <EditIcon size={14} />,
+          label: '重命名',
+          onClick: () => handleStartRename(sessionId, title),
+        });
+      }
+      
+      if (onSessionDelete) {
+        actions.push({
+          icon: <TrashIcon size={14} />,
+          label: '删除',
+          onClick: () => onSessionDelete(sessionId),
+        });
+      }
+      
+      return actions;
+    },
+    [onSessionDelete, onSessionRename, handleStartRename]
+  );
+
   useEffect(() => {
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
@@ -144,6 +193,12 @@ export function Sidebar({
               icon={<CommentIcon size={18} />}
               selected={session.id === selectedSessionId}
               onClick={() => onSessionSelect?.(session.id)}
+              actions={getSessionActions(session.id, session.title)}
+              editing={editingSessionId === session.id}
+              editValue={editValue}
+              onEditChange={setEditValue}
+              onEditConfirm={handleConfirmRename}
+              onEditCancel={handleCancelRename}
             >
               {session.title}
             </ListItem>

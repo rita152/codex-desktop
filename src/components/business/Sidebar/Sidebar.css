@@ -5,8 +5,9 @@
   width: 260px;
   min-width: 200px;
   max-width: 400px;
-  height: 100%;
+  height: calc(100% - var(--spacing-sm) * 2);
   margin: var(--spacing-sm);
+  margin-right: 0;
   background-color: var(--color-bg-sidebar);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-xl);
@@ -17,13 +18,26 @@
   user-select: none;
 }
 
+.sidebar__drag-region {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
 .sidebar__header {
+  position: relative;
+  z-index: 101;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: var(--spacing-xs);
-  padding: var(--spacing-sm) var(--spacing-md);
-  padding-left: 80px; /* macOS 窗口控制按钮空间 */
+  padding: var(--spacing-md);
+  padding-top: 6px;
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .sidebar__content {
