@@ -74,7 +74,8 @@
   font-size: 13px;
   line-height: 1.6;
   color: var(--color-text-secondary);
-  white-space: pre-wrap;
+  /* 这里渲染的是 Markdown，让 Markdown 自己控制换行/段落，避免额外空行 */
+  white-space: normal;
   word-break: break-word;
 }
 

@@ -3,6 +3,8 @@
   line-height: 1.6;
   color: var(--color-text);
   word-break: break-word;
+  /* 防止父容器设置 white-space: pre-wrap 导致 Markdown 额外空行 */
+  white-space: normal;
 }
 
 /* 段落 */
