@@ -1,4 +1,5 @@
 import { Thinking } from '../../ui/feedback/Thinking';
+import { Markdown } from '../../ui/data-display/Markdown';
 import { cn } from '../../../utils/cn';
 
 import type { ChatMessageProps } from './types';
@@ -27,6 +28,13 @@ export function ChatMessage({
     className
   );
 
+  const renderContent = () => {
+    if (role === 'assistant') {
+      return <Markdown content={content} />;
+    }
+    return content;
+  };
+
   return (
     <div className={classNames}>
       {thinking && role === 'assistant' && (
@@ -39,7 +47,7 @@ export function ChatMessage({
           />
         </div>
       )}
-      <div className="chat-message__bubble">{content}</div>
+      <div className="chat-message__bubble">{renderContent()}</div>
       {timestamp && (
         <span className="chat-message__timestamp">{formatTime(timestamp)}</span>
       )}
