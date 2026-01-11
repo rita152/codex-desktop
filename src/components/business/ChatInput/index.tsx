@@ -1,18 +1,30 @@
+import { DEFAULT_MODELS } from '../../../constants/chat';
+
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
 import {
   PlusIcon,
-  SlidersIcon,
   RobotIcon,
   MicrophoneIcon,
   SendIcon,
+  ChatIcon,
+  ForwardIcon,
+  NotebookIcon,
 } from '../../ui/data-display/Icon';
-import { DEFAULT_AGENTS, DEFAULT_MODELS } from '../../../constants/chat';
 
 import type { ChatInputProps } from './types';
+import type { SelectOption } from '../../ui/data-entry/Select/types';
 
 import './ChatInput.css';
+
+// Agent 选项带图标
+const AGENT_OPTIONS: SelectOption[] = [
+  { value: 'chat', label: 'Chat', icon: <ChatIcon size={18} /> },
+  { value: 'agent', label: 'Agent', icon: <RobotIcon size={18} /> },
+  { value: 'agent-full', label: 'Agent (full access)', icon: <ForwardIcon size={18} /> },
+  { value: 'custom', label: 'Custom (config.toml)', icon: <NotebookIcon size={18} /> },
+];
 
 export function ChatInput({
   value,
@@ -20,11 +32,10 @@ export function ChatInput({
   onSend,
   onVoiceClick,
   onAddClick,
-  onSettingsClick,
   placeholder = '问问 olyx',
   disabled = false,
-  agentOptions = DEFAULT_AGENTS,
-  selectedAgent = 'agent',
+  agentOptions = AGENT_OPTIONS,
+  selectedAgent = 'agent-full',
   onAgentChange,
   modelOptions = DEFAULT_MODELS,
   selectedModel = 'gpt-5.2-high',
@@ -81,15 +92,6 @@ export function ChatInput({
             variant="ghost"
             disabled={disabled || !onAddClick}
           />
-          <button
-            type="button"
-            className="chat-input__tool-button"
-            onClick={onSettingsClick}
-            disabled={disabled || !onSettingsClick}
-          >
-            <SlidersIcon size={18} />
-            <span className="chat-input__tool-text">工具</span>
-          </button>
           <Select
             options={agentOptions}
             value={selectedAgent}
@@ -98,6 +100,8 @@ export function ChatInput({
             borderless
             size="sm"
             disabled={disabled}
+            variant="glass"
+            dropdownTitle="Switch mode"
             aria-label="选择智能体"
           />
         </div>

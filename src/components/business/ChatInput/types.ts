@@ -4,7 +4,6 @@ export interface ChatInputProps {
   onSend: (message: string) => void;
   onVoiceClick?: () => void;
   onAddClick?: () => void;
-  onSettingsClick?: () => void;
   placeholder?: string;
   disabled?: boolean;
   agentOptions?: { value: string; label: string }[];

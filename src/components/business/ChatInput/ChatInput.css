@@ -102,11 +102,13 @@
 }
 
 .chat-input__send-button {
-  color: var(--color-text);
+  color: var(--color-text-secondary);
+  opacity: 0.5;
 }
 
 .chat-input__send-button--active {
   color: var(--color-text);
+  opacity: 1;
 }
 
 /* 工具按钮文字 */

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
+import { createPortal } from 'react-dom';
 
-import { ChevronDownIcon } from '../../data-display/Icon';
+import { ChevronDownIcon, CheckIcon } from '../../data-display/Icon';
 import { cn } from '../../../../utils/cn';
 
 import type { SelectProps } from './types';
@@ -19,13 +20,17 @@ export function Select({
   width,
   icon,
   className = '',
+  dropdownTitle,
+  variant = 'default',
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropdownPosition, setDropdownPosition] = useState({ bottom: 0, left: 0, width: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   const generatedId = useId();
@@ -47,6 +52,25 @@ export function Select({
     }
   };
 
+  // 计算下拉框位置（上拉）
+  const updateDropdownPosition = useCallback(() => {
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      setDropdownPosition({
+        bottom: window.innerHeight - rect.top + 4, // 4px gap，从按钮顶部向上
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, []);
+
+  // 打开时计算位置
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+    }
+  }, [isOpen, updateDropdownPosition]);
+
   const handleSelect = (optionValue: string) => {
     onChange?.(optionValue);
     setIsOpen(false);
@@ -54,7 +78,11 @@ export function Select({
   };
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+    const target = event.target as Node;
+    if (
+      containerRef.current && !containerRef.current.contains(target) &&
+      dropdownRef.current && !dropdownRef.current.contains(target)
+    ) {
       setIsOpen(false);
       setHighlightedIndex(-1);
     }
@@ -161,7 +189,9 @@ export function Select({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
       >
-        {icon && <span className="select__prefix-icon">{icon}</span>}
+        {(selectedOption?.icon || icon) && (
+          <span className="select__prefix-icon">{selectedOption?.icon ?? icon}</span>
+        )}
         {selectedOption ? (
           <span className="select__value">{selectedOption.label}</span>
         ) : (
@@ -170,8 +200,27 @@ export function Select({
         <ChevronDownIcon size={16} className="select__icon" />
       </button>
 
-      {isOpen && (
-        <div className="select__dropdown" role="listbox" id={listboxId} aria-labelledby={triggerId}>
+      {isOpen && createPortal(
+        <div
+          ref={dropdownRef}
+          className={cn(
+            'select__dropdown',
+            `select__dropdown--${size}`,
+            variant === 'glass' && 'select__dropdown--glass'
+          )}
+          role="listbox"
+          id={listboxId}
+          aria-labelledby={triggerId}
+          style={{
+            position: 'fixed',
+            bottom: dropdownPosition.bottom,
+            left: dropdownPosition.left,
+            minWidth: dropdownPosition.width,
+          }}
+        >
+          {dropdownTitle && (
+            <div className="select__dropdown-title">{dropdownTitle}</div>
+          )}
           {options.map((option, index) => {
             const optionClasses = cn(
               'select__option',
@@ -192,11 +241,16 @@ export function Select({
                   optionRefs.current[index] = el;
                 }}
               >
-                {option.label}
+                {option.icon && <span className="select__option-icon">{option.icon}</span>}
+                <span className="select__option-label">{option.label}</span>
+                {option.value === value && (
+                  <CheckIcon size={16} className="select__option-check" />
+                )}
               </div>
             );
           })}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

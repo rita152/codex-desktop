@@ -30,6 +30,8 @@ export function ChatContainer({
 }: ChatContainerProps) {
   const [inputValue, setInputValue] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  const [selectedAgent, setSelectedAgent] = useState('agent-full');
+  const [selectedModel, setSelectedModel] = useState('gpt-5.2-high');
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
@@ -95,6 +97,10 @@ export function ChatContainer({
             onChange={setInputValue}
             onSend={handleSend}
             disabled={isGenerating}
+            selectedAgent={selectedAgent}
+            onAgentChange={setSelectedAgent}
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
             className="chat-container__input"
           />
         </div>

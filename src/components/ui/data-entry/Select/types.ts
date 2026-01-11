@@ -5,6 +5,8 @@ export interface SelectOption {
   value: string;
   /** 显示文本 */
   label: string;
+  /** 选项图标 */
+  icon?: ReactNode;
 }
 
 type SelectA11yProps =
@@ -34,6 +36,10 @@ export interface SelectBaseProps {
   icon?: ReactNode;
   /** 自定义类名 */
   className?: string;
+  /** 下拉面板标题 */
+  dropdownTitle?: string;
+  /** 下拉面板样式变体 */
+  variant?: 'default' | 'glass';
 }
 
 export type SelectProps = SelectBaseProps & SelectA11yProps;
