@@ -33,6 +33,7 @@
   min-width: 0;
   height: 100%;
   position: relative;
+  transition: flex 0.2s ease;
 }
 
 .chat-container__header {
@@ -51,11 +52,13 @@
   padding: var(--spacing-lg);
   padding-top: var(--spacing-sm);
   background-color: var(--color-bg);
+  transition: padding 0.2s ease;
 }
 
 .chat-container__input {
   max-width: 768px;
   margin: 0 auto;
+  transition: max-width 0.2s ease;
 }
 
 .chat-container__welcome {
