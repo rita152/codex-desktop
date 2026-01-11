@@ -93,11 +93,18 @@
 - `src-tauri/src/codex/binary.rs`
 
 **内容**：
-- [ ] Dev：支持通过 `npx @zed-industries/codex-acp` 启动（可配置开关）
-- [ ] Prod：支持通过 Tauri sidecar 启动（优先）
-- [ ] Dev：启动时设置 `CODEX_HOME=$HOME/.codex`（确保读取 `~/.codex/config.toml`）
-- [ ] 明确 `PATH`、工作目录、以及 `CODEX_HOME`/`RUST_LOG`/认证相关 env 的注入策略（开发期尽量不传 Key）
-- [ ] 启动时打印一行可诊断信息（版本号/路径/模式），但避免输出敏感 env
+- [x] Dev：支持通过 `npx @zed-industries/codex-acp` 启动（可配置开关）
+- [x] Prod：支持通过 Tauri sidecar 启动（优先）
+- [x] Dev：启动时设置 `CODEX_HOME=$HOME/.codex`（确保读取 `~/.codex/config.toml`）
+- [x] 明确 `PATH`、工作目录、以及 `CODEX_HOME`/`RUST_LOG`/认证相关 env 的注入策略（开发期尽量不传 Key）
+- [x] 启动时打印一行可诊断信息（版本号/路径/模式），但避免输出敏感 env
+
+**实现备注**：
+- `CODEX_DESKTOP_ACP_MODE`: `npx|sidecar`（Debug 默认 npx；Release 默认 sidecar）
+- `CODEX_DESKTOP_NPX_BIN`: 覆盖 npx 可执行文件（默认 `npx`）
+- `CODEX_DESKTOP_ACP_NPX_SPEC`: 覆盖 npx spec（默认 `@zed-industries/codex-acp`）
+- `CODEX_DESKTOP_ACP_PATH`: 显式指定 sidecar 路径（用于本地/CI/自定义打包验证）
+- `CODEX_DESKTOP_ACP_SIDECAR_NAME`: sidecar 文件名（默认 `codex-acp`；会自动追加 `.exe` 后缀）
 
 **验收标准**：
 - 在 Dev 与 Prod 模式都能成功启动并进入 ACP 握手（Initialize 可返回）
@@ -112,14 +119,10 @@
 - `src-tauri/src/codex/types.rs`
 
 **内容**：
-- [ ] **方案 A（推荐）**：直接引入 `agent-client-protocol` crate，尽量复用其类型（减少维护成本与协议漂移风险）
-- [ ] **方案 B（兜底）**：自定义 `AcpRequest/AcpResponse/SessionUpdate/...`（需要同时覆盖“客户端被动接收通知 + 被动响应 request_permission”的双向请求场景）
-- [ ] 定义 `AcpRequest` 枚举（Initialize, Authenticate, NewSession, Prompt, Cancel）
-- [ ] 定义 `AcpResponse` 枚举（对应响应类型）
-- [ ] 定义 `SessionUpdate` 事件类型（AgentMessageChunk, ToolCall, ApprovalRequest 等）
-- [ ] 定义 `ContentBlock` 类型（Text, Image, ResourceLink）
-- [ ] 定义 `ToolKind` 枚举（Read, Edit, Execute, Search, Fetch）
-- [ ] 定义 `ApprovalDecision` 枚举（AllowAlways, AllowOnce, RejectOnce）
+- [x] **方案 A（推荐）**：直接引入 `agent-client-protocol` crate，尽量复用其类型（减少维护成本与协议漂移风险）
+- [x] **方案 B（兜底）**：暂不实现（已满足 Task1 需要）
+- [x] 定义 `ApprovalDecision`（用于 `codex_approve` 的 decision→option 映射）
+- [x] 前后端交互使用轻量 JSON 结果/事件，避免强耦合（见 `src-tauri/src/codex/types.rs`）
 
 **验收标准**：
 ```bash
@@ -137,12 +140,10 @@ cd src-tauri && cargo check
 - `src-tauri/src/codex/process.rs`
 
 **内容**：
-- [ ] `CodexProcess` 结构体，管理子进程生命周期
-- [ ] `spawn()` 方法：启动 codex-acp 进程，绑定 stdin/stdout
-- [ ] `kill()` 方法：终止进程
-- [ ] `is_alive()` 方法：检查进程状态
-- [ ] 错误处理：进程启动失败、意外退出
-- [ ] 环境变量注入：开发期至少注入 `CODEX_HOME=$HOME/.codex`；必要时再注入 `CODEX_API_KEY`/`OPENAI_API_KEY`、`RUST_LOG`、`NO_BROWSER`
+- [x] `CodexProcess` 结构体，管理子进程生命周期（`src-tauri/src/codex/process.rs`）
+- [x] `spawn()`：启动 codex-acp，绑定 stdin/stdout
+- [x] `kill()` / `is_alive()`：进程管理与错误处理
+- [x] 环境变量注入：默认 `CODEX_HOME=$HOME/.codex`；可按需注入 API Key 与 `RUST_LOG`
 
 **依赖**：
 - Dev 模式：需要系统可用 `npx`
@@ -172,13 +173,9 @@ mod tests {
 - `src-tauri/src/codex/protocol.rs`
 
 **内容**：
-- [ ] 若采用 `agent-client-protocol`：实现 `Client`（处理 `session_notification`、`request_permission`），并通过 `ClientSideConnection`（或等价 API）拿到远端 `Agent` 调用句柄
-- [ ] 若自研：补齐 **双向** JSON-RPC（agent->client 的 request_permission 也需能被正确处理并回包）
-- [ ] `AcpConnection` 结构体，封装 stdin/stdout 读写
-- [ ] `send_request()` 方法：发送请求并等待响应
-- [ ] `read_notification()` 方法：读取事件通知流
-- [ ] JSON 序列化/反序列化
-- [ ] 请求 ID 管理
+- [x] 使用 `agent-client-protocol`：实现 `Client`（`session_notification`/`request_permission`）并建立 `ClientSideConnection`
+- [x] `AcpConnection`：封装子进程 + stdio + io_task（`src-tauri/src/codex/protocol.rs`）
+- [x] `request_permission`：通过 `codex_approve` 回传所选 `option_id`
 
 **验收标准**：
 ```rust
@@ -204,14 +201,9 @@ mod tests {
 - `src-tauri/src/codex/mod.rs`
 
 **内容**：
-- [ ] `CodexService` 结构体，管理多个会话
-- [ ] `initialize()` 方法：初始化 ACP 连接
-- [ ] `authenticate()` 方法：执行认证流程（注意：API Key 可能需通过 env 注入后重启子进程再走 authenticate）
-- [ ] `create_session()` 方法：创建新会话
-- [ ] `send_prompt()` 方法：发送用户消息
-- [ ] `cancel()` 方法：取消当前操作
-- [ ] `approve()`/`respond_permission()` 方法：响应 `request_permission`（返回所选 `option_id`，并支持“拒绝但继续/取消”等分支）
-- [ ] 事件回调机制
+- [x] `CodexService`：封装 Initialize/Auth/NewSession/Prompt/Cancel/Approve（`src-tauri/src/codex/service.rs`）
+- [x] Auth：若传入 `api_key` 会重启子进程并以 env 注入后再 authenticate
+- [x] Approve：以 `(sessionId, toolCallId)` 作为 requestId 进行匹配，回传 option_id
 
 **验收标准**：
 ```rust
@@ -240,14 +232,9 @@ mod tests {
 - `src-tauri/src/lib.rs`（修改）
 
 **内容**：
-- [ ] `#[tauri::command] codex_init()` - 初始化服务
-- [ ] `#[tauri::command] codex_auth(method, api_key?)` - 认证（开发期允许 api_key 为空，优先复用 `~/.codex` 已有凭据；生产期再做安全存储与重启注入）
-- [ ] `#[tauri::command] codex_new_session(cwd)` - 创建会话
-- [ ] `#[tauri::command] codex_prompt(session_id, content)` - 发送消息
-- [ ] `#[tauri::command] codex_cancel(session_id)` - 取消
-- [ ] `#[tauri::command] codex_approve(session_id, request_id, decision)` - 审批
-- [ ] 在 `lib.rs` 注册所有命令
-- [ ] （补充）暴露会话配置相关命令：`codex_set_mode` / `codex_set_model` / `codex_set_config_option`（用于设置面板与 slash 命令配合）
+- [x] `codex_init` / `codex_auth` / `codex_new_session` / `codex_prompt` / `codex_cancel` / `codex_approve`
+- [x] `codex_set_mode` / `codex_set_model` / `codex_set_config_option`
+- [x] `src-tauri/src/lib.rs` 注册命令与 `CodexManager` 状态
 
 **验收标准**：
 ```bash
@@ -273,13 +260,9 @@ invoke('codex_auth', { method: 'openai-api-key' })
 - `src-tauri/src/codex/commands.rs`（修改）
 
 **内容**：
-- [ ] 定义 Tauri 事件名称常量
-- [ ] `codex:message` - AI 消息流
-- [ ] `codex:tool-call` - 工具调用
-- [ ] `codex:approval-request` - 审批请求
-- [ ] `codex:error` - 错误
-- [ ] `codex:turn-complete` - 回合完成
-- [ ] 实现事件发射逻辑
+- [x] 事件常量：`src-tauri/src/codex/events.rs`
+- [x] 事件发射：`src-tauri/src/codex/protocol.rs`（SessionUpdate/Permission/IO error）
+- [x] `codex:message` / `codex:tool-call` / `codex:approval-request` / `codex:error` / `codex:turn-complete`
 
 **验收标准**：
 ```typescript

@@ -8,13 +8,13 @@ use agent_client_protocol::{
 use serde_json::json;
 use std::{
     path::PathBuf,
-    process::Stdio,
     sync::Arc,
 };
 use tauri::{Emitter, Window};
-use tokio::process::Command;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
+use tauri::Manager;
+use crate::codex::binary::CodexAcpBinary;
 use super::config::{codex_home_dir, load_codex_cli_config, redact_api_key, CodexCliConfig};
 
 pub const EVENT_MESSAGE_CHUNK: &str = "codex:message";
@@ -163,13 +163,9 @@ async fn prompt_once_inner(window: Window, cwd: PathBuf, content: String, cfg: C
     };
 
     let codex_home = codex_home_dir()?;
-
-    let mut cmd = Command::new("npx");
-    cmd.arg("@zed-industries/codex-acp")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .env("CODEX_HOME", &codex_home);
+    let binary = CodexAcpBinary::resolve(Some(&window.app_handle()))?;
+    eprintln!("{}", binary.diagnostics_line());
+    let mut cmd = binary.command(&codex_home);
 
     // Dev: prefer reading ~/.codex/config.toml; if api_key is present there,
     // also export it to env so codex-acp's `authenticate` path can succeed.

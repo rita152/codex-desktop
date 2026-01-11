@@ -7,10 +7,10 @@ use agent_client_protocol::{
     SessionUpdate, SetSessionConfigOptionRequest,
 };
 use serde_json::json;
-use std::{path::PathBuf, process::Stdio, sync::Arc};
-use tokio::process::Command;
+use std::{path::PathBuf, sync::Arc};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
+use codex_desktop_lib::codex::binary::CodexAcpBinary;
 use codex_desktop_lib::codex_dev::config;
 
 #[derive(Clone)]
@@ -104,12 +104,9 @@ async fn run_smoke(
     cwd: PathBuf,
     prompt: String,
 ) -> Result<()> {
-    let mut cmd = Command::new("npx");
-    cmd.arg("@zed-industries/codex-acp")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .env("CODEX_HOME", &codex_home);
+    let binary = CodexAcpBinary::resolve(None)?;
+    eprintln!("{}", binary.diagnostics_line());
+    let mut cmd = binary.command(&codex_home);
 
     if let Some(api_key) = cfg.api_key.as_deref() {
         let provider = cfg
