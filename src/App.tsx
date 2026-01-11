@@ -209,11 +209,17 @@ function App() {
       };
 
       const assistantMessageId = String(Date.now() + 1);
+      const thinkingStartTime = Date.now();
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
         content: '',
         isStreaming: true,
+        thinking: {
+          content: '',
+          isStreaming: true,
+          startTime: thinkingStartTime,
+        },
         timestamp: new Date(),
       };
 
