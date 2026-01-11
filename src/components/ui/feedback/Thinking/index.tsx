@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 
+import { Markdown } from '../../data-display/Markdown';
 import { cn } from '../../../../utils/cn';
 
 import type { ThinkingProps } from './types';
@@ -134,7 +135,7 @@ export function Thinking({
       </button>
       <div className="thinking__content">
         <div className="thinking__content-inner">
-          <div className="thinking__text">{content}</div>
+          <Markdown content={content} className="thinking__text" />
         </div>
       </div>
     </div>
