@@ -1,31 +1,36 @@
 :root {
-  /* 主色 */
-  --color-primary: #396cd8;
-  --color-primary-hover: #535bf2;
-  --color-primary-active: #646cff;
-
   /* 品牌色 */
-  --color-brand-tauri: #24c8db;
-  --color-brand-vite: #747bff;
-  --color-brand-react: #61dafb;
+  --color-brand: #74aa9c;
+  --color-brand-pro: #ab68ff;
 
-  /* 文字 */
-  --color-text: #0f0f0f;
-  --color-text-secondary: #6b7280;
-  --color-text-inverse: #f6f6f6;
+  /* 主色 */
+  --color-primary: #74aa9c;
+  --color-primary-hover: #5a9a8a;
 
-  /* 背景 */
-  --color-bg: #f6f6f6;
-  --color-bg-secondary: #ffffff;
+  /* 强调色选项 */
+  --color-accent-blue: #3b82f6;
+  --color-accent-green: #10b981;
+  --color-accent-yellow: #f59e0b;
+  --color-accent-pink: #ec4899;
+  --color-accent-orange: #f97316;
+
+  /* 文字 - 亮色模式 */
+  --color-text: #0d0d0d;
+  --color-text-secondary: #8e8ea0;
+  --color-text-inverse: #ececec;
+
+  /* 背景 - 亮色模式 */
+  --color-bg: #ffffff;
+  --color-bg-secondary: #f7f7f8;
+  --color-bg-sidebar: #f7f7f8;
   --color-bg-elevated: #ffffff;
 
   /* 边框 */
-  --color-border: transparent;
-  --color-border-hover: #396cd8;
-  --color-border-active: #396cd8;
+  --color-border: #e5e5e5;
+  --color-border-hover: #74aa9c;
 
   /* 阴影 */
-  --color-shadow: rgba(0, 0, 0, 0.2);
+  --color-shadow: rgba(0, 0, 0, 0.1);
 
   /* 状态 */
   --color-success: #10b981;
@@ -37,16 +42,20 @@
 /* 暗色模式 */
 @media (prefers-color-scheme: dark) {
   :root {
-    /* 文字 */
-    --color-text: #f6f6f6;
-    --color-text-inverse: #0f0f0f;
+    /* 文字 - 暗色模式 */
+    --color-text: #ececec;
+    --color-text-inverse: #0d0d0d;
 
-    /* 背景 */
-    --color-bg: #2f2f2f;
-    --color-bg-secondary: #0f0f0f98;
-    --color-bg-elevated: #0f0f0f69;
+    /* 背景 - 暗色模式 */
+    --color-bg: #212121;
+    --color-bg-secondary: #2f2f2f;
+    --color-bg-sidebar: #171717;
+    --color-bg-elevated: #343541;
 
-    /* 主色（暗色模式调整） */
-    --color-primary-hover: #24c8db;
+    /* 边框 */
+    --color-border: #444444;
+
+    /* 阴影 */
+    --color-shadow: rgba(0, 0, 0, 0.3);
   }
 }
