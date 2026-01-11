@@ -1,6 +1,6 @@
-import './Icon.css';
-
 import type { IconProps } from './types';
+
+import './Icon.css';
 
 export function BoltIcon({ size = 24, className = '' }: IconProps) {
   return (

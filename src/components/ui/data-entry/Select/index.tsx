@@ -2,9 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 import { ChevronDownIcon } from '../../data-display/Icon';
 
-import './Select.css';
-
 import type { SelectProps } from './types';
+
+import './Select.css';
 
 export function Select({
   options,

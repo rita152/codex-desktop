@@ -1,8 +1,8 @@
 import { useRef, useEffect } from 'react';
 
-import './TextArea.css';
-
 import type { TextAreaProps } from './types';
+
+import './TextArea.css';
 
 export function TextArea({
   value,

@@ -1,5 +1,3 @@
-import './ChatInput.css';
-
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
@@ -10,18 +8,11 @@ import {
   MicrophoneIcon,
   SendIcon,
 } from '../../ui/data-display/Icon';
+import { DEFAULT_AGENTS, DEFAULT_MODELS } from '../../../constants/chat';
 
 import type { ChatInputProps } from './types';
 
-const DEFAULT_AGENTS = [
-  { value: 'agent', label: 'Agent' },
-];
-
-const DEFAULT_MODELS = [
-  { value: 'gpt-5.2-high', label: 'gpt-5.2 (high)' },
-  { value: 'gpt-5.2', label: 'gpt-5.2' },
-  { value: 'gpt-4.1', label: 'gpt-4.1' },
-];
+import './ChatInput.css';
 
 export function ChatInput({
   value,

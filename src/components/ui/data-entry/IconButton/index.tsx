@@ -1,6 +1,6 @@
-import './IconButton.css';
-
 import type { IconButtonProps } from './types';
+
+import './IconButton.css';
 
 export function IconButton({
   icon,

@@ -1,6 +1,6 @@
-import './ListItem.css';
-
 import type { ListItemProps } from './types';
+
+import './ListItem.css';
 
 export function ListItem({
   icon,

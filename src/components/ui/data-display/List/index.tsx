@@ -1,6 +1,6 @@
-import './List.css';
-
 import type { ListProps } from './types';
+
+import './List.css';
 
 export function List({
   children,

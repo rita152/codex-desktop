@@ -1,7 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-import './Sidebar.css';
-
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { IconButton } from '../../ui/data-entry/IconButton';
@@ -13,6 +11,8 @@ import {
 } from '../../ui/data-display/Icon';
 
 import type { SidebarProps } from './types';
+
+import './Sidebar.css';
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
