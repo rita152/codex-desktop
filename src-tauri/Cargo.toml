@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Codex Desktop App"
 authors = ["you"]
 edition = "2021"
+default-run = "codex-desktop"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -22,4 +23,9 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-
+anyhow = "1"
+agent-client-protocol = { version = "=0.9.3", features = ["unstable"] }
+async-trait = "0.1"
+tokio = { version = "1", features = ["process", "io-util", "macros", "rt", "time"] }
+tokio-util = { version = "0.7", features = ["compat"] }
+toml = "0.8"

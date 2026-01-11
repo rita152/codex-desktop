@@ -79,6 +79,7 @@
 
 **验收标准**：
 - Desktop 在 `tauri dev` 下可稳定完成一次 turn（含 turn-complete），无崩溃/死锁
+- 验证记录与当前实现见 `docs/task0-dev-validation.md`
 
 ---
 

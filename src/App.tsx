@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 
 import { ChatContainer } from './components/business/ChatContainer';
 
@@ -19,9 +21,90 @@ function App() {
     '1': [],
   });
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const activeSessionIdRef = useRef<string>('1');
+  const activeAssistantMessageIdRef = useRef<string | null>(null);
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
+
+  useEffect(() => {
+    const unlistenPromises = [
+      listen<{ sessionId: string; text: string }>('codex:message', (event) => {
+        const sessionId = activeSessionIdRef.current;
+        const assistantMessageId = activeAssistantMessageIdRef.current;
+        if (!assistantMessageId) return;
+
+        setSessionMessages((prev) => {
+          const list = prev[sessionId] ?? [];
+          const next = list.map((m) => {
+            if (String(m.id) !== assistantMessageId) return m;
+            return {
+              ...m,
+              content: String(m.content ?? '') + event.payload.text,
+              isStreaming: true,
+            };
+          });
+          return { ...prev, [sessionId]: next };
+        });
+      }),
+      listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', () => {
+        const sessionId = activeSessionIdRef.current;
+        const assistantMessageId = activeAssistantMessageIdRef.current;
+        if (!assistantMessageId) return;
+
+        setSessionMessages((prev) => {
+          const list = prev[sessionId] ?? [];
+          const next = list.map((m) => {
+            if (String(m.id) !== assistantMessageId) return m;
+            return { ...m, isStreaming: false };
+          });
+          return { ...prev, [sessionId]: next };
+        });
+
+        activeAssistantMessageIdRef.current = null;
+        setIsGenerating(false);
+      }),
+      listen<{ error: string }>('codex:error', (event) => {
+        const sessionId = activeSessionIdRef.current;
+        const assistantMessageId = activeAssistantMessageIdRef.current;
+        if (!assistantMessageId) return;
+
+        setSessionMessages((prev) => {
+          const list = prev[sessionId] ?? [];
+          const next = list.map((m) => {
+            if (String(m.id) !== assistantMessageId) return m;
+            return {
+              ...m,
+              content: `发生错误：${event.payload.error}`,
+              isStreaming: false,
+            };
+          });
+          return { ...prev, [sessionId]: next };
+        });
+
+        activeAssistantMessageIdRef.current = null;
+        setIsGenerating(false);
+      }),
+      listen('codex:approval-request', (event) => {
+        // Task0：先用 console 观察审批流，后续接入 ApprovalDialog
+        console.debug('[codex approval]', event.payload);
+      }),
+      listen('codex:tool-call', (event) => {
+        console.debug('[codex tool-call]', event.payload);
+      }),
+      listen('codex:tool-call-update', (event) => {
+        console.debug('[codex tool-call-update]', event.payload);
+      }),
+    ];
+
+    return () => {
+      Promise.all(unlistenPromises)
+        .then((unlisteners) => unlisteners.forEach((u) => u()))
+        .catch(() => {});
+    };
+  }, []);
 
   const handleNewChat = useCallback(() => {
     const newId = String(Date.now());
@@ -79,10 +162,27 @@ function App() {
         timestamp: new Date(),
       };
 
+      const assistantMessageId = String(Date.now() + 1);
+      const assistantMessage: Message = {
+        id: assistantMessageId,
+        role: 'assistant',
+        content: '',
+        isStreaming: true,
+        timestamp: new Date(),
+      };
+
+      activeSessionIdRef.current = selectedSessionId;
+      activeAssistantMessageIdRef.current = assistantMessageId;
+      setIsGenerating(true);
+
       // 更新当前会话的消息
       setSessionMessages((prev) => ({
         ...prev,
-        [selectedSessionId]: [...(prev[selectedSessionId] ?? []), userMessage],
+        [selectedSessionId]: [
+          ...(prev[selectedSessionId] ?? []),
+          userMessage,
+          assistantMessage,
+        ],
       }));
 
       // 如果是第一条消息，用消息内容更新会话标题
@@ -93,20 +193,22 @@ function App() {
         );
       }
 
-      // TODO: 调用后端 API 获取 AI 回复
-      // 模拟 AI 回复
-      setTimeout(() => {
-        const aiMessage: Message = {
-          id: String(Date.now() + 1),
-          role: 'assistant',
-          content: '这是一条模拟的 AI 回复。后续会接入真实的后端 API。',
-          timestamp: new Date(),
-        };
-        setSessionMessages((prev) => ({
-          ...prev,
-          [selectedSessionId]: [...(prev[selectedSessionId] ?? []), aiMessage],
-        }));
-      }, 500);
+      void invoke('codex_dev_prompt_once', { cwd: '.', content }).catch((err) => {
+        setSessionMessages((prev) => {
+          const list = prev[selectedSessionId] ?? [];
+          const next = list.map((m) => {
+            if (String(m.id) !== assistantMessageId) return m;
+            return {
+              ...m,
+              content: `调用失败：${String(err)}`,
+              isStreaming: false,
+            };
+          });
+          return { ...prev, [selectedSessionId]: next };
+        });
+        activeAssistantMessageIdRef.current = null;
+        setIsGenerating(false);
+      });
     },
     [selectedSessionId, messages.length]
   );
@@ -117,6 +219,7 @@ function App() {
       selectedSessionId={selectedSessionId}
       messages={messages}
       sidebarVisible={sidebarVisible}
+      isGenerating={isGenerating}
       onSessionSelect={handleSessionSelect}
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
