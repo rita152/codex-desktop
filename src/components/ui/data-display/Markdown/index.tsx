@@ -10,10 +10,12 @@ import './Markdown.css';
 export function Markdown({ content, compact = false, className = '' }: MarkdownProps) {
   let normalizedContent = content;
   if (compact) {
-    // 先将单个换行替换为空格，再合并连续换行
+    // 将所有换行统一处理：保留段落分隔，其余合并为空格
     normalizedContent = content
-      .replace(/([^\n])\n([^\n])/g, '$1 $2')  // 单个换行 → 空格
-      .replace(/\n{2,}/g, '\n\n');             // 多个换行 → 两个换行
+      .split(/\n{2,}/)           // 按段落分隔（2个及以上换行）
+      .map(p => p.replace(/\n/g, ' ').trim())  // 段落内换行替换为空格
+      .filter(p => p.length > 0) // 移除空段落
+      .join('\n\n');             // 用双换行重新连接段落
   }
 
   return (
