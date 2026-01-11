@@ -104,10 +104,7 @@ export function ChatMessage({
 
   const renderContent = () => {
     if (role === 'assistant') {
-      if (isStreaming) {
-        return <div className="chat-message__streaming-text">{streamedContent}</div>;
-      }
-      return <Markdown content={content} />;
+      return <Markdown content={isStreaming ? streamedContent : content} />;
     }
     return content;
   };

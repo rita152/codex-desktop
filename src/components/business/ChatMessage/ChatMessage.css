@@ -14,6 +14,7 @@
 }
 
 .chat-message__bubble {
+  position: relative;
   max-width: 80%;
   padding: var(--spacing-md) var(--spacing-lg);
   border-radius: var(--radius-lg);
@@ -56,20 +57,8 @@
   padding: 0 var(--spacing-xs);
 }
 
-/* 流式输出时的光标效果 */
+/* 流式输出：不显示跳动光标 */
 .chat-message--streaming .chat-message__bubble::after {
-  content: '▋';
-  display: inline-block;
-  animation: blink 1s step-end infinite;
-  margin-left: 2px;
-  color: var(--color-text-secondary);
-}
-
-@keyframes blink {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
+  content: '';
+  display: none;
 }
