@@ -42,6 +42,7 @@
 .chat-message--assistant .chat-message__bubble {
   border-color: transparent;
   border-bottom-left-radius: var(--radius-sm);
+  padding-top: 0;
 }
 
 .chat-message__thinking {
