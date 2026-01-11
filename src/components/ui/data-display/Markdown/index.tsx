@@ -7,7 +7,9 @@ import type { MarkdownProps } from './types';
 
 import './Markdown.css';
 
-export function Markdown({ content, className = '' }: MarkdownProps) {
+export function Markdown({ content, compact = false, className = '' }: MarkdownProps) {
+  const normalizedContent = compact ? content.replace(/\n{3,}/g, '\n\n') : content;
+
   return (
     <div className={cn('markdown', className)}>
       <ReactMarkdown
@@ -36,7 +38,7 @@ export function Markdown({ content, className = '' }: MarkdownProps) {
           },
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );

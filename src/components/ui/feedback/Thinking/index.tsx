@@ -135,7 +135,7 @@ export function Thinking({
       </button>
       <div className="thinking__content">
         <div className="thinking__content-inner">
-          <Markdown content={content} className="thinking__text" />
+          <Markdown content={content} compact className="thinking__text" />
         </div>
       </div>
     </div>
