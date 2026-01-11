@@ -6,7 +6,6 @@ import { Select } from '../../ui/data-entry/Select';
 import {
   PlusIcon,
   RobotIcon,
-  MicrophoneIcon,
   SendIcon,
   ChatIcon,
   ForwardIcon,
@@ -30,7 +29,6 @@ export function ChatInput({
   value,
   onChange,
   onSend,
-  onVoiceClick,
   onAddClick,
   placeholder = '问问 olyx',
   disabled = false,
@@ -114,14 +112,6 @@ export function ChatInput({
             size="sm"
             disabled={disabled}
             aria-label="选择模型"
-          />
-          <IconButton
-            icon={<MicrophoneIcon size={20} />}
-            onClick={onVoiceClick}
-            aria-label="语音输入"
-            size="sm"
-            variant="ghost"
-            disabled={disabled || !onVoiceClick}
           />
           <IconButton
             icon={<SendIcon size={20} />}
