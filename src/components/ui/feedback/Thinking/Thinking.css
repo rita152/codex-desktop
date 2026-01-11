@@ -69,8 +69,7 @@
 }
 
 .thinking__text {
-  padding: var(--spacing-md);
-  padding-top: 0;
+  padding: 0 var(--spacing-md) 0 var(--spacing-md);
   font-size: 13px;
   line-height: 1.6;
   color: var(--color-text-secondary);
