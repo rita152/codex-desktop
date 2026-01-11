@@ -49,6 +49,29 @@ function App() {
           return { ...prev, [sessionId]: next };
         });
       }),
+      listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
+        const sessionId = activeSessionIdRef.current;
+        const assistantMessageId = activeAssistantMessageIdRef.current;
+        if (!assistantMessageId) return;
+
+        setSessionMessages((prev) => {
+          const list = prev[sessionId] ?? [];
+          const now = Date.now();
+          const next = list.map((m) => {
+            if (String(m.id) !== assistantMessageId) return m;
+            const startTime = m.thinking?.startTime ?? now;
+            return {
+              ...m,
+              thinking: {
+                content: String(m.thinking?.content ?? '') + event.payload.text,
+                isStreaming: true,
+                startTime,
+              },
+            };
+          });
+          return { ...prev, [sessionId]: next };
+        });
+      }),
       listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', () => {
         const sessionId = activeSessionIdRef.current;
         const assistantMessageId = activeAssistantMessageIdRef.current;
@@ -56,9 +79,22 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-            return { ...m, isStreaming: false };
+            const duration =
+              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
+            return {
+              ...m,
+              isStreaming: false,
+              thinking: m.thinking
+                ? {
+                    ...m.thinking,
+                    isStreaming: false,
+                    duration: m.thinking.duration ?? duration,
+                  }
+                : m.thinking,
+            };
           });
           return { ...prev, [sessionId]: next };
         });
@@ -73,12 +109,22 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+            const duration =
+              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
               content: `发生错误：${event.payload.error}`,
               isStreaming: false,
+              thinking: m.thinking
+                ? {
+                    ...m.thinking,
+                    isStreaming: false,
+                    duration: m.thinking.duration ?? duration,
+                  }
+                : m.thinking,
             };
           });
           return { ...prev, [sessionId]: next };
