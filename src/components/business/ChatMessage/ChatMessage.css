@@ -1,7 +1,7 @@
 .chat-message {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 0;
   max-width: 100%;
 }
 
