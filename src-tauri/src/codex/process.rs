@@ -17,11 +17,11 @@ pub struct CodexProcessConfig {
 }
 
 impl CodexProcessConfig {
-    pub fn codex_home_or_default(&self) -> Result<PathBuf> {
+    pub fn codex_home_or_default(&self, app: Option<&AppHandle>) -> Result<PathBuf> {
         self.codex_home
             .clone()
             .map(Ok)
-            .unwrap_or_else(CodexAcpBinary::default_codex_home)
+            .unwrap_or_else(|| CodexAcpBinary::default_codex_home(app))
     }
 
     pub fn set_env<K: Into<OsString>, V: Into<OsString>>(&mut self, key: K, value: V) {
@@ -43,7 +43,7 @@ pub struct CodexProcess {
 
 impl CodexProcess {
     pub async fn spawn(app: Option<&AppHandle>, cfg: CodexProcessConfig) -> Result<Self> {
-        let codex_home = cfg.codex_home_or_default()?;
+        let codex_home = cfg.codex_home_or_default(app)?;
         let mode = cfg.mode.unwrap_or_else(CodexAcpLaunchMode::default_for_build);
         let binary = CodexAcpBinary::resolve_with_mode(mode, app)?;
 
@@ -134,4 +134,3 @@ mod tests {
         assert!(!process.is_alive());
     }
 }
-

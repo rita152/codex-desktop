@@ -181,7 +181,6 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
     }
 
     let mut cfg = CodexProcessConfig::default();
-    cfg.codex_home = Some(crate::codex::binary::CodexAcpBinary::default_codex_home()?);
 
     if let Some((k, v)) = state.api_key_env.clone() {
         cfg.set_env(k, v);

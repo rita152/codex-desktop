@@ -25,3 +25,6 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Tauri sidecar binaries (fetched during build)
+src-tauri/bin/codex-acp-*

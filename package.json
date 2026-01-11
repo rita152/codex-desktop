@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:tauri": "npm run fetch:codex-acp && npm run build",
+    "fetch:codex-acp": "node scripts/fetch-codex-acp.mjs",
     "test": "vitest --browser --run",
     "preview": "vite preview",
     "tauri": "tauri",

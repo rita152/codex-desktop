@@ -85,11 +85,12 @@ impl CodexAcpBinary {
 
     fn npx() -> Self {
         let program: OsString = std::env::var_os("CODEX_DESKTOP_NPX_BIN").unwrap_or_else(|| OsString::from("npx"));
-        let spec = std::env::var_os("CODEX_DESKTOP_ACP_NPX_SPEC").unwrap_or_else(|| OsString::from("@zed-industries/codex-acp"));
+        let spec = std::env::var_os("CODEX_DESKTOP_ACP_NPX_SPEC")
+            .unwrap_or_else(|| OsString::from("@zed-industries/codex-acp@0.8.2"));
         Self {
             mode: CodexAcpLaunchMode::Npx,
             program,
-            args: vec![spec],
+            args: vec![OsString::from("--yes"), spec],
         }
     }
 
@@ -114,13 +115,20 @@ impl CodexAcpBinary {
             .unwrap_or_else(|| "codex-acp".to_string());
 
         let exe_name = format!("{sidecar_name}{}", std::env::consts::EXE_SUFFIX);
-        let candidate = resource_dir.join(exe_name);
-        if !candidate.exists() {
+
+        let candidates = [
+            resource_dir.join(&exe_name),
+            resource_dir.join("bin").join(&exe_name),
+            macos_macos_dir(&resource_dir).map(|d| d.join(&exe_name)).unwrap_or_default(),
+        ];
+
+        let found = candidates.into_iter().find(|p| !p.as_os_str().is_empty() && p.exists());
+        let Some(candidate) = found else {
             return Err(anyhow!(
-                "codex-acp sidecar not found at {} (set CODEX_DESKTOP_ACP_PATH to override)",
-                candidate.display()
+                "codex-acp sidecar not found (looked for {}) (set CODEX_DESKTOP_ACP_PATH to override)",
+                resource_dir.display()
             ));
-        }
+        };
 
         Ok(Self {
             mode: CodexAcpLaunchMode::Sidecar,
@@ -129,10 +137,32 @@ impl CodexAcpBinary {
         })
     }
 
-    pub fn default_codex_home() -> Result<PathBuf> {
+    pub fn default_codex_home(app: Option<&tauri::AppHandle>) -> Result<PathBuf> {
+        if let Some(explicit) = std::env::var_os("CODEX_DESKTOP_CODEX_HOME").or_else(|| std::env::var_os("CODEX_HOME"))
+        {
+            return Ok(PathBuf::from(explicit));
+        }
+
+        if !cfg!(debug_assertions) {
+            if let Some(app) = app {
+                if let Ok(dir) = app.path().app_data_dir() {
+                    return Ok(dir.join("codex"));
+                }
+            }
+        }
+
         let home = std::env::var_os("HOME")
             .or_else(|| std::env::var_os("USERPROFILE"))
             .context("HOME/USERPROFILE not set; set CODEX_HOME explicitly")?;
         Ok(PathBuf::from(home).join(".codex"))
     }
+}
+
+fn macos_macos_dir(resource_dir: &Path) -> Option<PathBuf> {
+    if !cfg!(target_os = "macos") {
+        return None;
+    }
+    // For macOS bundles, resources live at `Contents/Resources` and binaries at `Contents/MacOS`.
+    let contents = resource_dir.parent()?;
+    Some(contents.join("MacOS"))
 }

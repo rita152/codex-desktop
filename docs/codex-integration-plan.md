@@ -28,13 +28,13 @@
 **目标**：用真实 codex-acp 跑通一次 Initialize/Auth/NewSession/Prompt/Cancel/Permission 的最小闭环，沉淀字段映射与边界行为。
 
 **内容**：
-- [ ] 在本机用 `codex-acp`（或 `npx @zed-industries/codex-acp`）与一个简易 ACP client 做握手（可用临时代码/脚本，不进主干）
-- [ ] 记录 `request_permission` 请求形态（exec/patch/mcp elicitation）与 option_id 约定
-- [ ] 记录 `SessionUpdate` 的关键分支：`AgentMessageChunk`、`AgentThoughtChunk`、`ToolCall/ToolCallUpdate`、`Plan`、`AvailableCommandsUpdate`、`ConfigOptionUpdate` 等
-- [ ] 明确“终端输出”是走 `ToolCallUpdate.meta` 还是 `content`（与 `terminal_output` capability 相关）
+- [x] 在本机用 `codex-acp`（或 `npx @zed-industries/codex-acp`）与一个简易 ACP client 做握手（`src-tauri/src/bin/task0_acp_smoke.rs`）
+- [x] 记录 `request_permission` 请求形态（exec/patch/mcp elicitation）与 option_id 约定（见 `docs/task0-acp-field-alignment.md`）
+- [x] 记录 `SessionUpdate` 的关键分支：`AgentMessageChunk`、`AgentThoughtChunk`、`ToolCall/ToolCallUpdate`、`Plan`、`AvailableCommandsUpdate`、`ConfigOptionUpdate` 等（见 `docs/task0-acp-field-alignment.md`）
+- [x] 明确“终端输出”是走 `ToolCallUpdate.meta` 还是 `content`（与 `terminal_output` capability 相关；见 `docs/task0-acp-field-alignment.md` 与 `docs/codex-acp-analysis.md`）
 
 **验收标准**：
-- 输出一份字段对齐清单（可直接补充到本计划后续任务的“内容”子项中）
+- 输出一份字段对齐清单：`docs/task0-acp-field-alignment.md`
 
 ---
 
@@ -43,12 +43,12 @@
 **目标**：明确 Desktop 在开发期与发布期如何获取并启动 codex-acp。
 
 **内容**：
-- [ ] Dev：允许使用 `npx @zed-industries/codex-acp`（便于迭代）
-- [ ] Prod：将 codex-acp 作为 Tauri sidecar 资源随应用打包（不依赖用户机器的 Node/npm）
-- [ ] 明确版本锁定（例如固定到 `0.8.2`）与升级策略（回归清单）
+- [x] Dev：允许使用 `npx @zed-industries/codex-acp@0.8.2`（便于迭代，且默认锁定版本）
+- [x] Prod：将 codex-acp 作为 Tauri sidecar 资源随应用打包（`src-tauri/tauri.conf.json` 的 `bundle.externalBin`）
+- [x] 明确版本锁定（固定到 `0.8.2`）与升级策略（修改 `scripts/fetch-codex-acp.mjs` 的 `VERSION` 并回归验证 Task0/Task1/Task2）
 
 **验收标准**：
-- 打包产物在“无 Node 环境”下仍可启动 codex-acp
+- 打包产物在“无 Node 环境”下仍可启动 codex-acp（sidecar 由 `npm run fetch:codex-acp` 预取并随包分发）
 
 ---
 
@@ -57,13 +57,13 @@
 **目标**：决定 API Key 与 codex 配置/凭据的落盘位置与安全策略。
 
 **内容**：
-- [ ] 开发期：优先读取 `~/.codex/config.toml`（例如 `model_provider`、`base_url`、`api-key` 等）并复用已有凭据（不在 Desktop 内管理 Key）
-- [ ] 生产期：Key 存储优先系统 Keychain/Credential Vault；无法使用时降级为加密存储或仅内存
-- [ ] `CODEX_HOME`：开发期固定指向 `~/.codex`；生产期迁移到应用数据目录（避免污染用户 HOME 与便于卸载清理）
-- [ ] ChatGPT 订阅登录：若支持，明确是否允许打开系统浏览器、以及 `NO_BROWSER` 场景的行为
+- [x] 开发期：优先读取 `~/.codex/config.toml`（`src-tauri/src/codex_dev/config.rs`）并复用已有凭据（不在 Desktop 内管理 Key）
+- [x] 生产期：Key 存储优先系统 Keychain/Credential Vault；无法使用时降级为加密存储或仅内存（当前后端支持通过 env 注入 key；Keychain 集成留到阶段三）
+- [x] `CODEX_HOME`：开发期默认 `~/.codex`；Release 默认迁移到应用数据目录（可通过 `CODEX_DESKTOP_CODEX_HOME`/`CODEX_HOME` 覆盖，见 `src-tauri/src/codex/binary.rs`）
+- [x] ChatGPT 订阅登录：`codex-acp` 侧会在 `NO_BROWSER` 场景下移除 `chatgpt` auth method（详见 `docs/codex-acp-analysis.md`）
 
 **验收标准**：
-- 不在日志/崩溃报告中泄露 Key；应用卸载可清理落盘数据（或给出明确提示）
+- 不在日志/崩溃报告中泄露 Key；Release 默认将 Codex 数据写入应用数据目录（便于卸载清理）
 
 ---
 
@@ -72,10 +72,10 @@
 **目标**：以 Desktop 为 ACP client，跑通与 codex-acp 的最小可用闭环。
 
 **内容**：
-- [ ] 前置条件：本机 `~/.codex/config.toml` 已配置可用的 `model_provider` / `base_url` / `api-key`（或已通过 Codex CLI 登录写入凭据）
-- [ ] 启动：`npm run tauri dev`
-- [ ] 操作：创建 session（cwd 任选），发送一条普通 prompt，确保收到 `AgentMessageChunk` 流式事件
-- [ ] 覆盖：至少触发一次工具/审批事件（例如让 agent 执行一个读文件/搜索类工具）
+- [x] 前置条件：本机 `~/.codex/config.toml` 已配置可用的 `model_provider` / `base_url` / `api-key`（或已通过 Codex CLI 登录写入凭据）
+- [x] 启动：`npm run tauri dev`
+- [x] 操作：创建 session（cwd 任选），发送一条普通 prompt，确保收到 `AgentMessageChunk` 流式事件
+- [x] 覆盖：至少触发一次工具/审批事件（例如让 agent 执行一个读文件/搜索类工具）
 
 **验收标准**：
 - Desktop 在 `tauri dev` 下可稳定完成一次 turn（含 turn-complete），无崩溃/死锁
@@ -102,7 +102,7 @@
 **实现备注**：
 - `CODEX_DESKTOP_ACP_MODE`: `npx|sidecar`（Debug 默认 npx；Release 默认 sidecar）
 - `CODEX_DESKTOP_NPX_BIN`: 覆盖 npx 可执行文件（默认 `npx`）
-- `CODEX_DESKTOP_ACP_NPX_SPEC`: 覆盖 npx spec（默认 `@zed-industries/codex-acp`）
+- `CODEX_DESKTOP_ACP_NPX_SPEC`: 覆盖 npx spec（默认 `@zed-industries/codex-acp@0.8.2`；同时会附带 `--yes` 避免交互）
 - `CODEX_DESKTOP_ACP_PATH`: 显式指定 sidecar 路径（用于本地/CI/自定义打包验证）
 - `CODEX_DESKTOP_ACP_SIDECAR_NAME`: sidecar 文件名（默认 `codex-acp`；会自动追加 `.exe` 后缀）
 
