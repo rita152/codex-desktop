@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 export interface SelectOption {
   /** 选项值 */
   value: string;
@@ -22,6 +24,8 @@ export interface SelectProps {
   borderless?: boolean;
   /** 宽度 */
   width?: string | number;
+  /** 前置图标 */
+  icon?: ReactNode;
   /** 自定义类名 */
   className?: string;
 }

@@ -1,0 +1,67 @@
+.chat-input {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-sm);
+  border: var(--border-width-thin) solid transparent;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-input:focus-within {
+  border-color: var(--color-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-input__textarea {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.chat-input__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.chat-input__toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  justify-content: flex-start;
+}
+
+.chat-input__toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.chat-input__tool-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.chat-input__tool-button:hover {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.chat-input__send-button {
+  color: var(--color-text-secondary);
+}
+
+.chat-input__send-button--active {
+  color: var(--color-text);
+}

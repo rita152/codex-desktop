@@ -15,6 +15,7 @@ export function Select({
   size = 'md',
   borderless = false,
   width,
+  icon,
   className = '',
 }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -103,6 +104,7 @@ export function Select({
         aria-expanded={isOpen}
         aria-haspopup="listbox"
       >
+        {icon && <span className="select__prefix-icon">{icon}</span>}
         {selectedOption ? (
           <span className="select__value">{selectedOption.label}</span>
         ) : (
