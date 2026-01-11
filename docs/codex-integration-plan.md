@@ -7,12 +7,101 @@
 ## 技术方案
 
 - **集成方式**：子进程 + ACP 协议（stdio）
-- **认证方式**：优先支持 Codex CLI 原生认证
-- **二进制来源**：通过 npm 安装 `@zed-industries/codex-acp`
+- **认证方式**：开发期优先复用 Codex CLI 本地配置与凭据（`~/.codex/config.toml` 等）；生产期再补齐应用内密钥管理/Keychain
+- **二进制来源**：开发期通过 npm（`npx @zed-industries/codex-acp`）；发布期建议以 Tauri sidecar 方式随应用分发 codex-acp 可执行文件（避免依赖用户机器的 Node/npm）
+- **开发验证方式**：以 `npm run tauri dev` 为主线，尽快跑通“发消息 -> 收流式回复 -> 工具/审批事件”闭环
+
+## 关键对齐（基于 codex-acp 0.8.2，补充）
+
+- **协议实现建议**：优先在 Desktop 后端直接使用 Rust crate `agent-client-protocol` 作为 ACP 客户端实现（避免手写 JSON-RPC、类型与双向请求）。
+- **审批流方向**：codex-acp 会通过 ACP 的 `request_permission` 向客户端“发起请求”，客户端需要返回所选 `option_id`（不是单纯 allow/reject）。
+- **开发期认证来源**：优先依赖用户现有的 `~/.codex` 配置与凭据；必要时才通过 env（`CODEX_API_KEY` / `OPENAI_API_KEY`）或 ChatGPT 订阅登录补齐。
+- **会话恢复现状**：codex-acp 目前仅能 `load_session` 已存在于内存的 session；应用重启后无法直接恢复真实会话，需要定义“恢复策略”（例如：只恢复 UI 历史，继续对话时新建 session 并注入摘要/上下文）。
+- **能力协商**：若客户端希望收到“终端输出流式更新”，需在 Initialize 的 `client_capabilities.meta` 中声明 `terminal_output: true`（否则工具输出可能不走 terminal meta 通道）。
+
+---
+
+## 阶段零：预研与对齐（建议先做）
+
+### Task 0.1：ACP 交互录制与字段对齐
+
+**目标**：用真实 codex-acp 跑通一次 Initialize/Auth/NewSession/Prompt/Cancel/Permission 的最小闭环，沉淀字段映射与边界行为。
+
+**内容**：
+- [ ] 在本机用 `codex-acp`（或 `npx @zed-industries/codex-acp`）与一个简易 ACP client 做握手（可用临时代码/脚本，不进主干）
+- [ ] 记录 `request_permission` 请求形态（exec/patch/mcp elicitation）与 option_id 约定
+- [ ] 记录 `SessionUpdate` 的关键分支：`AgentMessageChunk`、`AgentThoughtChunk`、`ToolCall/ToolCallUpdate`、`Plan`、`AvailableCommandsUpdate`、`ConfigOptionUpdate` 等
+- [ ] 明确“终端输出”是走 `ToolCallUpdate.meta` 还是 `content`（与 `terminal_output` capability 相关）
+
+**验收标准**：
+- 输出一份字段对齐清单（可直接补充到本计划后续任务的“内容”子项中）
+
+---
+
+### Task 0.2：codex-acp 分发策略选型（Dev/Prod）
+
+**目标**：明确 Desktop 在开发期与发布期如何获取并启动 codex-acp。
+
+**内容**：
+- [ ] Dev：允许使用 `npx @zed-industries/codex-acp`（便于迭代）
+- [ ] Prod：将 codex-acp 作为 Tauri sidecar 资源随应用打包（不依赖用户机器的 Node/npm）
+- [ ] 明确版本锁定（例如固定到 `0.8.2`）与升级策略（回归清单）
+
+**验收标准**：
+- 打包产物在“无 Node 环境”下仍可启动 codex-acp
+
+---
+
+### Task 0.3：认证与敏感信息存储方案
+
+**目标**：决定 API Key 与 codex 配置/凭据的落盘位置与安全策略。
+
+**内容**：
+- [ ] 开发期：优先读取 `~/.codex/config.toml`（例如 `model_provider`、`base_url`、`api-key` 等）并复用已有凭据（不在 Desktop 内管理 Key）
+- [ ] 生产期：Key 存储优先系统 Keychain/Credential Vault；无法使用时降级为加密存储或仅内存
+- [ ] `CODEX_HOME`：开发期固定指向 `~/.codex`；生产期迁移到应用数据目录（避免污染用户 HOME 与便于卸载清理）
+- [ ] ChatGPT 订阅登录：若支持，明确是否允许打开系统浏览器、以及 `NO_BROWSER` 场景的行为
+
+**验收标准**：
+- 不在日志/崩溃报告中泄露 Key；应用卸载可清理落盘数据（或给出明确提示）
+
+---
+
+### Task 0.4：npm tauri dev 端到端验证（开发优先）
+
+**目标**：以 Desktop 为 ACP client，跑通与 codex-acp 的最小可用闭环。
+
+**内容**：
+- [ ] 前置条件：本机 `~/.codex/config.toml` 已配置可用的 `model_provider` / `base_url` / `api-key`（或已通过 Codex CLI 登录写入凭据）
+- [ ] 启动：`npm run tauri dev`
+- [ ] 操作：创建 session（cwd 任选），发送一条普通 prompt，确保收到 `AgentMessageChunk` 流式事件
+- [ ] 覆盖：至少触发一次工具/审批事件（例如让 agent 执行一个读文件/搜索类工具）
+
+**验收标准**：
+- Desktop 在 `tauri dev` 下可稳定完成一次 turn（含 turn-complete），无崩溃/死锁
 
 ---
 
 ## 阶段一：后端基础设施
+
+### Task 1.0：codex-acp 子进程分发与定位
+
+**目标**：后端可稳定找到并启动 codex-acp（Dev/Prod 两套路径）。
+
+**文件**（建议）：
+- `src-tauri/src/codex/binary.rs`
+
+**内容**：
+- [ ] Dev：支持通过 `npx @zed-industries/codex-acp` 启动（可配置开关）
+- [ ] Prod：支持通过 Tauri sidecar 启动（优先）
+- [ ] Dev：启动时设置 `CODEX_HOME=$HOME/.codex`（确保读取 `~/.codex/config.toml`）
+- [ ] 明确 `PATH`、工作目录、以及 `CODEX_HOME`/`RUST_LOG`/认证相关 env 的注入策略（开发期尽量不传 Key）
+- [ ] 启动时打印一行可诊断信息（版本号/路径/模式），但避免输出敏感 env
+
+**验收标准**：
+- 在 Dev 与 Prod 模式都能成功启动并进入 ACP 握手（Initialize 可返回）
+
+---
 
 ### Task 1.1：ACP 协议类型定义
 
@@ -22,6 +111,8 @@
 - `src-tauri/src/codex/types.rs`
 
 **内容**：
+- [ ] **方案 A（推荐）**：直接引入 `agent-client-protocol` crate，尽量复用其类型（减少维护成本与协议漂移风险）
+- [ ] **方案 B（兜底）**：自定义 `AcpRequest/AcpResponse/SessionUpdate/...`（需要同时覆盖“客户端被动接收通知 + 被动响应 request_permission”的双向请求场景）
 - [ ] 定义 `AcpRequest` 枚举（Initialize, Authenticate, NewSession, Prompt, Cancel）
 - [ ] 定义 `AcpResponse` 枚举（对应响应类型）
 - [ ] 定义 `SessionUpdate` 事件类型（AgentMessageChunk, ToolCall, ApprovalRequest 等）
@@ -50,9 +141,11 @@ cd src-tauri && cargo check
 - [ ] `kill()` 方法：终止进程
 - [ ] `is_alive()` 方法：检查进程状态
 - [ ] 错误处理：进程启动失败、意外退出
+- [ ] 环境变量注入：开发期至少注入 `CODEX_HOME=$HOME/.codex`；必要时再注入 `CODEX_API_KEY`/`OPENAI_API_KEY`、`RUST_LOG`、`NO_BROWSER`
 
 **依赖**：
-- 需要系统安装 `npx` 或预装 codex-acp 二进制
+- Dev 模式：需要系统可用 `npx`
+- Prod 模式：需要将 codex-acp 作为 sidecar 随应用分发
 
 **验收标准**：
 ```rust
@@ -78,6 +171,8 @@ mod tests {
 - `src-tauri/src/codex/protocol.rs`
 
 **内容**：
+- [ ] 若采用 `agent-client-protocol`：实现 `Client`（处理 `session_notification`、`request_permission`），并通过 `ClientSideConnection`（或等价 API）拿到远端 `Agent` 调用句柄
+- [ ] 若自研：补齐 **双向** JSON-RPC（agent->client 的 request_permission 也需能被正确处理并回包）
 - [ ] `AcpConnection` 结构体，封装 stdin/stdout 读写
 - [ ] `send_request()` 方法：发送请求并等待响应
 - [ ] `read_notification()` 方法：读取事件通知流
@@ -110,11 +205,11 @@ mod tests {
 **内容**：
 - [ ] `CodexService` 结构体，管理多个会话
 - [ ] `initialize()` 方法：初始化 ACP 连接
-- [ ] `authenticate()` 方法：执行认证流程
+- [ ] `authenticate()` 方法：执行认证流程（注意：API Key 可能需通过 env 注入后重启子进程再走 authenticate）
 - [ ] `create_session()` 方法：创建新会话
 - [ ] `send_prompt()` 方法：发送用户消息
 - [ ] `cancel()` 方法：取消当前操作
-- [ ] `approve()` 方法：响应审批请求
+- [ ] `approve()`/`respond_permission()` 方法：响应 `request_permission`（返回所选 `option_id`，并支持“拒绝但继续/取消”等分支）
 - [ ] 事件回调机制
 
 **验收标准**：
@@ -145,12 +240,13 @@ mod tests {
 
 **内容**：
 - [ ] `#[tauri::command] codex_init()` - 初始化服务
-- [ ] `#[tauri::command] codex_auth(method, api_key)` - 认证
+- [ ] `#[tauri::command] codex_auth(method, api_key?)` - 认证（开发期允许 api_key 为空，优先复用 `~/.codex` 已有凭据；生产期再做安全存储与重启注入）
 - [ ] `#[tauri::command] codex_new_session(cwd)` - 创建会话
 - [ ] `#[tauri::command] codex_prompt(session_id, content)` - 发送消息
 - [ ] `#[tauri::command] codex_cancel(session_id)` - 取消
 - [ ] `#[tauri::command] codex_approve(session_id, request_id, decision)` - 审批
 - [ ] 在 `lib.rs` 注册所有命令
+- [ ] （补充）暴露会话配置相关命令：`codex_set_mode` / `codex_set_model` / `codex_set_config_option`（用于设置面板与 slash 命令配合）
 
 **验收标准**：
 ```bash
@@ -159,7 +255,10 @@ cd src-tauri && cargo build
 
 # 前端可以调用：
 invoke('codex_init')
-invoke('codex_auth', { method: 'openai-api-key', apiKey: 'sk-...' })
+// 开发期：优先复用 ~/.codex 配置/凭据（apiKey 可省略）
+invoke('codex_auth', { method: 'openai-api-key' })
+// 生产期：可通过 Keychain/安全存储注入 key（示例）
+// invoke('codex_auth', { method: 'openai-api-key', apiKey: 'sk-...' })
 ```
 
 ---
@@ -234,6 +333,7 @@ npm run build
 - [ ] `cancelPrompt(sessionId)` - 取消
 - [ ] `approveRequest(sessionId, requestId, decision)` - 审批
 - [ ] `subscribeToEvents(handlers)` - 订阅事件
+- [ ] （补充）`setSessionMode(sessionId, modeId)` / `setSessionModel(sessionId, modelId)` / `setSessionConfigOption(sessionId, configId, valueId)`
 
 **验收标准**：
 ```typescript
@@ -256,6 +356,8 @@ const sessionId = await createSession('/path/to/project');
 - [ ] 管理当前会话 ID
 - [ ] 管理消息流缓冲
 - [ ] 管理待处理的审批请求
+- [ ] 管理可用 slash commands（用于 `/` 自动补全）
+- [ ] 管理会话配置项（modes/models/config options）并支持更新
 - [ ] `connect()` 方法
 - [ ] `authenticate()` 方法
 - [ ] `sendMessage()` 方法
@@ -386,6 +488,7 @@ npm run storybook
 - `src/components/business/AuthDialog/types.ts`
 
 **内容**：
+- [ ] 开发期：可先做“只读提示”——检测 `~/.codex/config.toml`/凭据是否存在与可用，并给出修复指引（不强制输入 Key）
 - [ ] API Key 输入表单
 - [ ] 支持选择认证方式（Codex API Key / OpenAI API Key）
 - [ ] 认证状态显示
@@ -433,10 +536,12 @@ npm run storybook
 - [ ] 保存每个会话的消息历史
 - [ ] 应用启动时恢复会话
 - [ ] 会话切换时的状态管理
+- [ ] （补充）定义“会话恢复策略”：重启后 UI 会话为只读；继续对话时新建 codex session 并注入摘要/关键上下文（或另行实现 codex-acp 的可恢复加载能力）
 
 **验收标准**：
 - 关闭应用后重新打开，会话列表保留
 - 历史消息可以查看
+- 继续对话时不会误用失效的 session_id（应自动创建新 session 并提示用户）
 
 ---
 
@@ -474,13 +579,25 @@ npm run storybook
 - [ ] 审批模式选择
 - [ ] 推理强度设置
 - [ ] API Key 管理
+- [ ] （补充）设置项尽量以 ACP 的 `config_options`/`modes`/`models` 为来源（避免硬编码与版本漂移）
+
+---
+
+### Task 5.4：打包回归与兼容性矩阵（补充）
+
+**目标**：保证各平台打包后 codex-acp 可用、协议握手与审批流稳定。
+
+**内容**：
+- [ ] macOS/Windows/Linux 的 sidecar 启动验证
+- [ ] “无 Node 环境”验证（确保未意外依赖 npx）
+- [ ] 回归清单：Initialize/Auth/NewSession/Prompt/Cancel、exec/patch/mcp permission、图片输入、slash 命令、mcp servers（最小用例）
 
 ---
 
 ## 依赖关系
 
 ```
-Task 1.1 ──┬──► Task 1.2 ──► Task 1.3 ──► Task 1.4 ──► Task 1.5 ──► Task 1.6
+Task 1.0 ──► Task 1.1 ──┬──► Task 1.2 ──► Task 1.3 ──► Task 1.4 ──► Task 1.5 ──► Task 1.6
            │
            └──► Task 2.1 ──► Task 2.2 ──► Task 2.3
                                               │
@@ -498,8 +615,9 @@ Task 3.4 ──┘
 
 | 里程碑 | 包含 Task | 目标 |
 |--------|-----------|------|
-| M1 | 1.1 - 1.6 | 后端可以与 codex-acp 通信 |
+| M0 | 0.1 - 0.4 | 协议/分发/认证与开发闭环 |
+| M1 | 1.0 - 1.6 | 后端可以与 codex-acp 通信 |
 | M2 | 2.1 - 2.3 | 前端可以调用后端 API |
 | M3 | 3.1 - 3.4 | UI 组件就绪 |
 | M4 | 4.1 - 4.3 | 完整可用的集成 |
-| M5 | 5.1 - 5.3 | 生产就绪 |
+| M5 | 5.1 - 5.4 | 生产就绪 |
