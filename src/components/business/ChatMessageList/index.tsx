@@ -40,6 +40,36 @@ export function ChatMessageList({
     }
   }, [messages, autoScroll]);
 
+  // 当消息内部在流式“打字”时（不一定触发 messages 变更），也要跟随滚动
+  useEffect(() => {
+    if (!autoScroll) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    let rafId: number | null = null;
+    const scheduleScrollToBottom = () => {
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (isUserScrollingRef.current) return;
+        container.scrollTop = container.scrollHeight;
+      });
+    };
+
+    const observer = new MutationObserver(() => scheduleScrollToBottom());
+    observer.observe(container, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+    });
+
+    return () => {
+      observer.disconnect();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
+  }, [autoScroll]);
+
   const classNames = cn('chat-message-list', className);
 
   if (messages.length === 0) {

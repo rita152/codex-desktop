@@ -26,6 +26,10 @@
   color: var(--color-text);
 }
 
+.chat-message__streaming-text {
+  white-space: pre-wrap;
+}
+
 .chat-message--user .chat-message__bubble {
   /* user 消息是纯文本渲染，需要保留换行 */
   white-space: pre-wrap;
