@@ -60,14 +60,12 @@ export function Thinking({
   const [isOpen, setIsOpen] = useState(defaultOpen ?? isStreaming);
   const [elapsedTime, setElapsedTime] = useState(0);
 
-  // 流式传输时自动展开，完成后自动折叠
+  // 流式传输时自动展开；结束后保持当前展开状态（避免看起来“消失”）
   useEffect(() => {
     if (isStreaming) {
       setIsOpen(true);
-    } else if (defaultOpen === undefined) {
-      setIsOpen(false);
     }
-  }, [isStreaming, defaultOpen]);
+  }, [isStreaming]);
 
   // 实时计时
   useEffect(() => {
