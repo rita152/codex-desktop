@@ -28,3 +28,6 @@ storybook-static
 
 # Tauri sidecar binaries (fetched during build)
 src-tauri/bin/codex-acp-*
+
+# Tauri temp output files
+src-tauri/*.txt

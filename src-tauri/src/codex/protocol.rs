@@ -3,11 +3,12 @@ use crate::codex::{
     process::{CodexProcess, CodexProcessConfig},
     thoughts::emit_thought_chunks,
     types::ApprovalDecision,
+    util::content_block_text,
 };
 use agent_client_protocol::{
-    Client, ClientSideConnection, ContentBlock, PermissionOption, PermissionOptionId,
-    PermissionOptionKind, RequestPermissionOutcome, RequestPermissionRequest,
-    RequestPermissionResponse, SelectedPermissionOutcome, SessionNotification, SessionUpdate,
+    Client, ClientSideConnection, PermissionOption, PermissionOptionId, PermissionOptionKind,
+    RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
+    SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
 use anyhow::{anyhow, Context, Result};
 use serde_json::json;
@@ -96,13 +97,6 @@ impl ApprovalState {
 struct AcpClient {
     app: AppHandle,
     approvals: Arc<ApprovalState>,
-}
-
-fn content_block_text(block: &ContentBlock) -> Option<&str> {
-    match block {
-        ContentBlock::Text(text) => Some(text.text.as_str()),
-        _ => None,
-    }
 }
 
 #[async_trait::async_trait(?Send)]

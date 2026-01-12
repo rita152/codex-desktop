@@ -41,6 +41,14 @@ export function ChatInput({
   width,
   className = '',
 }: ChatInputProps) {
+  const trimmedValue = value.trim();
+
+  const trySend = () => {
+    if (disabled) return;
+    if (!trimmedValue) return;
+    onSend(trimmedValue);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (disabled) return;
     const nativeEvent = e.nativeEvent as unknown as { isComposing?: boolean; keyCode?: number };
@@ -49,20 +57,15 @@ export function ChatInput({
 
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (value.trim()) {
-        onSend(value.trim());
-      }
+      trySend();
     }
   };
 
   const handleSend = () => {
-    if (disabled) return;
-    if (value.trim()) {
-      onSend(value.trim());
-    }
+    trySend();
   };
 
-  const hasContent = value.trim().length > 0;
+  const hasContent = trimmedValue.length > 0;
 
   const style: React.CSSProperties = width
     ? { width: typeof width === 'number' ? `${width}px` : width }

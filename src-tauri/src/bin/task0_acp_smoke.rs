@@ -17,6 +17,7 @@ use std::{
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 use codex_desktop_lib::codex::binary::CodexAcpBinary;
+use codex_desktop_lib::codex::util::content_block_text;
 use codex_desktop_lib::codex_dev::config;
 
 fn now_ms() -> u64 {
@@ -145,16 +146,24 @@ impl Client for StdoutClient {
                 self.log.write_json(value.clone());
                 eprintln!("{value}");
             }
+            SessionUpdate::AvailableCommandsUpdate(update) => {
+                let value = json!({ "type": "available_commands_update", "update": update });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
+            }
+            SessionUpdate::CurrentModeUpdate(update) => {
+                let value = json!({ "type": "current_mode_update", "update": update });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
+            }
+            SessionUpdate::ConfigOptionUpdate(update) => {
+                let value = json!({ "type": "config_option_update", "update": update });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
+            }
             _ => {}
         }
         Ok(())
-    }
-}
-
-fn content_block_text(block: &ContentBlock) -> Option<&str> {
-    match block {
-        ContentBlock::Text(text) => Some(text.text.as_str()),
-        _ => None,
     }
 }
 
@@ -281,12 +290,12 @@ async fn run_smoke(
         },
     );
 
+    let io_log = out_log.clone();
     tokio::task::spawn_local(async move {
         if let Err(err) = io_task.await {
-            eprintln!(
-                "{}",
-                json!({ "type": "io_error", "error": err.to_string() })
-            );
+            let value = json!({ "type": "io_error", "error": err.to_string() });
+            io_log.write_json(value.clone());
+            eprintln!("{value}");
         }
     });
 
@@ -377,6 +386,39 @@ async fn run_smoke(
                     let value = json!({
                         "type": "set_mode_attempted",
                         "configId": mode_option.id,
+                        "value": target.value,
+                        "name": target.name,
+                    });
+                    out_log.write_json(value.clone());
+                    eprintln!("{value}");
+                }
+            }
+        }
+        if let Some(model_option) = config_options.iter().find(|o| o.id.0.as_ref() == "model") {
+            if let SessionConfigKind::Select(select) = &model_option.kind {
+                let mut flat = Vec::new();
+                match &select.options {
+                    SessionConfigSelectOptions::Ungrouped(opts) => flat.extend(opts.iter()),
+                    SessionConfigSelectOptions::Grouped(groups) => {
+                        for g in groups {
+                            flat.extend(g.options.iter());
+                        }
+                    }
+                    _ => {}
+                }
+
+                let pick = flat.iter().find(|o| o.value != select.current_value);
+                if let Some(target) = pick {
+                    let _ = conn
+                        .set_session_config_option(SetSessionConfigOptionRequest::new(
+                            session.session_id.clone(),
+                            model_option.id.clone(),
+                            target.value.clone(),
+                        ))
+                        .await?;
+                    let value = json!({
+                        "type": "set_model_attempted",
+                        "configId": model_option.id,
                         "value": target.value,
                         "name": target.name,
                     });

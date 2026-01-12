@@ -1,3 +1,5 @@
+import type { SelectOption } from '../../ui/data-entry/Select/types';
+
 export interface ChatInputProps {
   value: string;
   onChange: (value: string) => void;
@@ -6,10 +8,10 @@ export interface ChatInputProps {
   onAddClick?: () => void;
   placeholder?: string;
   disabled?: boolean;
-  agentOptions?: { value: string; label: string }[];
+  agentOptions?: SelectOption[];
   selectedAgent?: string;
   onAgentChange?: (agent: string) => void;
-  modelOptions?: { value: string; label: string }[];
+  modelOptions?: SelectOption[];
   selectedModel?: string;
   onModelChange?: (model: string) => void;
   width?: string | number;

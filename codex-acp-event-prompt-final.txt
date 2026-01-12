@@ -1,0 +1,4 @@
+请立即按顺序执行并结束，不要解释：
+1) 发送 1 次 Plan 更新（3 个步骤）。
+2) 执行需要权限的写操作：/bin/zsh -lc "echo acp_permission_test > acp_permission_test.txt"（如需权限请请求并等待）。
+3) 输出一条 assistant 消息 "DONE" 结束。

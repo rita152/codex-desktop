@@ -6,3 +6,4 @@ pub mod protocol;
 pub mod service;
 pub mod thoughts;
 pub mod types;
+pub mod util;

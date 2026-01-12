@@ -11,21 +11,14 @@ use tauri::{Emitter, Window};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 use super::config::{codex_home_dir, load_codex_cli_config, redact_api_key, CodexCliConfig};
-use crate::codex::thoughts::emit_thought_chunks;
-use crate::codex::binary::CodexAcpBinary;
+use crate::codex::{
+    binary::CodexAcpBinary,
+    events::*,
+    process::resolve_cwd,
+    thoughts::emit_thought_chunks,
+    util::content_block_text,
+};
 use tauri::Manager;
-
-pub const EVENT_MESSAGE_CHUNK: &str = "codex:message";
-pub const EVENT_THOUGHT_CHUNK: &str = "codex:thought";
-pub const EVENT_TOOL_CALL: &str = "codex:tool-call";
-pub const EVENT_TOOL_CALL_UPDATE: &str = "codex:tool-call-update";
-pub const EVENT_APPROVAL_REQUEST: &str = "codex:approval-request";
-pub const EVENT_PLAN: &str = "codex:plan";
-pub const EVENT_AVAILABLE_COMMANDS: &str = "codex:available-commands";
-pub const EVENT_CURRENT_MODE: &str = "codex:current-mode";
-pub const EVENT_CONFIG_OPTION_UPDATE: &str = "codex:config-option-update";
-pub const EVENT_TURN_COMPLETE: &str = "codex:turn-complete";
-pub const EVENT_ERROR: &str = "codex:error";
 
 #[derive(Clone)]
 struct DevClient {
@@ -140,13 +133,6 @@ impl Client for DevClient {
     }
 }
 
-fn content_block_text(block: &ContentBlock) -> Option<&str> {
-    match block {
-        ContentBlock::Text(text) => Some(text.text.as_str()),
-        _ => None,
-    }
-}
-
 pub async fn check_dev_prereqs(window: &Window) -> Result<CodexCliConfig> {
     let codex_home = codex_home_dir()?;
     let cfg = load_codex_cli_config(&codex_home)?;
@@ -188,15 +174,7 @@ async fn prompt_once_inner(
     content: String,
     cfg: CodexCliConfig,
 ) -> Result<()> {
-    let cwd = if cwd.as_os_str().is_empty() {
-        std::env::current_dir().context("failed to resolve current_dir")?
-    } else if cwd.is_absolute() {
-        cwd
-    } else {
-        std::env::current_dir()
-            .context("failed to resolve current_dir")?
-            .join(cwd)
-    };
+    let cwd = resolve_cwd(cwd)?;
 
     let codex_home = codex_home_dir()?;
     let binary = CodexAcpBinary::resolve(Some(&window.app_handle()))?;
