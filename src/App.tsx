@@ -41,14 +41,28 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+
+            const nextThinking = m.thinking
+              ? {
+                  ...m.thinking,
+                  isStreaming: false,
+                  duration:
+                    m.thinking.duration ??
+                    (m.thinking.startTime !== undefined
+                      ? (now - m.thinking.startTime) / 1000
+                      : undefined),
+                }
+              : undefined;
+
             return {
               ...m,
               content: m.content + event.payload.text,
               isStreaming: true,
-              // 一旦开始输出回复，认为“思考结束”，立刻隐藏思考组件
-              thinking: undefined,
+              // 一旦开始输出回复，认为“思考结束”，立刻折叠并保留思考内容
+              thinking: nextThinking,
             };
           });
           return { ...prev, [sessionId]: next };
@@ -88,13 +102,27 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+
+            const nextThinking = m.thinking
+              ? {
+                  ...m.thinking,
+                  isStreaming: false,
+                  duration:
+                    m.thinking.duration ??
+                    (m.thinking.startTime !== undefined
+                      ? (now - m.thinking.startTime) / 1000
+                      : undefined),
+                }
+              : undefined;
+
             return {
               ...m,
               isStreaming: false,
               timestamp: new Date(),
-              thinking: undefined,
+              thinking: nextThinking,
             };
           });
           return { ...prev, [sessionId]: next };
@@ -112,14 +140,28 @@ function App() {
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
+          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+
+            const nextThinking = m.thinking
+              ? {
+                  ...m.thinking,
+                  isStreaming: false,
+                  duration:
+                    m.thinking.duration ??
+                    (m.thinking.startTime !== undefined
+                      ? (now - m.thinking.startTime) / 1000
+                      : undefined),
+                }
+              : undefined;
+
             return {
               ...m,
               content: `发生错误：${event.payload.error}`,
               isStreaming: false,
               timestamp: new Date(),
-              thinking: undefined,
+              thinking: nextThinking,
             };
           });
           return { ...prev, [sessionId]: next };
