@@ -25,6 +25,7 @@ function App() {
 
   const activeSessionIdRef = useRef<string>('1');
   const activeAssistantMessageIdRef = useRef<string | null>(null);
+  const activeAssistantAnswerStartedRef = useRef(false);
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
@@ -36,24 +37,18 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
+        activeAssistantAnswerStartedRef.current = true;
+
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
-          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-            const thinkingDuration =
-              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
               content: m.content + event.payload.text,
               isStreaming: true,
-              thinking: m.thinking
-                ? {
-                  ...m.thinking,
-                  isStreaming: false,
-                    duration: m.thinking.duration ?? thinkingDuration,
-                  }
-                : m.thinking,
+              // 一旦开始输出回复，认为“思考结束”，立刻隐藏思考组件
+              thinking: undefined,
             };
           });
           return { ...prev, [sessionId]: next };
@@ -63,6 +58,8 @@ function App() {
         const sessionId = activeSessionIdRef.current;
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
+        // 如果已经开始输出最终回复，则不再展示/更新思考内容
+        if (activeAssistantAnswerStartedRef.current) return;
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
@@ -87,23 +84,16 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
+        activeAssistantAnswerStartedRef.current = false;
+
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
-          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-            const duration =
-              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
               isStreaming: false,
-              thinking: m.thinking
-                ? {
-                    ...m.thinking,
-                    isStreaming: false,
-                    duration: m.thinking.duration ?? duration,
-                  }
-                : m.thinking,
+              thinking: undefined,
             };
           });
           return { ...prev, [sessionId]: next };
@@ -117,24 +107,17 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
+        activeAssistantAnswerStartedRef.current = false;
+
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
-          const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-            const duration =
-              m.thinking?.startTime !== undefined ? (now - m.thinking.startTime) / 1000 : undefined;
             return {
               ...m,
               content: `发生错误：${event.payload.error}`,
               isStreaming: false,
-              thinking: m.thinking
-                ? {
-                    ...m.thinking,
-                    isStreaming: false,
-                    duration: m.thinking.duration ?? duration,
-                  }
-                : m.thinking,
+              thinking: undefined,
             };
           });
           return { ...prev, [sessionId]: next };
@@ -219,22 +202,17 @@ function App() {
       };
 
       const assistantMessageId = String(Date.now() + 1);
-      const thinkingStartTime = Date.now();
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
         content: '',
         isStreaming: true,
-        thinking: {
-          content: '',
-          isStreaming: true,
-          startTime: thinkingStartTime,
-        },
         timestamp: new Date(),
       };
 
       activeSessionIdRef.current = selectedSessionId;
       activeAssistantMessageIdRef.current = assistantMessageId;
+      activeAssistantAnswerStartedRef.current = false;
       setIsGenerating(true);
 
       // 更新当前会话的消息
