@@ -1,0 +1,271 @@
+.tool-call {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-secondary);
+}
+
+/* 触发器 */
+.tool-call__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.tool-call__trigger:hover {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.tool-call__trigger:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: -2px;
+}
+
+.tool-call__trigger:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+/* 图标 */
+.tool-call__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tool-call__icon--kind {
+  color: var(--color-text-secondary);
+}
+
+.tool-call__icon--status {
+  margin-left: auto;
+}
+
+.tool-call--in-progress .tool-call__icon--status {
+  animation: tool-call-spin 1s linear infinite;
+}
+
+@keyframes tool-call-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 工具标题 */
+.tool-call__title {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--color-text);
+  min-width: 0;
+}
+
+/* 文件位置列表（内联在标题后） */
+.tool-call__locations {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.tool-call__location {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-muted);
+  font-size: 11px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  cursor: default;
+}
+
+.tool-call__location:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text);
+}
+.tool-call__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tool-call__status--pending {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.tool-call__status--in-progress {
+  background-color: color-mix(in srgb, var(--color-info) 15%, transparent);
+  color: var(--color-info);
+}
+
+.tool-call__status--completed {
+  background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+}
+
+.tool-call__status--failed {
+  background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+  color: var(--color-error);
+}
+
+/* 时长 */
+.tool-call__duration {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 展开箭头 */
+.tool-call__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.tool-call--open .tool-call__chevron {
+  transform: rotate(180deg);
+}
+
+/* 状态徽章 */
+.tool-call__content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.tool-call--open .tool-call__content {
+  grid-template-rows: 1fr;
+}
+
+.tool-call__content-inner {
+  overflow: hidden;
+}
+
+/* 分区 */
+.tool-call__section {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.tool-call__section-label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+/* JSON 代码块 */
+.tool-call__code {
+  margin: 0;
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Diff 样式 */
+.tool-call__diff {
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.tool-call__diff-header {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background-color: var(--color-bg-muted);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tool-call__code--diff {
+  border-radius: 0;
+}
+
+/* 终端占位 */
+.tool-call__terminal {
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.tool-call__terminal-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+}
+
+/* 错误信息 */
+.tool-call__error {
+  margin: 0;
+  padding: var(--spacing-sm);
+  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-error);
+}
+
+/* Running 状态的 shimmer 效果 */
+.tool-call--in-progress .tool-call__title {
+  background: linear-gradient(
+    90deg,
+    var(--color-text) 0%,
+    var(--color-info) 50%,
+    var(--color-text) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-call-shimmer 2s infinite;
+}
+
+@keyframes tool-call-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
