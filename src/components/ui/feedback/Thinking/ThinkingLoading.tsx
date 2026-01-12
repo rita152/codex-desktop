@@ -32,13 +32,12 @@ export interface ThinkingLoadingProps {
 export function ThinkingLoading({ className = '' }: ThinkingLoadingProps) {
   return (
     <div className={cn('thinking', 'thinking--streaming', className)}>
-      <button type="button" className="thinking__trigger" disabled aria-label="思考中">
+      <button type="button" className="thinking__trigger" disabled aria-label="loading">
         <span className="thinking__icon">
           <BrainIcon size={16} />
         </span>
-        <span className="thinking__label">思考中...</span>
+        <span className="thinking__label">loading</span>
       </button>
     </div>
   );
 }
-
