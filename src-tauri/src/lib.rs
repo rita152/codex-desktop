@@ -4,11 +4,15 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
-pub mod codex_dev;
 pub mod codex;
+pub mod codex_dev;
 
 #[tauri::command]
-async fn codex_dev_prompt_once(window: tauri::Window, cwd: String, content: String) -> Result<(), String> {
+async fn codex_dev_prompt_once(
+    window: tauri::Window,
+    cwd: String,
+    content: String,
+) -> Result<(), String> {
     let cwd = std::path::PathBuf::from(cwd);
     codex_dev::run::prompt_once(window, cwd, content)
         .await

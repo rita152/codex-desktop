@@ -1,14 +1,15 @@
 use crate::codex::{
     events::*,
     process::{CodexProcess, CodexProcessConfig},
+    thoughts::emit_thought_chunks,
     types::ApprovalDecision,
 };
-use anyhow::{anyhow, Context, Result};
 use agent_client_protocol::{
     Client, ClientSideConnection, ContentBlock, PermissionOption, PermissionOptionId,
     PermissionOptionKind, RequestPermissionOutcome, RequestPermissionRequest,
     RequestPermissionResponse, SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
+use anyhow::{anyhow, Context, Result};
 use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 use tauri::{AppHandle, Emitter};
@@ -130,13 +131,15 @@ impl Client for AcpClient {
         let selected = match rx.await {
             Ok(option_id) => option_id,
             Err(_) => {
-                return Ok(RequestPermissionResponse::new(RequestPermissionOutcome::Cancelled));
+                return Ok(RequestPermissionResponse::new(
+                    RequestPermissionOutcome::Cancelled,
+                ));
             }
         };
 
-        Ok(RequestPermissionResponse::new(RequestPermissionOutcome::Selected(
-            SelectedPermissionOutcome::new(selected),
-        )))
+        Ok(RequestPermissionResponse::new(
+            RequestPermissionOutcome::Selected(SelectedPermissionOutcome::new(selected)),
+        ))
     }
 
     async fn session_notification(
@@ -148,22 +151,27 @@ impl Client for AcpClient {
         match &args.update {
             SessionUpdate::AgentMessageChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
-                    let _ = self
-                        .app
-                        .emit(EVENT_MESSAGE_CHUNK, json!({ "sessionId": session_id, "text": text }));
+                    let _ = self.app.emit(
+                        EVENT_MESSAGE_CHUNK,
+                        json!({ "sessionId": session_id, "text": text }),
+                    );
                 }
             }
             SessionUpdate::AgentThoughtChunk(chunk) => {
-                if let Some(text) = content_block_text(&chunk.content) {
-                    let _ = self
-                        .app
-                        .emit(EVENT_THOUGHT_CHUNK, json!({ "sessionId": session_id, "text": text }));
+                if emit_thought_chunks() {
+                    if let Some(text) = content_block_text(&chunk.content) {
+                        let _ = self.app.emit(
+                            EVENT_THOUGHT_CHUNK,
+                            json!({ "sessionId": session_id, "text": text }),
+                        );
+                    }
                 }
             }
             SessionUpdate::ToolCall(tool_call) => {
-                let _ = self
-                    .app
-                    .emit(EVENT_TOOL_CALL, json!({ "sessionId": session_id, "toolCall": tool_call }));
+                let _ = self.app.emit(
+                    EVENT_TOOL_CALL,
+                    json!({ "sessionId": session_id, "toolCall": tool_call }),
+                );
             }
             SessionUpdate::ToolCallUpdate(update) => {
                 let _ = self.app.emit(

@@ -1,21 +1,19 @@
-use anyhow::{anyhow, Context, Result};
 use agent_client_protocol::{
     Agent, AuthenticateRequest, Client, ClientCapabilities, ClientSideConnection, ContentBlock,
-    Implementation, InitializeRequest, Meta, PermissionOptionKind, ProtocolVersion, PromptRequest,
+    Implementation, InitializeRequest, Meta, PermissionOptionKind, PromptRequest, ProtocolVersion,
     RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
     SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
+use anyhow::{anyhow, Context, Result};
 use serde_json::json;
-use std::{
-    path::PathBuf,
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 use tauri::{Emitter, Window};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
-use tauri::Manager;
-use crate::codex::binary::CodexAcpBinary;
 use super::config::{codex_home_dir, load_codex_cli_config, redact_api_key, CodexCliConfig};
+use crate::codex::thoughts::emit_thought_chunks;
+use crate::codex::binary::CodexAcpBinary;
+use tauri::Manager;
 
 pub const EVENT_MESSAGE_CHUNK: &str = "codex:message";
 pub const EVENT_THOUGHT_CHUNK: &str = "codex:thought";
@@ -23,6 +21,9 @@ pub const EVENT_TOOL_CALL: &str = "codex:tool-call";
 pub const EVENT_TOOL_CALL_UPDATE: &str = "codex:tool-call-update";
 pub const EVENT_APPROVAL_REQUEST: &str = "codex:approval-request";
 pub const EVENT_PLAN: &str = "codex:plan";
+pub const EVENT_AVAILABLE_COMMANDS: &str = "codex:available-commands";
+pub const EVENT_CURRENT_MODE: &str = "codex:current-mode";
+pub const EVENT_CONFIG_OPTION_UPDATE: &str = "codex:config-option-update";
 pub const EVENT_TURN_COMPLETE: &str = "codex:turn-complete";
 pub const EVENT_ERROR: &str = "codex:error";
 
@@ -38,29 +39,40 @@ impl Client for DevClient {
         &self,
         args: RequestPermissionRequest,
     ) -> agent_client_protocol::Result<RequestPermissionResponse> {
+        let request_id = args.tool_call.tool_call_id.0.clone();
         let _ = self.window.emit(
             EVENT_APPROVAL_REQUEST,
             json!({
                 "sessionId": args.session_id.0,
+                "requestId": request_id,
                 "toolCall": args.tool_call,
                 "options": args.options,
             }),
         );
 
-    if !self.auto_approve {
-        return Ok(RequestPermissionResponse::new(RequestPermissionOutcome::Cancelled));
-    }
+        if !self.auto_approve {
+            return Ok(RequestPermissionResponse::new(
+                RequestPermissionOutcome::Cancelled,
+            ));
+        }
 
         let selected = args
             .options
             .iter()
-            .find(|o| matches!(o.kind, PermissionOptionKind::AllowOnce | PermissionOptionKind::AllowAlways))
+            .find(|o| {
+                matches!(
+                    o.kind,
+                    PermissionOptionKind::AllowOnce | PermissionOptionKind::AllowAlways
+                )
+            })
             .or_else(|| args.options.first())
             .ok_or_else(agent_client_protocol::Error::invalid_params)?;
 
-        Ok(RequestPermissionResponse::new(RequestPermissionOutcome::Selected(
-            SelectedPermissionOutcome::new(selected.option_id.clone()),
-        )))
+        Ok(RequestPermissionResponse::new(
+            RequestPermissionOutcome::Selected(SelectedPermissionOutcome::new(
+                selected.option_id.clone(),
+            )),
+        ))
     }
 
     async fn session_notification(
@@ -78,11 +90,13 @@ impl Client for DevClient {
                 }
             }
             SessionUpdate::AgentThoughtChunk(chunk) => {
-                if let Some(text) = content_block_text(&chunk.content) {
-                    let _ = self.window.emit(
-                        EVENT_THOUGHT_CHUNK,
-                        json!({ "sessionId": session_id, "text": text }),
-                    );
+                if emit_thought_chunks() {
+                    if let Some(text) = content_block_text(&chunk.content) {
+                        let _ = self.window.emit(
+                            EVENT_THOUGHT_CHUNK,
+                            json!({ "sessionId": session_id, "text": text }),
+                        );
+                    }
                 }
             }
             SessionUpdate::ToolCall(tool_call) => {
@@ -98,9 +112,26 @@ impl Client for DevClient {
                 );
             }
             SessionUpdate::Plan(plan) => {
+                let _ = self
+                    .window
+                    .emit(EVENT_PLAN, json!({ "sessionId": session_id, "plan": plan }));
+            }
+            SessionUpdate::AvailableCommandsUpdate(update) => {
                 let _ = self.window.emit(
-                    EVENT_PLAN,
-                    json!({ "sessionId": session_id, "plan": plan }),
+                    EVENT_AVAILABLE_COMMANDS,
+                    json!({ "sessionId": session_id, "update": update }),
+                );
+            }
+            SessionUpdate::CurrentModeUpdate(update) => {
+                let _ = self.window.emit(
+                    EVENT_CURRENT_MODE,
+                    json!({ "sessionId": session_id, "update": update }),
+                );
+            }
+            SessionUpdate::ConfigOptionUpdate(update) => {
+                let _ = self.window.emit(
+                    EVENT_CONFIG_OPTION_UPDATE,
+                    json!({ "sessionId": session_id, "update": update }),
                 );
             }
             _ => {}
@@ -151,7 +182,12 @@ pub async fn prompt_once(window: Window, cwd: PathBuf, content: String) -> Resul
     .map_err(|e| anyhow!("failed to join blocking task: {e}"))?
 }
 
-async fn prompt_once_inner(window: Window, cwd: PathBuf, content: String, cfg: CodexCliConfig) -> Result<()> {
+async fn prompt_once_inner(
+    window: Window,
+    cwd: PathBuf,
+    content: String,
+    cfg: CodexCliConfig,
+) -> Result<()> {
     let cwd = if cwd.as_os_str().is_empty() {
         std::env::current_dir().context("failed to resolve current_dir")?
     } else if cwd.is_absolute() {
@@ -222,7 +258,10 @@ async fn prompt_once_inner(window: Window, cwd: PathBuf, content: String, cfg: C
     let init = conn
         .initialize(
             InitializeRequest::new(ProtocolVersion::V1)
-                .client_info(Implementation::new("codex-desktop", env!("CARGO_PKG_VERSION")))
+                .client_info(Implementation::new(
+                    "codex-desktop",
+                    env!("CARGO_PKG_VERSION"),
+                ))
                 .client_capabilities(client_capabilities),
         )
         .await
@@ -274,7 +313,9 @@ async fn prompt_once_inner(window: Window, cwd: PathBuf, content: String, cfg: C
 
     let prompt = PromptRequest::new(
         session.session_id.clone(),
-        vec![ContentBlock::Text(agent_client_protocol::TextContent::new(content))],
+        vec![ContentBlock::Text(agent_client_protocol::TextContent::new(
+            content,
+        ))],
     );
 
     let response = conn

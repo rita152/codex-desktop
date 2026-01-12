@@ -38,7 +38,7 @@ Desktop 后端实现位置：
 `codex-acp` 会通过 `session_notification` 推送 `SessionUpdate`，Desktop 将其映射为前端事件：
 
 - `SessionUpdate::AgentMessageChunk(Text)` → `codex:message`
-- `SessionUpdate::AgentThoughtChunk(Text)` → `codex:thought`
+- `SessionUpdate::AgentThoughtChunk(Text)` → `codex:thought`（默认转发；如需关闭可设置 `CODEX_DESKTOP_EMIT_THOUGHT_CHUNKS=0`）
 - `SessionUpdate::ToolCall` → `codex:tool-call`
 - `SessionUpdate::ToolCallUpdate` → `codex:tool-call-update`
 - `SessionUpdate::Plan` → `codex:plan`
@@ -61,4 +61,3 @@ Desktop 后端实现位置：
 - `client_capabilities.meta.terminal_output = true`
 
 Desktop 已在 Initialize 中默认开启该 capability（Dev/Prod 代码均设置）。
-

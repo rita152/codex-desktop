@@ -3,12 +3,12 @@ use crate::codex::{
     protocol::{AcpConnection, ApprovalKey, ApprovalState},
     types::{ApprovalDecision, InitializeResult, NewSessionResult, PromptResult},
 };
-use anyhow::{anyhow, Context, Result};
 use agent_client_protocol::{
     Agent, AuthenticateRequest, CancelNotification, ClientCapabilities, Implementation,
-    InitializeRequest, Meta, NewSessionRequest, PromptRequest, ProtocolVersion,
-    SetSessionConfigOptionRequest, SessionId, TextContent,
+    InitializeRequest, Meta, NewSessionRequest, PromptRequest, ProtocolVersion, SessionId,
+    SetSessionConfigOptionRequest, TextContent,
 };
+use anyhow::{anyhow, Context, Result};
 use std::{path::PathBuf, sync::Arc};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{mpsc, oneshot};
@@ -70,7 +70,10 @@ impl CodexService {
     pub async fn create_session(&self, cwd: PathBuf) -> Result<NewSessionResult> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
-            .send(ServiceCommand::NewSession { cwd, reply: reply_tx })
+            .send(ServiceCommand::NewSession {
+                cwd,
+                reply: reply_tx,
+            })
             .map_err(|_| anyhow!("codex service worker stopped"))?;
         reply_rx
             .await
@@ -203,17 +206,17 @@ async fn initialize_inner(state: &mut WorkerState) -> Result<InitializeResult> {
     let conn = state.conn.as_ref().context("connection missing")?;
 
     let mut meta = Meta::default();
-    meta.insert(
-        "terminal_output".to_owned(),
-        serde_json::Value::Bool(true),
-    );
+    meta.insert("terminal_output".to_owned(), serde_json::Value::Bool(true));
     let client_capabilities = ClientCapabilities::new().meta(meta);
 
     let init = conn
         .conn
         .initialize(
             InitializeRequest::new(ProtocolVersion::V1)
-                .client_info(Implementation::new("codex-desktop", env!("CARGO_PKG_VERSION")))
+                .client_info(Implementation::new(
+                    "codex-desktop",
+                    env!("CARGO_PKG_VERSION"),
+                ))
                 .client_capabilities(client_capabilities),
         )
         .await
@@ -225,7 +228,11 @@ async fn initialize_inner(state: &mut WorkerState) -> Result<InitializeResult> {
     Ok(out)
 }
 
-async fn authenticate_inner(state: &mut WorkerState, method_id: String, api_key: Option<String>) -> Result<()> {
+async fn authenticate_inner(
+    state: &mut WorkerState,
+    method_id: String,
+    api_key: Option<String>,
+) -> Result<()> {
     if let Some(api_key) = api_key {
         let env_key = if method_id.to_ascii_lowercase().contains("codex") {
             "CODEX_API_KEY"
@@ -271,19 +278,22 @@ async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewS
     })
 }
 
-async fn prompt_inner(conn: Arc<AcpConnection>, app: AppHandle, session_id: String, content: String) -> Result<PromptResult> {
+async fn prompt_inner(
+    conn: Arc<AcpConnection>,
+    app: AppHandle,
+    session_id: String,
+    content: String,
+) -> Result<PromptResult> {
     let session_id_typed = SessionId::from(session_id.clone());
 
     let request = PromptRequest::new(
         session_id_typed.clone(),
-        vec![agent_client_protocol::ContentBlock::Text(TextContent::new(content))],
+        vec![agent_client_protocol::ContentBlock::Text(TextContent::new(
+            content,
+        ))],
     );
 
-    let resp = conn
-        .conn
-        .prompt(request)
-        .await
-        .context("prompt failed")?;
+    let resp = conn.conn.prompt(request).await.context("prompt failed")?;
 
     let _ = app.emit(
         crate::codex::events::EVENT_TURN_COMPLETE,
@@ -386,7 +396,9 @@ async fn worker_loop(
                 value_id,
                 reply,
             } => {
-                let _ = reply.send(set_config_option_inner(&mut state, session_id, config_id, value_id).await);
+                let _ = reply.send(
+                    set_config_option_inner(&mut state, session_id, config_id, value_id).await,
+                );
             }
         }
     }

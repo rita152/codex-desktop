@@ -1,5 +1,8 @@
 use anyhow::{Context, Result};
-use std::{fs, path::{Path, PathBuf}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct CodexCliConfig {
@@ -20,7 +23,15 @@ pub fn load_codex_cli_config(codex_home: &Path) -> Result<CodexCliConfig> {
     let doc: toml::Value = toml::from_str(&raw)
         .with_context(|| format!("failed to parse {}", config_path.display()))?;
 
-    let model_provider = get_string_by_any_key(&doc, &["model_provider", "modelProvider", "model_provider_id", "modelProviderId"]);
+    let model_provider = get_string_by_any_key(
+        &doc,
+        &[
+            "model_provider",
+            "modelProvider",
+            "model_provider_id",
+            "modelProviderId",
+        ],
+    );
     let api_key = find_api_key(&doc, model_provider.as_deref());
     let base_url = find_base_url(&doc, model_provider.as_deref());
 

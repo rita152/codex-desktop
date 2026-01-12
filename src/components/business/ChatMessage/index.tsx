@@ -87,8 +87,11 @@ export function ChatMessage({
   className = '',
 }: ChatMessageProps) {
   const streamedContent = useTypewriterText(content, role === 'assistant' && isStreaming);
-  const hasThought = (thinking?.content ?? '').trim().length > 0;
-  const showThinkingLoading = role === 'assistant' && isStreaming && !hasThought && content.length === 0;
+  const thoughtContent = role === 'thought' ? content : (thinking?.content ?? '');
+  const hasThoughtText = thoughtContent.trim().length > 0;
+  const showThinkingLoading =
+    role === 'assistant' && isStreaming && !hasThoughtText && content.length === 0;
+  const showCursor = role === 'assistant' && isStreaming;
 
   const formatTime = (date: Date): string => {
     return date.toLocaleTimeString('zh-CN', {
@@ -97,30 +100,44 @@ export function ChatMessage({
     });
   };
 
+  const visualRole = role === 'user' ? 'user' : 'assistant';
   const classNames = cn(
     'chat-message',
-    `chat-message--${role}`,
+    `chat-message--${visualRole}`,
+    role === 'thought' && 'chat-message--thought',
+    role === 'tool' && 'chat-message--tool',
     isStreaming && 'chat-message--streaming',
     className
   );
 
   const renderContent = () => {
-    if (role === 'assistant') {
+    if (role === 'assistant' || role === 'tool') {
       return <Markdown content={isStreaming ? streamedContent : content} />;
     }
+    if (role === 'thought') return null;
     return content;
   };
 
+  const showThinkingBlock = role === 'assistant' || role === 'thought';
+  const showBubble = role !== 'thought';
+  const showThinking =
+    (role === 'assistant' && hasThoughtText) || (role === 'thought' && (hasThoughtText || isStreaming));
+
   return (
     <div className={classNames}>
-      {hasThought && role === 'assistant' && thinking && (
+      {showThinkingBlock && showThinking && (
         <div className="chat-message__thinking">
           <Thinking
-            content={thinking.content}
-            isStreaming={thinking.isStreaming}
-            startTime={thinking.startTime}
-            duration={thinking.duration}
+            content={thoughtContent}
+            isStreaming={role === 'thought' ? isStreaming : thinking?.isStreaming}
+            startTime={role === 'thought' ? undefined : thinking?.startTime}
+            duration={role === 'thought' ? undefined : thinking?.duration}
           />
+        </div>
+      )}
+      {role === 'thought' && isStreaming && !hasThoughtText && (
+        <div className="chat-message__thinking">
+          <ThinkingLoading />
         </div>
       )}
       {showThinkingLoading && (
@@ -128,7 +145,12 @@ export function ChatMessage({
           <ThinkingLoading />
         </div>
       )}
-      <div className="chat-message__bubble">{renderContent()}</div>
+      {showBubble && (
+        <div className="chat-message__bubble">
+          {renderContent()}
+          {showCursor && <span className="chat-message__cursor" aria-hidden="true" />}
+        </div>
+      )}
       {timestamp && (role === 'user' || !isStreaming) && (
         <span className="chat-message__timestamp">{formatTime(timestamp)}</span>
       )}

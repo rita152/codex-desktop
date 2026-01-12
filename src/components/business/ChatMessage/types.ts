@@ -1,4 +1,4 @@
-export type MessageRole = 'user' | 'assistant';
+export type MessageRole = 'user' | 'assistant' | 'thought' | 'tool';
 
 export interface ThinkingData {
   /** 思考内容 */

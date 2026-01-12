@@ -44,7 +44,9 @@ pub struct CodexProcess {
 impl CodexProcess {
     pub async fn spawn(app: Option<&AppHandle>, cfg: CodexProcessConfig) -> Result<Self> {
         let codex_home = cfg.codex_home_or_default(app)?;
-        let mode = cfg.mode.unwrap_or_else(CodexAcpLaunchMode::default_for_build);
+        let mode = cfg
+            .mode
+            .unwrap_or_else(CodexAcpLaunchMode::default_for_build);
         let binary = CodexAcpBinary::resolve_with_mode(mode, app)?;
 
         eprintln!("{}", binary.diagnostics_line());

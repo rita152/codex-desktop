@@ -25,7 +25,10 @@ impl CodexManager {
 }
 
 #[tauri::command]
-pub async fn codex_init(app: AppHandle, state: State<'_, CodexManager>) -> Result<InitializeResult, String> {
+pub async fn codex_init(
+    app: AppHandle,
+    state: State<'_, CodexManager>,
+) -> Result<InitializeResult, String> {
     let svc = state.get_or_create(app).await;
     svc.initialize().await.map_err(|e| e.to_string())
 }
@@ -40,11 +43,16 @@ pub async fn codex_auth(
         .get()
         .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
-    svc.authenticate(method, api_key).await.map_err(|e| e.to_string())
+    svc.authenticate(method, api_key)
+        .await
+        .map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn codex_new_session(state: State<'_, CodexManager>, cwd: String) -> Result<NewSessionResult, String> {
+pub async fn codex_new_session(
+    state: State<'_, CodexManager>,
+    cwd: String,
+) -> Result<NewSessionResult, String> {
     let svc = state
         .get()
         .await
@@ -70,7 +78,10 @@ pub async fn codex_prompt(
 }
 
 #[tauri::command]
-pub async fn codex_cancel(state: State<'_, CodexManager>, session_id: String) -> Result<(), String> {
+pub async fn codex_cancel(
+    state: State<'_, CodexManager>,
+    session_id: String,
+) -> Result<(), String> {
     let svc = state
         .get()
         .await
@@ -111,12 +122,19 @@ pub async fn codex_set_config_option(
 }
 
 #[tauri::command]
-pub async fn codex_set_mode(state: State<'_, CodexManager>, session_id: String, mode_id: String) -> Result<(), String> {
+pub async fn codex_set_mode(
+    state: State<'_, CodexManager>,
+    session_id: String,
+    mode_id: String,
+) -> Result<(), String> {
     codex_set_config_option(state, session_id, "mode".to_string(), mode_id).await
 }
 
 #[tauri::command]
-pub async fn codex_set_model(state: State<'_, CodexManager>, session_id: String, model_id: String) -> Result<(), String> {
+pub async fn codex_set_model(
+    state: State<'_, CodexManager>,
+    session_id: String,
+    model_id: String,
+) -> Result<(), String> {
     codex_set_config_option(state, session_id, "model".to_string(), model_id).await
 }
-

@@ -12,6 +12,18 @@ import './App.css';
 // 每个会话的消息独立存储
 type SessionMessages = Record<string, Message[]>;
 
+function safeJson(value: unknown): string {
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+}
+
+function newMessageId(): string {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function App() {
   const [sessions, setSessions] = useState<ChatSession[]>([
     { id: '1', title: '新对话' },
@@ -24,133 +36,156 @@ function App() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const activeSessionIdRef = useRef<string>('1');
-  const activeAssistantMessageIdRef = useRef<string | null>(null);
+  const activeAcpSessionIdRef = useRef<string | null>(null);
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
 
-  const finalizeThinking = (now: number, thinking?: Message['thinking']) => {
-    if (!thinking) return undefined;
-    return {
-      ...thinking,
-      isStreaming: false,
-      duration:
-        thinking.duration ??
-        (thinking.startTime !== undefined ? (now - thinking.startTime) / 1000 : undefined),
-    };
-  };
-
   useEffect(() => {
+    const ensureActiveAcpSession = (incomingSessionId: string) => {
+      if (!activeAcpSessionIdRef.current) {
+        activeAcpSessionIdRef.current = incomingSessionId;
+        return true;
+      }
+      return activeAcpSessionIdRef.current === incomingSessionId;
+    };
+
+    const appendStreamingChunk = (role: Message['role'], text: string) => {
+      const sessionId = activeSessionIdRef.current;
+      setSessionMessages((prev) => {
+        const list = prev[sessionId] ?? [];
+        const last = list.length > 0 ? list[list.length - 1] : undefined;
+
+        // 当开始输出回复时，结束上一段思考流
+        const shouldCloseThought =
+          role === 'assistant' &&
+          last?.role === 'thought' &&
+          last.isStreaming;
+
+        const baseList = shouldCloseThought
+          ? list.map((m, idx) =>
+              idx === list.length - 1 ? { ...m, isStreaming: false } : m
+            )
+          : list;
+
+        const last2 = baseList.length > 0 ? baseList[baseList.length - 1] : undefined;
+        if (last2 && last2.role === role && last2.isStreaming) {
+          const next = baseList.map((m, idx) => {
+            if (idx !== baseList.length - 1) return m;
+            return { ...m, content: m.content + text, isStreaming: true };
+          });
+          return { ...prev, [sessionId]: next };
+        }
+
+        const nextMessage: Message = {
+          id: newMessageId(),
+          role,
+          content: text,
+          isStreaming: true,
+          timestamp: undefined,
+        };
+        return { ...prev, [sessionId]: [...baseList, nextMessage] };
+      });
+    };
+
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
-        const sessionId = activeSessionIdRef.current;
-        const assistantMessageId = activeAssistantMessageIdRef.current;
-        if (!assistantMessageId) return;
-
-        setSessionMessages((prev) => {
-          const list = prev[sessionId] ?? [];
-          const now = Date.now();
-          const next = list.map((m) => {
-            if (String(m.id) !== assistantMessageId) return m;
-            const nextThinking = finalizeThinking(now, m.thinking);
-
-            return {
-              ...m,
-              content: m.content + event.payload.text,
-              isStreaming: true,
-              // 一旦开始输出回复，认为“思考结束”，立刻折叠并保留思考内容
-              thinking: nextThinking,
-            };
-          });
-          return { ...prev, [sessionId]: next };
-        });
+        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
+        appendStreamingChunk('assistant', event.payload.text);
       }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
-        const sessionId = activeSessionIdRef.current;
-        const assistantMessageId = activeAssistantMessageIdRef.current;
-        if (!assistantMessageId) return;
-
-        setSessionMessages((prev) => {
-          const list = prev[sessionId] ?? [];
-          const now = Date.now();
-          const next = list.map((m) => {
-            if (String(m.id) !== assistantMessageId) return m;
-            const startTime = m.thinking?.startTime ?? now;
-            const isAnswerStarted = m.content.length > 0;
-            return {
-              ...m,
-              thinking: {
-                content: (m.thinking?.content ?? '') + event.payload.text,
-                // 若回答已开始但 thought 晚到：仍然保留内容，但不显示“思考中”流式状态
-                isStreaming: !isAnswerStarted,
-                startTime,
-                duration: m.thinking?.duration,
-              },
-            };
-          });
-          return { ...prev, [sessionId]: next };
-        });
+        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
+        appendStreamingChunk('thought', event.payload.text);
       }),
       listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', () => {
         const sessionId = activeSessionIdRef.current;
-        const assistantMessageId = activeAssistantMessageIdRef.current;
-        if (!assistantMessageId) return;
-
+        const now = new Date();
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
-          const now = Date.now();
           const next = list.map((m) => {
-            if (String(m.id) !== assistantMessageId) return m;
-            const nextThinking = finalizeThinking(now, m.thinking);
-
+            if (m.role === 'user' || !m.isStreaming) return m;
             return {
               ...m,
               isStreaming: false,
-              timestamp: new Date(),
-              thinking: nextThinking,
+              timestamp: m.timestamp ?? now,
             };
           });
           return { ...prev, [sessionId]: next };
         });
 
-        activeAssistantMessageIdRef.current = null;
+        activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       }),
       listen<{ error: string }>('codex:error', (event) => {
         const sessionId = activeSessionIdRef.current;
-        const assistantMessageId = activeAssistantMessageIdRef.current;
-        if (!assistantMessageId) return;
+        const errMsg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: `发生错误：${event.payload.error}`,
+          isStreaming: false,
+          timestamp: new Date(),
+        };
 
-        setSessionMessages((prev) => {
-          const list = prev[sessionId] ?? [];
-          const now = Date.now();
-          const next = list.map((m) => {
-            if (String(m.id) !== assistantMessageId) return m;
-            const nextThinking = finalizeThinking(now, m.thinking);
+        setSessionMessages((prev) => ({
+          ...prev,
+          [sessionId]: [...(prev[sessionId] ?? []), errMsg],
+        }));
 
-            return {
-              ...m,
-              content: `发生错误：${event.payload.error}`,
-              isStreaming: false,
-              timestamp: new Date(),
-              thinking: nextThinking,
-            };
-          });
-          return { ...prev, [sessionId]: next };
-        });
-
-        activeAssistantMessageIdRef.current = null;
+        activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       }),
       listen('codex:approval-request', (event) => {
         // Task0：先用 console 观察审批流，后续接入 ApprovalDialog
         console.debug('[codex approval]', event.payload);
       }),
-      listen('codex:tool-call', (event) => {
-        console.debug('[codex tool-call]', event.payload);
+      listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
+        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
+
+        const sessionId = activeSessionIdRef.current;
+        const toolCall = event.payload.toolCall as any;
+        const toolCallId = String(toolCall?.toolCallId ?? toolCall?.tool_call_id ?? '');
+
+        const headerParts = [
+          '**Tool Call**',
+          toolCall?.name ? `\`${String(toolCall.name)}\`` : '',
+          toolCallId ? `(id: \`${toolCallId}\`)` : '',
+        ].filter(Boolean);
+
+        const msg: Message = {
+          id: newMessageId(),
+          role: 'tool',
+          content: `${headerParts.join(' ')}\n\n\`\`\`json\n${safeJson(toolCall)}\n\`\`\`\n`,
+          isStreaming: true,
+          timestamp: undefined,
+        };
+
+        setSessionMessages((prev) => ({
+          ...prev,
+          [sessionId]: [...(prev[sessionId] ?? []), msg],
+        }));
       }),
-      listen('codex:tool-call-update', (event) => {
-        console.debug('[codex tool-call-update]', event.payload);
+      listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
+        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
+
+        const sessionId = activeSessionIdRef.current;
+        const update = event.payload.update as any;
+        const toolCallId = String(update?.toolCallId ?? update?.tool_call_id ?? '');
+
+        const toolIdPart = toolCallId ? ` (id: \`${toolCallId}\`)` : '';
+        const chunk = `\n\n**Tool Update**${toolIdPart}\n\n\`\`\`json\n${safeJson(update)}\n\`\`\`\n`;
+
+        const msg: Message = {
+          id: newMessageId(),
+          role: 'tool',
+          content: chunk,
+          isStreaming: true,
+          timestamp: undefined,
+        };
+
+        setSessionMessages((prev) => ({
+          ...prev,
+          [sessionId]: [...(prev[sessionId] ?? []), msg],
+        }));
       }),
     ];
 
@@ -218,28 +253,14 @@ function App() {
         timestamp: new Date(),
       };
 
-      const assistantMessageId = String(now + 1);
-      const assistantMessage: Message = {
-        id: assistantMessageId,
-        role: 'assistant',
-        content: '',
-        isStreaming: true,
-        // assistant 消息时间戳应为“回答完毕时刻”，因此先不设置
-        timestamp: undefined,
-      };
-
       activeSessionIdRef.current = selectedSessionId;
-      activeAssistantMessageIdRef.current = assistantMessageId;
+      activeAcpSessionIdRef.current = null;
       setIsGenerating(true);
 
       // 更新当前会话的消息
       setSessionMessages((prev) => ({
         ...prev,
-        [selectedSessionId]: [
-          ...(prev[selectedSessionId] ?? []),
-          userMessage,
-          assistantMessage,
-        ],
+        [selectedSessionId]: [...(prev[selectedSessionId] ?? []), userMessage],
       }));
 
       // 如果是第一条消息，用消息内容更新会话标题
@@ -251,23 +272,18 @@ function App() {
       }
 
       void invoke('codex_dev_prompt_once', { cwd: '.', content }).catch((err) => {
-        setSessionMessages((prev) => {
-          const list = prev[selectedSessionId] ?? [];
-          const errorNow = Date.now();
-          const next = list.map((m) => {
-            if (String(m.id) !== assistantMessageId) return m;
-            const nextThinking = finalizeThinking(errorNow, m.thinking);
-            return {
-              ...m,
-              content: `调用失败：${String(err)}`,
-              isStreaming: false,
-              timestamp: new Date(),
-              thinking: nextThinking,
-            };
-          });
-          return { ...prev, [selectedSessionId]: next };
-        });
-        activeAssistantMessageIdRef.current = null;
+        const msg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: `调用失败：${String(err)}`,
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        setSessionMessages((prev) => ({
+          ...prev,
+          [selectedSessionId]: [...(prev[selectedSessionId] ?? []), msg],
+        }));
+        activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       });
     },

@@ -83,6 +83,26 @@
   word-break: break-word;
 }
 
+.thinking--streaming .thinking__text::after {
+  content: '▍';
+  display: inline-block;
+  width: 0.6ch;
+  margin-left: 0.1ch;
+  vertical-align: baseline;
+  animation: thinking-cursor-blink 1s step-end infinite;
+}
+
+@keyframes thinking-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
 /* 流式传输时的 shimmer 效果 */
 .thinking--streaming .thinking__trigger {
   color: var(--color-text);

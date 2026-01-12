@@ -17,7 +17,7 @@
 ## 事件对齐（已观测）
 
 - `codex:message` ← `SessionUpdate::AgentMessageChunk(Text)`
-- `codex:thought` ← `SessionUpdate::AgentThoughtChunk(Text)`
+- `codex:thought` ← `SessionUpdate::AgentThoughtChunk(Text)`（默认转发；如需关闭可设置 `CODEX_DESKTOP_EMIT_THOUGHT_CHUNKS=0`）
 - `codex:tool-call` / `codex:tool-call-update` ← `SessionUpdate::ToolCall` / `ToolCallUpdate`
 - `codex:approval-request` ← ACP `session/request_permission`（包含 `toolCall` 与 `options`，如 `approved-for-session` / `approved` / `abort`）
 - `codex:turn-complete`：由 Desktop 在 `prompt` 返回后发出（携带 `stopReason`）
@@ -38,6 +38,13 @@ cd src-tauri
 cargo run --bin task0_acp_smoke -- "请在当前目录创建文件 demo.txt，内容为 hello"
 ```
 
+也支持从文件读取长 prompt，并把所有流式增量（含 `tsMs`/`dtMs`）保存到 `.txt`（JSONL）：
+
+```bash
+cd src-tauri
+cargo run --bin task0_acp_smoke -- --prompt-file ./prompt.txt --out ./output.txt
+```
+
 ### 2) tauri dev（UI 闭环）
 
 ```bash
@@ -45,4 +52,3 @@ npm run tauri dev
 ```
 
 在输入框发送消息后，assistant 回复应以流式方式增量显示；工具/审批事件可在 DevTools Console 观察（Task0 阶段先 console.debug）。
-

@@ -46,6 +46,17 @@
   padding-top: 0;
 }
 
+.chat-message--tool .chat-message__bubble {
+  border-color: var(--color-border);
+  border-bottom-left-radius: var(--radius-sm);
+  padding-top: var(--spacing-md);
+  background: color-mix(in srgb, var(--color-border) 10%, transparent);
+}
+
+.chat-message--thought .chat-message__thinking {
+  margin-left: 0;
+}
+
 .chat-message__thinking {
   max-width: 80%;
   margin-left: 4px;
@@ -57,8 +68,26 @@
   padding: 0 var(--spacing-xs);
 }
 
-/* 流式输出：不显示跳动光标 */
-.chat-message--streaming .chat-message__bubble::after {
-  content: '';
-  display: none;
+.chat-message__cursor {
+  display: inline-block;
+  width: 0.6ch;
+  margin-left: 0.1ch;
+  vertical-align: baseline;
+  opacity: 1;
+  animation: chat-message-cursor-blink 1s step-end infinite;
+}
+
+.chat-message__cursor::after {
+  content: '▍';
+}
+
+@keyframes chat-message-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
 }

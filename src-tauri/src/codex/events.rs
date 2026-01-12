@@ -9,4 +9,3 @@ pub const EVENT_CURRENT_MODE: &str = "codex:current-mode";
 pub const EVENT_CONFIG_OPTION_UPDATE: &str = "codex:config-option-update";
 pub const EVENT_TURN_COMPLETE: &str = "codex:turn-complete";
 pub const EVENT_ERROR: &str = "codex:error";
-

@@ -46,11 +46,15 @@ pub struct CodexAcpBinary {
 
 impl CodexAcpBinary {
     pub fn resolve(app: Option<&tauri::AppHandle>) -> Result<Self> {
-        let mode = CodexAcpLaunchMode::from_env().unwrap_or_else(CodexAcpLaunchMode::default_for_build);
+        let mode =
+            CodexAcpLaunchMode::from_env().unwrap_or_else(CodexAcpLaunchMode::default_for_build);
         Self::resolve_with_mode(mode, app)
     }
 
-    pub fn resolve_with_mode(mode: CodexAcpLaunchMode, app: Option<&tauri::AppHandle>) -> Result<Self> {
+    pub fn resolve_with_mode(
+        mode: CodexAcpLaunchMode,
+        app: Option<&tauri::AppHandle>,
+    ) -> Result<Self> {
         match mode {
             CodexAcpLaunchMode::Npx => Ok(Self::npx()),
             CodexAcpLaunchMode::Sidecar => Self::sidecar(app),
@@ -58,7 +62,11 @@ impl CodexAcpBinary {
     }
 
     pub fn diagnostics_line(&self) -> String {
-        let mut s = format!("codex-acp spawn: mode={:?} program={}", self.mode, self.program.to_string_lossy());
+        let mut s = format!(
+            "codex-acp spawn: mode={:?} program={}",
+            self.mode,
+            self.program.to_string_lossy()
+        );
         if !self.args.is_empty() {
             s.push_str(" args=");
             s.push_str(
@@ -84,7 +92,8 @@ impl CodexAcpBinary {
     }
 
     fn npx() -> Self {
-        let program: OsString = std::env::var_os("CODEX_DESKTOP_NPX_BIN").unwrap_or_else(|| OsString::from("npx"));
+        let program: OsString =
+            std::env::var_os("CODEX_DESKTOP_NPX_BIN").unwrap_or_else(|| OsString::from("npx"));
         let spec = std::env::var_os("CODEX_DESKTOP_ACP_NPX_SPEC")
             .unwrap_or_else(|| OsString::from("@zed-industries/codex-acp@0.8.2"));
         Self {
@@ -103,7 +112,8 @@ impl CodexAcpBinary {
             });
         }
 
-        let app = app.context("sidecar mode requires a Tauri AppHandle (or set CODEX_DESKTOP_ACP_PATH)")?;
+        let app =
+            app.context("sidecar mode requires a Tauri AppHandle (or set CODEX_DESKTOP_ACP_PATH)")?;
         let resource_dir = app
             .path()
             .resource_dir()
@@ -119,10 +129,14 @@ impl CodexAcpBinary {
         let candidates = [
             resource_dir.join(&exe_name),
             resource_dir.join("bin").join(&exe_name),
-            macos_macos_dir(&resource_dir).map(|d| d.join(&exe_name)).unwrap_or_default(),
+            macos_macos_dir(&resource_dir)
+                .map(|d| d.join(&exe_name))
+                .unwrap_or_default(),
         ];
 
-        let found = candidates.into_iter().find(|p| !p.as_os_str().is_empty() && p.exists());
+        let found = candidates
+            .into_iter()
+            .find(|p| !p.as_os_str().is_empty() && p.exists());
         let Some(candidate) = found else {
             return Err(anyhow!(
                 "codex-acp sidecar not found (looked for {}) (set CODEX_DESKTOP_ACP_PATH to override)",
@@ -138,7 +152,8 @@ impl CodexAcpBinary {
     }
 
     pub fn default_codex_home(app: Option<&tauri::AppHandle>) -> Result<PathBuf> {
-        if let Some(explicit) = std::env::var_os("CODEX_DESKTOP_CODEX_HOME").or_else(|| std::env::var_os("CODEX_HOME"))
+        if let Some(explicit) =
+            std::env::var_os("CODEX_DESKTOP_CODEX_HOME").or_else(|| std::env::var_os("CODEX_HOME"))
         {
             return Ok(PathBuf::from(explicit));
         }

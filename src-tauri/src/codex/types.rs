@@ -52,13 +52,40 @@ pub struct PromptResult {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum CodexEventPayload {
-    MessageChunk { session_id: String, text: String },
-    ThoughtChunk { session_id: String, text: String },
-    ToolCall { session_id: String, tool_call: ToolCall },
-    ToolCallUpdate { session_id: String, update: ToolCallUpdate },
-    Plan { session_id: String, plan: Plan },
-    AvailableCommandsUpdate { session_id: String, update: AvailableCommandsUpdate },
-    CurrentModeUpdate { session_id: String, update: CurrentModeUpdate },
-    ConfigOptionUpdate { session_id: String, update: ConfigOptionUpdate },
-    UnknownSessionUpdate { session_id: String, update: SessionUpdate },
+    MessageChunk {
+        session_id: String,
+        text: String,
+    },
+    ThoughtChunk {
+        session_id: String,
+        text: String,
+    },
+    ToolCall {
+        session_id: String,
+        tool_call: ToolCall,
+    },
+    ToolCallUpdate {
+        session_id: String,
+        update: ToolCallUpdate,
+    },
+    Plan {
+        session_id: String,
+        plan: Plan,
+    },
+    AvailableCommandsUpdate {
+        session_id: String,
+        update: AvailableCommandsUpdate,
+    },
+    CurrentModeUpdate {
+        session_id: String,
+        update: CurrentModeUpdate,
+    },
+    ConfigOptionUpdate {
+        session_id: String,
+        update: ConfigOptionUpdate,
+    },
+    UnknownSessionUpdate {
+        session_id: String,
+        update: SessionUpdate,
+    },
 }

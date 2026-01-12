@@ -1,20 +1,81 @@
-use anyhow::{anyhow, Context, Result};
 use agent_client_protocol::{
     Agent, AuthenticateRequest, Client, ClientCapabilities, ClientSideConnection, ContentBlock,
-    InitializeRequest, Meta, PermissionOptionKind, ProtocolVersion, PromptRequest,
+    InitializeRequest, Meta, PermissionOptionKind, PromptRequest, ProtocolVersion,
     RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
     SelectedPermissionOutcome, SessionConfigKind, SessionConfigSelectOptions, SessionNotification,
     SessionUpdate, SetSessionConfigOptionRequest,
 };
+use anyhow::{anyhow, Context, Result};
 use serde_json::json;
-use std::{path::PathBuf, sync::Arc};
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+    path::{Path, PathBuf},
+    sync::{Arc, Mutex},
+    time::{SystemTime, UNIX_EPOCH},
+};
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 use codex_desktop_lib::codex::binary::CodexAcpBinary;
 use codex_desktop_lib::codex_dev::config;
 
+fn now_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis()
+        .try_into()
+        .unwrap_or(u64::MAX)
+}
+
 #[derive(Clone)]
-struct StdoutClient;
+struct OutputLog {
+    path: PathBuf,
+    start_ms: u64,
+    writer: Arc<Mutex<BufWriter<File>>>,
+}
+
+impl OutputLog {
+    fn new(path: PathBuf) -> Result<Self> {
+        if let Some(parent) = path.parent() {
+            if !parent.as_os_str().is_empty() {
+                std::fs::create_dir_all(parent)
+                    .with_context(|| format!("failed to create log dir: {}", parent.display()))?;
+            }
+        }
+        let file =
+            File::create(&path).with_context(|| format!("failed to create log: {}", path.display()))?;
+        Ok(Self {
+            path,
+            start_ms: now_ms(),
+            writer: Arc::new(Mutex::new(BufWriter::new(file))),
+        })
+    }
+
+    fn write_json(&self, mut value: serde_json::Value) {
+        let ts_ms = now_ms();
+        if let Some(obj) = value.as_object_mut() {
+            obj.insert("tsMs".to_string(), serde_json::Value::Number(ts_ms.into()));
+            let dt = ts_ms.saturating_sub(self.start_ms);
+            obj.insert("dtMs".to_string(), serde_json::Value::Number(dt.into()));
+        }
+
+        let line = match serde_json::to_string(&value) {
+            Ok(s) => s,
+            Err(_) => return,
+        };
+
+        if let Ok(mut guard) = self.writer.lock() {
+            let _ = writeln!(guard, "{line}");
+            let _ = guard.flush();
+        }
+    }
+}
+
+#[derive(Clone)]
+struct StdoutClient {
+    log: OutputLog,
+}
 
 #[async_trait::async_trait(?Send)]
 impl Client for StdoutClient {
@@ -22,26 +83,32 @@ impl Client for StdoutClient {
         &self,
         args: RequestPermissionRequest,
     ) -> agent_client_protocol::Result<RequestPermissionResponse> {
-        eprintln!(
-            "{}",
-            json!({
-                "type": "request_permission",
-                "sessionId": args.session_id.0,
-                "toolCall": args.tool_call,
-                "options": args.options,
-            })
-        );
+        let value = json!({
+            "type": "request_permission",
+            "sessionId": args.session_id.0,
+            "toolCall": args.tool_call,
+            "options": args.options,
+        });
+        self.log.write_json(value.clone());
+        eprintln!("{value}");
 
         let selected = args
             .options
             .iter()
-            .find(|o| matches!(o.kind, PermissionOptionKind::AllowOnce | PermissionOptionKind::AllowAlways))
+            .find(|o| {
+                matches!(
+                    o.kind,
+                    PermissionOptionKind::AllowOnce | PermissionOptionKind::AllowAlways
+                )
+            })
             .or_else(|| args.options.first())
             .ok_or_else(agent_client_protocol::Error::invalid_params)?;
 
-        Ok(RequestPermissionResponse::new(RequestPermissionOutcome::Selected(
-            SelectedPermissionOutcome::new(selected.option_id.clone()),
-        )))
+        Ok(RequestPermissionResponse::new(
+            RequestPermissionOutcome::Selected(SelectedPermissionOutcome::new(
+                selected.option_id.clone(),
+            )),
+        ))
     }
 
     async fn session_notification(
@@ -51,22 +118,32 @@ impl Client for StdoutClient {
         match &args.update {
             SessionUpdate::AgentMessageChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
-                    eprintln!("{}", json!({ "type": "agent_message_chunk", "text": text }));
+                    let value = json!({ "type": "agent_message_chunk", "text": text });
+                    self.log.write_json(value.clone());
+                    eprintln!("{value}");
                 }
             }
             SessionUpdate::AgentThoughtChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
-                    eprintln!("{}", json!({ "type": "agent_thought_chunk", "text": text }));
+                    let value = json!({ "type": "agent_thought_chunk", "text": text });
+                    self.log.write_json(value.clone());
+                    eprintln!("{value}");
                 }
             }
             SessionUpdate::ToolCall(tool_call) => {
-                eprintln!("{}", json!({ "type": "tool_call", "toolCall": tool_call }));
+                let value = json!({ "type": "tool_call", "toolCall": tool_call });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
             }
             SessionUpdate::ToolCallUpdate(update) => {
-                eprintln!("{}", json!({ "type": "tool_call_update", "update": update }));
+                let value = json!({ "type": "tool_call_update", "update": update });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
             }
             SessionUpdate::Plan(plan) => {
-                eprintln!("{}", json!({ "type": "plan", "plan": plan }));
+                let value = json!({ "type": "plan", "plan": plan });
+                self.log.write_json(value.clone());
+                eprintln!("{value}");
             }
             _ => {}
         }
@@ -87,15 +164,69 @@ async fn main() -> Result<()> {
     let cfg = config::load_codex_cli_config(&codex_home)?;
 
     let cwd = std::env::current_dir().context("failed to get current_dir")?;
-    let prompt = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| "请读取 README.md 并总结项目用途（如需读取文件请发起工具调用）".to_string());
+    let (prompt, out_path) = parse_args()?;
+    let out_log = OutputLog::new(out_path)?;
+    let init_value = json!({
+        "type": "output_file",
+        "path": out_log.path.display().to_string(),
+    });
+    out_log.write_json(init_value.clone());
+    eprintln!("{init_value}");
 
     tokio::task::LocalSet::new()
-        .run_until(async move {
-            run_smoke(codex_home, cfg, cwd, prompt).await
-        })
+        .run_until(async move { run_smoke(codex_home, cfg, cwd, prompt, out_log).await })
         .await
+}
+
+fn default_out_path(cwd: &Path) -> PathBuf {
+    cwd.join(format!("task0_acp_smoke_output_{}.txt", now_ms()))
+}
+
+fn parse_args() -> Result<(String, PathBuf)> {
+    let cwd = std::env::current_dir().context("failed to get current_dir")?;
+
+    let mut prompt: Option<String> = None;
+    let mut prompt_file: Option<PathBuf> = None;
+    let mut out: Option<PathBuf> = None;
+
+    let mut args = std::env::args().skip(1);
+    while let Some(arg) = args.next() {
+        match arg.as_str() {
+            "--prompt-file" => {
+                let path = args
+                    .next()
+                    .ok_or_else(|| anyhow!("--prompt-file requires a path"))?;
+                prompt_file = Some(PathBuf::from(path));
+            }
+            "--out" => {
+                let path = args.next().ok_or_else(|| anyhow!("--out requires a path"))?;
+                out = Some(PathBuf::from(path));
+            }
+            "--help" | "-h" => {
+                eprintln!(
+                    "usage: task0_acp_smoke [PROMPT]\n  --prompt-file <path>\n  --out <path>"
+                );
+                std::process::exit(0);
+            }
+            other => {
+                if prompt.is_none() {
+                    prompt = Some(other.to_string());
+                } else {
+                    prompt = Some(format!("{} {}", prompt.unwrap(), other));
+                }
+            }
+        }
+    }
+
+    let prompt = if let Some(path) = prompt_file {
+        std::fs::read_to_string(&path)
+            .with_context(|| format!("failed to read prompt file: {}", path.display()))?
+    } else {
+        prompt.unwrap_or_else(|| "请读取 README.md 并总结项目用途（如需读取文件请发起工具调用）".to_string())
+    };
+
+    let out = out.unwrap_or_else(|| default_out_path(&cwd));
+    Ok((prompt, out))
 }
 
 async fn run_smoke(
@@ -103,9 +234,12 @@ async fn run_smoke(
     cfg: config::CodexCliConfig,
     cwd: PathBuf,
     prompt: String,
+    out_log: OutputLog,
 ) -> Result<()> {
     let binary = CodexAcpBinary::resolve(None)?;
-    eprintln!("{}", binary.diagnostics_line());
+    let diagnostics = binary.diagnostics_line();
+    out_log.write_json(json!({ "type": "codex_acp_spawn", "diagnostics": diagnostics }));
+    eprintln!("{diagnostics}");
     let mut cmd = binary.command(&codex_home);
 
     if let Some(api_key) = cfg.api_key.as_deref() {
@@ -137,7 +271,9 @@ async fn run_smoke(
     let client_capabilities = ClientCapabilities::new().meta(meta);
 
     let (conn, io_task) = ClientSideConnection::new(
-        Arc::new(StdoutClient),
+        Arc::new(StdoutClient {
+            log: out_log.clone(),
+        }),
         stdin.compat_write(),
         stdout.compat(),
         |fut| {
@@ -147,7 +283,10 @@ async fn run_smoke(
 
     tokio::task::spawn_local(async move {
         if let Err(err) = io_task.await {
-            eprintln!("{}", json!({ "type": "io_error", "error": err.to_string() }));
+            eprintln!(
+                "{}",
+                json!({ "type": "io_error", "error": err.to_string() })
+            );
         }
     });
 
@@ -161,7 +300,9 @@ async fn run_smoke(
                 .client_capabilities(client_capabilities),
         )
         .await?;
-    eprintln!("{}", json!({ "type": "initialize_ok", "agentInfo": init.agent_info, "authMethods": init.auth_methods }));
+    let value = json!({ "type": "initialize_ok", "agentInfo": init.agent_info, "authMethods": init.auth_methods });
+    out_log.write_json(value.clone());
+    eprintln!("{value}");
 
     if cfg.api_key.is_some() {
         let provider = cfg
@@ -174,21 +315,26 @@ async fn run_smoke(
         } else {
             "openai-api-key"
         };
-        let _ = conn.authenticate(AuthenticateRequest::new(method_id)).await?;
-        eprintln!("{}", json!({ "type": "authenticate_ok", "methodId": method_id }));
+        let _ = conn
+            .authenticate(AuthenticateRequest::new(method_id))
+            .await?;
+        let value = json!({ "type": "authenticate_ok", "methodId": method_id });
+        out_log.write_json(value.clone());
+        eprintln!("{value}");
     }
 
-    let session = conn.new_session(agent_client_protocol::NewSessionRequest::new(cwd)).await?;
-    eprintln!(
-        "{}",
-        json!({
-            "type": "new_session_ok",
-            "sessionId": session.session_id.0,
-            "configOptions": session.config_options,
-            "modes": session.modes,
-            "models": session.models,
-        })
-    );
+    let session = conn
+        .new_session(agent_client_protocol::NewSessionRequest::new(cwd))
+        .await?;
+    let value = json!({
+        "type": "new_session_ok",
+        "sessionId": session.session_id.0,
+        "configOptions": session.config_options,
+        "modes": session.modes,
+        "models": session.models,
+    });
+    out_log.write_json(value.clone());
+    eprintln!("{value}");
 
     // Try to switch to a more restrictive approval preset so `request_permission` is exercised.
     if let Some(config_options) = session.config_options.as_ref() {
@@ -208,15 +354,17 @@ async fn run_smoke(
                 let pick = flat
                     .iter()
                     .find(|o| o.value.0.as_ref() == "read-only")
-                    .or_else(|| flat.iter().find(|o| {
-                    let name = o.name.to_ascii_lowercase();
-                    let id = o.value.0.as_ref().to_ascii_lowercase();
-                    name.contains("ask")
-                        || name.contains("untrusted")
-                        || name.contains("prompt")
-                        || id.contains("untrusted")
-                        || id.contains("ask")
-                }));
+                    .or_else(|| {
+                        flat.iter().find(|o| {
+                            let name = o.name.to_ascii_lowercase();
+                            let id = o.value.0.as_ref().to_ascii_lowercase();
+                            name.contains("ask")
+                                || name.contains("untrusted")
+                                || name.contains("prompt")
+                                || id.contains("untrusted")
+                                || id.contains("ask")
+                        })
+                    });
 
                 if let Some(target) = pick {
                     let _ = conn
@@ -226,15 +374,14 @@ async fn run_smoke(
                             target.value.clone(),
                         ))
                         .await?;
-                    eprintln!(
-                        "{}",
-                        json!({
-                            "type": "set_mode_attempted",
-                            "configId": mode_option.id,
-                            "value": target.value,
-                            "name": target.name,
-                        })
-                    );
+                    let value = json!({
+                        "type": "set_mode_attempted",
+                        "configId": mode_option.id,
+                        "value": target.value,
+                        "name": target.name,
+                    });
+                    out_log.write_json(value.clone());
+                    eprintln!("{value}");
                 }
             }
         }
@@ -242,11 +389,15 @@ async fn run_smoke(
 
     let request = PromptRequest::new(
         session.session_id.clone(),
-        vec![ContentBlock::Text(agent_client_protocol::TextContent::new(prompt))],
+        vec![ContentBlock::Text(agent_client_protocol::TextContent::new(
+            prompt,
+        ))],
     );
 
     let response = conn.prompt(request).await?;
-    eprintln!("{}", json!({ "type": "prompt_done", "stopReason": response.stop_reason }));
+    let value = json!({ "type": "prompt_done", "stopReason": response.stop_reason });
+    out_log.write_json(value.clone());
+    eprintln!("{value}");
 
     let _ = child.kill().await;
     let _ = child.wait().await;
