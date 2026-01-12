@@ -25,10 +25,20 @@ function App() {
 
   const activeSessionIdRef = useRef<string>('1');
   const activeAssistantMessageIdRef = useRef<string | null>(null);
-  const activeAssistantAnswerStartedRef = useRef(false);
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
+
+  const finalizeThinking = (now: number, thinking?: Message['thinking']) => {
+    if (!thinking) return undefined;
+    return {
+      ...thinking,
+      isStreaming: false,
+      duration:
+        thinking.duration ??
+        (thinking.startTime !== undefined ? (now - thinking.startTime) / 1000 : undefined),
+    };
+  };
 
   useEffect(() => {
     const unlistenPromises = [
@@ -37,25 +47,12 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
-        activeAssistantAnswerStartedRef.current = true;
-
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
           const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-
-            const nextThinking = m.thinking
-              ? {
-                  ...m.thinking,
-                  isStreaming: false,
-                  duration:
-                    m.thinking.duration ??
-                    (m.thinking.startTime !== undefined
-                      ? (now - m.thinking.startTime) / 1000
-                      : undefined),
-                }
-              : undefined;
+            const nextThinking = finalizeThinking(now, m.thinking);
 
             return {
               ...m,
@@ -72,8 +69,6 @@ function App() {
         const sessionId = activeSessionIdRef.current;
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
-        // 如果已经开始输出最终回复，则不再展示/更新思考内容
-        if (activeAssistantAnswerStartedRef.current) return;
 
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
@@ -81,12 +76,15 @@ function App() {
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
             const startTime = m.thinking?.startTime ?? now;
+            const isAnswerStarted = m.content.length > 0;
             return {
               ...m,
               thinking: {
                 content: (m.thinking?.content ?? '') + event.payload.text,
-                isStreaming: true,
+                // 若回答已开始但 thought 晚到：仍然保留内容，但不显示“思考中”流式状态
+                isStreaming: !isAnswerStarted,
                 startTime,
+                duration: m.thinking?.duration,
               },
             };
           });
@@ -98,25 +96,12 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
-        activeAssistantAnswerStartedRef.current = false;
-
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
           const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-
-            const nextThinking = m.thinking
-              ? {
-                  ...m.thinking,
-                  isStreaming: false,
-                  duration:
-                    m.thinking.duration ??
-                    (m.thinking.startTime !== undefined
-                      ? (now - m.thinking.startTime) / 1000
-                      : undefined),
-                }
-              : undefined;
+            const nextThinking = finalizeThinking(now, m.thinking);
 
             return {
               ...m,
@@ -136,25 +121,12 @@ function App() {
         const assistantMessageId = activeAssistantMessageIdRef.current;
         if (!assistantMessageId) return;
 
-        activeAssistantAnswerStartedRef.current = false;
-
         setSessionMessages((prev) => {
           const list = prev[sessionId] ?? [];
           const now = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
-
-            const nextThinking = m.thinking
-              ? {
-                  ...m.thinking,
-                  isStreaming: false,
-                  duration:
-                    m.thinking.duration ??
-                    (m.thinking.startTime !== undefined
-                      ? (now - m.thinking.startTime) / 1000
-                      : undefined),
-                }
-              : undefined;
+            const nextThinking = finalizeThinking(now, m.thinking);
 
             return {
               ...m,
@@ -238,14 +210,15 @@ function App() {
 
   const handleSendMessage = useCallback(
     (content: string) => {
+      const now = Date.now();
       const userMessage: Message = {
-        id: String(Date.now()),
+        id: String(now),
         role: 'user',
         content,
         timestamp: new Date(),
       };
 
-      const assistantMessageId = String(Date.now() + 1);
+      const assistantMessageId = String(now + 1);
       const assistantMessage: Message = {
         id: assistantMessageId,
         role: 'assistant',
@@ -257,7 +230,6 @@ function App() {
 
       activeSessionIdRef.current = selectedSessionId;
       activeAssistantMessageIdRef.current = assistantMessageId;
-      activeAssistantAnswerStartedRef.current = false;
       setIsGenerating(true);
 
       // 更新当前会话的消息
@@ -281,13 +253,16 @@ function App() {
       void invoke('codex_dev_prompt_once', { cwd: '.', content }).catch((err) => {
         setSessionMessages((prev) => {
           const list = prev[selectedSessionId] ?? [];
+          const errorNow = Date.now();
           const next = list.map((m) => {
             if (String(m.id) !== assistantMessageId) return m;
+            const nextThinking = finalizeThinking(errorNow, m.thinking);
             return {
               ...m,
               content: `调用失败：${String(err)}`,
               isStreaming: false,
               timestamp: new Date(),
+              thinking: nextThinking,
             };
           });
           return { ...prev, [selectedSessionId]: next };

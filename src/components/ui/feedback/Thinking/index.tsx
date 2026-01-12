@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 import { Markdown } from '../../data-display/Markdown';
 import { cn } from '../../../../utils/cn';
@@ -6,6 +6,7 @@ import { cn } from '../../../../utils/cn';
 import type { ThinkingProps } from './types';
 
 import './Thinking.css';
+export { ThinkingLoading } from './ThinkingLoading';
 
 function BrainIcon({ size = 16 }: { size?: number }) {
   return (
@@ -57,14 +58,17 @@ export function Thinking({
   defaultOpen,
   className = '',
 }: ThinkingProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen ?? isStreaming);
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const prevIsStreamingRef = useRef(isStreaming);
 
-  // 流式传输时自动展开；结束后保持当前展开状态（避免看起来“消失”）
+  // 思考结束后：保持组件存在并默认折叠
   useEffect(() => {
-    if (isStreaming) {
-      setIsOpen(true);
+    const prev = prevIsStreamingRef.current;
+    if (prev && !isStreaming) {
+      setIsOpen(false);
     }
+    prevIsStreamingRef.current = isStreaming;
   }, [isStreaming]);
 
   // 实时计时
@@ -120,7 +124,7 @@ export function Thinking({
       <button
         type="button"
         className="thinking__trigger"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen((v) => !v)}
         aria-expanded={isOpen}
       >
         <span className="thinking__icon">

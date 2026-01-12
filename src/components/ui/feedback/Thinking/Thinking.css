@@ -31,6 +31,11 @@
   outline-offset: -2px;
 }
 
+.thinking__trigger:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .thinking__icon {
   display: flex;
   align-items: center;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { Thinking } from '../../ui/feedback/Thinking';
+import { Thinking, ThinkingLoading } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
 import { cn } from '../../../utils/cn';
 
@@ -87,6 +87,8 @@ export function ChatMessage({
   className = '',
 }: ChatMessageProps) {
   const streamedContent = useTypewriterText(content, role === 'assistant' && isStreaming);
+  const hasThought = (thinking?.content ?? '').trim().length > 0;
+  const showThinkingLoading = role === 'assistant' && isStreaming && !hasThought && content.length === 0;
 
   const formatTime = (date: Date): string => {
     return date.toLocaleTimeString('zh-CN', {
@@ -111,7 +113,7 @@ export function ChatMessage({
 
   return (
     <div className={classNames}>
-      {thinking && role === 'assistant' && (
+      {hasThought && role === 'assistant' && thinking && (
         <div className="chat-message__thinking">
           <Thinking
             content={thinking.content}
@@ -119,6 +121,11 @@ export function ChatMessage({
             startTime={thinking.startTime}
             duration={thinking.duration}
           />
+        </div>
+      )}
+      {showThinkingLoading && (
+        <div className="chat-message__thinking">
+          <ThinkingLoading />
         </div>
       )}
       <div className="chat-message__bubble">{renderContent()}</div>
