@@ -122,7 +122,7 @@ export function ChatMessage({
         </div>
       )}
       <div className="chat-message__bubble">{renderContent()}</div>
-      {timestamp && (
+      {timestamp && (role === 'user' || !isStreaming) && (
         <span className="chat-message__timestamp">{formatTime(timestamp)}</span>
       )}
     </div>

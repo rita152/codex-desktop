@@ -93,6 +93,7 @@ function App() {
             return {
               ...m,
               isStreaming: false,
+              timestamp: new Date(),
               thinking: undefined,
             };
           });
@@ -117,6 +118,7 @@ function App() {
               ...m,
               content: `发生错误：${event.payload.error}`,
               isStreaming: false,
+              timestamp: new Date(),
               thinking: undefined,
             };
           });
@@ -207,7 +209,8 @@ function App() {
         role: 'assistant',
         content: '',
         isStreaming: true,
-        timestamp: new Date(),
+        // assistant 消息时间戳应为“回答完毕时刻”，因此先不设置
+        timestamp: undefined,
       };
 
       activeSessionIdRef.current = selectedSessionId;
@@ -242,6 +245,7 @@ function App() {
               ...m,
               content: `调用失败：${String(err)}`,
               isStreaming: false,
+              timestamp: new Date(),
             };
           });
           return { ...prev, [selectedSessionId]: next };
