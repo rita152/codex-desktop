@@ -134,9 +134,8 @@ function App() {
         activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       }),
-      listen('codex:approval-request', (event) => {
-        // Task0：先用 console 观察审批流，后续接入 ApprovalDialog
-        console.debug('[codex approval]', event.payload);
+      listen('codex:approval-request', () => {
+        // TODO: 接入 ApprovalDialog
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         if (!ensureActiveAcpSession(event.payload.sessionId)) return;

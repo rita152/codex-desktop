@@ -112,34 +112,60 @@ export interface CodexEventHandlers {
   onDebug?: (payload: CodexDebugEvent) => void;
 }
 
+function logEvent(eventName: string, payload: unknown): void {
+  console.debug(`[codex] ${eventName}`, payload);
+}
+
 export async function subscribeToEvents(handlers: CodexEventHandlers): Promise<UnlistenFn> {
   const unlisteners = await Promise.all([
-    listen<MessageChunk>('codex:message', (event) => handlers.onMessageChunk?.(event.payload)),
-    listen<MessageChunk>('codex:thought', (event) => handlers.onThoughtChunk?.(event.payload)),
-    listen<{ sessionId: string; toolCall: ToolCall }>('codex:tool-call', (event) =>
-      handlers.onToolCall?.(event.payload)
-    ),
-    listen<{ sessionId: string; update: ToolCallUpdate }>('codex:tool-call-update', (event) =>
-      handlers.onToolCallUpdate?.(event.payload)
-    ),
-    listen<ApprovalRequest>('codex:approval-request', (event) =>
-      handlers.onApprovalRequest?.(event.payload)
-    ),
-    listen<{ sessionId: string; plan: unknown }>('codex:plan', (event) => handlers.onPlan?.(event.payload)),
-    listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) =>
-      handlers.onAvailableCommands?.(event.payload)
-    ),
-    listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) =>
-      handlers.onCurrentMode?.(event.payload)
-    ),
-    listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) =>
-      handlers.onConfigOptionUpdate?.(event.payload)
-    ),
-    listen<TurnCompleteEvent>('codex:turn-complete', (event) =>
-      handlers.onTurnComplete?.(event.payload)
-    ),
-    listen<CodexErrorEvent>('codex:error', (event) => handlers.onError?.(event.payload)),
-    listen<CodexDebugEvent>('codex:debug', (event) => handlers.onDebug?.(event.payload)),
+    listen<MessageChunk>('codex:message', (event) => {
+      logEvent('message', event.payload);
+      handlers.onMessageChunk?.(event.payload);
+    }),
+    listen<MessageChunk>('codex:thought', (event) => {
+      logEvent('thought', event.payload);
+      handlers.onThoughtChunk?.(event.payload);
+    }),
+    listen<{ sessionId: string; toolCall: ToolCall }>('codex:tool-call', (event) => {
+      logEvent('tool-call', event.payload);
+      handlers.onToolCall?.(event.payload);
+    }),
+    listen<{ sessionId: string; update: ToolCallUpdate }>('codex:tool-call-update', (event) => {
+      logEvent('tool-call-update', event.payload);
+      handlers.onToolCallUpdate?.(event.payload);
+    }),
+    listen<ApprovalRequest>('codex:approval-request', (event) => {
+      logEvent('approval-request', event.payload);
+      handlers.onApprovalRequest?.(event.payload);
+    }),
+    listen<{ sessionId: string; plan: unknown }>('codex:plan', (event) => {
+      logEvent('plan', event.payload);
+      handlers.onPlan?.(event.payload);
+    }),
+    listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) => {
+      logEvent('available-commands', event.payload);
+      handlers.onAvailableCommands?.(event.payload);
+    }),
+    listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) => {
+      logEvent('current-mode', event.payload);
+      handlers.onCurrentMode?.(event.payload);
+    }),
+    listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) => {
+      logEvent('config-option-update', event.payload);
+      handlers.onConfigOptionUpdate?.(event.payload);
+    }),
+    listen<TurnCompleteEvent>('codex:turn-complete', (event) => {
+      logEvent('turn-complete', event.payload);
+      handlers.onTurnComplete?.(event.payload);
+    }),
+    listen<CodexErrorEvent>('codex:error', (event) => {
+      logEvent('error', event.payload);
+      handlers.onError?.(event.payload);
+    }),
+    listen<CodexDebugEvent>('codex:debug', (event) => {
+      logEvent('debug', event.payload);
+      handlers.onDebug?.(event.payload);
+    }),
   ]);
 
   return () => {
