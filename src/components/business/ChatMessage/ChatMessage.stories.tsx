@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { ChatMessage } from './index';
+import type { ThinkingPhase } from '../../ui/feedback/Thinking';
 
 const meta: Meta<typeof ChatMessage> = {
   title: 'Business/ChatMessage',
@@ -62,79 +63,97 @@ function ConversationDemo() {
   }>>([
     { id: 1, role: 'user', content: '帮我解释一下 React 组件设计的最佳实践', timestamp: new Date(Date.now() - 60000) },
   ]);
-  const [isThinking, setIsThinking] = useState(false);
+  const [phase, setPhase] = useState<ThinkingPhase>('done');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamContent, setStreamContent] = useState('');
   const [thinkingStartTime, setThinkingStartTime] = useState<number | null>(null);
   const [thinkingDuration, setThinkingDuration] = useState<number | undefined>(undefined);
+  const [thinkingStreamContent, setThinkingStreamContent] = useState('');
 
   const simulateResponse = useCallback(() => {
-    // 开始思考
-    setIsThinking(true);
-    const startTime = Date.now();
-    setThinkingStartTime(startTime);
-    setThinkingDuration(undefined);
+    // 阶段 1: Working
+    setPhase('working');
+    setThinkingStreamContent('');
+    setStreamContent('');
 
-    // 2秒后结束思考，开始流式输出
+    // 500ms 后切换到 Thinking
     setTimeout(() => {
-      setIsThinking(false);
-      setThinkingDuration((Date.now() - startTime) / 1000);
-      setIsStreaming(true);
-      setStreamContent('');
+      const startTime = Date.now();
+      setThinkingStartTime(startTime);
+      setPhase('thinking');
 
-      let charIndex = 0;
-      const streamInterval = setInterval(() => {
-        if (charIndex >= assistantResponse.length) {
-          clearInterval(streamInterval);
-          setIsStreaming(false);
-          setMessages(prev => [
-            ...prev,
-            {
-              id: Date.now(),
-              role: 'assistant',
-              content: assistantResponse,
-              timestamp: new Date(),
-            },
-          ]);
-          setStreamContent('');
-          setThinkingStartTime(null);
-          setThinkingDuration(undefined);
+      // 流式输出思考内容
+      let thinkingCharIndex = 0;
+      const thinkingInterval = setInterval(() => {
+        if (thinkingCharIndex >= thinkingContent.length) {
+          clearInterval(thinkingInterval);
+          // 思考结束，开始输出正文
+          setPhase('done');
+          setThinkingDuration((Date.now() - startTime) / 1000);
+          setIsStreaming(true);
+
+          let charIndex = 0;
+          const streamInterval = setInterval(() => {
+            if (charIndex >= assistantResponse.length) {
+              clearInterval(streamInterval);
+              setIsStreaming(false);
+              setMessages(prev => [
+                ...prev,
+                {
+                  id: Date.now(),
+                  role: 'assistant',
+                  content: assistantResponse,
+                  timestamp: new Date(),
+                },
+              ]);
+              setStreamContent('');
+              setThinkingStreamContent('');
+              setThinkingStartTime(null);
+              setThinkingDuration(undefined);
+              return;
+            }
+            setStreamContent(assistantResponse.slice(0, charIndex + 1));
+            charIndex++;
+          }, 20);
           return;
         }
-        setStreamContent(assistantResponse.slice(0, charIndex + 1));
-        charIndex++;
-      }, 20);
-    }, 2000);
+        setThinkingStreamContent(thinkingContent.slice(0, thinkingCharIndex + 1));
+        thinkingCharIndex++;
+      }, 30);
+    }, 500);
   }, []);
 
   const reset = useCallback(() => {
     setMessages([
       { id: 1, role: 'user', content: '帮我解释一下 React 组件设计的最佳实践', timestamp: new Date(Date.now() - 60000) },
     ]);
-    setIsThinking(false);
+    setPhase('done');
     setIsStreaming(false);
     setStreamContent('');
+    setThinkingStreamContent('');
     setThinkingStartTime(null);
     setThinkingDuration(undefined);
   }, []);
+
+  const isActive = phase === 'working' || phase === 'thinking' || isStreaming;
 
   return (
     <div style={{ maxWidth: 700, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <button
           onClick={simulateResponse}
-          disabled={isThinking || isStreaming}
+          disabled={isActive}
           style={{
             padding: '8px 16px',
             borderRadius: 6,
             border: '1px solid var(--color-border)',
-            background: (isThinking || isStreaming) ? 'var(--color-bg-muted)' : 'var(--color-primary)',
-            color: (isThinking || isStreaming) ? 'var(--color-text-secondary)' : 'var(--color-text-inverse)',
-            cursor: (isThinking || isStreaming) ? 'not-allowed' : 'pointer',
+            background: isActive ? 'var(--color-bg-muted)' : 'var(--color-primary)',
+            color: isActive ? 'var(--color-text-secondary)' : 'var(--color-text-inverse)',
+            cursor: isActive ? 'not-allowed' : 'pointer',
             fontSize: 14,
           }}
         >
-          模拟 AI 回复
+          {phase === 'working' ? 'Working...' : phase === 'thinking' ? 'Thinking...' : isStreaming ? '输出中...' : '模拟 AI 回复'}
         </button>
         <button
           onClick={reset}
@@ -162,14 +181,15 @@ function ConversationDemo() {
           />
         ))}
 
-        {(isThinking || isStreaming) && (
+        {isActive && (
           <ChatMessage
             role="assistant"
-            content={streamContent || ''}
+            content={streamContent}
             isStreaming={isStreaming}
             thinking={{
-              content: thinkingContent,
-              isStreaming: isThinking,
+              content: thinkingStreamContent,
+              isStreaming: phase === 'thinking',
+              phase: phase,
               startTime: thinkingStartTime ?? undefined,
               duration: thinkingDuration,
             }}

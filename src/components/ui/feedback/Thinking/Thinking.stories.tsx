@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { Thinking } from './index';
+import type { ThinkingPhase } from './types';
 
 const meta: Meta<typeof Thinking> = {
   title: 'UI/Thinking',
@@ -16,6 +17,11 @@ const meta: Meta<typeof Thinking> = {
     isStreaming: {
       control: 'boolean',
       description: '是否正在流式传输',
+    },
+    phase: {
+      control: 'select',
+      options: ['working', 'thinking', 'done'],
+      description: '当前阶段',
     },
     duration: {
       control: 'number',
@@ -46,78 +52,85 @@ const thinkingSteps = [
 
 function StreamingDemo() {
   const [content, setContent] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
+  const [phase, setPhase] = useState<ThinkingPhase>('done');
   const [duration, setDuration] = useState<number | undefined>(undefined);
   const [startTime, setStartTime] = useState<number | null>(null);
 
   // 实时更新计时
   useEffect(() => {
-    if (!isStreaming || !startTime) return;
+    if (phase !== 'thinking' || !startTime) return;
 
     const timer = setInterval(() => {
       setDuration((Date.now() - startTime) / 1000);
     }, 100);
 
     return () => clearInterval(timer);
-  }, [isStreaming, startTime]);
+  }, [phase, startTime]);
 
   const startStreaming = useCallback(() => {
+    // 阶段 1: Working
     setContent('');
-    setIsStreaming(true);
+    setPhase('working');
     setDuration(undefined);
-    const now = Date.now();
-    setStartTime(now);
+    setStartTime(null);
 
-    let stepIndex = 0;
-    let charIndex = 0;
-    let currentContent = '';
+    // 500ms 后切换到 Thinking
+    setTimeout(() => {
+      const now = Date.now();
+      setStartTime(now);
+      setPhase('thinking');
 
-    const streamInterval = setInterval(() => {
-      if (stepIndex >= thinkingSteps.length) {
-        clearInterval(streamInterval);
-        setIsStreaming(false);
-        setDuration((Date.now() - now) / 1000);
-        return;
-      }
+      let stepIndex = 0;
+      let charIndex = 0;
+      let currentContent = '';
 
-      const currentStep = thinkingSteps[stepIndex];
-      if (charIndex < currentStep.length) {
-        currentContent += currentStep[charIndex];
-        setContent(currentContent);
-        charIndex++;
-      } else {
-        stepIndex++;
-        charIndex = 0;
-      }
-    }, 50);
+      const streamInterval = setInterval(() => {
+        if (stepIndex >= thinkingSteps.length) {
+          clearInterval(streamInterval);
+          setPhase('done');
+          setDuration((Date.now() - now) / 1000);
+          return;
+        }
 
-    return () => clearInterval(streamInterval);
+        const currentStep = thinkingSteps[stepIndex];
+        if (charIndex < currentStep.length) {
+          currentContent += currentStep[charIndex];
+          setContent(currentContent);
+          charIndex++;
+        } else {
+          stepIndex++;
+          charIndex = 0;
+        }
+      }, 50);
+    }, 500);
   }, []);
 
   const reset = useCallback(() => {
     setContent('');
-    setIsStreaming(false);
+    setPhase('done');
     setDuration(undefined);
     setStartTime(null);
   }, []);
+
+  const isActive = phase === 'working' || phase === 'thinking';
 
   return (
     <div style={{ maxWidth: 600 }}>
       <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
         <button
           onClick={startStreaming}
-          disabled={isStreaming}
+          disabled={isActive}
           style={{
             padding: '8px 16px',
             borderRadius: 6,
             border: '1px solid var(--color-border)',
-            background: isStreaming ? 'var(--color-bg-muted)' : 'var(--color-primary)',
-            color: isStreaming ? 'var(--color-text-secondary)' : 'white',
-            cursor: isStreaming ? 'not-allowed' : 'pointer',
+            background: isActive ? 'var(--color-bg-muted)' : 'var(--color-primary)',
+            color: isActive ? 'var(--color-text-secondary)' : 'white',
+            cursor: isActive ? 'not-allowed' : 'pointer',
             fontSize: 14,
           }}
         >
-          {isStreaming ? '思考中...' : '开始模拟流式传输'}
+          {phase === 'working' ? 'Working...' : phase === 'thinking' ? 'Thinking...' : '开始模拟'}
         </button>
         <button
           onClick={reset}
@@ -135,12 +148,13 @@ function StreamingDemo() {
         </button>
       </div>
       
-      {(content || isStreaming) && (
+      {(content || isActive || duration) && (
         <Thinking
-          content={content || '准备思考...'}
-          isStreaming={isStreaming}
+          content={content}
+          isStreaming={phase === 'thinking'}
+          phase={phase}
           startTime={startTime ?? undefined}
-          duration={!isStreaming && duration ? duration : undefined}
+          duration={phase === 'done' && duration ? duration : undefined}
         />
       )}
 
@@ -153,9 +167,11 @@ function StreamingDemo() {
         color: 'var(--color-text-secondary)',
       }}>
         <strong>状态：</strong>
-        {isStreaming ? (
+        {phase === 'working' ? (
+          <span style={{ color: 'var(--color-warning)' }}>Working (等待响应)</span>
+        ) : phase === 'thinking' ? (
           <span style={{ color: 'var(--color-primary)' }}>
-            流式传输中 ({duration?.toFixed(1)}s)
+            Thinking ({duration?.toFixed(1)}s)
           </span>
         ) : duration ? (
           <span>已完成，耗时 {duration.toFixed(1)} 秒</span>

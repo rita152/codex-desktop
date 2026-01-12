@@ -1,3 +1,5 @@
+import type { ThinkingPhase } from '../../ui/feedback/Thinking';
+
 export type MessageRole = 'user' | 'assistant' | 'thought' | 'tool';
 
 export interface ThinkingData {
@@ -5,6 +7,8 @@ export interface ThinkingData {
   content: string;
   /** 是否正在流式传输 */
   isStreaming?: boolean;
+  /** 当前阶段 */
+  phase?: ThinkingPhase;
   /** 思考开始时间戳 */
   startTime?: number;
   /** 最终思考时长（秒） */

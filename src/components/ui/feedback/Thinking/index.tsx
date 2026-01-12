@@ -1,16 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 
-import { Markdown } from '../../data-display/Markdown';
 import { cn } from '../../../../utils/cn';
-import { useTypewriterText } from '../../../../hooks/useTypewriterText';
+import { Markdown } from '../../data-display/Markdown';
 
-import type { ThinkingProps } from './types';
+import type { ThinkingProps, ThinkingPhase } from './types';
 
 import './Thinking.css';
 export { ThinkingLoading } from './ThinkingLoading';
-
-const TYPEWRITER_SPEED = 140;
-const TYPEWRITER_MAX_CHARS = 14;
 
 function BrainIcon({ size = 16 }: { size?: number }) {
   return (
@@ -57,36 +53,46 @@ function ChevronDownIcon({ size = 16 }: { size?: number }) {
 export function Thinking({
   content,
   isStreaming = false,
+  phase = 'done',
   startTime,
   duration,
   defaultOpen,
   className = '',
 }: ThinkingProps) {
-  const [isOpen, setIsOpen] = useState(defaultOpen ?? isStreaming);
+  const hasContent = content.trim().length > 0;
+  const isActive = phase === 'working' || phase === 'thinking';
+  
+  // 有内容时展开，无内容或完成时折叠
+  const [isOpen, setIsOpen] = useState(() => {
+    if (defaultOpen !== undefined) return defaultOpen;
+    return hasContent && isActive;
+  });
   const [elapsedTime, setElapsedTime] = useState(0);
-  const prevIsStreamingRef = useRef(isStreaming);
-  const streamedContent = useTypewriterText(
-    content,
-    isStreaming,
-    TYPEWRITER_SPEED,
-    TYPEWRITER_MAX_CHARS
-  );
+  const prevPhaseRef = useRef<ThinkingPhase>(phase);
+  const prevHasContentRef = useRef(hasContent);
 
-  // 思考中：默认展开；思考结束：默认折叠（用户仍可手动切换）
+  // 阶段变化时自动控制展开/折叠
   useEffect(() => {
-    const prev = prevIsStreamingRef.current;
-    if (!prev && isStreaming) {
+    const prevPhase = prevPhaseRef.current;
+    const prevHasContent = prevHasContentRef.current;
+    
+    // 从无内容变为有内容时，展开
+    if (!prevHasContent && hasContent && isActive) {
       setIsOpen(true);
     }
-    if (prev && !isStreaming) {
+    
+    // 从 thinking 变为 done 时，折叠
+    if (prevPhase !== 'done' && phase === 'done') {
       setIsOpen(false);
     }
-    prevIsStreamingRef.current = isStreaming;
-  }, [isStreaming]);
+    
+    prevPhaseRef.current = phase;
+    prevHasContentRef.current = hasContent;
+  }, [phase, hasContent, isActive]);
 
   // 实时计时
   useEffect(() => {
-    if (!isStreaming || !startTime) {
+    if (!isActive || !startTime) {
       setElapsedTime(0);
       return;
     }
@@ -99,7 +105,7 @@ export function Thinking({
     const timer = setInterval(updateElapsed, 100);
 
     return () => clearInterval(timer);
-  }, [isStreaming, startTime]);
+  }, [isActive, startTime]);
 
   const formatDuration = (seconds: number): string => {
     if (seconds < 60) {
@@ -113,22 +119,33 @@ export function Thinking({
   };
 
   const getLabel = (): string => {
-    if (isStreaming) {
-      if (startTime) {
-        return `思考中... ${formatDuration(elapsedTime)}`;
-      }
-      return '思考中...';
+    if (phase === 'working') {
+      return 'Working';
     }
+    if (phase === 'thinking') {
+      if (startTime) {
+        return `Thinking ${formatDuration(elapsedTime)}`;
+      }
+      return 'Thinking';
+    }
+    // phase === 'done'
     if (duration !== undefined) {
       return `思考了 ${formatDuration(duration)}`;
     }
     return '思考过程';
   };
 
+  // 只有有内容时才显示展开箭头
+  const showChevron = hasContent;
+  // 只有有内容时才可点击
+  const canToggle = hasContent;
+
   const classNames = cn(
     'thinking',
     isOpen && 'thinking--open',
-    isStreaming && 'thinking--streaming',
+    isActive && 'thinking--streaming',
+    phase === 'working' && 'thinking--working',
+    phase === 'thinking' && 'thinking--thinking',
     className
   );
 
@@ -137,28 +154,33 @@ export function Thinking({
       <button
         type="button"
         className="thinking__trigger"
-        onClick={() => setIsOpen((v) => !v)}
+        onClick={() => canToggle && setIsOpen((v) => !v)}
         aria-expanded={isOpen}
+        disabled={!canToggle}
       >
         <span className="thinking__icon">
           <BrainIcon size={16} />
         </span>
         <span className="thinking__label">{getLabel()}</span>
-        <span className="thinking__chevron">
-          <ChevronDownIcon size={14} />
-        </span>
+        {showChevron && (
+          <span className="thinking__chevron">
+            <ChevronDownIcon size={14} />
+          </span>
+        )}
       </button>
-      <div className="thinking__content">
-        <div className="thinking__content-inner">
-          <Markdown
-            content={isStreaming ? streamedContent : content}
-            compact={!isStreaming}
-            className="thinking__text"
-          />
+      {hasContent && (
+        <div className="thinking__content">
+          <div className="thinking__content-inner">
+            <Markdown
+              content={content}
+              compact={!isStreaming}
+              className="thinking__text"
+            />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-export type { ThinkingProps } from './types';
+export type { ThinkingProps, ThinkingPhase } from './types';

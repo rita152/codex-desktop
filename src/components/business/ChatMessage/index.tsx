@@ -1,4 +1,4 @@
-import { Thinking, ThinkingLoading } from '../../ui/feedback/Thinking';
+import { Thinking } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
 import { cn } from '../../../utils/cn';
 import { useTypewriterText } from '../../../hooks/useTypewriterText';
@@ -31,10 +31,11 @@ export function ChatMessage({
     TYPEWRITER_SPEED,
     TYPEWRITER_MAX_CHARS
   );
+  
   const thoughtContent = role === 'thought' ? content : (thinking?.content ?? '');
-  const hasThoughtText = thoughtContent.trim().length > 0;
-  const showThinkingLoading =
-    role === 'assistant' && isStreaming && !hasThoughtText && content.length === 0;
+  const thoughtPhase = role === 'thought' 
+    ? (isStreaming ? 'thinking' : 'done')
+    : (thinking?.phase ?? 'done');
   const showCursor = role === 'assistant' && isStreaming;
 
   const visualRole = role === 'user' ? 'user' : 'assistant';
@@ -55,31 +56,25 @@ export function ChatMessage({
     return content;
   };
 
-  const showThinkingBlock = role === 'assistant' || role === 'thought';
+  // 显示 Thinking 组件的条件：
+  // 1. assistant 消息且有 thinking 数据（任何阶段都显示）
+  // 2. thought 角色的消息
+  const showThinkingBlock = 
+    (role === 'assistant' && thinking !== undefined) || 
+    role === 'thought';
   const showBubble = role !== 'thought';
-  const showThinking =
-    (role === 'assistant' && hasThoughtText) || (role === 'thought' && (hasThoughtText || isStreaming));
 
   return (
     <div className={classNames}>
-      {showThinkingBlock && showThinking && (
+      {showThinkingBlock && (
         <div className="chat-message__thinking">
           <Thinking
             content={thoughtContent}
             isStreaming={role === 'thought' ? isStreaming : thinking?.isStreaming}
+            phase={thoughtPhase}
             startTime={role === 'thought' ? undefined : thinking?.startTime}
             duration={role === 'thought' ? undefined : thinking?.duration}
           />
-        </div>
-      )}
-      {role === 'thought' && isStreaming && !hasThoughtText && (
-        <div className="chat-message__thinking">
-          <ThinkingLoading />
-        </div>
-      )}
-      {showThinkingLoading && (
-        <div className="chat-message__thinking">
-          <ThinkingLoading />
         </div>
       )}
       {showBubble && (
