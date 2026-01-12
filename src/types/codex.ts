@@ -71,6 +71,16 @@ export interface CodexErrorEvent {
   error: string;
 }
 
+export interface CodexDebugEvent {
+  label: string;
+  sessionId?: string | null;
+  tsMs: number;
+  dtMs: number;
+  sincePromptMs?: number | null;
+  sinceLastEventMs?: number | null;
+  extra?: unknown;
+}
+
 export type CodexEvent =
   | { event: 'codex:message'; payload: MessageChunk }
   | { event: 'codex:thought'; payload: MessageChunk }
@@ -82,5 +92,5 @@ export type CodexEvent =
   | { event: 'codex:current-mode'; payload: { sessionId: string; update: unknown } }
   | { event: 'codex:config-option-update'; payload: { sessionId: string; update: unknown } }
   | { event: 'codex:turn-complete'; payload: TurnCompleteEvent }
-  | { event: 'codex:error'; payload: CodexErrorEvent };
-
+  | { event: 'codex:error'; payload: CodexErrorEvent }
+  | { event: 'codex:debug'; payload: CodexDebugEvent };

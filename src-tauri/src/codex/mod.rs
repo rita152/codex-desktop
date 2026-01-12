@@ -1,5 +1,6 @@
 pub mod binary;
 pub mod commands;
+pub mod debug;
 pub mod events;
 pub mod process;
 pub mod protocol;

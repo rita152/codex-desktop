@@ -1,4 +1,5 @@
 use crate::codex::{
+    debug::DebugState,
     process::{resolve_cwd, CodexProcessConfig},
     protocol::{AcpConnection, ApprovalKey, ApprovalState},
     types::{ApprovalDecision, InitializeResult, NewSessionResult, PromptResult},
@@ -9,7 +10,7 @@ use agent_client_protocol::{
     SetSessionConfigOptionRequest, TextContent,
 };
 use anyhow::{anyhow, Context, Result};
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, time::Instant};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{mpsc, oneshot};
 
@@ -22,10 +23,12 @@ pub struct CodexService {
 impl CodexService {
     pub fn new(app: AppHandle) -> Self {
         let approvals = Arc::new(ApprovalState::default());
+        let debug = Arc::new(DebugState::new());
         let (tx, rx) = mpsc::unbounded_channel();
 
         std::thread::spawn({
             let approvals = approvals.clone();
+            let debug = debug.clone();
             move || {
                 let rt = tokio::runtime::Builder::new_current_thread()
                     .enable_all()
@@ -34,7 +37,7 @@ impl CodexService {
 
                 rt.block_on(async move {
                     tokio::task::LocalSet::new()
-                        .run_until(worker_loop(app, approvals, rx))
+                        .run_until(worker_loop(app, approvals, debug, rx))
                         .await
                 });
             }
@@ -172,6 +175,7 @@ enum ServiceCommand {
 struct WorkerState {
     app: AppHandle,
     approvals: Arc<ApprovalState>,
+    debug: Arc<DebugState>,
     conn: Option<Arc<AcpConnection>>,
     initialized: bool,
     last_init: Option<InitializeResult>,
@@ -189,7 +193,13 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
         cfg.set_env(k, v);
     }
 
-    let conn = AcpConnection::spawn(state.app.clone(), state.approvals.clone(), cfg).await?;
+    let conn = AcpConnection::spawn(
+        state.app.clone(),
+        state.approvals.clone(),
+        state.debug.clone(),
+        cfg,
+    )
+    .await?;
     state.conn = Some(Arc::new(conn));
     Ok(())
 }
@@ -281,10 +291,20 @@ async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewS
 async fn prompt_inner(
     conn: Arc<AcpConnection>,
     app: AppHandle,
+    debug: Arc<DebugState>,
     session_id: String,
     content: String,
 ) -> Result<PromptResult> {
     let session_id_typed = SessionId::from(session_id.clone());
+
+    let timing = debug.mark_prompt(&session_id);
+    debug.emit(
+        &app,
+        Some(&session_id),
+        "prompt_start",
+        timing,
+        serde_json::json!({ "contentLen": content.len() }),
+    );
 
     let request = PromptRequest::new(
         session_id_typed.clone(),
@@ -298,6 +318,17 @@ async fn prompt_inner(
     let _ = app.emit(
         crate::codex::events::EVENT_TURN_COMPLETE,
         serde_json::json!({ "sessionId": session_id, "stopReason": resp.stop_reason }),
+    );
+
+    let timing = debug.mark_event(&session_id);
+    debug.emit(
+        &app,
+        Some(&session_id),
+        "prompt_done",
+        timing,
+        serde_json::json!({
+            "stopReason": serde_json::to_value(&resp.stop_reason).unwrap_or(serde_json::Value::Null),
+        }),
     );
 
     Ok(PromptResult {
@@ -337,11 +368,13 @@ async fn set_config_option_inner(
 async fn worker_loop(
     app: AppHandle,
     approvals: Arc<ApprovalState>,
+    debug: Arc<DebugState>,
     mut rx: mpsc::UnboundedReceiver<ServiceCommand>,
 ) {
     let mut state = WorkerState {
         app,
         approvals,
+        debug,
         conn: None,
         initialized: false,
         last_init: None,
@@ -351,17 +384,81 @@ async fn worker_loop(
     while let Some(cmd) = rx.recv().await {
         match cmd {
             ServiceCommand::Initialize { reply } => {
-                let _ = reply.send(initialize_inner(&mut state).await);
+                let timing = state.debug.mark_global();
+                state
+                    .debug
+                    .emit(&state.app, None, "initialize_start", timing, serde_json::json!({}));
+
+                let start = Instant::now();
+                let result = initialize_inner(&mut state).await;
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_global();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "initialize_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
             ServiceCommand::Authenticate {
                 method_id,
                 api_key,
                 reply,
             } => {
-                let _ = reply.send(authenticate_inner(&mut state, method_id, api_key).await);
+                let timing = state.debug.mark_global();
+                let method_id_label = method_id.clone();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "authenticate_start",
+                    timing,
+                    serde_json::json!({ "methodId": method_id_label }),
+                );
+
+                let start = Instant::now();
+                let result = authenticate_inner(&mut state, method_id, api_key).await;
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_global();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "authenticate_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
             ServiceCommand::NewSession { cwd, reply } => {
-                let _ = reply.send(new_session_inner(&mut state, cwd).await);
+                let timing = state.debug.mark_global();
+                let cwd_label = cwd.display().to_string();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "new_session_start",
+                    timing,
+                    serde_json::json!({ "cwd": cwd_label }),
+                );
+
+                let start = Instant::now();
+                let result = new_session_inner(&mut state, cwd).await;
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_global();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "new_session_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
             ServiceCommand::Prompt {
                 session_id,
@@ -377,8 +474,9 @@ async fn worker_loop(
                             .clone()
                             .expect("initialized implies connection exists");
                         let app = state.app.clone();
+                        let debug = state.debug.clone();
                         tokio::task::spawn_local(async move {
-                            let res = prompt_inner(conn, app, session_id, content).await;
+                            let res = prompt_inner(conn, app, debug, session_id, content).await;
                             let _ = reply.send(res);
                         });
                     }
@@ -388,7 +486,29 @@ async fn worker_loop(
                 }
             }
             ServiceCommand::Cancel { session_id, reply } => {
-                let _ = reply.send(cancel_inner(&mut state, session_id).await);
+                let timing = state.debug.mark_event(&session_id);
+                state.debug.emit(
+                    &state.app,
+                    Some(&session_id),
+                    "cancel_start",
+                    timing,
+                    serde_json::json!({}),
+                );
+
+                let start = Instant::now();
+                let result = cancel_inner(&mut state, session_id.clone()).await;
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_event(&session_id);
+                state.debug.emit(
+                    &state.app,
+                    Some(&session_id),
+                    "cancel_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
             ServiceCommand::SetConfigOption {
                 session_id,
@@ -396,9 +516,33 @@ async fn worker_loop(
                 value_id,
                 reply,
             } => {
-                let _ = reply.send(
-                    set_config_option_inner(&mut state, session_id, config_id, value_id).await,
+                let timing = state.debug.mark_event(&session_id);
+                let config_id_label = config_id.clone();
+                let value_id_label = value_id.clone();
+                state.debug.emit(
+                    &state.app,
+                    Some(&session_id),
+                    "set_config_option_start",
+                    timing,
+                    serde_json::json!({ "configId": config_id_label, "valueId": value_id_label }),
                 );
+
+                let start = Instant::now();
+                let result =
+                    set_config_option_inner(&mut state, session_id.clone(), config_id, value_id)
+                        .await;
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_event(&session_id);
+                state.debug.emit(
+                    &state.app,
+                    Some(&session_id),
+                    "set_config_option_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
         }
     }

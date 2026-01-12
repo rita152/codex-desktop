@@ -1,4 +1,5 @@
 use crate::codex::{
+    debug::DebugState,
     events::*,
     process::{CodexProcess, CodexProcessConfig},
     thoughts::emit_thought_chunks,
@@ -97,6 +98,7 @@ impl ApprovalState {
 struct AcpClient {
     app: AppHandle,
     approvals: Arc<ApprovalState>,
+    debug: Arc<DebugState>,
 }
 
 #[async_trait::async_trait(?Send)]
@@ -108,6 +110,15 @@ impl Client for AcpClient {
         let tool_call_id = args.tool_call.tool_call_id.0.as_ref().to_string();
         let session_id = args.session_id.0.as_ref().to_string();
         let key = ApprovalKey::new(session_id.clone(), tool_call_id.clone());
+
+        let timing = self.debug.mark_event(&session_id);
+        self.debug.emit(
+            &self.app,
+            Some(&session_id),
+            "request_permission",
+            timing,
+            json!({ "toolCallId": tool_call_id }),
+        );
 
         let (tx, rx) = oneshot::channel();
         self.approvals.insert(key, args.options.clone(), tx);
@@ -145,6 +156,14 @@ impl Client for AcpClient {
         match &args.update {
             SessionUpdate::AgentMessageChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
+                    let timing = self.debug.mark_event(&session_id);
+                    self.debug.emit(
+                        &self.app,
+                        Some(&session_id),
+                        "agent_message_chunk",
+                        timing,
+                        json!({ "textLen": text.len() }),
+                    );
                     let _ = self.app.emit(
                         EVENT_MESSAGE_CHUNK,
                         json!({ "sessionId": session_id, "text": text }),
@@ -154,6 +173,14 @@ impl Client for AcpClient {
             SessionUpdate::AgentThoughtChunk(chunk) => {
                 if emit_thought_chunks() {
                     if let Some(text) = content_block_text(&chunk.content) {
+                        let timing = self.debug.mark_event(&session_id);
+                        self.debug.emit(
+                            &self.app,
+                            Some(&session_id),
+                            "agent_thought_chunk",
+                            timing,
+                            json!({ "textLen": text.len() }),
+                        );
                         let _ = self.app.emit(
                             EVENT_THOUGHT_CHUNK,
                             json!({ "sessionId": session_id, "text": text }),
@@ -162,35 +189,88 @@ impl Client for AcpClient {
                 }
             }
             SessionUpdate::ToolCall(tool_call) => {
+                let tool_call_id = tool_call.tool_call_id.0.as_ref();
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "tool_call",
+                    timing,
+                    json!({
+                        "toolCallId": tool_call_id,
+                        "title": tool_call.title.as_str(),
+                    }),
+                );
                 let _ = self.app.emit(
                     EVENT_TOOL_CALL,
                     json!({ "sessionId": session_id, "toolCall": tool_call }),
                 );
             }
             SessionUpdate::ToolCallUpdate(update) => {
+                let tool_call_id = update.tool_call_id.0.as_ref();
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "tool_call_update",
+                    timing,
+                    json!({ "toolCallId": tool_call_id }),
+                );
                 let _ = self.app.emit(
                     EVENT_TOOL_CALL_UPDATE,
                     json!({ "sessionId": session_id, "update": update }),
                 );
             }
             SessionUpdate::Plan(plan) => {
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "plan",
+                    timing,
+                    json!({ "entries": plan.entries.len() }),
+                );
                 let _ = self
                     .app
                     .emit(EVENT_PLAN, json!({ "sessionId": session_id, "plan": plan }));
             }
             SessionUpdate::AvailableCommandsUpdate(update) => {
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "available_commands_update",
+                    timing,
+                    json!({ "count": update.available_commands.len() }),
+                );
                 let _ = self.app.emit(
                     EVENT_AVAILABLE_COMMANDS,
                     json!({ "sessionId": session_id, "update": update }),
                 );
             }
             SessionUpdate::CurrentModeUpdate(update) => {
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "current_mode_update",
+                    timing,
+                    json!({ "mode": update.current_mode_id.0.as_ref() }),
+                );
                 let _ = self.app.emit(
                     EVENT_CURRENT_MODE,
                     json!({ "sessionId": session_id, "update": update }),
                 );
             }
             SessionUpdate::ConfigOptionUpdate(update) => {
+                let timing = self.debug.mark_event(&session_id);
+                self.debug.emit(
+                    &self.app,
+                    Some(&session_id),
+                    "config_option_update",
+                    timing,
+                    json!({ "count": update.config_options.len() }),
+                );
                 let _ = self.app.emit(
                     EVENT_CONFIG_OPTION_UPDATE,
                     json!({ "sessionId": session_id, "update": update }),
@@ -211,6 +291,7 @@ impl AcpConnection {
     pub async fn spawn(
         app: AppHandle,
         approvals: Arc<ApprovalState>,
+        debug: Arc<DebugState>,
         mut cfg: CodexProcessConfig,
     ) -> Result<Self> {
         cfg.set_env_if_missing("RUST_LOG", "warn");
@@ -223,6 +304,7 @@ impl AcpConnection {
         let client = AcpClient {
             app: app.clone(),
             approvals,
+            debug: debug.clone(),
         };
 
         let (conn, io_task) = ClientSideConnection::new(
@@ -235,8 +317,17 @@ impl AcpConnection {
         );
 
         let io_app = app.clone();
+        let io_debug = debug.clone();
         tokio::task::spawn_local(async move {
             if let Err(err) = io_task.await {
+                let timing = io_debug.mark_global();
+                io_debug.emit(
+                    &io_app,
+                    None,
+                    "io_error",
+                    timing,
+                    json!({ "error": err.to_string() }),
+                );
                 let _ = io_app.emit(EVENT_ERROR, json!({ "error": err.to_string() }));
             }
         });

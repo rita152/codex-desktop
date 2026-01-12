@@ -13,6 +13,7 @@ import type {
   TurnCompleteEvent,
   InitializeResult,
   CodexAuthMethod,
+  CodexDebugEvent,
 } from '../types/codex';
 
 export async function initCodex(): Promise<InitializeResult> {
@@ -108,6 +109,7 @@ export interface CodexEventHandlers {
   onConfigOptionUpdate?: (payload: { sessionId: string; update: unknown }) => void;
   onTurnComplete?: (payload: TurnCompleteEvent) => void;
   onError?: (payload: CodexErrorEvent) => void;
+  onDebug?: (payload: CodexDebugEvent) => void;
 }
 
 export async function subscribeToEvents(handlers: CodexEventHandlers): Promise<UnlistenFn> {
@@ -137,10 +139,10 @@ export async function subscribeToEvents(handlers: CodexEventHandlers): Promise<U
       handlers.onTurnComplete?.(event.payload)
     ),
     listen<CodexErrorEvent>('codex:error', (event) => handlers.onError?.(event.payload)),
+    listen<CodexDebugEvent>('codex:debug', (event) => handlers.onDebug?.(event.payload)),
   ]);
 
   return () => {
     for (const unlisten of unlisteners) unlisten();
   };
 }
-
