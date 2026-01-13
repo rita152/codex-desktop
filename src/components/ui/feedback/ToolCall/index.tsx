@@ -245,10 +245,7 @@ export function ToolCall({
 
   const isActive = status === 'in-progress';
 
-  const [isOpen, setIsOpen] = useState(() => {
-    if (defaultOpen !== undefined) return defaultOpen;
-    return isActive;
-  });
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
 
   const [elapsedTime, setElapsedTime] = useState(0);
 

@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
 import { cn } from '../../../../utils/cn';
 import { Markdown } from '../../data-display/Markdown';
 
-import type { ThinkingProps, ThinkingPhase } from './types';
+import type { ThinkingProps } from './types';
 
 import './Thinking.css';
 export { ThinkingLoading } from './ThinkingLoading';
@@ -61,34 +61,9 @@ export function Thinking({
 }: ThinkingProps) {
   const hasContent = content.trim().length > 0;
   const isActive = phase === 'working' || phase === 'thinking';
-  
-  // 有内容时展开，无内容或完成时折叠
-  const [isOpen, setIsOpen] = useState(() => {
-    if (defaultOpen !== undefined) return defaultOpen;
-    return hasContent && isActive;
-  });
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const prevPhaseRef = useRef<ThinkingPhase>(phase);
-  const prevHasContentRef = useRef(hasContent);
 
-  // 阶段变化时自动控制展开/折叠
-  useEffect(() => {
-    const prevPhase = prevPhaseRef.current;
-    const prevHasContent = prevHasContentRef.current;
-    
-    // 从无内容变为有内容时，展开
-    if (!prevHasContent && hasContent && isActive) {
-      setIsOpen(true);
-    }
-    
-    // 从 thinking 变为 done 时，折叠
-    if (prevPhase !== 'done' && phase === 'done') {
-      setIsOpen(false);
-    }
-    
-    prevPhaseRef.current = phase;
-    prevHasContentRef.current = hasContent;
-  }, [phase, hasContent, isActive]);
+  const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
+  const [elapsedTime, setElapsedTime] = useState(0);
 
   // 实时计时
   useEffect(() => {
