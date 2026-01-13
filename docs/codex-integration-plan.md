@@ -462,30 +462,7 @@ npm run storybook
 
 ## 阶段四：业务集成
 
-### Task 4.1：认证流程
-
-**目标**：实现应用启动时的认证流程
-
-**文件**：
-- `src/components/business/AuthDialog/index.tsx`
-- `src/components/business/AuthDialog/AuthDialog.css`
-- `src/components/business/AuthDialog/types.ts`
-
-**内容**：
-- [ ] 开发期：可先做“只读提示”——检测 `~/.codex/config.toml`/凭据是否存在与可用，并给出修复指引（不强制输入 Key）
-- [ ] API Key 输入表单
-- [ ] 支持选择认证方式（Codex API Key / OpenAI API Key）
-- [ ] 认证状态显示
-- [ ] 错误提示
-- [ ] 记住 API Key（可选，存储到系统密钥链）
-
-**验收标准**：
-- 输入有效 API Key 后可以成功认证
-- 无效 API Key 显示错误提示
-
----
-
-### Task 4.2：App.tsx 集成
+### Task 4.1：App.tsx 集成
 
 **目标**：将 Codex 集成到主应用
 
@@ -496,9 +473,9 @@ npm run storybook
 - [ ] 应用启动时初始化 Codex
 - [ ] 未认证时显示认证对话框
 - [ ] 每个会话对应一个 Codex Session
-- [ ] 替换模拟 AI 回复为真实 Codex 调用
-- [ ] 处理流式消息更新
-- [ ] 处理审批请求弹窗
+- [x] 替换模拟 AI 回复为真实 Codex 调用（当前使用 `codex_dev_prompt_once`）
+- [x] 处理流式消息更新
+- [x] 处理审批请求弹窗
 
 **验收标准**：
 - 可以发送消息并收到 AI 回复
@@ -507,7 +484,7 @@ npm run storybook
 
 ---
 
-### Task 4.3：会话状态持久化
+### Task 4.2：会话状态持久化
 
 **目标**：保存和恢复会话状态
 
@@ -529,7 +506,7 @@ npm run storybook
 
 ---
 
-## 阶段五：完善与优化
+## 阶段五：完善与优化（待阶段四完成后推进）
 
 ### Task 5.1：错误处理
 
@@ -567,7 +544,30 @@ npm run storybook
 
 ---
 
-### Task 5.4：打包回归与兼容性矩阵（补充）
+### Task 5.4：认证流程
+
+**目标**：实现应用启动时的认证流程
+
+**文件**：
+- `src/components/business/AuthDialog/index.tsx`
+- `src/components/business/AuthDialog/AuthDialog.css`
+- `src/components/business/AuthDialog/types.ts`
+
+**内容**：
+- [ ] 开发期：可先做“只读提示”——检测 `~/.codex/config.toml`/凭据是否存在与可用，并给出修复指引（不强制输入 Key）
+- [ ] API Key 输入表单
+- [ ] 支持选择认证方式（Codex API Key / OpenAI API Key）
+- [ ] 认证状态显示
+- [ ] 错误提示
+- [ ] 记住 API Key（可选，存储到系统密钥链）
+
+**验收标准**：
+- 输入有效 API Key 后可以成功认证
+- 无效 API Key 显示错误提示
+
+---
+
+### Task 5.5：打包回归与兼容性矩阵（补充）
 
 **目标**：保证各平台打包后 codex-acp 可用、协议握手与审批流稳定。
 
@@ -585,12 +585,10 @@ Task 1.0 ──► Task 1.1 ──┬──► Task 1.2 ──► Task 1.3 ─�
            │
            └──► Task 2.1 ──► Task 2.2 ──► Task 2.3
                                               │
-Task 3.1 ──┬──────────────────────────────────┴──► Task 4.2
+Task 3.1 ──┬──────────────────────────────────┴──► Task 4.1 ──► Task 4.2 ──► Task 5.x
 Task 3.2 ──┤
 Task 3.3 ──┤
 Task 3.4 ──┘
-           │
-           └──► Task 4.1 ──► Task 4.2 ──► Task 4.3 ──► Task 5.x
 ```
 
 ---
@@ -603,5 +601,5 @@ Task 3.4 ──┘
 | M1 | 1.0 - 1.6 | 后端可以与 codex-acp 通信 |
 | M2 | 2.1 - 2.3 | 前端可以调用后端 API |
 | M3 | 3.1 - 3.4 | UI 组件就绪 |
-| M4 | 4.1 - 4.3 | 完整可用的集成 |
-| M5 | 5.1 - 5.4 | 生产就绪 |
+| M4 | 4.1 - 4.2 | 完整可用的集成 |
+| M5 | 5.1 - 5.5 | 生产就绪 |
