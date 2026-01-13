@@ -107,23 +107,21 @@
 }
 
 .working__content {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease;
+  max-height: 0;
   overflow: hidden;
+  transition: max-height 0.2s ease;
 }
 
 .working--open .working__content {
-  grid-template-rows: 1fr;
+  max-height: min(360px, 60vh);
   border-top: 1px solid var(--color-border);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .working__content-inner {
   min-height: 0;
-  max-height: min(360px, 60vh);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-gutter: stable;
 }
 
 .working__items {

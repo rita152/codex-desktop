@@ -8,6 +8,10 @@
   min-height: 0;
 }
 
+.chat-message-list > * {
+  flex-shrink: 0;
+}
+
 .chat-message-list__empty {
   display: flex;
   align-items: center;

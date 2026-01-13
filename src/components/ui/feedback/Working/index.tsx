@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import type { WheelEvent } from 'react';
 
 import { cn } from '../../../../utils/cn';
 import { Thinking } from '../Thinking';
@@ -80,6 +81,7 @@ export function Working({
 }: WorkingProps) {
   const [internalOpen, setInternalOpen] = useState(isOpen ?? true);
   const [now, setNow] = useState(() => Date.now());
+  const contentRef = useRef<HTMLDivElement>(null);
   const open = isOpen ?? internalOpen;
   const canToggle = items.length > 0;
 
@@ -136,6 +138,20 @@ export function Working({
     className
   );
 
+  const handleWheel = (event: WheelEvent<HTMLDivElement>) => {
+    const container = contentRef.current;
+    if (!container) return;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    if (scrollHeight <= clientHeight) return;
+    const delta = event.deltaY;
+    const atTop = scrollTop <= 0;
+    const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
+
+    if ((delta < 0 && !atTop) || (delta > 0 && !atBottom)) {
+      event.stopPropagation();
+    }
+  };
+
   return (
     <div className={classNames}>
       <button
@@ -158,7 +174,7 @@ export function Working({
           <ChevronDownIcon size={14} />
         </span>
       </button>
-      <div className="working__content">
+      <div className="working__content" ref={contentRef} onWheel={handleWheel}>
         <div className="working__content-inner">
           <div className="working__items">{items.map(renderItem)}</div>
         </div>
