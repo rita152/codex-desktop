@@ -9,8 +9,6 @@ import type { Message } from '../components/business/ChatMessageList/types';
 export type SessionMessages = Record<string, Message[]>;
 
 const DEFAULT_SESSION_ID = '1';
-const DEFAULT_SESSIONS: ChatSession[] = [{ id: DEFAULT_SESSION_ID, title: '新对话' }];
-const DEFAULT_MESSAGES: SessionMessages = { [DEFAULT_SESSION_ID]: [] };
 
 export interface SessionPersistenceResult {
   sessions: ChatSession[];
@@ -25,17 +23,33 @@ export interface SessionPersistenceResult {
 }
 
 export function useSessionPersistence(): SessionPersistenceResult {
-  const initial = useMemo(() => loadSessionState(), []);
+  const initial = useMemo(() => {
+    const loaded = loadSessionState();
+    const restoredSessions = loaded?.sessions ?? [];
+    const restoredMessages = loaded?.sessionMessages ?? {};
+    let newSessionId = String(Date.now());
+    if (restoredSessions.some((session) => session.id === newSessionId)) {
+      newSessionId = `${newSessionId}-${Math.random().toString(16).slice(2)}`;
+    }
+    const newSession: ChatSession = { id: newSessionId, title: '新对话' };
 
-  const [sessions, setSessions] = useState<ChatSession[]>(() => initial?.sessions ?? DEFAULT_SESSIONS);
+    return {
+      sessions: [newSession, ...restoredSessions],
+      selectedSessionId: newSessionId,
+      sessionMessages: { ...restoredMessages, [newSessionId]: [] },
+      restoredSessionIds: new Set(restoredSessions.map((session) => session.id)),
+    };
+  }, []);
+
+  const [sessions, setSessions] = useState<ChatSession[]>(initial.sessions);
   const [selectedSessionId, setSelectedSessionId] = useState<string>(
-    () => initial?.selectedSessionId ?? DEFAULT_SESSION_ID
+    initial.selectedSessionId
   );
   const [sessionMessages, setSessionMessages] = useState<SessionMessages>(
-    () => initial?.sessionMessages ?? DEFAULT_MESSAGES
+    initial.sessionMessages
   );
   const [restoredSessionIds, setRestoredSessionIds] = useState<Set<string>>(
-    () => new Set(initial?.sessions.map((session) => session.id) ?? [])
+    initial.restoredSessionIds
   );
 
   useEffect(() => {
