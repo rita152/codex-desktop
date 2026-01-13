@@ -66,6 +66,14 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
+
+  /* Diff 颜色 - 亮色模式 */
+  --color-diff-add-bg: #dafbe1;
+  --color-diff-add-line-bg: #ccffd8;
+  --color-diff-remove-bg: #ffebe9;
+  --color-diff-remove-line-bg: #ffd7d5;
+  --color-diff-hunk-bg: #ddf4ff;
+  --color-diff-hunk-text: #0969da;
 }
 
 /* 暗色模式 */
@@ -92,5 +100,13 @@
     --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
     --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.3);
     --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.3);
+
+    /* Diff 颜色 - 暗色模式 */
+    --color-diff-add-bg: #1a3d2e;
+    --color-diff-add-line-bg: #1f4d38;
+    --color-diff-remove-bg: #4d1f1f;
+    --color-diff-remove-line-bg: #5c2626;
+    --color-diff-hunk-bg: #1c3a5e;
+    --color-diff-hunk-text: #79c0ff;
   }
 }

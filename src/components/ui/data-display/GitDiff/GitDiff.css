@@ -1,0 +1,100 @@
+.git-diff {
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.git-diff__header {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+}
+
+.git-diff__filename {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.git-diff__content {
+  overflow-x: auto;
+  background-color: var(--color-bg);
+}
+
+.git-diff__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.git-diff__row {
+  border: none;
+}
+
+.git-diff__row--add {
+  background-color: var(--color-diff-add-bg);
+}
+
+.git-diff__row--remove {
+  background-color: var(--color-diff-remove-bg);
+}
+
+.git-diff__row--context {
+  background-color: var(--color-bg);
+}
+
+.git-diff__row--header {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.git-diff__row--hunk {
+  background-color: var(--color-diff-hunk-bg);
+  color: var(--color-diff-hunk-text);
+}
+
+.git-diff__line-number {
+  width: 50px;
+  min-width: 50px;
+  padding: 0 var(--spacing-sm);
+  text-align: right;
+  color: var(--color-text-secondary);
+  background-color: var(--color-bg-secondary);
+  border-right: var(--border-width-thin) solid var(--color-border);
+  user-select: none;
+  vertical-align: top;
+}
+
+.git-diff__row--add .git-diff__line-number {
+  background-color: var(--color-diff-add-line-bg);
+}
+
+.git-diff__row--remove .git-diff__line-number {
+  background-color: var(--color-diff-remove-line-bg);
+}
+
+.git-diff__line-content {
+  padding: 0 var(--spacing-sm);
+  white-space: pre;
+  overflow-x: auto;
+}
+
+.git-diff__prefix {
+  display: inline-block;
+  width: 1em;
+  user-select: none;
+}
+
+.git-diff__row--add .git-diff__prefix {
+  color: var(--color-success);
+}
+
+.git-diff__row--remove .git-diff__prefix {
+  color: var(--color-error);
+}
+
+.git-diff__code {
+  white-space: pre;
+}
