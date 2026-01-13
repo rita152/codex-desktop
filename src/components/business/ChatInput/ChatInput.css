@@ -42,6 +42,54 @@
   margin-left: auto;
 }
 
+.chat-input__slash-menu {
+  margin-top: var(--spacing-sm);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-bg-secondary);
+  padding: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.chat-input__slash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--spacing-xs);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.chat-input__slash-hint {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.chat-input__slash-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 14px;
+}
+
+.chat-input__slash-item:hover,
+.chat-input__slash-item--active {
+  background-color: var(--color-bg-muted);
+}
+
+.chat-input__slash-command {
+  font-weight: 500;
+}
+
 /* 工具栏内所有图标和文字使用黑色 */
 .chat-input__toolbar .icon-button {
   color: var(--color-text);

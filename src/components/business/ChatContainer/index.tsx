@@ -4,7 +4,7 @@ import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { IconButton } from '../../ui/data-entry/IconButton';
-import { SidebarLeftIcon } from '../../ui/data-display/Icon';
+import { FolderIcon, SidebarLeftIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -16,13 +16,24 @@ const DEFAULT_SIDEBAR_WIDTH = 200;
 export function ChatContainer({
   sessions,
   selectedSessionId,
+  sessionTitle,
+  sessionModel,
+  sessionCwd,
+  sessionNotice,
   messages,
   approvals,
   isGenerating = false,
+  inputValue,
+  onInputChange,
+  modelOptions,
+  selectedModel,
+  onModelChange,
+  slashCommands,
   inputPlaceholder,
   onSessionSelect,
   onNewChat,
   onSendMessage,
+  onSelectCwd,
   onSessionDelete,
   onSessionRename,
   sidebarVisible = true,
@@ -30,19 +41,21 @@ export function ChatContainer({
   welcomeContent,
   className = '',
 }: ChatContainerProps) {
-  const [inputValue, setInputValue] = useState('');
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [selectedAgent, setSelectedAgent] = useState('agent-full');
-  const [selectedModel, setSelectedModel] = useState('gpt-5.2-high');
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
-    setInputValue('');
+    onInputChange('');
   };
 
   const classNames = cn('chat-container', className);
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
+  const displayTitle = sessionTitle ?? sessions.find((s) => s.id === selectedSessionId)?.title;
+  const displayModel = sessionModel ?? selectedModel;
+  const displayCwd =
+    sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : '默认目录';
 
   return (
     <div className={classNames}>
@@ -75,6 +88,40 @@ export function ChatContainer({
       )}
 
       <div className="chat-container__main">
+        <div className="chat-container__session-header">
+          <div className="chat-container__session-title">{displayTitle ?? '新对话'}</div>
+          <div className="chat-container__session-meta">
+            {displayModel && (
+              <div className="chat-container__meta-item">
+                <span className="chat-container__meta-label">模型</span>
+                <span className="chat-container__meta-value">{displayModel}</span>
+              </div>
+            )}
+            <div className="chat-container__meta-item chat-container__meta-item--cwd">
+              <FolderIcon size={14} />
+              <span className="chat-container__meta-label">目录</span>
+              <span className="chat-container__meta-value" title={displayCwd}>
+                {displayCwd}
+              </span>
+              {onSelectCwd && (
+                <button
+                  type="button"
+                  className="chat-container__meta-action"
+                  onClick={onSelectCwd}
+                >
+                  更改
+                </button>
+              )}
+            </div>
+          </div>
+          {sessionNotice && (
+            <div
+              className={`chat-container__session-notice chat-container__session-notice--${sessionNotice.kind}`}
+            >
+              {sessionNotice.message}
+            </div>
+          )}
+        </div>
         {showWelcome ? (
           <div className="chat-container__welcome">
             {welcomeContent}
@@ -88,14 +135,16 @@ export function ChatContainer({
         <div className="chat-container__input-wrapper">
           <ChatInput
             value={inputValue}
-            onChange={setInputValue}
+            onChange={onInputChange}
             onSend={handleSend}
             disabled={isGenerating}
             placeholder={inputPlaceholder}
             selectedAgent={selectedAgent}
             onAgentChange={setSelectedAgent}
             selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
+            modelOptions={modelOptions}
+            onModelChange={onModelChange}
+            slashCommands={slashCommands}
             className="chat-container__input"
           />
         </div>

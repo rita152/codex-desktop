@@ -7,3 +7,5 @@ export const DEFAULT_MODELS = [
   { value: 'gpt-5.2', label: 'gpt-5.2' },
   { value: 'gpt-4.1', label: 'gpt-4.1' },
 ];
+
+export const DEFAULT_MODEL_ID = DEFAULT_MODELS[0]?.value ?? 'gpt-5.2-high';

@@ -1,12 +1,15 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
+import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import { approveRequest, createSession, initCodex, sendPrompt } from './api/codex';
+import { approveRequest, createSession, initCodex, sendPrompt, setSessionModel } from './api/codex';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
+import { DEFAULT_MODEL_ID, DEFAULT_MODELS } from './constants/chat';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
+import type { SelectOption } from './components/ui/data-entry/Select/types';
 import type {
   ToolCallContent,
   ToolCallLocation,
@@ -32,6 +35,11 @@ function safeJson(value: unknown): string {
   } catch {
     return String(value);
   }
+}
+
+function formatError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
 }
 
 function newMessageId(): string {
@@ -448,6 +456,110 @@ function extractCommand(rawInput: unknown): string | undefined {
   return parsedText ?? undefined;
 }
 
+const DEFAULT_SLASH_COMMANDS = ['review', 'compact', 'undo'];
+
+function parseModelOptionsFromSessionModels(
+  raw: unknown
+): { currentModelId?: string; options: SelectOption[] } | null {
+  const record = asRecord(raw);
+  if (!record) return null;
+  const currentModelId = getString(record.currentModelId ?? record.current_model_id);
+  const available = asArray(record.availableModels ?? record.available_models);
+  const options = available
+    .map((item) => {
+      const optionRecord = asRecord(item);
+      if (!optionRecord) return null;
+      const value =
+        getString(optionRecord.modelId ?? optionRecord.model_id ?? optionRecord.id) ??
+        undefined;
+      if (!value) return null;
+      const label = getString(optionRecord.name) ?? value;
+      return { value, label };
+    })
+    .filter(Boolean) as SelectOption[];
+
+  if (options.length === 0 && !currentModelId) return null;
+  return { currentModelId, options };
+}
+
+function parseModelOptionsFromConfigOptions(
+  raw: unknown
+): { currentModelId?: string; options: SelectOption[] } | null {
+  const configOptions = asArray(raw);
+  if (configOptions.length === 0) return null;
+
+  const target = configOptions
+    .map((item) => asRecord(item))
+    .find((record) => {
+      if (!record) return false;
+      const id = getString(record.id);
+      return id?.toLowerCase() === 'model';
+    });
+
+  if (!target) return null;
+  const currentModelId = getString(target.currentValue ?? target.current_value);
+  const optionsField = target.options;
+  const options: SelectOption[] = [];
+
+  const pushOption = (option: UnknownRecord) => {
+    const value = getString(option.value);
+    if (!value) return;
+    const label = getString(option.name) ?? value;
+    options.push({ value, label });
+  };
+
+  for (const item of asArray(optionsField)) {
+    const itemRecord = asRecord(item);
+    if (!itemRecord) continue;
+    const grouped = asArray(itemRecord.options);
+    if (grouped.length > 0) {
+      grouped.forEach((groupItem) => {
+        const optionRecord = asRecord(groupItem);
+        if (optionRecord) pushOption(optionRecord);
+      });
+      continue;
+    }
+    pushOption(itemRecord);
+  }
+
+  if (options.length === 0 && !currentModelId) return null;
+  return { currentModelId, options };
+}
+
+function resolveModelOptions(
+  models: unknown,
+  configOptions: unknown
+): { currentModelId?: string; options: SelectOption[] } | null {
+  return (
+    parseModelOptionsFromSessionModels(models) ??
+    parseModelOptionsFromConfigOptions(configOptions)
+  );
+}
+
+function extractSlashCommands(update: unknown): string[] {
+  const candidates = Array.isArray(update)
+    ? update
+    : asArray(asRecord(update)?.commands ?? asRecord(update)?.available_commands ?? asRecord(update)?.availableCommands);
+  if (candidates.length === 0) return [];
+
+  const names = new Set<string>();
+  for (const cmd of candidates) {
+    if (typeof cmd === 'string') {
+      const name = cmd.trim().replace(/^\//, '');
+      if (name) names.add(name);
+      continue;
+    }
+    const record = asRecord(cmd);
+    if (!record) continue;
+    const name = getString(record.name ?? record.command);
+    if (name) {
+      const cleaned = name.trim().replace(/^\//, '');
+      if (cleaned) names.add(cleaned);
+    }
+  }
+  return Array.from(names).sort();
+}
+
 function mapApprovalOptions(options: PermissionOption[] | undefined): ApprovalOption[] {
   if (!options) return [];
   return options
@@ -493,30 +605,94 @@ function App() {
     setSelectedSessionId,
     sessionMessages,
     setSessionMessages,
+    sessionDrafts,
+    setSessionDrafts,
     restoredSessionIds,
     clearRestoredSession,
   } = useSessionPersistence();
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
   const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
+  const [sessionNotices, setSessionNotices] = useState<
+    Record<string, { kind: 'error' | 'info'; message: string }>
+  >({});
+  const [sessionSlashCommands, setSessionSlashCommands] = useState<
+    Record<string, string[]>
+  >({});
+  const [sessionModelOptions, setSessionModelOptions] = useState<
+    Record<string, SelectOption[]>
+  >({});
 
   const activeSessionIdRef = useRef<string>(selectedSessionId);
   const codexSessionByChatRef = useRef<Record<string, string>>({});
   const chatSessionByCodexRef = useRef<Record<string, string>>({});
+  const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
   }, [selectedSessionId]);
 
+  const activeSession = useMemo(
+    () => sessions.find((session) => session.id === selectedSessionId),
+    [sessions, selectedSessionId]
+  );
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
+  const draftMessage = sessionDrafts[selectedSessionId] ?? '';
+  const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
+  const selectedCwd = activeSession?.cwd;
+  const sessionNotice = sessionNotices[selectedSessionId] ?? null;
+  const modelOptions =
+    sessionModelOptions[selectedSessionId]?.length > 0
+      ? sessionModelOptions[selectedSessionId]
+      : DEFAULT_MODELS;
+  const modelLabel =
+    modelOptions.find((option) => option.value === selectedModel)?.label ?? selectedModel;
+  const slashCommands = useMemo(() => {
+    const fromSession = sessionSlashCommands[selectedSessionId] ?? [];
+    const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSession]);
+    return Array.from(merged).sort();
+  }, [selectedSessionId, sessionSlashCommands]);
+  const isGenerating = isGeneratingBySession[selectedSessionId] ?? false;
 
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
     return chatSessionByCodexRef.current[codexSessionId] ?? null;
+  }, []);
+
+  const pickWorkingDirectory = useCallback(async (defaultPath?: string): Promise<string | null> => {
+    try {
+      const selection = await open({
+        directory: true,
+        multiple: false,
+        defaultPath,
+      });
+      if (typeof selection === 'string') return selection;
+      if (Array.isArray(selection) && typeof selection[0] === 'string') return selection[0];
+      return null;
+    } catch (err) {
+      console.warn('[codex] Failed to open directory picker', err);
+      return null;
+    }
+  }, []);
+
+  const handleDraftChange = useCallback(
+    (value: string) => {
+      setSessionDrafts((prev) => ({ ...prev, [selectedSessionId]: value }));
+    },
+    [selectedSessionId, setSessionDrafts]
+  );
+
+  const clearSessionNotice = useCallback((sessionId: string) => {
+    setSessionNotices((prev) => {
+      if (!prev[sessionId]) return prev;
+      const next = { ...prev };
+      delete next[sessionId];
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -756,7 +932,7 @@ function App() {
           return { ...prev, [sessionId]: next };
         });
 
-        setIsGenerating(false);
+        setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
       }),
       listen<{ error: string }>('codex:error', (event) => {
         const sessionId = activeSessionIdRef.current;
@@ -773,7 +949,7 @@ function App() {
           [sessionId]: [...(prev[sessionId] ?? []), errMsg],
         }));
 
-        setIsGenerating(false);
+        setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
       }),
       listen<ApprovalRequest>('codex:approval-request', (event) => {
         const req = event.payload;
@@ -784,6 +960,13 @@ function App() {
         });
         setApprovalFeedback((prev) => ({ ...prev, [key]: prev[key] ?? '' }));
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
+      }),
+      listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) => {
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        const commands = extractSlashCommands(event.payload.update);
+        if (commands.length === 0) return;
+        setSessionSlashCommands((prev) => ({ ...prev, [sessionId]: commands }));
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         const sessionId = resolveChatSessionId(event.payload.sessionId);
@@ -827,37 +1010,151 @@ function App() {
       const existing = codexSessionByChatRef.current[chatSessionId];
       if (existing && !forceNew) return existing;
 
-      if (existing) {
-        delete chatSessionByCodexRef.current[existing];
+      if (!forceNew) {
+        const pending = pendingSessionInitRef.current[chatSessionId];
+        if (pending) return pending;
       }
 
-      const result = await createSession('.');
-      registerCodexSession(chatSessionId, result.sessionId);
-      if (forceNew) {
-        clearRestoredSession(chatSessionId);
+      const task = (async () => {
+        if (existing) {
+          delete chatSessionByCodexRef.current[existing];
+        }
+
+        const sessionMeta = sessions.find((session) => session.id === chatSessionId);
+        const cwd =
+          typeof sessionMeta?.cwd === 'string' && sessionMeta.cwd.trim() !== ''
+            ? sessionMeta.cwd
+            : '.';
+        const result = await createSession(cwd);
+        registerCodexSession(chatSessionId, result.sessionId);
+        const modelState = resolveModelOptions(result.models, result.configOptions);
+        if (modelState?.options && modelState.options.length > 0) {
+          setSessionModelOptions((prev) => ({
+            ...prev,
+            [chatSessionId]: modelState.options,
+          }));
+        }
+
+        const availableIds = new Set(modelState?.options.map((option) => option.value) ?? []);
+        let desiredModel = sessionMeta?.model;
+        if (desiredModel && availableIds.size > 0 && !availableIds.has(desiredModel)) {
+          desiredModel = undefined;
+        }
+        if (!desiredModel) {
+          desiredModel =
+            modelState?.currentModelId ??
+            modelState?.options?.[0]?.value ??
+            DEFAULT_MODEL_ID;
+        }
+
+        if (desiredModel && desiredModel !== sessionMeta?.model) {
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.id === chatSessionId ? { ...session, model: desiredModel } : session
+            )
+          );
+        }
+
+        const shouldSyncModel =
+          desiredModel &&
+          (modelState?.currentModelId ? desiredModel !== modelState.currentModelId : true) &&
+          (availableIds.size === 0 || availableIds.has(desiredModel));
+
+        if (shouldSyncModel && desiredModel) {
+          try {
+            await setSessionModel(result.sessionId, desiredModel);
+            clearSessionNotice(chatSessionId);
+          } catch (err) {
+            const fallbackModel =
+              modelState?.currentModelId ??
+              modelState?.options?.[0]?.value ??
+              DEFAULT_MODEL_ID;
+            setSessionNotices((prev) => ({
+              ...prev,
+              [chatSessionId]: {
+                kind: 'error',
+                message: `模型设置失败：${formatError(err)}`,
+              },
+            }));
+            setSessions((prev) =>
+              prev.map((session) =>
+                session.id === chatSessionId
+                  ? { ...session, model: fallbackModel }
+                  : session
+              )
+            );
+          }
+        }
+        if (forceNew) {
+          clearRestoredSession(chatSessionId);
+        }
+        return result.sessionId;
+      })();
+
+      if (!forceNew) {
+        pendingSessionInitRef.current[chatSessionId] = task;
+        try {
+          return await task;
+        } finally {
+          delete pendingSessionInitRef.current[chatSessionId];
+        }
       }
-      return result.sessionId;
+
+      return task;
     },
-    [clearRestoredSession, registerCodexSession]
+    [
+      clearRestoredSession,
+      clearSessionNotice,
+      registerCodexSession,
+      sessions,
+      setSessions,
+    ]
   );
 
   const handleNewChat = useCallback(() => {
-    const newId = String(Date.now());
-    const newSession: ChatSession = {
-      id: newId,
-      title: '新对话',
-    };
-    setSessions((prev) => [newSession, ...prev]);
-    setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
-    setSelectedSessionId(newId);
-    clearRestoredSession(newId);
-    activeSessionIdRef.current = newId;
-  }, [clearRestoredSession]);
+    void (async () => {
+      const cwd = await pickWorkingDirectory(selectedCwd);
+      const newId = String(Date.now());
+      const newSession: ChatSession = {
+        id: newId,
+        title: '新对话',
+        cwd: cwd ?? undefined,
+        model: DEFAULT_MODEL_ID,
+      };
+      setSessions((prev) => [newSession, ...prev]);
+      setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
+      setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
+      setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
+      setSelectedSessionId(newId);
+      clearRestoredSession(newId);
+      clearSessionNotice(newId);
+      activeSessionIdRef.current = newId;
+    })();
+  }, [
+    clearRestoredSession,
+    clearSessionNotice,
+    pickWorkingDirectory,
+    selectedCwd,
+    setSessionDrafts,
+    setSessionMessages,
+    setSessions,
+  ]);
 
   const handleSessionSelect = useCallback((sessionId: string) => {
     setSelectedSessionId(sessionId);
     activeSessionIdRef.current = sessionId;
   }, []);
+
+  useEffect(() => {
+    const sessionId = selectedSessionId;
+    if (!sessionId) return;
+    if (restoredSessionIds.has(sessionId)) return;
+    if (codexSessionByChatRef.current[sessionId]) return;
+
+    void ensureCodexSession(sessionId, false).catch((err) => {
+      console.warn('[codex] prefetch session failed', err);
+    });
+  }, [ensureCodexSession, restoredSessionIds, selectedSessionId]);
 
   const handleSessionDelete = useCallback(
     (sessionId: string) => {
@@ -868,6 +1165,26 @@ function App() {
       clearRestoredSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
       setSessionMessages((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+      setIsGeneratingBySession((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+      setSessionNotices((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+      setSessionSlashCommands((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+      setSessionModelOptions((prev) => {
         const next = { ...prev };
         delete next[sessionId];
         return next;
@@ -893,6 +1210,66 @@ function App() {
     []
   );
 
+  const handleModelChange = useCallback(
+    async (modelId: string) => {
+      const sessionId = selectedSessionId;
+      const previousModel = activeSession?.model ?? DEFAULT_MODEL_ID;
+      if (modelId === previousModel) return;
+
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId ? { ...session, model: modelId } : session
+        )
+      );
+      clearSessionNotice(sessionId);
+
+      const codexSessionId = codexSessionByChatRef.current[sessionId];
+      if (!codexSessionId) return;
+
+      try {
+        await setSessionModel(codexSessionId, modelId);
+      } catch (err) {
+        setSessions((prev) =>
+          prev.map((session) =>
+            session.id === sessionId ? { ...session, model: previousModel } : session
+          )
+        );
+        setSessionNotices((prev) => ({
+          ...prev,
+          [sessionId]: {
+            kind: 'error',
+            message: `模型切换失败：${formatError(err)}`,
+          },
+        }));
+      }
+    },
+    [activeSession?.model, clearSessionNotice, selectedSessionId, setSessions]
+  );
+
+  const handleSelectCwd = useCallback(async () => {
+    const sessionId = selectedSessionId;
+    const cwd = await pickWorkingDirectory(selectedCwd);
+    if (!cwd) return;
+
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === sessionId ? { ...session, cwd } : session
+      )
+    );
+
+    if (codexSessionByChatRef.current[sessionId]) {
+      setSessionNotices((prev) => ({
+        ...prev,
+        [sessionId]: {
+          kind: 'info',
+          message: '工作目录已更新，将在下次创建 Codex 会话时生效。',
+        },
+      }));
+    } else {
+      clearSessionNotice(sessionId);
+    }
+  }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId]);
+
   const handleSendMessage = useCallback(
     (content: string) => {
       const now = Date.now();
@@ -915,7 +1292,7 @@ function App() {
         : null;
 
       activeSessionIdRef.current = sessionId;
-      setIsGenerating(true);
+      setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: true }));
 
       // 更新当前会话的消息：添加用户消息（恢复会话时先追加提示）
       setSessionMessages((prev) => {
@@ -953,7 +1330,7 @@ function App() {
               [sessionId]: [...(prev[sessionId] ?? []), errMsg],
             };
           });
-          setIsGenerating(false);
+          setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
         }
       })();
     },
@@ -1035,13 +1412,24 @@ function App() {
     <ChatContainer
       sessions={sessions}
       selectedSessionId={selectedSessionId}
+      sessionTitle={activeSession?.title}
+      sessionModel={modelLabel}
+      sessionCwd={selectedCwd}
+      sessionNotice={sessionNotice}
       messages={messages}
       approvals={approvalCards}
       sidebarVisible={sidebarVisible}
       isGenerating={isGenerating}
+      inputValue={draftMessage}
+      onInputChange={handleDraftChange}
+      modelOptions={modelOptions}
+      selectedModel={selectedModel}
+      onModelChange={handleModelChange}
+      slashCommands={slashCommands}
       onSessionSelect={handleSessionSelect}
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
+      onSelectCwd={handleSelectCwd}
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
       onSidebarToggle={() => setSidebarVisible((v) => !v)}

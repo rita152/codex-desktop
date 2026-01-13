@@ -14,6 +14,7 @@ export interface ChatInputProps {
   modelOptions?: SelectOption[];
   selectedModel?: string;
   onModelChange?: (model: string) => void;
+  slashCommands?: string[];
   width?: string | number;
   className?: string;
 }

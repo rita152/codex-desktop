@@ -1,6 +1,8 @@
 export interface ChatSession {
   id: string;
   title: string;
+  cwd?: string;
+  model?: string;
 }
 
 export interface SidebarProps {

@@ -8,9 +8,9 @@ import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
 
 const mockSessions: ChatSession[] = [
-  { id: '1', title: '关于 React 的问题' },
-  { id: '2', title: 'TypeScript 类型推断' },
-  { id: '3', title: 'Tauri 桌面应用开发' },
+  { id: '1', title: '关于 React 的问题', model: 'gpt-5.2-high', cwd: '/Users/demo/react-app' },
+  { id: '2', title: 'TypeScript 类型推断', model: 'gpt-5.2', cwd: '/Users/demo/ts-guide' },
+  { id: '3', title: 'Tauri 桌面应用开发', model: 'gpt-4.1', cwd: '/Users/demo/tauri-app' },
 ];
 
 const mockMessages: Message[] = [
@@ -64,6 +64,8 @@ function ChatContainerWithState() {
   const [selectedSessionId, setSelectedSessionId] = useState('1');
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const [inputValue, setInputValue] = useState('');
+  const activeSession = sessions.find((session) => session.id === selectedSessionId);
 
   const handleSendMessage = (content: string) => {
     const newMessage: Message = {
@@ -79,6 +81,12 @@ function ChatContainerWithState() {
     <ChatContainer
       sessions={sessions}
       selectedSessionId={selectedSessionId}
+      sessionTitle={activeSession?.title}
+      sessionModel={activeSession?.model}
+      sessionCwd={activeSession?.cwd}
+      inputValue={inputValue}
+      onInputChange={setInputValue}
+      selectedModel={activeSession?.model}
       messages={messages}
       sidebarVisible={sidebarVisible}
       onSessionSelect={setSelectedSessionId}
