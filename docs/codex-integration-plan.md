@@ -262,7 +262,8 @@ invoke('codex_auth', { method: 'openai-api-key' })
 **内容**：
 - [x] 事件常量：`src-tauri/src/codex/events.rs`
 - [x] 事件发射：`src-tauri/src/codex/protocol.rs`（SessionUpdate/Permission/IO error）
-- [x] `codex:message` / `codex:tool-call` / `codex:approval-request` / `codex:error` / `codex:turn-complete`
+- [x] `codex:message` / `codex:thought` / `codex:tool-call` / `codex:tool-call-update` / `codex:approval-request`
+- [x] `codex:plan` / `codex:available-commands` / `codex:current-mode` / `codex:config-option-update` / `codex:turn-complete` / `codex:error` / `codex:debug`
 
 **验收标准**：
 ```typescript
@@ -470,10 +471,10 @@ npm run storybook
 - `src/App.tsx`（修改）
 
 **内容**：
-- [ ] 应用启动时初始化 Codex
+- [x] 应用启动时初始化 Codex
 - [ ] 未认证时显示认证对话框
-- [ ] 每个会话对应一个 Codex Session
-- [x] 替换模拟 AI 回复为真实 Codex 调用（当前使用 `codex_dev_prompt_once`）
+- [x] 每个会话对应一个 Codex Session
+- [x] 替换模拟 AI 回复为真实 Codex 调用（App 使用 `codex_prompt`）
 - [x] 处理流式消息更新
 - [x] 处理审批请求弹窗
 
@@ -493,11 +494,11 @@ npm run storybook
 - `src/api/storage.ts`
 
 **内容**：
-- [ ] 保存会话列表到本地存储
-- [ ] 保存每个会话的消息历史
-- [ ] 应用启动时恢复会话
-- [ ] 会话切换时的状态管理
-- [ ] （补充）定义“会话恢复策略”：重启后 UI 会话为只读；继续对话时新建 codex session 并注入摘要/关键上下文（或另行实现 codex-acp 的可恢复加载能力）
+- [x] 保存会话列表到本地存储
+- [x] 保存每个会话的消息历史
+- [x] 应用启动时恢复会话
+- [x] 会话切换时的状态管理
+- [x] （补充）定义“会话恢复策略”：重启后 UI 会话为只读；继续对话时新建 codex session 并注入摘要/关键上下文（或另行实现 codex-acp 的可恢复加载能力）
 
 **验收标准**：
 - 关闭应用后重新打开，会话列表保留
