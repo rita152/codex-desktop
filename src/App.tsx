@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import { approveRequest } from './api/codex';
+import { approveRequest, createSession, initCodex, sendPrompt } from './api/codex';
+import { useSessionPersistence } from './hooks/useSessionPersistence';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
@@ -26,9 +26,6 @@ import { buildUnifiedDiff } from './utils/diff';
 
 import './App.css';
 
-// 每个会话的消息独立存储
-type SessionMessages = Record<string, Message[]>;
-
 function safeJson(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -39,6 +36,31 @@ function safeJson(value: unknown): string {
 
 function newMessageId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+const RECOVERY_CONTEXT_LIMIT = 12;
+const RECOVERY_CHAR_LIMIT = 1800;
+const RECOVERY_NOTICE =
+  '系统提示：此会话已从本地恢复，继续对话会创建新的 Codex 会话，并注入最近上下文。';
+
+function buildRecoveryPrompt(history: Message[], content: string): string {
+  const contextLines = history
+    .filter((message) => message.role === 'user' || message.role === 'assistant')
+    .map((message) => {
+      const role = message.role === 'user' ? 'User' : 'Assistant';
+      return `${role}: ${message.content}`;
+    })
+    .filter((line) => line.trim() !== '')
+    .slice(-RECOVERY_CONTEXT_LIMIT);
+
+  if (contextLines.length === 0) return content;
+
+  let context = contextLines.join('\n');
+  if (context.length > RECOVERY_CHAR_LIMIT) {
+    context = context.slice(context.length - RECOVERY_CHAR_LIMIT);
+  }
+
+  return `Restored session context (read-only):\n${context}\n\nUser message:\n${content}`;
 }
 
 type UnknownRecord = Record<string, unknown>;
@@ -464,36 +486,51 @@ function extractApprovalDescription(toolCall: UnknownRecord): string | undefined
 }
 
 function App() {
-  const [sessions, setSessions] = useState<ChatSession[]>([
-    { id: '1', title: '新对话' },
-  ]);
-  const [selectedSessionId, setSelectedSessionId] = useState<string>('1');
-  const [sessionMessages, setSessionMessages] = useState<SessionMessages>({
-    '1': [],
-  });
+  const {
+    sessions,
+    setSessions,
+    selectedSessionId,
+    setSelectedSessionId,
+    sessionMessages,
+    setSessionMessages,
+    restoredSessionIds,
+    clearRestoredSession,
+  } = useSessionPersistence();
+
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
   const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
 
-  const activeSessionIdRef = useRef<string>('1');
-  const activeAcpSessionIdRef = useRef<string | null>(null);
+  const activeSessionIdRef = useRef<string>(selectedSessionId);
+  const codexSessionByChatRef = useRef<Record<string, string>>({});
+  const chatSessionByCodexRef = useRef<Record<string, string>>({});
+
+  useEffect(() => {
+    activeSessionIdRef.current = selectedSessionId;
+  }, [selectedSessionId]);
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
+  const isRestoredSession = restoredSessionIds.has(selectedSessionId);
+  const inputPlaceholder = isRestoredSession
+    ? '历史会话已恢复，发送新消息将创建新的会话'
+    : undefined;
+
+  const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
+    if (!codexSessionId) return null;
+    return chatSessionByCodexRef.current[codexSessionId] ?? null;
+  }, []);
 
   useEffect(() => {
-    const ensureActiveAcpSession = (incomingSessionId: string) => {
-      if (!activeAcpSessionIdRef.current) {
-        activeAcpSessionIdRef.current = incomingSessionId;
-        return true;
-      }
-      return activeAcpSessionIdRef.current === incomingSessionId;
-    };
+    void initCodex().catch((err) => {
+      console.warn('[codex] init failed', err);
+    });
+  }, []);
 
-    const appendThoughtChunk = (text: string) => {
-      const sessionId = activeSessionIdRef.current;
+  useEffect(() => {
+    const appendThoughtChunk = (sessionId: string, text: string) => {
       console.debug('[appendThoughtChunk]', {
         sessionId,
         textLen: text.length,
@@ -541,8 +578,7 @@ function App() {
       });
     };
 
-    const appendAssistantChunk = (text: string) => {
-      const sessionId = activeSessionIdRef.current;
+    const appendAssistantChunk = (sessionId: string, text: string) => {
       console.debug('[appendAssistantChunk]', { sessionId, textLen: text.length });
       setSessionMessages((prev) => {
         const baseList = prev[sessionId] ?? [];
@@ -568,8 +604,7 @@ function App() {
       });
     };
 
-    const upsertToolCallMessage = (toolCall: ToolCallProps) => {
-      const sessionId = activeSessionIdRef.current;
+    const upsertToolCallMessage = (sessionId: string, toolCall: ToolCallProps) => {
       const isStreaming =
         toolCall.status === 'in-progress' || toolCall.status === 'pending';
 
@@ -612,8 +647,7 @@ function App() {
       });
     };
 
-    const applyToolCallUpdateMessage = (update: UnknownRecord) => {
-      const sessionId = activeSessionIdRef.current;
+    const applyToolCallUpdateMessage = (sessionId: string, update: UnknownRecord) => {
       const toolCallId = getToolCallId(update);
       if (!toolCallId) return;
 
@@ -662,19 +696,22 @@ function App() {
 
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
-        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
-        appendAssistantChunk(event.payload.text);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        appendAssistantChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
-        console.debug('[codex:thought] Received', { sessionId: event.payload.sessionId, textLen: event.payload.text.length });
-        if (!ensureActiveAcpSession(event.payload.sessionId)) {
-          console.debug('[codex:thought] Ignored - session mismatch');
-          return;
-        }
-        appendThoughtChunk(event.payload.text);
+        console.debug('[codex:thought] Received', {
+          sessionId: event.payload.sessionId,
+          textLen: event.payload.text.length,
+        });
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        appendThoughtChunk(sessionId, event.payload.text);
       }),
-      listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', () => {
-        const sessionId = activeSessionIdRef.current;
+      listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', (event) => {
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
         const nowMs = Date.now();
         const now = new Date(nowMs);
         setSessionMessages((prev) => {
@@ -723,7 +760,6 @@ function App() {
           return { ...prev, [sessionId]: next };
         });
 
-        activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       }),
       listen<{ error: string }>('codex:error', (event) => {
@@ -741,7 +777,6 @@ function App() {
           [sessionId]: [...(prev[sessionId] ?? []), errMsg],
         }));
 
-        activeAcpSessionIdRef.current = null;
         setIsGenerating(false);
       }),
       listen<ApprovalRequest>('codex:approval-request', (event) => {
@@ -755,19 +790,19 @@ function App() {
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
-        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
-
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
         const toolCall = asRecord(event.payload.toolCall);
         if (!toolCall) return;
         const parsed = parseToolCall(toolCall);
-        upsertToolCallMessage(parsed);
+        upsertToolCallMessage(sessionId, parsed);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
-        if (!ensureActiveAcpSession(event.payload.sessionId)) return;
-
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
-        applyToolCallUpdateMessage(update);
+        applyToolCallUpdateMessage(sessionId, update);
       }),
     ];
 
@@ -776,7 +811,39 @@ function App() {
         .then((unlisteners) => unlisteners.forEach((u) => u()))
         .catch(() => {});
     };
+  }, [resolveChatSessionId]);
+
+  const registerCodexSession = useCallback((chatSessionId: string, codexSessionId: string) => {
+    codexSessionByChatRef.current[chatSessionId] = codexSessionId;
+    chatSessionByCodexRef.current[codexSessionId] = chatSessionId;
   }, []);
+
+  const clearCodexSession = useCallback((chatSessionId: string) => {
+    const existing = codexSessionByChatRef.current[chatSessionId];
+    if (existing) {
+      delete chatSessionByCodexRef.current[existing];
+    }
+    delete codexSessionByChatRef.current[chatSessionId];
+  }, []);
+
+  const ensureCodexSession = useCallback(
+    async (chatSessionId: string, forceNew: boolean) => {
+      const existing = codexSessionByChatRef.current[chatSessionId];
+      if (existing && !forceNew) return existing;
+
+      if (existing) {
+        delete chatSessionByCodexRef.current[existing];
+      }
+
+      const result = await createSession('.');
+      registerCodexSession(chatSessionId, result.sessionId);
+      if (forceNew) {
+        clearRestoredSession(chatSessionId);
+      }
+      return result.sessionId;
+    },
+    [clearRestoredSession, registerCodexSession]
+  );
 
   const handleNewChat = useCallback(() => {
     const newId = String(Date.now());
@@ -787,10 +854,13 @@ function App() {
     setSessions((prev) => [newSession, ...prev]);
     setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
     setSelectedSessionId(newId);
-  }, []);
+    clearRestoredSession(newId);
+    activeSessionIdRef.current = newId;
+  }, [clearRestoredSession]);
 
   const handleSessionSelect = useCallback((sessionId: string) => {
     setSelectedSessionId(sessionId);
+    activeSessionIdRef.current = sessionId;
   }, []);
 
   const handleSessionDelete = useCallback(
@@ -798,6 +868,8 @@ function App() {
       // 不允许删除最后一个会话
       if (sessions.length <= 1) return;
 
+      clearCodexSession(sessionId);
+      clearRestoredSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
       setSessionMessages((prev) => {
         const next = { ...prev };
@@ -813,7 +885,7 @@ function App() {
         }
       }
     },
-    [sessions, selectedSessionId]
+    [clearCodexSession, clearRestoredSession, sessions, selectedSessionId]
   );
 
   const handleSessionRename = useCallback(
@@ -828,51 +900,75 @@ function App() {
   const handleSendMessage = useCallback(
     (content: string) => {
       const now = Date.now();
+      const sessionId = selectedSessionId;
+      const shouldRecover = restoredSessionIds.has(sessionId);
       const userMessage: Message = {
         id: String(now),
         role: 'user',
         content,
         timestamp: new Date(),
       };
+      const recoveryNotice: Message | null = shouldRecover
+        ? {
+            id: newMessageId(),
+            role: 'assistant',
+            content: RECOVERY_NOTICE,
+            isStreaming: false,
+            timestamp: new Date(),
+          }
+        : null;
 
-      activeSessionIdRef.current = selectedSessionId;
-      activeAcpSessionIdRef.current = null;
+      activeSessionIdRef.current = sessionId;
       setIsGenerating(true);
 
-      // 更新当前会话的消息：添加用户消息
-      setSessionMessages((prev) => ({
-        ...prev,
-        [selectedSessionId]: [...(prev[selectedSessionId] ?? []), userMessage],
-      }));
+      // 更新当前会话的消息：添加用户消息（恢复会话时先追加提示）
+      setSessionMessages((prev) => {
+        const list = prev[sessionId] ?? [];
+        const nextList = recoveryNotice
+          ? [...list, recoveryNotice, userMessage]
+          : [...list, userMessage];
+        return { ...prev, [sessionId]: nextList };
+      });
 
       // 如果是第一条消息，用消息内容更新会话标题
       if (messages.length === 0) {
         const title = content.slice(0, 20) + (content.length > 20 ? '...' : '');
         setSessions((prev) =>
-          prev.map((s) => (s.id === selectedSessionId ? { ...s, title } : s))
+          prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
         );
       }
 
-      void invoke('codex_dev_prompt_once', { cwd: '.', content }).catch((err) => {
-        // 添加错误消息
-        setSessionMessages((prev) => {
-          const errMsg: Message = {
-            id: newMessageId(),
-            role: 'assistant',
-            content: `调用失败：${String(err)}`,
-            isStreaming: false,
-            timestamp: new Date(),
-          };
-          return {
-            ...prev,
-            [selectedSessionId]: [...(prev[selectedSessionId] ?? []), errMsg],
-          };
-        });
-        activeAcpSessionIdRef.current = null;
-        setIsGenerating(false);
-      });
+      void (async () => {
+        try {
+          const codexSessionId = await ensureCodexSession(sessionId, shouldRecover);
+          const promptContent = shouldRecover ? buildRecoveryPrompt(messages, content) : content;
+          await sendPrompt(codexSessionId, promptContent);
+        } catch (err) {
+          setSessionMessages((prev) => {
+            const errMsg: Message = {
+              id: newMessageId(),
+              role: 'assistant',
+              content: `调用失败：${String(err)}`,
+              isStreaming: false,
+              timestamp: new Date(),
+            };
+            return {
+              ...prev,
+              [sessionId]: [...(prev[sessionId] ?? []), errMsg],
+            };
+          });
+          setIsGenerating(false);
+        }
+      })();
     },
-    [selectedSessionId, messages.length]
+    [
+      ensureCodexSession,
+      messages,
+      restoredSessionIds,
+      selectedSessionId,
+      setSessions,
+      setSessionMessages,
+    ]
   );
 
   const handleApprovalSelect = useCallback(
@@ -909,33 +1005,35 @@ function App() {
     [approvalFeedback]
   );
 
-  const approvalCards: ApprovalProps[] = pendingApprovals.map((request) => {
-    const toolCall = asRecord(request.toolCall) ?? {};
-    const toolKind = normalizeToolKind(toolCall.kind);
-    const type = toolKind === 'edit' ? 'patch' : 'exec';
-    const title = getString(toolCall.title ?? toolCall.name) ?? 'Approval Required';
-    const description = extractApprovalDescription(toolCall);
-    const command = extractCommand(toolCall.rawInput ?? toolCall.raw_input);
-    const diffs = extractApprovalDiffs(toolCall);
-    const options = mapApprovalOptions(request.options);
-    const key = `${request.sessionId}:${request.requestId}`;
+  const approvalCards: ApprovalProps[] = pendingApprovals
+    .filter((request) => resolveChatSessionId(request.sessionId) === selectedSessionId)
+    .map((request) => {
+      const toolCall = asRecord(request.toolCall) ?? {};
+      const toolKind = normalizeToolKind(toolCall.kind);
+      const type = toolKind === 'edit' ? 'patch' : 'exec';
+      const title = getString(toolCall.title ?? toolCall.name) ?? 'Approval Required';
+      const description = extractApprovalDescription(toolCall);
+      const command = extractCommand(toolCall.rawInput ?? toolCall.raw_input);
+      const diffs = extractApprovalDiffs(toolCall);
+      const options = mapApprovalOptions(request.options);
+      const key = `${request.sessionId}:${request.requestId}`;
 
-    return {
-      callId: request.requestId,
-      type,
-      title,
-      status: 'pending',
-      description,
-      command,
-      diffs: diffs.length > 0 ? diffs : undefined,
-      options: options.length > 0 ? options : undefined,
-      feedback: approvalFeedback[key] ?? '',
-      onFeedbackChange: (next) =>
-        setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
-      loading: approvalLoading[key] ?? false,
-      onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
-    };
-  });
+      return {
+        callId: request.requestId,
+        type,
+        title,
+        status: 'pending',
+        description,
+        command,
+        diffs: diffs.length > 0 ? diffs : undefined,
+        options: options.length > 0 ? options : undefined,
+        feedback: approvalFeedback[key] ?? '',
+        onFeedbackChange: (next) =>
+          setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
+        loading: approvalLoading[key] ?? false,
+        onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
+      };
+    });
 
   return (
     <ChatContainer
@@ -945,6 +1043,7 @@ function App() {
       approvals={approvalCards}
       sidebarVisible={sidebarVisible}
       isGenerating={isGenerating}
+      inputPlaceholder={inputPlaceholder}
       onSessionSelect={handleSessionSelect}
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}

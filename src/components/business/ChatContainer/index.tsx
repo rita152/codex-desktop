@@ -19,6 +19,7 @@ export function ChatContainer({
   messages,
   approvals,
   isGenerating = false,
+  inputPlaceholder,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -90,6 +91,7 @@ export function ChatContainer({
             onChange={setInputValue}
             onSend={handleSend}
             disabled={isGenerating}
+            placeholder={inputPlaceholder}
             selectedAgent={selectedAgent}
             onAgentChange={setSelectedAgent}
             selectedModel={selectedModel}

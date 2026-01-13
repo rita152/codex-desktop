@@ -15,6 +15,8 @@ export interface ChatContainerProps {
   approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
+  /** 输入框占位文案 */
+  inputPlaceholder?: string;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */
