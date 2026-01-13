@@ -48,8 +48,8 @@ export function ChevronDownIcon({ size = 24, className = '' }: IconProps) {
 export function EditIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg aria-hidden="true" focusable="false" className={`icon ${className}`} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 20H8L18.5 9.5C19.0304 8.96957 19.3284 8.24891 19.3284 7.5C19.3284 6.75109 19.0304 6.03043 18.5 5.5C17.9696 4.96957 17.2489 4.67157 16.5 4.67157C15.7511 4.67157 15.0304 4.96957 14.5 5.5L4 16V20Z" />
-      <path d="M13.5 6.5L17.5 10.5" />
+      <path d="M12 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V12" />
+      <path d="M18.375 2.625C18.7728 2.22717 19.3124 2.00368 19.875 2.00368C20.4376 2.00368 20.9772 2.22717 21.375 2.625C21.7728 3.02283 21.9963 3.56239 21.9963 4.125C21.9963 4.68761 21.7728 5.22717 21.375 5.625L12 15L8 16L9 12L18.375 2.625Z" />
     </svg>
   );
 }
