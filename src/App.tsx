@@ -513,10 +513,6 @@ function App() {
 
   // 当前会话的消息
   const messages = sessionMessages[selectedSessionId] ?? [];
-  const isRestoredSession = restoredSessionIds.has(selectedSessionId);
-  const inputPlaceholder = isRestoredSession
-    ? '历史会话已恢复，发送新消息将创建新的会话'
-    : undefined;
 
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
@@ -1043,7 +1039,6 @@ function App() {
       approvals={approvalCards}
       sidebarVisible={sidebarVisible}
       isGenerating={isGenerating}
-      inputPlaceholder={inputPlaceholder}
       onSessionSelect={handleSessionSelect}
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
