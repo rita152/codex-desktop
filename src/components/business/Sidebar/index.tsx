@@ -7,6 +7,7 @@ import {
   CommentIcon,
   SidebarLeftIcon,
   EditIcon,
+  PencilIcon,
   MenuIcon,
   TrashIcon,
 } from '../../ui/data-display/Icon';
@@ -125,7 +126,7 @@ export function Sidebar({
 
       if (onSessionRename) {
         actions.push({
-          icon: <EditIcon size={14} />,
+          icon: <PencilIcon size={14} />,
           label: '重命名',
           onClick: () => handleStartRename(sessionId, title),
         });
