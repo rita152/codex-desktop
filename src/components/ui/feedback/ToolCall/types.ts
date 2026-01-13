@@ -42,6 +42,14 @@ export interface TerminalContent {
   type: 'terminal';
   /** 终端 ID */
   terminalId: string;
+  /** 终端工作目录 */
+  cwd?: string;
+  /** 终端输出 */
+  output?: string;
+  /** 退出码 */
+  exitCode?: number | null;
+  /** 退出信号 */
+  signal?: string | null;
 }
 
 /** 文本内容 */

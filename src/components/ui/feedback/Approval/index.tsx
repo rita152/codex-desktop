@@ -1,9 +1,13 @@
 import { cn } from '../../../../utils/cn';
+import { Markdown } from '../../data-display/Markdown';
+import { GitDiff } from '../../data-display/GitDiff';
+import { TextArea } from '../../data-entry/TextArea';
 
 import type {
   ApprovalProps,
   ApprovalStatus,
   ApprovalType,
+  ApprovalDiff,
   PermissionOption,
   PermissionOptionKind,
 } from './types';
@@ -100,6 +104,8 @@ function getOptionIcon(kind: PermissionOptionKind, size = 14) {
       return <CheckIcon size={size} />;
     case 'reject-once':
       return <XIcon size={size} />;
+    case 'reject-always':
+      return <XIcon size={size} />;
   }
 }
 
@@ -113,12 +119,21 @@ export function Approval({
   options,
   disabled = false,
   loading = false,
+  description,
+  command,
+  diffs,
+  feedback = '',
+  onFeedbackChange,
+  showFeedback,
+  feedbackPlaceholder = '请输入拒绝原因（可选）',
   onSelect,
   className = '',
 }: ApprovalProps) {
   const isPending = status === 'pending';
   const resolvedOptions = options ?? getDefaultOptions(type);
   const showActions = isPending && onSelect && resolvedOptions.length > 0;
+  const canReject = resolvedOptions.some((option) => option.kind.startsWith('reject'));
+  const shouldShowFeedback = showFeedback ?? canReject;
 
   const classNames = cn(
     'approval',
@@ -133,6 +148,12 @@ export function Approval({
       onSelect(callId, optionId);
     }
   };
+
+  const handleFeedbackChange = (value: string) => {
+    onFeedbackChange?.(value);
+  };
+
+  const hasDetails = Boolean(description || command || (diffs && diffs.length > 0) || shouldShowFeedback);
 
   return (
     <div className={classNames} data-call-id={callId}>
@@ -165,6 +186,50 @@ export function Approval({
           </div>
         )}
       </div>
+      {hasDetails && (
+        <div className="approval__body">
+          {description && (
+            <div className="approval__section">
+              <span className="approval__section-label">说明</span>
+              <Markdown content={description} compact className="approval__description" />
+            </div>
+          )}
+          {command && (
+            <div className="approval__section">
+              <span className="approval__section-label">命令</span>
+              <pre className="approval__code">{command}</pre>
+            </div>
+          )}
+          {diffs && diffs.length > 0 && (
+            <div className="approval__section">
+              <span className="approval__section-label">变更</span>
+              <div className="approval__diffs">
+                {diffs.map((diffItem, idx) => (
+                  <GitDiff
+                    key={`${diffItem.path}-${idx}`}
+                    diff={diffItem.diff}
+                    fileName={diffItem.path}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          {shouldShowFeedback && (
+            <div className="approval__section">
+              <span className="approval__section-label">拒绝反馈</span>
+              <TextArea
+                value={feedback}
+                onChange={handleFeedbackChange}
+                placeholder={feedbackPlaceholder}
+                minRows={2}
+                maxRows={4}
+                className="approval__feedback"
+                disabled={disabled || loading}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

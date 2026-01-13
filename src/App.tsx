@@ -3,10 +3,27 @@ import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 
 import { ChatContainer } from './components/business/ChatContainer';
+import { approveRequest } from './api/codex';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
 import type { ThinkingPhase } from './components/ui/feedback/Thinking';
+import type {
+  ToolCallContent,
+  ToolCallLocation,
+  ToolCallProps,
+  ToolCallStatus,
+  ToolKind,
+  TerminalContent,
+} from './components/ui/feedback/ToolCall';
+import type {
+  ApprovalDiff,
+  ApprovalProps,
+  PermissionOption as ApprovalOption,
+  PermissionOptionKind,
+} from './components/ui/feedback/Approval';
+import type { ApprovalRequest, PermissionOption } from './types/codex';
+import { buildUnifiedDiff } from './utils/diff';
 
 import './App.css';
 
@@ -25,6 +42,361 @@ function newMessageId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+type UnknownRecord = Record<string, unknown>;
+
+function asRecord(value: unknown): UnknownRecord | null {
+  if (!value || typeof value !== 'object') return null;
+  return value as UnknownRecord;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function getString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function getNumber(value: unknown): number | undefined {
+  return typeof value === 'number' ? value : undefined;
+}
+
+function normalizeToolCallStatus(value: unknown): ToolCallStatus {
+  const key = String(value ?? '').toLowerCase();
+  switch (key) {
+    case 'in_progress':
+    case 'in-progress':
+      return 'in-progress';
+    case 'completed':
+      return 'completed';
+    case 'failed':
+      return 'failed';
+    default:
+      return 'pending';
+  }
+}
+
+function normalizeToolKind(value: unknown): ToolKind | undefined {
+  const key = String(value ?? '').toLowerCase();
+  switch (key) {
+    case 'read':
+      return 'read';
+    case 'edit':
+    case 'delete':
+    case 'move':
+      return 'edit';
+    case 'execute':
+      return 'execute';
+    case 'search':
+      return 'search';
+    case 'fetch':
+      return 'fetch';
+    case 'browser':
+      return 'browser';
+    case 'mcp':
+      return 'mcp';
+    default:
+      return key ? 'other' : undefined;
+  }
+}
+
+function normalizePermissionKind(value: unknown): PermissionOptionKind {
+  const key = String(value ?? '').toLowerCase();
+  switch (key) {
+    case 'allow_always':
+    case 'allow-always':
+      return 'allow-always';
+    case 'allow_once':
+    case 'allow-once':
+      return 'allow-once';
+    case 'reject_always':
+    case 'reject-always':
+      return 'reject-always';
+    case 'reject_once':
+    case 'reject-once':
+    case 'abort':
+      return 'reject-once';
+    default:
+      return 'allow-once';
+  }
+}
+
+function extractMeta(raw: UnknownRecord | null): UnknownRecord | null {
+  if (!raw) return null;
+  return (asRecord(raw._meta) ?? asRecord(raw.meta)) ?? null;
+}
+
+function parseToolCallLocations(raw: unknown): ToolCallLocation[] | undefined {
+  const items = asArray(raw);
+  if (items.length === 0) return undefined;
+  const locations = items
+    .map((item) => {
+      const record = asRecord(item);
+      if (!record) return null;
+      const path = getString(record.path ?? record.uri);
+      if (!path) return null;
+      const line = getNumber(record.line ?? record.startLine ?? record.start_line);
+      return {
+        uri: path,
+        range: line ? { startLine: line } : undefined,
+      };
+    })
+    .filter(Boolean) as ToolCallLocation[];
+
+  return locations.length > 0 ? locations : undefined;
+}
+
+function parseToolCallContent(raw: unknown): ToolCallContent[] | null {
+  const items = asArray(raw);
+  if (items.length === 0) return null;
+  const result: ToolCallContent[] = [];
+
+  for (const item of items) {
+    const record = asRecord(item);
+    if (!record) continue;
+    const type = getString(record.type);
+
+    if (type === 'content') {
+      const contentRecord = asRecord(record.content);
+      if (!contentRecord) continue;
+      const contentType = getString(contentRecord.type);
+      if (contentType === 'text' && typeof contentRecord.text === 'string') {
+        result.push({ type: 'text', text: contentRecord.text });
+      } else if (contentType === 'resource_link') {
+        const name = getString(contentRecord.name) ?? 'resource';
+        const uri = getString(contentRecord.uri);
+        result.push({
+          type: 'text',
+          text: uri ? `${name} (${uri})` : name,
+        });
+      } else {
+        result.push({
+          type: 'text',
+          text: safeJson(contentRecord),
+        });
+      }
+      continue;
+    }
+
+    if (type === 'diff') {
+      const path = getString(record.path) ?? 'unknown';
+      const oldText =
+        typeof record.oldText === 'string'
+          ? record.oldText
+          : typeof record.old_text === 'string'
+            ? record.old_text
+            : null;
+      const newText =
+        typeof record.newText === 'string'
+          ? record.newText
+          : typeof record.new_text === 'string'
+            ? record.new_text
+            : '';
+      result.push({
+        type: 'diff',
+        path,
+        diff: buildUnifiedDiff(path, oldText, newText),
+      });
+      continue;
+    }
+
+    if (type === 'terminal') {
+      const terminalId = getString(record.terminalId ?? record.terminal_id);
+      if (terminalId) {
+        result.push({ type: 'terminal', terminalId });
+      }
+    }
+  }
+
+  return result.length > 0 ? result : null;
+}
+
+function applyTerminalMeta(
+  content: ToolCallContent[] | undefined,
+  meta: UnknownRecord | null
+): ToolCallContent[] | undefined {
+  if (!meta) return content;
+  let nextContent = content ? [...content] : [];
+
+  const ensureTerminalContent = (terminalId: string): TerminalContent => {
+    const index = nextContent.findIndex(
+      (item) => item.type === 'terminal' && item.terminalId === terminalId
+    );
+    if (index >= 0) {
+      return nextContent[index] as TerminalContent;
+    }
+    const created: TerminalContent = { type: 'terminal', terminalId, output: '' };
+    nextContent = [...nextContent, created];
+    return created;
+  };
+
+  const terminalInfo = asRecord(meta.terminal_info ?? meta.terminalInfo);
+  const terminalOutput = asRecord(meta.terminal_output ?? meta.terminalOutput);
+  const terminalExit = asRecord(meta.terminal_exit ?? meta.terminalExit);
+
+  if (terminalInfo) {
+    const terminalId = getString(terminalInfo.terminal_id ?? terminalInfo.terminalId);
+    if (terminalId) {
+      const entry = ensureTerminalContent(terminalId);
+      const cwd = getString(terminalInfo.cwd);
+      const nextEntry = { ...entry, cwd };
+      nextContent = nextContent.map((item) =>
+        item.type === 'terminal' && item.terminalId === terminalId ? nextEntry : item
+      );
+    }
+  }
+
+  if (terminalOutput) {
+    const terminalId = getString(terminalOutput.terminal_id ?? terminalOutput.terminalId);
+    const data = getString(terminalOutput.data);
+    if (terminalId && data !== undefined) {
+      const entry = ensureTerminalContent(terminalId);
+      const nextEntry = {
+        ...entry,
+        output: `${entry.output ?? ''}${data}`,
+      };
+      nextContent = nextContent.map((item) =>
+        item.type === 'terminal' && item.terminalId === terminalId ? nextEntry : item
+      );
+    }
+  }
+
+  if (terminalExit) {
+    const terminalId = getString(terminalExit.terminal_id ?? terminalExit.terminalId);
+    if (terminalId) {
+      const entry = ensureTerminalContent(terminalId);
+      const nextEntry = {
+        ...entry,
+        exitCode: getNumber(terminalExit.exit_code ?? terminalExit.exitCode) ?? entry.exitCode,
+        signal: getString(terminalExit.signal) ?? entry.signal,
+      };
+      nextContent = nextContent.map((item) =>
+        item.type === 'terminal' && item.terminalId === terminalId ? nextEntry : item
+      );
+    }
+  }
+
+  return nextContent.length > 0 ? nextContent : content;
+}
+
+function getToolCallId(raw: UnknownRecord): string {
+  const id = getString(raw.toolCallId ?? raw.tool_call_id ?? raw.id);
+  return id ?? '';
+}
+
+function parseToolCall(raw: UnknownRecord): ToolCallProps {
+  const meta = extractMeta(raw);
+  const toolCallId = getToolCallId(raw) || newMessageId();
+  const title = getString(raw.title ?? raw.name) ?? 'Tool Call';
+  const status = normalizeToolCallStatus(raw.status);
+  const kind = normalizeToolKind(raw.kind);
+  const locations = parseToolCallLocations(raw.locations);
+  const rawInput = raw.rawInput ?? raw.raw_input;
+  const rawOutput = raw.rawOutput ?? raw.raw_output;
+  const parsedContent = parseToolCallContent(raw.content);
+  const content = applyTerminalMeta(parsedContent ?? undefined, meta);
+
+  return {
+    toolCallId,
+    title,
+    kind,
+    status,
+    content,
+    locations,
+    rawInput,
+    rawOutput,
+    startTime: status === 'in-progress' ? Date.now() : undefined,
+  };
+}
+
+function applyToolCallUpdate(
+  existing: ToolCallProps | undefined,
+  raw: UnknownRecord
+): ToolCallProps {
+  const meta = extractMeta(raw);
+  const toolCallId = getToolCallId(raw) || existing?.toolCallId || newMessageId();
+  const status = raw.status ? normalizeToolCallStatus(raw.status) : existing?.status ?? 'pending';
+  const kind = normalizeToolKind(raw.kind ?? existing?.kind);
+  const title = getString(raw.title) ?? existing?.title ?? 'Tool Call';
+  const locations = raw.locations ? parseToolCallLocations(raw.locations) : existing?.locations;
+  const rawInput = raw.rawInput ?? raw.raw_input ?? existing?.rawInput;
+  const rawOutput = raw.rawOutput ?? raw.raw_output ?? existing?.rawOutput;
+
+  const parsedContent = parseToolCallContent(raw.content);
+  const mergedContent = applyTerminalMeta(parsedContent ?? existing?.content, meta);
+
+  const startTime =
+    existing?.startTime ?? (status === 'in-progress' ? Date.now() : undefined);
+  const duration =
+    (status === 'completed' || status === 'failed') && startTime
+      ? existing?.duration ?? (Date.now() - startTime) / 1000
+      : existing?.duration;
+
+  return {
+    toolCallId,
+    title,
+    kind,
+    status,
+    content: mergedContent,
+    locations,
+    rawInput,
+    rawOutput,
+    startTime,
+    duration,
+  };
+}
+
+function extractCommand(rawInput: unknown): string | undefined {
+  const record = asRecord(rawInput);
+  if (!record) return undefined;
+  const command = record.proposed_execpolicy_amendment ?? record.command ?? record.cmd;
+  if (Array.isArray(command)) {
+    return command.map((item) => String(item)).join(' ');
+  }
+  if (typeof command === 'string') return command;
+  const parsedCmd = asArray(record.parsed_cmd)[0];
+  const parsedRecord = asRecord(parsedCmd);
+  const parsedText = parsedRecord && getString(parsedRecord.cmd);
+  return parsedText ?? undefined;
+}
+
+function mapApprovalOptions(options: PermissionOption[] | undefined): ApprovalOption[] {
+  if (!options) return [];
+  return options
+    .map((option) => {
+      const id = getString(option.optionId ?? option.option_id ?? option.id);
+      if (!id) return null;
+      const label = getString(option.label ?? option.name) ?? id;
+      return {
+        id,
+        label,
+        kind: normalizePermissionKind(option.kind),
+      };
+    })
+    .filter(Boolean) as ApprovalOption[];
+}
+
+function extractApprovalDiffs(toolCall: UnknownRecord): ApprovalDiff[] {
+  const content = parseToolCallContent(toolCall.content);
+  if (!content) return [];
+  return content
+    .filter((item) => item.type === 'diff')
+    .map((item) => ({
+      path: item.path,
+      diff: item.diff,
+    }));
+}
+
+function extractApprovalDescription(toolCall: UnknownRecord): string | undefined {
+  const content = parseToolCallContent(toolCall.content);
+  if (!content) return undefined;
+  const texts = content
+    .filter((item) => item.type === 'text')
+    .map((item) => item.text.trim())
+    .filter(Boolean);
+  return texts.length > 0 ? texts.join('\n\n') : undefined;
+}
+
 function App() {
   const [sessions, setSessions] = useState<ChatSession[]>([
     { id: '1', title: '新对话' },
@@ -35,6 +407,9 @@ function App() {
   });
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
+  const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
+  const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
 
   const activeSessionIdRef = useRef<string>('1');
   const activeAcpSessionIdRef = useRef<string | null>(null);
@@ -160,6 +535,92 @@ function App() {
       });
     };
 
+    const upsertToolCallMessage = (toolCall: ToolCallProps) => {
+      const sessionId = activeSessionIdRef.current;
+      const isStreaming =
+        toolCall.status === 'in-progress' || toolCall.status === 'pending';
+
+      setSessionMessages((prev) => {
+        const list = prev[sessionId] ?? [];
+        let updated = false;
+        const nextList = list.map((msg) => {
+          if (!msg.toolCalls) return msg;
+          const index = msg.toolCalls.findIndex(
+            (call) => call.toolCallId === toolCall.toolCallId
+          );
+          if (index === -1) return msg;
+          updated = true;
+          const nextCalls = [...msg.toolCalls];
+          nextCalls[index] = toolCall;
+          return {
+            ...msg,
+            toolCalls: nextCalls,
+            isStreaming,
+            timestamp: msg.timestamp ?? (isStreaming ? undefined : new Date()),
+          };
+        });
+
+        if (!updated) {
+          const nextMessage: Message = {
+            id: toolCall.toolCallId,
+            role: 'tool',
+            content: '',
+            toolCalls: [toolCall],
+            isStreaming,
+            timestamp: isStreaming ? undefined : new Date(),
+          };
+          return { ...prev, [sessionId]: [...list, nextMessage] };
+        }
+
+        return { ...prev, [sessionId]: nextList };
+      });
+    };
+
+    const applyToolCallUpdateMessage = (update: UnknownRecord) => {
+      const sessionId = activeSessionIdRef.current;
+      const toolCallId = getToolCallId(update);
+      if (!toolCallId) return;
+
+      setSessionMessages((prev) => {
+        const list = prev[sessionId] ?? [];
+        let updated = false;
+        const nextList = list.map((msg) => {
+          if (!msg.toolCalls) return msg;
+          const index = msg.toolCalls.findIndex((call) => call.toolCallId === toolCallId);
+          if (index === -1) return msg;
+          updated = true;
+          const nextCall = applyToolCallUpdate(msg.toolCalls[index], update);
+          const isStreaming =
+            nextCall.status === 'in-progress' || nextCall.status === 'pending';
+          const nextCalls = [...msg.toolCalls];
+          nextCalls[index] = nextCall;
+          return {
+            ...msg,
+            toolCalls: nextCalls,
+            isStreaming,
+            timestamp: msg.timestamp ?? (isStreaming ? undefined : new Date()),
+          };
+        });
+
+        if (!updated) {
+          const nextCall = applyToolCallUpdate(undefined, update);
+          const isStreaming =
+            nextCall.status === 'in-progress' || nextCall.status === 'pending';
+          const nextMessage: Message = {
+            id: nextCall.toolCallId,
+            role: 'tool',
+            content: '',
+            toolCalls: [nextCall],
+            isStreaming,
+            timestamp: isStreaming ? undefined : new Date(),
+          };
+          return { ...prev, [sessionId]: [...list, nextMessage] };
+        }
+
+        return { ...prev, [sessionId]: nextList };
+      });
+    };
+
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
         if (!ensureActiveAcpSession(event.payload.sessionId)) return;
@@ -225,57 +686,30 @@ function App() {
         thinkingStartTimeRef.current = null;
         setIsGenerating(false);
       }),
-      listen('codex:approval-request', () => {
-        // TODO: 接入 ApprovalDialog
+      listen<ApprovalRequest>('codex:approval-request', (event) => {
+        const req = event.payload;
+        const key = `${req.sessionId}:${req.requestId}`;
+        setPendingApprovals((prev) => {
+          const next = prev.filter((item) => `${item.sessionId}:${item.requestId}` !== key);
+          return [...next, req];
+        });
+        setApprovalFeedback((prev) => ({ ...prev, [key]: prev[key] ?? '' }));
+        setApprovalLoading((prev) => ({ ...prev, [key]: false }));
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         if (!ensureActiveAcpSession(event.payload.sessionId)) return;
 
-        const sessionId = activeSessionIdRef.current;
-        const toolCall = event.payload.toolCall as Record<string, unknown>;
-        const toolCallId = String(toolCall?.toolCallId ?? toolCall?.tool_call_id ?? '');
-
-        const headerParts = [
-          '**Tool Call**',
-          toolCall?.name ? `\`${String(toolCall.name)}\`` : '',
-          toolCallId ? `(id: \`${toolCallId}\`)` : '',
-        ].filter(Boolean);
-
-        const msg: Message = {
-          id: newMessageId(),
-          role: 'tool',
-          content: `${headerParts.join(' ')}\n\n\`\`\`json\n${safeJson(toolCall)}\n\`\`\`\n`,
-          isStreaming: true,
-          timestamp: undefined,
-        };
-
-        setSessionMessages((prev) => ({
-          ...prev,
-          [sessionId]: [...(prev[sessionId] ?? []), msg],
-        }));
+        const toolCall = asRecord(event.payload.toolCall);
+        if (!toolCall) return;
+        const parsed = parseToolCall(toolCall);
+        upsertToolCallMessage(parsed);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
         if (!ensureActiveAcpSession(event.payload.sessionId)) return;
 
-        const sessionId = activeSessionIdRef.current;
-        const update = event.payload.update as Record<string, unknown>;
-        const toolCallId = String(update?.toolCallId ?? update?.tool_call_id ?? '');
-
-        const toolIdPart = toolCallId ? ` (id: \`${toolCallId}\`)` : '';
-        const chunk = `\n\n**Tool Update**${toolIdPart}\n\n\`\`\`json\n${safeJson(update)}\n\`\`\`\n`;
-
-        const msg: Message = {
-          id: newMessageId(),
-          role: 'tool',
-          content: chunk,
-          isStreaming: true,
-          timestamp: undefined,
-        };
-
-        setSessionMessages((prev) => ({
-          ...prev,
-          [sessionId]: [...(prev[sessionId] ?? []), msg],
-        }));
+        const update = asRecord(event.payload.update);
+        if (!update) return;
+        applyToolCallUpdateMessage(update);
       }),
     ];
 
@@ -403,11 +837,74 @@ function App() {
     [selectedSessionId, messages.length]
   );
 
+  const handleApprovalSelect = useCallback(
+    async (request: ApprovalRequest, optionId: string) => {
+      const key = `${request.sessionId}:${request.requestId}`;
+      setApprovalLoading((prev) => ({ ...prev, [key]: true }));
+      try {
+        const feedback = approvalFeedback[key]?.trim();
+        if (feedback) {
+          console.debug('[approval feedback]', { requestId: request.requestId, feedback });
+        }
+        await approveRequest(request.sessionId, request.requestId, undefined, optionId);
+        setPendingApprovals((prev) =>
+          prev.filter(
+            (item) =>
+              !(item.sessionId === request.sessionId && item.requestId === request.requestId)
+          )
+        );
+        setApprovalFeedback((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        setApprovalLoading((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      } catch (err) {
+        console.error('[approval failed]', err);
+        setApprovalLoading((prev) => ({ ...prev, [key]: false }));
+      }
+    },
+    [approvalFeedback]
+  );
+
+  const approvalCards: ApprovalProps[] = pendingApprovals.map((request) => {
+    const toolCall = asRecord(request.toolCall) ?? {};
+    const toolKind = normalizeToolKind(toolCall.kind);
+    const type = toolKind === 'edit' ? 'patch' : 'exec';
+    const title = getString(toolCall.title ?? toolCall.name) ?? 'Approval Required';
+    const description = extractApprovalDescription(toolCall);
+    const command = extractCommand(toolCall.rawInput ?? toolCall.raw_input);
+    const diffs = extractApprovalDiffs(toolCall);
+    const options = mapApprovalOptions(request.options);
+    const key = `${request.sessionId}:${request.requestId}`;
+
+    return {
+      callId: request.requestId,
+      type,
+      title,
+      status: 'pending',
+      description,
+      command,
+      diffs: diffs.length > 0 ? diffs : undefined,
+      options: options.length > 0 ? options : undefined,
+      feedback: approvalFeedback[key] ?? '',
+      onFeedbackChange: (next) =>
+        setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
+      loading: approvalLoading[key] ?? false,
+      onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
+    };
+  });
+
   return (
     <ChatContainer
       sessions={sessions}
       selectedSessionId={selectedSessionId}
       messages={messages}
+      approvals={approvalCards}
       sidebarVisible={sidebarVisible}
       isGenerating={isGenerating}
       onSessionSelect={handleSessionSelect}

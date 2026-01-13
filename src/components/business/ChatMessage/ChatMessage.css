@@ -51,6 +51,8 @@
   border-bottom-left-radius: var(--radius-sm);
   padding-top: var(--spacing-md);
   background: color-mix(in srgb, var(--color-border) 10%, transparent);
+  max-width: 100%;
+  width: 100%;
 }
 
 .chat-message--thought .chat-message__thinking {
@@ -79,6 +81,13 @@
 
 .chat-message__cursor::after {
   content: '▍';
+}
+
+.chat-message__tool-calls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
 }
 
 @keyframes chat-message-cursor-blink {

@@ -88,6 +88,7 @@ export function ChatMessageList({
           role={message.role}
           content={message.content}
           thinking={message.thinking}
+          toolCalls={message.toolCalls}
           isStreaming={message.role !== 'user' ? message.isStreaming : false}
           timestamp={message.timestamp}
         />

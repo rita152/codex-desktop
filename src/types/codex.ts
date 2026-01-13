@@ -14,19 +14,45 @@ export interface MessageChunk {
 
 export interface ToolCall {
   toolCallId?: string;
+  tool_call_id?: string;
   name?: string;
+  title?: string;
+  kind?: string;
+  status?: string;
+  content?: unknown;
+  locations?: unknown;
+  rawInput?: unknown;
+  raw_input?: unknown;
+  rawOutput?: unknown;
+  raw_output?: unknown;
+  _meta?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
   arguments?: unknown;
   [key: string]: unknown;
 }
 
 export interface ToolCallUpdate {
+  toolCallId?: string;
+  tool_call_id?: string;
+  title?: string;
+  status?: string;
+  content?: unknown;
+  locations?: unknown;
+  rawInput?: unknown;
+  raw_input?: unknown;
+  rawOutput?: unknown;
+  raw_output?: unknown;
+  _meta?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
   [key: string]: unknown;
 }
 
 export interface PermissionOption {
   optionId?: string;
-  kind?: ApprovalDecision;
+  option_id?: string;
+  kind?: ApprovalDecision | 'allow_once' | 'allow_always' | 'reject_once' | 'reject_always' | 'abort';
   label?: string;
+  name?: string;
   description?: string;
   [key: string]: unknown;
 }

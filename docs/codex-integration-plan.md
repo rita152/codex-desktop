@@ -392,21 +392,21 @@ const {
 **目标**：展示 AI 的工具调用
 
 **文件**：
-- `src/components/ui/ToolCallCard/index.tsx`
-- `src/components/ui/ToolCallCard/ToolCallCard.css`
-- `src/components/ui/ToolCallCard/types.ts`
-- `src/components/ui/ToolCallCard/ToolCallCard.stories.tsx`
+- `src/components/ui/feedback/ToolCall/index.tsx`
+- `src/components/ui/feedback/ToolCall/ToolCall.css`
+- `src/components/ui/feedback/ToolCall/types.ts`
+- `src/components/ui/feedback/ToolCall/ToolCall.stories.tsx`
 
 **内容**：
-- [ ] 根据 `ToolKind` 显示不同图标（读取、编辑、执行、搜索）
-- [ ] 显示工具调用标题和状态（进行中、完成、失败）
-- [ ] 可折叠的输出内容
-- [ ] 执行命令显示终端样式输出
+- [x] 根据 `ToolKind` 显示不同图标（读取、编辑、执行、搜索）
+- [x] 显示工具调用标题和状态（进行中、完成、失败）
+- [x] 可折叠的输出内容
+- [x] 执行命令显示终端样式输出
 
 **验收标准**：
 ```bash
 npm run storybook
-# 在 Storybook 中可以看到不同状态的 ToolCallCard
+# 在 Storybook 中可以看到不同状态的 ToolCall
 ```
 
 ---
@@ -416,17 +416,17 @@ npm run storybook
 **目标**：实现命令执行和补丁应用的审批 UI
 
 **文件**：
-- `src/components/ui/ApprovalDialog/index.tsx`
-- `src/components/ui/ApprovalDialog/ApprovalDialog.css`
-- `src/components/ui/ApprovalDialog/types.ts`
-- `src/components/ui/ApprovalDialog/ApprovalDialog.stories.tsx`
+- `src/components/ui/feedback/Approval/index.tsx`
+- `src/components/ui/feedback/Approval/Approval.css`
+- `src/components/ui/feedback/Approval/types.ts`
+- `src/components/ui/feedback/Approval/Approval.stories.tsx`
 
 **内容**：
-- [ ] 显示待审批的命令或补丁内容
-- [ ] 三个按钮：始终允许、允许一次、拒绝
-- [ ] 拒绝时可输入反馈
-- [ ] 命令审批显示命令内容
-- [ ] 补丁审批显示 Diff 预览
+- [x] 显示待审批的命令或补丁内容
+- [x] 三个按钮：始终允许、允许一次、拒绝
+- [x] 拒绝时可输入反馈
+- [x] 命令审批显示命令内容
+- [x] 补丁审批显示 Diff 预览
 
 **验收标准**：
 ```bash
@@ -441,16 +441,16 @@ npm run storybook
 **目标**：展示代码变更的 Diff 视图
 
 **文件**：
-- `src/components/ui/DiffViewer/index.tsx`
-- `src/components/ui/DiffViewer/DiffViewer.css`
-- `src/components/ui/DiffViewer/types.ts`
-- `src/components/ui/DiffViewer/DiffViewer.stories.tsx`
+- `src/components/ui/data-display/GitDiff/index.tsx`
+- `src/components/ui/data-display/GitDiff/GitDiff.css`
+- `src/components/ui/data-display/GitDiff/types.ts`
+- `src/components/ui/data-display/GitDiff/GitDiff.stories.tsx`
 
 **内容**：
-- [ ] 支持 unified diff 格式解析
-- [ ] 添加行高亮（绿色添加、红色删除）
-- [ ] 显示文件路径
-- [ ] 行号显示
+- [x] 支持 unified diff 格式解析
+- [x] 添加行高亮（绿色添加、红色删除）
+- [x] 显示文件路径
+- [x] 行号显示
 
 **验收标准**：
 ```bash

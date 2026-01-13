@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { cn } from '../../../../utils/cn';
+import { GitDiff } from '../../data-display/GitDiff';
 
 import type {
   ToolCallProps,
@@ -351,17 +352,28 @@ export function ToolCall({
                   if (item.type === 'diff') {
                     return (
                       <div key={idx} className="tool-call__diff">
-                        <div className="tool-call__diff-header">{item.path}</div>
-                        <pre className="tool-call__code tool-call__code--diff">{item.diff}</pre>
+                        <GitDiff diff={item.diff} fileName={item.path} />
                       </div>
                     );
                   }
                   if (item.type === 'terminal') {
                     return (
                       <div key={idx} className="tool-call__terminal">
-                        <span className="tool-call__terminal-label">
-                          Terminal: {item.terminalId}
-                        </span>
+                        <div className="tool-call__terminal-header">
+                          <span>Terminal: {item.terminalId}</span>
+                          {item.cwd && (
+                            <span className="tool-call__terminal-meta">cwd: {item.cwd}</span>
+                          )}
+                          {item.exitCode !== undefined && item.exitCode !== null && (
+                            <span className="tool-call__terminal-meta">exit {item.exitCode}</span>
+                          )}
+                          {item.signal && (
+                            <span className="tool-call__terminal-meta">signal {item.signal}</span>
+                          )}
+                        </div>
+                        <pre className="tool-call__terminal-output">
+                          {item.output?.length ? item.output : '等待终端输出...'}
+                        </pre>
                       </div>
                     );
                   }

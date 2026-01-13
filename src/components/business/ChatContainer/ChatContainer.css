@@ -72,6 +72,24 @@
   transition: max-width 0.2s ease;
 }
 
+.chat-container__approvals {
+  position: absolute;
+  right: var(--spacing-lg);
+  bottom: calc(var(--spacing-lg) + 96px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  max-width: min(560px, calc(100% - var(--spacing-xl) * 2));
+  z-index: 20;
+}
+
+@media (max-width: 900px) {
+  .chat-container__approvals {
+    left: var(--spacing-lg);
+    right: var(--spacing-lg);
+  }
+}
+
 .chat-container__welcome {
   flex: 1;
   display: flex;

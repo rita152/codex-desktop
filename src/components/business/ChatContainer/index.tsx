@@ -5,6 +5,7 @@ import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarLeftIcon } from '../../ui/data-display/Icon';
+import { Approval } from '../../ui/feedback/Approval';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -17,6 +18,7 @@ export function ChatContainer({
   sessions,
   selectedSessionId,
   messages,
+  approvals,
   isGenerating = false,
   onSessionSelect,
   onNewChat,
@@ -96,6 +98,14 @@ export function ChatContainer({
             className="chat-container__input"
           />
         </div>
+
+        {approvals && approvals.length > 0 && (
+          <div className="chat-container__approvals" aria-live="polite">
+            {approvals.map((approval) => (
+              <Approval key={approval.callId} {...approval} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

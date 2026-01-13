@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 
 import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
+import type { ApprovalProps } from '../../ui/feedback/Approval';
 
 export interface ChatContainerProps {
   /** 会话列表 */
@@ -10,6 +11,8 @@ export interface ChatContainerProps {
   selectedSessionId?: string;
   /** 当前会话的消息列表 */
   messages: Message[];
+  /** 待审批列表 */
+  approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
   /** 会话选择回调 */

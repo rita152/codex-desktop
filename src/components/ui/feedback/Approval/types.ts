@@ -5,7 +5,7 @@ export type ApprovalStatus = 'pending' | 'approved' | 'approved-for-session' | '
 export type ApprovalType = 'exec' | 'patch';
 
 /** 权限选项类型（与 codex-acp PermissionOptionKind 对应） */
-export type PermissionOptionKind = 'allow-once' | 'allow-always' | 'reject-once';
+export type PermissionOptionKind = 'allow-once' | 'allow-always' | 'reject-once' | 'reject-always';
 
 /** 权限选项 */
 export interface PermissionOption {
@@ -15,6 +15,13 @@ export interface PermissionOption {
   label: string;
   /** 选项类型 */
   kind: PermissionOptionKind;
+}
+
+export interface ApprovalDiff {
+  /** 文件路径 */
+  path: string;
+  /** unified diff 字符串 */
+  diff: string;
 }
 
 export interface ApprovalProps {
@@ -32,6 +39,20 @@ export interface ApprovalProps {
   disabled?: boolean;
   /** 是否显示加载状态 */
   loading?: boolean;
+  /** 审批说明文本 */
+  description?: string;
+  /** 命令内容 */
+  command?: string;
+  /** Diff 预览 */
+  diffs?: ApprovalDiff[];
+  /** 拒绝反馈文本 */
+  feedback?: string;
+  /** 拒绝反馈变更回调 */
+  onFeedbackChange?: (next: string) => void;
+  /** 是否显示反馈输入框 */
+  showFeedback?: boolean;
+  /** 反馈输入框占位 */
+  feedbackPlaceholder?: string;
   /** 选择回调 */
   onSelect?: (callId: string, optionId: string) => void;
   /** 自定义类名 */

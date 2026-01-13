@@ -1,5 +1,5 @@
 import type { MessageRole, ThinkingData } from '../ChatMessage/types';
-import type { ToolCall } from '../../../types/codex';
+import type { ToolCallProps } from '../../ui/feedback/ToolCall';
 
 export interface Message {
   /** 消息唯一标识 */
@@ -12,8 +12,8 @@ export interface Message {
   thinking?: ThinkingData;
   /** 是否正在流式输出 */
   isStreaming?: boolean;
-  /** 工具调用（仅 assistant） */
-  toolCalls?: ToolCall[];
+  /** 工具调用 */
+  toolCalls?: ToolCallProps[];
   /** 时间戳 */
   timestamp?: Date;
 }

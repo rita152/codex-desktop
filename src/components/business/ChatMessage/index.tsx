@@ -1,5 +1,6 @@
 import { Thinking } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
+import { ToolCall } from '../../ui/feedback/ToolCall';
 import { cn } from '../../../utils/cn';
 import { useTypewriterText } from '../../../hooks/useTypewriterText';
 
@@ -21,6 +22,7 @@ export function ChatMessage({
   role,
   content,
   thinking,
+  toolCalls,
   isStreaming = false,
   timestamp,
   className = '',
@@ -37,6 +39,7 @@ export function ChatMessage({
     ? (isStreaming ? 'thinking' : 'done')
     : (thinking?.phase ?? 'done');
   const showCursor = role === 'assistant' && isStreaming;
+  const hasToolCalls = Boolean(toolCalls && toolCalls.length > 0);
 
   const visualRole = role === 'user' ? 'user' : 'assistant';
   const classNames = cn(
@@ -49,6 +52,15 @@ export function ChatMessage({
   );
 
   const renderContent = () => {
+    if (hasToolCalls && toolCalls) {
+      return (
+        <div className="chat-message__tool-calls">
+          {toolCalls.map((toolCall) => (
+            <ToolCall key={toolCall.toolCallId} {...toolCall} />
+          ))}
+        </div>
+      );
+    }
     if (role === 'assistant' || role === 'tool') {
       return <Markdown content={isStreaming ? streamedContent : content} />;
     }

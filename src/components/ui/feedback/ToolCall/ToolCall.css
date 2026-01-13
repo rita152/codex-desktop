@@ -225,14 +225,41 @@
 /* 终端占位 */
 .tool-call__terminal {
   padding: var(--spacing-sm);
-  background-color: var(--color-bg-subtle);
+  background-color: color-mix(in srgb, var(--color-text) 6%, var(--color-bg));
   border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
 }
 
-.tool-call__terminal-label {
+.tool-call__terminal-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
   font-size: 12px;
   color: var(--color-text-secondary);
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  margin-bottom: var(--spacing-xs);
+}
+
+.tool-call__terminal-meta {
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background-color: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text-secondary);
+}
+
+.tool-call__terminal-output {
+  margin: 0;
+  padding: var(--spacing-sm);
+  background-color: color-mix(in srgb, var(--color-text) 10%, var(--color-bg));
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow: auto;
 }
 
 /* 错误信息 */

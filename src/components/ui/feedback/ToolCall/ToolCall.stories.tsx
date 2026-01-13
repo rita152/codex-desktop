@@ -74,3 +74,51 @@ export const Default: Story = {
     defaultOpen: true,
   },
 };
+
+export const TerminalOutput: Story = {
+  args: {
+    toolCallId: 'call_002',
+    title: 'Run npm run build',
+    kind: 'execute',
+    status: 'in-progress',
+    content: [
+      {
+        type: 'terminal',
+        terminalId: 'term_01',
+        cwd: '/Users/zp/Desktop/codex-desktop',
+        output: 'npm run build\n\n> codex-desktop@0.1.0 build\n> tsc && vite build\n\n[info] building...',
+      },
+    ],
+    startTime: Date.now() - 1200,
+    defaultOpen: true,
+  },
+};
+
+export const DiffPreview: Story = {
+  args: {
+    toolCallId: 'call_003',
+    title: 'Edit src/App.tsx',
+    kind: 'edit',
+    status: 'completed',
+    content: [
+      {
+        type: 'diff',
+        path: 'src/App.tsx',
+        diff: `--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,4 +1,6 @@
+-export function App() {
+-  return <div>Hello</div>;
+-}
++export function App() {
++  return (
++    <div>Hello Codex</div>
++  );
++}
+`,
+      },
+    ],
+    duration: 0.58,
+    defaultOpen: true,
+  },
+};
