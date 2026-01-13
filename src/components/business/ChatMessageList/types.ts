@@ -8,7 +8,7 @@ export interface Message {
   role: MessageRole;
   /** 消息内容 */
   content: string;
-  /** 思考数据（仅 assistant） */
+  /** 思考数据（assistant/thought） */
   thinking?: ThinkingData;
   /** 是否正在流式输出 */
   isStreaming?: boolean;

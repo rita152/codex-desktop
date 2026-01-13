@@ -34,10 +34,15 @@ export function ChatMessage({
     TYPEWRITER_MAX_CHARS
   );
   
-  const thoughtContent = role === 'thought' ? content : (thinking?.content ?? '');
-  const thoughtPhase = role === 'thought' 
-    ? (isStreaming ? 'thinking' : 'done')
+  const thoughtContent = role === 'thought'
+    ? (thinking?.content ?? content)
+    : (thinking?.content ?? '');
+  const thoughtPhase = role === 'thought'
+    ? (thinking?.phase ?? (isStreaming ? 'thinking' : 'done'))
     : (thinking?.phase ?? 'done');
+  const thoughtStreaming = role === 'thought'
+    ? (thinking?.isStreaming ?? isStreaming)
+    : thinking?.isStreaming;
   const showCursor = role === 'assistant' && isStreaming;
   const hasToolCalls = Boolean(toolCalls && toolCalls.length > 0);
 
@@ -82,10 +87,10 @@ export function ChatMessage({
         <div className="chat-message__thinking">
           <Thinking
             content={thoughtContent}
-            isStreaming={role === 'thought' ? isStreaming : thinking?.isStreaming}
+            isStreaming={thoughtStreaming}
             phase={thoughtPhase}
-            startTime={role === 'thought' ? undefined : thinking?.startTime}
-            duration={role === 'thought' ? undefined : thinking?.duration}
+            startTime={thinking?.startTime}
+            duration={thinking?.duration}
           />
         </div>
       )}

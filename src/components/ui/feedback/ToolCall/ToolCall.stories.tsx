@@ -57,68 +57,19 @@ type Story = StoryObj<typeof ToolCall>;
 export const Default: Story = {
   args: {
     toolCallId: 'call_001',
-    title: 'Reading file: src/App.tsx',
+    title: 'read_file',
     kind: 'read',
     status: 'completed',
     locations: [
-      { uri: 'file:///project/src/App.tsx' },
+      { uri: 'src/App.tsx', range: { startLine: 1, endLine: 50 } },
     ],
-    rawInput: {
-      path: 'src/App.tsx',
-    },
-    rawOutput: {
-      content: 'import React from "react";\n\nexport function App() {\n  return <div>Hello</div>;\n}',
-      size: 89,
-    },
-    duration: 0.12,
-    defaultOpen: true,
-  },
-};
-
-export const TerminalOutput: Story = {
-  args: {
-    toolCallId: 'call_002',
-    title: 'Run npm run build',
-    kind: 'execute',
-    status: 'in-progress',
     content: [
       {
-        type: 'terminal',
-        terminalId: 'term_01',
-        cwd: '/Users/zp/Desktop/codex-desktop',
-        output: 'npm run build\n\n> codex-desktop@0.1.0 build\n> tsc && vite build\n\n[info] building...',
+        type: 'text',
+        text: 'import { useState } from "react";\n\nexport function App() {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello Codex</h1>\n      <button onClick={() => setCount(c => c + 1)}>\n        Count: {count}\n      </button>\n    </div>\n  );\n}',
       },
     ],
-    startTime: Date.now() - 1200,
-    defaultOpen: true,
-  },
-};
-
-export const DiffPreview: Story = {
-  args: {
-    toolCallId: 'call_003',
-    title: 'Edit src/App.tsx',
-    kind: 'edit',
-    status: 'completed',
-    content: [
-      {
-        type: 'diff',
-        path: 'src/App.tsx',
-        diff: `--- a/src/App.tsx
-+++ b/src/App.tsx
-@@ -1,4 +1,6 @@
--export function App() {
--  return <div>Hello</div>;
--}
-+export function App() {
-+  return (
-+    <div>Hello Codex</div>
-+  );
-+}
-`,
-      },
-    ],
-    duration: 0.58,
+    duration: 0.08,
     defaultOpen: true,
   },
 };

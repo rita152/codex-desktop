@@ -21,7 +21,7 @@ export interface ChatMessageProps {
   role: MessageRole;
   /** 消息内容 */
   content: string;
-  /** 思考数据（仅 assistant 角色） */
+  /** 思考数据（assistant/thought 角色） */
   thinking?: ThinkingData;
   /** 工具调用卡片（仅 tool 角色） */
   toolCalls?: ToolCallProps[];

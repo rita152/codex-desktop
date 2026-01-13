@@ -7,7 +7,6 @@ import type {
   ApprovalProps,
   ApprovalStatus,
   ApprovalType,
-  ApprovalDiff,
   PermissionOption,
   PermissionOptionKind,
 } from './types';
@@ -238,6 +237,7 @@ export type {
   ApprovalProps,
   ApprovalStatus,
   ApprovalType,
+  ApprovalDiff,
   PermissionOption,
   PermissionOptionKind,
 } from './types';
