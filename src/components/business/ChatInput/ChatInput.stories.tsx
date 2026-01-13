@@ -23,7 +23,7 @@ type Story = StoryObj<typeof ChatInput>;
 
 export const Default: Story = {
   args: {
-    placeholder: '问问 olyx',
+    placeholder: '',
     width: 600,
   },
   render: (args) => {

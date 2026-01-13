@@ -30,7 +30,7 @@ export function ChatInput({
   onChange,
   onSend,
   onAddClick,
-  placeholder = '问问 olyx',
+  placeholder = '',
   disabled = false,
   agentOptions = AGENT_OPTIONS,
   selectedAgent = 'agent-full',

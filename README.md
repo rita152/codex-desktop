@@ -2,6 +2,8 @@
 
 基于 Tauri 2 构建的跨平台 AI 对话桌面应用。
 
+![Screenshot](docs/screenshot.png)
+
 ## 概述
 
 Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rust 后端结合，提供流畅的 AI 对话体验。支持多会话管理、代码高亮、Markdown 渲染等功能。
