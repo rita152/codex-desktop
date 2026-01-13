@@ -1,5 +1,6 @@
 import type { MessageRole, ThinkingData } from '../ChatMessage/types';
 import type { ToolCallProps } from '../../ui/feedback/ToolCall';
+import type { ApprovalProps } from '../../ui/feedback/Approval';
 
 export interface Message {
   /** 消息唯一标识 */
@@ -21,6 +22,8 @@ export interface Message {
 export interface ChatMessageListProps {
   /** 消息列表 */
   messages: Message[];
+  /** 待审批列表 */
+  approvals?: ApprovalProps[];
   /** 是否自动滚动到底部 */
   autoScroll?: boolean;
   /** 自定义类名 */

@@ -21,14 +21,20 @@ const mockMessages: Message[] = [
     timestamp: new Date(),
   },
   {
+    id: '1b',
+    role: 'thought',
+    content: '用户询问 React 19 新特性，需要整理并概括主要更新点。',
+    thinking: {
+      content: '用户询问 React 19 新特性，需要整理并概括主要更新点。',
+      phase: 'done',
+      duration: 3,
+    },
+  },
+  {
     id: '2',
     role: 'assistant',
     content:
       'React 19 带来了许多令人兴奋的新特性，包括：\n\n1. **Actions** - 简化表单处理和数据变更\n2. **use() Hook** - 在渲染时读取资源\n3. **Server Components** - 改进的服务端渲染支持\n4. **改进的 Suspense** - 更好的加载状态处理',
-    thinking: {
-      content: '用户询问 React 19 新特性，我需要列出主要的更新点...',
-      duration: 3,
-    },
     timestamp: new Date(),
   },
 ];

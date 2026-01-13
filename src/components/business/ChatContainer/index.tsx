@@ -5,7 +5,6 @@ import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarLeftIcon } from '../../ui/data-display/Icon';
-import { Approval } from '../../ui/feedback/Approval';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -42,7 +41,7 @@ export function ChatContainer({
 
   const classNames = cn('chat-container', className);
 
-  const showWelcome = messages.length === 0;
+  const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
 
   return (
     <div className={classNames}>
@@ -81,7 +80,7 @@ export function ChatContainer({
           </div>
         ) : (
           <div className="chat-container__messages">
-            <ChatMessageList messages={messages} />
+            <ChatMessageList messages={messages} approvals={approvals} />
           </div>
         )}
 
@@ -99,13 +98,6 @@ export function ChatContainer({
           />
         </div>
 
-        {approvals && approvals.length > 0 && (
-          <div className="chat-container__approvals" aria-live="polite">
-            {approvals.map((approval) => (
-              <Approval key={approval.callId} {...approval} />
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );
