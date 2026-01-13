@@ -11,7 +11,7 @@ import type { ChatContainerProps } from './types';
 
 import './ChatContainer.css';
 
-const DEFAULT_SIDEBAR_WIDTH = 260;
+const DEFAULT_SIDEBAR_WIDTH = 200;
 
 export function ChatContainer({
   sessions,

@@ -19,7 +19,7 @@ import './Sidebar.css';
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
-const DEFAULT_WIDTH = 260;
+const DEFAULT_WIDTH = 200;
 
 export function Sidebar({
   sessions,
