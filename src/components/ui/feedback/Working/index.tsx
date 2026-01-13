@@ -79,7 +79,7 @@ export function Working({
   onToggle,
   className = '',
 }: WorkingProps) {
-  const [internalOpen, setInternalOpen] = useState(isOpen ?? true);
+  const [internalOpen, setInternalOpen] = useState(isOpen ?? false);
   const [now, setNow] = useState(() => Date.now());
   const contentRef = useRef<HTMLDivElement>(null);
   const open = isOpen ?? internalOpen;
