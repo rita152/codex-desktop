@@ -175,11 +175,13 @@ export function Working({
         <span className="working__spacer" />
         {isActive && <span className="working__status">In progress</span>}
       </button>
-      <div className="working__content" ref={contentRef} onWheel={handleWheel}>
-        <div className="working__content-inner">
-          <div className="working__items">{items.map(renderItem)}</div>
+      {open && (
+        <div className="working__content" ref={contentRef} onWheel={handleWheel}>
+          <div className="working__content-inner">
+            <div className="working__items">{items.map(renderItem)}</div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
