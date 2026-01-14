@@ -115,9 +115,9 @@
 }
 
 .working--open .working__content {
-  max-height: min(360px, 60vh);
+  max-height: none;
   border-top: 1px solid transparent;
-  overflow-y: auto;
+  overflow-y: visible;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
