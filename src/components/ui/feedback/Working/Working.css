@@ -49,10 +49,13 @@
 }
 
 .working__meta {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
+}
+
+.working__spacer {
+  flex: 1;
 }
 
 .working__count {
@@ -99,7 +102,6 @@
   justify-content: center;
   flex-shrink: 0;
   transition: transform 0.2s ease;
-  margin-left: var(--spacing-xs);
 }
 
 .working--open .working__chevron {

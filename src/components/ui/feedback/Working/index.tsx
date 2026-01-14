@@ -168,11 +168,12 @@ export function Working({
         <span className="working__meta">
           <span className="working__count">{itemLabel}</span>
           <span className="working__duration">总耗时 {formatDuration(totalSeconds)}</span>
-          {isActive && <span className="working__status">In progress</span>}
+          <span className="working__chevron">
+            <ChevronDownIcon size={14} />
+          </span>
         </span>
-        <span className="working__chevron">
-          <ChevronDownIcon size={14} />
-        </span>
+        <span className="working__spacer" />
+        {isActive && <span className="working__status">In progress</span>}
       </button>
       <div className="working__content" ref={contentRef} onWheel={handleWheel}>
         <div className="working__content-inner">
