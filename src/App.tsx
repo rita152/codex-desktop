@@ -657,6 +657,8 @@ function App() {
     return Array.from(merged).sort();
   }, [selectedSessionId, sessionSlashCommands]);
   const isGenerating = isGeneratingBySession[selectedSessionId] ?? false;
+  // 当对话已有消息时，锁定工作目录（无法切换）
+  const cwdLocked = messages.length > 0;
 
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
@@ -1254,19 +1256,8 @@ function App() {
         session.id === sessionId ? { ...session, cwd } : session
       )
     );
-
-    if (codexSessionByChatRef.current[sessionId]) {
-      setSessionNotices((prev) => ({
-        ...prev,
-        [sessionId]: {
-          kind: 'info',
-          message: '工作目录已更新，将在下次创建 Codex 会话时生效。',
-        },
-      }));
-    } else {
-      clearSessionNotice(sessionId);
-    }
-  }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId]);
+    clearSessionNotice(sessionId);
+  }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId, setSessions]);
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -1428,6 +1419,7 @@ function App() {
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
       onSelectCwd={handleSelectCwd}
+      cwdLocked={cwdLocked}
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
       onSidebarToggle={() => setSidebarVisible((v) => !v)}

@@ -32,6 +32,7 @@ export function ChatContainer({
   onNewChat,
   onSendMessage,
   onSelectCwd,
+  cwdLocked = false,
   onSessionDelete,
   onSessionRename,
   sidebarVisible = true,
@@ -90,8 +91,8 @@ export function ChatContainer({
               type="button"
               className="chat-container__cwd-button"
               onClick={onSelectCwd}
-              disabled={!onSelectCwd}
-              title={displayCwd}
+              disabled={!onSelectCwd || cwdLocked}
+              title={cwdLocked ? '对话进行中，无法切换工作目录' : displayCwd}
             >
               <FolderIcon size={14} />
               <span className="chat-container__meta-value">{displayCwd}</span>

@@ -46,6 +46,8 @@ export interface ChatContainerProps {
   onSendMessage?: (message: string) => void;
   /** 选择工作目录 */
   onSelectCwd?: () => void;
+  /** 工作目录是否锁定（已发送过 prompt 时锁定） */
+  cwdLocked?: boolean;
   /** 停止生成回调 */
   onStopGenerate?: () => void;
   /** 删除会话回调 */
