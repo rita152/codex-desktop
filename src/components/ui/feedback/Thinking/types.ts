@@ -3,6 +3,10 @@ export type ThinkingPhase = 'working' | 'thinking' | 'done';
 export interface ThinkingProps {
   /** 思考内容 */
   content: string;
+  /** 展示在触发器上的标题（可选） */
+  title?: string;
+  /** 触发器标题样式 */
+  headerVariant?: 'default' | 'title';
   /** 是否正在流式传输 */
   isStreaming?: boolean;
   /** 当前阶段：working(等待响应) → thinking(思考中) → done(完成) */

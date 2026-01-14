@@ -52,6 +52,8 @@ function ChevronDownIcon({ size = 16 }: { size?: number }) {
 
 export function Thinking({
   content,
+  title,
+  headerVariant = 'default',
   isStreaming = false,
   phase = 'done',
   startTime,
@@ -59,7 +61,6 @@ export function Thinking({
   defaultOpen,
   className = '',
 }: ThinkingProps) {
-  const hasContent = content.trim().length > 0;
   const isActive = phase === 'working' || phase === 'thinking';
 
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
@@ -93,6 +94,32 @@ export function Thinking({
       : `${minutes} 分钟`;
   };
 
+  const extractTitleAndBody = (raw: string): { title: string | null; body: string } => {
+    const lines = raw.split('\n');
+    const titleIndex = lines.findIndex((line) => line.trim().length > 0);
+    if (titleIndex === -1) return { title: null, body: '' };
+
+    const rawTitleLine = lines[titleIndex] ?? '';
+    let titleLine = rawTitleLine.trim();
+
+    const headingMatch = titleLine.match(/^#{1,6}\s+(.+)$/);
+    if (headingMatch) {
+      titleLine = headingMatch[1]?.trim() ?? '';
+    } else {
+      const quoteMatch = titleLine.match(/^>\s*(.+)$/);
+      if (quoteMatch) titleLine = quoteMatch[1]?.trim() ?? '';
+      const bulletMatch = titleLine.match(/^[-*]\s+(.+)$/);
+      if (bulletMatch) titleLine = bulletMatch[1]?.trim() ?? '';
+    }
+
+    const remaining = lines.slice(titleIndex + 1);
+    if (remaining.length > 0 && remaining[0]?.trim().length === 0) {
+      remaining.shift();
+    }
+
+    return { title: titleLine.length > 0 ? titleLine : null, body: remaining.join('\n') };
+  };
+
   const getLabel = (): string => {
     if (phase === 'working') {
       return 'Working';
@@ -110,10 +137,16 @@ export function Thinking({
     return '思考过程';
   };
 
+  const { title: extractedTitle, body: extractedBody } = extractTitleAndBody(content);
+  const labelMarkdown =
+    headerVariant === 'title' ? title ?? extractedTitle ?? '思考过程' : getLabel();
+  const displayContent = headerVariant === 'title' ? extractedBody : content;
+  const hasBodyContent = displayContent.trim().length > 0;
+
   // 只有有内容时才显示展开箭头
-  const showChevron = hasContent;
+  const showChevron = hasBodyContent;
   // 只有有内容时才可点击
-  const canToggle = hasContent;
+  const canToggle = hasBodyContent;
 
   const classNames = cn(
     'thinking',
@@ -133,21 +166,36 @@ export function Thinking({
         aria-expanded={isOpen}
         disabled={!canToggle}
       >
-        <span className="thinking__icon">
-          <BrainIcon size={16} />
-        </span>
-        <span className="thinking__label">{getLabel()}</span>
-        {showChevron && (
-          <span className="thinking__chevron">
-            <ChevronDownIcon size={14} />
+        {headerVariant !== 'title' && (
+          <span className="thinking__icon">
+            <BrainIcon size={16} />
           </span>
         )}
+        <div className="thinking__label">
+          {headerVariant === 'title' ? (
+            <Markdown
+              content={labelMarkdown}
+              compact
+              className="thinking__label-markdown"
+            />
+          ) : (
+            labelMarkdown
+          )}
+        </div>
+        {showChevron && (
+          <>
+            <span className="thinking__chevron">
+              <ChevronDownIcon size={14} />
+            </span>
+            <span className="thinking__spacer" />
+          </>
+        )}
       </button>
-      {hasContent && (
+      {hasBodyContent && (
         <div className="thinking__content">
           <div className="thinking__content-inner">
             <Markdown
-              content={content}
+              content={displayContent}
               compact={!isStreaming}
               className="thinking__text"
             />

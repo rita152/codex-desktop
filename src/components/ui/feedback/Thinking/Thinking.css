@@ -44,7 +44,34 @@
 }
 
 .thinking__label {
+  min-width: 0;
+}
+
+.thinking__spacer {
   flex: 1;
+}
+
+.thinking__label-markdown {
+  display: inline;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.thinking__label-markdown.markdown {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.thinking__label-markdown.markdown p,
+.thinking__label-markdown.markdown h1,
+.thinking__label-markdown.markdown h2,
+.thinking__label-markdown.markdown h3,
+.thinking__label-markdown.markdown h4,
+.thinking__label-markdown.markdown h5,
+.thinking__label-markdown.markdown h6 {
+  display: inline;
+  margin: 0;
 }
 
 .thinking__chevron {

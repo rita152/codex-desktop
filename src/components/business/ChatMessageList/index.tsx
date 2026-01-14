@@ -25,6 +25,7 @@ const buildThinkingItem = (message: Message): WorkingItem => {
     type: 'thinking',
     data: {
       content,
+      headerVariant: 'title',
       isStreaming,
       phase,
       startTime: message.thinking?.startTime,
