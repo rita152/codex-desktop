@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
 import { approveRequest, createSession, initCodex, sendPrompt, setSessionModel } from './api/codex';
+import { loadModelOptionsCache, saveModelOptionsCache } from './api/storage';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { DEFAULT_MODEL_ID, DEFAULT_MODELS } from './constants/chat';
 
@@ -611,6 +612,11 @@ function App() {
     clearRestoredSession,
   } = useSessionPersistence();
 
+  const [cachedModelOptions, setCachedModelOptions] = useState<SelectOption[] | null>(() => {
+    const cached = loadModelOptionsCache();
+    return cached?.options ?? null;
+  });
+
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
@@ -632,6 +638,20 @@ function App() {
   const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
 
   useEffect(() => {
+    if (!cachedModelOptions || cachedModelOptions.length === 0) return;
+    setSessionModelOptions((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const session of sessions) {
+        if (next[session.id]?.length) continue;
+        next[session.id] = cachedModelOptions;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [cachedModelOptions, sessions]);
+
+  useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
   }, [selectedSessionId]);
 
@@ -648,7 +668,9 @@ function App() {
   const modelOptions =
     sessionModelOptions[selectedSessionId]?.length > 0
       ? sessionModelOptions[selectedSessionId]
-      : DEFAULT_MODELS;
+      : cachedModelOptions && cachedModelOptions.length > 0
+        ? cachedModelOptions
+        : DEFAULT_MODELS;
   const modelLabel =
     modelOptions.find((option) => option.value === selectedModel)?.label ?? selectedModel;
   const slashCommands = useMemo(() => {
@@ -1048,10 +1070,19 @@ function App() {
         registerCodexSession(chatSessionId, result.sessionId);
         const modelState = resolveModelOptions(result.models, result.configOptions);
         if (modelState?.options && modelState.options.length > 0) {
-          setSessionModelOptions((prev) => ({
-            ...prev,
-            [chatSessionId]: modelState.options,
-          }));
+          setSessionModelOptions((prev) => {
+            const next = { ...prev };
+            for (const session of sessions) {
+              next[session.id] = modelState.options;
+            }
+            next[chatSessionId] = modelState.options;
+            return next;
+          });
+          setCachedModelOptions(modelState.options);
+          saveModelOptionsCache({
+            options: modelState.options,
+            currentModelId: modelState.currentModelId,
+          });
         }
 
         const availableIds = new Set(modelState?.options.map((option) => option.value) ?? []);
