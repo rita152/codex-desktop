@@ -385,7 +385,7 @@ function applyToolCallUpdate(
 function closeActiveThoughtMessages(list: Message[], now: number): Message[] {
   const lastThoughtIdx = findLastIndex(
     list,
-    (message) => message.role === 'thought' && message.isStreaming
+    (message) => message.role === 'thought' && message.isStreaming === true
   );
   if (lastThoughtIdx === -1) return list;
 
@@ -399,7 +399,7 @@ function closeActiveThoughtMessages(list: Message[], now: number): Message[] {
     isStreaming: false,
     thinking: {
       content,
-      phase: 'done',
+      phase: 'done' as const,
       isStreaming: false,
       startTime,
       duration,
@@ -415,7 +415,7 @@ function closeActiveThoughtMessages(list: Message[], now: number): Message[] {
 function closeActiveAssistantMessages(list: Message[], now: number): Message[] {
   const lastAssistantIdx = findLastIndex(
     list,
-    (message) => message.role === 'assistant' && message.isStreaming
+    (message) => message.role === 'assistant' && message.isStreaming === true
   );
   if (lastAssistantIdx === -1) return list;
 
@@ -428,11 +428,11 @@ function closeActiveAssistantMessages(list: Message[], now: number): Message[] {
     isStreaming: false,
     thinking: message.thinking
       ? {
-          ...message.thinking,
-          phase: 'done',
-          isStreaming: false,
-          duration,
-        }
+        ...message.thinking,
+        phase: 'done',
+        isStreaming: false,
+        duration,
+      }
       : undefined,
     timestamp: message.timestamp ?? new Date(now),
   };
@@ -899,13 +899,13 @@ function App() {
                 isStreaming: false,
                 thinking: {
                   content: m.thinking?.content ?? m.content,
-                  phase: 'done',
+                  phase: 'done' as const,
                   isStreaming: false,
                   startTime,
                   duration,
                 },
                 timestamp: m.timestamp ?? now,
-              };
+              } satisfies Message;
             }
             if (m.thinking) {
               const startTime = m.thinking.startTime;
@@ -916,12 +916,12 @@ function App() {
                 isStreaming: false,
                 thinking: {
                   ...m.thinking,
-                  phase: 'done',
+                  phase: 'done' as const,
                   isStreaming: false,
                   duration,
                 },
                 timestamp: m.timestamp ?? now,
-              };
+              } satisfies Message;
             }
             return {
               ...m,
@@ -988,7 +988,7 @@ function App() {
     return () => {
       Promise.all(unlistenPromises)
         .then((unlisteners) => unlisteners.forEach((u) => u()))
-        .catch(() => {});
+        .catch(() => { });
     };
   }, [resolveChatSessionId]);
 
@@ -1112,28 +1112,26 @@ function App() {
   );
 
   const handleNewChat = useCallback(() => {
-    void (async () => {
-      const cwd = await pickWorkingDirectory(selectedCwd);
-      const newId = String(Date.now());
-      const newSession: ChatSession = {
-        id: newId,
-        title: '新对话',
-        cwd: cwd ?? undefined,
-        model: DEFAULT_MODEL_ID,
-      };
-      setSessions((prev) => [newSession, ...prev]);
-      setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
-      setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
-      setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
-      setSelectedSessionId(newId);
-      clearRestoredSession(newId);
-      clearSessionNotice(newId);
-      activeSessionIdRef.current = newId;
-    })();
+    // 直接在当前工作目录下新建对话，不打开文件选择器
+    // 如果需要切换工作目录，用户应使用顶部的文件夹按钮
+    const newId = String(Date.now());
+    const newSession: ChatSession = {
+      id: newId,
+      title: '新对话',
+      cwd: selectedCwd, // 继承当前会话的工作目录
+      model: DEFAULT_MODEL_ID,
+    };
+    setSessions((prev) => [newSession, ...prev]);
+    setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
+    setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
+    setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
+    setSelectedSessionId(newId);
+    clearRestoredSession(newId);
+    clearSessionNotice(newId);
+    activeSessionIdRef.current = newId;
   }, [
     clearRestoredSession,
     clearSessionNotice,
-    pickWorkingDirectory,
     selectedCwd,
     setSessionDrafts,
     setSessionMessages,
@@ -1283,12 +1281,12 @@ function App() {
       };
       const recoveryNotice: Message | null = shouldRecover
         ? {
-            id: newMessageId(),
-            role: 'assistant',
-            content: RECOVERY_NOTICE,
-            isStreaming: false,
-            timestamp: new Date(),
-          }
+          id: newMessageId(),
+          role: 'assistant',
+          content: RECOVERY_NOTICE,
+          isStreaming: false,
+          timestamp: new Date(),
+        }
         : null;
 
       activeSessionIdRef.current = sessionId;
