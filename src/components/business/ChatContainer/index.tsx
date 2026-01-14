@@ -16,8 +16,6 @@ const DEFAULT_SIDEBAR_WIDTH = 200;
 export function ChatContainer({
   sessions,
   selectedSessionId,
-  sessionTitle,
-  sessionModel,
   sessionCwd,
   sessionNotice,
   messages,
@@ -52,8 +50,6 @@ export function ChatContainer({
   const classNames = cn('chat-container', className);
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
-  const displayTitle = sessionTitle ?? sessions.find((s) => s.id === selectedSessionId)?.title;
-  const displayModel = sessionModel ?? selectedModel;
   const displayCwd =
     sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : '默认目录';
 
@@ -90,22 +86,16 @@ export function ChatContainer({
       <div className="chat-container__main">
         <div className="chat-container__session-header">
           <div className="chat-container__session-meta">
-            <div className="chat-container__meta-item chat-container__meta-item--cwd">
+            <button
+              type="button"
+              className="chat-container__cwd-button"
+              onClick={onSelectCwd}
+              disabled={!onSelectCwd}
+              title={displayCwd}
+            >
               <FolderIcon size={14} />
-              <span className="chat-container__meta-label">目录</span>
-              <span className="chat-container__meta-value" title={displayCwd}>
-                {displayCwd}
-              </span>
-              {onSelectCwd && (
-                <button
-                  type="button"
-                  className="chat-container__meta-action"
-                  onClick={onSelectCwd}
-                >
-                  更改
-                </button>
-              )}
-            </div>
+              <span className="chat-container__meta-value">{displayCwd}</span>
+            </button>
           </div>
           {sessionNotice && (
             <div
