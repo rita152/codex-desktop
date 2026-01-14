@@ -681,6 +681,23 @@ function App() {
     }
   }, []);
 
+  const pickFiles = useCallback(async (): Promise<string[]> => {
+    try {
+      const selection = await open({
+        directory: false,
+        multiple: true,
+      });
+      if (typeof selection === 'string') return [selection];
+      if (Array.isArray(selection)) {
+        return selection.filter((item): item is string => typeof item === 'string');
+      }
+      return [];
+    } catch (err) {
+      console.warn('[codex] Failed to open file picker', err);
+      return [];
+    }
+  }, []);
+
   const handleDraftChange = useCallback(
     (value: string) => {
       setSessionDrafts((prev) => ({ ...prev, [selectedSessionId]: value }));
@@ -1145,17 +1162,6 @@ function App() {
     activeSessionIdRef.current = sessionId;
   }, []);
 
-  useEffect(() => {
-    const sessionId = selectedSessionId;
-    if (!sessionId) return;
-    if (restoredSessionIds.has(sessionId)) return;
-    if (codexSessionByChatRef.current[sessionId]) return;
-
-    void ensureCodexSession(sessionId, false).catch((err) => {
-      console.warn('[codex] prefetch session failed', err);
-    });
-  }, [ensureCodexSession, restoredSessionIds, selectedSessionId]);
-
   const handleSessionDelete = useCallback(
     (sessionId: string) => {
       // 不允许删除最后一个会话
@@ -1258,6 +1264,20 @@ function App() {
     );
     clearSessionNotice(sessionId);
   }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId, setSessions]);
+
+  const handleAddFile = useCallback(async () => {
+    const sessionId = selectedSessionId;
+    if (!sessionId) return;
+    const files = await pickFiles();
+    if (files.length === 0) return;
+
+    setSessionDrafts((prev) => {
+      const current = prev[sessionId] ?? '';
+      const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : '';
+      const nextValue = `${current}${separator}${files.map((file) => `File: ${file}`).join('\n')}`;
+      return { ...prev, [sessionId]: nextValue };
+    });
+  }, [pickFiles, selectedSessionId, setSessionDrafts]);
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -1418,6 +1438,7 @@ function App() {
       onSessionSelect={handleSessionSelect}
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
+      onAddClick={handleAddFile}
       onSelectCwd={handleSelectCwd}
       cwdLocked={cwdLocked}
       onSessionDelete={handleSessionDelete}

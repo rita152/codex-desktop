@@ -28,6 +28,7 @@ export function ChatContainer({
   onModelChange,
   slashCommands,
   inputPlaceholder,
+  onAddClick,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -123,6 +124,7 @@ export function ChatContainer({
             onSend={handleSend}
             disabled={isGenerating}
             placeholder={inputPlaceholder}
+            onAddClick={onAddClick}
             selectedAgent={selectedAgent}
             onAgentChange={setSelectedAgent}
             selectedModel={selectedModel}

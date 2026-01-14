@@ -38,6 +38,8 @@ export interface ChatContainerProps {
   slashCommands?: string[];
   /** 输入框占位文案 */
   inputPlaceholder?: string;
+  /** 上传文件回调 */
+  onAddClick?: () => void;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */
