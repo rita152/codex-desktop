@@ -47,6 +47,18 @@ export const Default: Story = {
   },
 };
 
+export const LongCommand: Story = {
+  args: {
+    callId: 'call-4',
+    type: 'exec',
+    title: 'Execute: long command',
+    status: 'pending',
+    command:
+      'python -m pip install -U "some-very-long-package-name[extra1,extra2,extra3]" --index-url https://example.com/simple --trusted-host example.com --no-cache-dir --disable-pip-version-check --timeout 120',
+    onSelect: (callId, optionId) => console.log('Selected:', callId, optionId),
+  },
+};
+
 export const PatchApproval: Story = {
   args: {
     callId: 'call-2',

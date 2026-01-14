@@ -134,6 +134,8 @@ export function Approval({
   const canReject = resolvedOptions.some((option) => option.kind.startsWith('reject'));
   const shouldShowFeedback = showFeedback ?? canReject;
 
+  const displayCommand = command ? command.replace(/\s*\n\s*/g, ' ').trim() : '';
+
   const classNames = cn(
     'approval',
     `approval--${status}`,
@@ -196,7 +198,9 @@ export function Approval({
           {command && (
             <div className="approval__section">
               <span className="approval__section-label">命令</span>
-              <pre className="approval__code">{command}</pre>
+              <pre className="approval__code" title={displayCommand}>
+                {displayCommand}
+              </pre>
             </div>
           )}
           {diffs && diffs.length > 0 && (
