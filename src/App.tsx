@@ -461,7 +461,16 @@ function extractCommand(rawInput: unknown): string | undefined {
   return parsedText ?? undefined;
 }
 
-const DEFAULT_SLASH_COMMANDS = ['review', 'compact', 'undo'];
+// Keep in sync with codex-acp built-in commands.
+const DEFAULT_SLASH_COMMANDS = [
+  'review',
+  'review-branch',
+  'review-commit',
+  'init',
+  'compact',
+  'undo',
+  'logout',
+];
 
 function parseModelOptionsFromSessionModels(
   raw: unknown
