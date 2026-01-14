@@ -19,6 +19,36 @@
   padding: var(--spacing-xs) var(--spacing-sm);
 }
 
+.chat-input__textarea-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.chat-input__textarea--with-pill {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-input__slash-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-top: 0;
+  min-width: 60px;
+  color: var(--color-text);
+  flex: 0 0 auto;
+}
+
+.chat-input__slash-pill-text {
+  font-size: 15px;
+  line-height: 1.5;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .chat-input__toolbar {
   display: flex;
   align-items: center;

@@ -5,6 +5,7 @@ import { DEFAULT_MODELS, DEFAULT_MODEL_ID } from '../../../constants/chat';
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
+import { Card } from '../../ui/data-display/Card';
 import {
   PlusIcon,
   RobotIcon,
@@ -48,6 +49,14 @@ export function ChatInput({
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
 
+  const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
+
+  const buildSlashCommandValue = (command: string, tail: string) => {
+    if (tail.length === 0) return `/${command}`;
+    const separator = /^\s/.test(tail) ? '' : ' ';
+    return `/${command}${separator}${tail}`;
+  };
+
   const normalizedSlashCommands = useMemo(() => {
     const cleaned = slashCommands
       .map((cmd) => cmd.trim().replace(/^\//, ''))
@@ -79,6 +88,16 @@ export function ChatInput({
       leading,
       query,
     };
+  }, [normalizedSlashCommands, value]);
+
+  const leadingSlashToken = useMemo(() => {
+    const match = value.match(/^\s*\/([^\s]+)([\s\S]*)$/);
+    if (!match) return null;
+    const command = match[1] ?? '';
+    if (!command) return null;
+    if (!normalizedSlashCommands.includes(command)) return null;
+    const tail = match[2] ?? '';
+    return { command, tail };
   }, [normalizedSlashCommands, value]);
 
   useEffect(() => {
@@ -136,6 +155,18 @@ export function ChatInput({
       }
     }
 
+    if (
+      leadingSlashToken &&
+      e.key === 'Backspace' &&
+      e.currentTarget.selectionStart === 0 &&
+      e.currentTarget.selectionEnd === 0
+    ) {
+      e.preventDefault();
+      onChange(stripCommandSeparator(leadingSlashToken.tail));
+      requestAnimationFrame(() => textareaRef.current?.focus());
+      return;
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       trySend();
@@ -154,17 +185,45 @@ export function ChatInput({
 
   return (
     <div className={`chat-input ${className}`} style={style}>
-      <TextArea
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        onKeyDown={handleKeyDown}
-        minRows={1}
-        maxRows={6}
-        className="chat-input__textarea"
-        ref={textareaRef}
-      />
+      {leadingSlashToken ? (
+        <div className="chat-input__textarea-row">
+          <Card
+            radius="full"
+            background="secondary"
+            bordered
+            borderWidth="thin"
+            padding="none"
+            className="chat-input__slash-pill"
+          >
+            <span className="chat-input__slash-pill-text">/{leadingSlashToken.command}</span>
+          </Card>
+          <TextArea
+            value={stripCommandSeparator(leadingSlashToken.tail)}
+            onChange={(nextTail) => {
+              onChange(buildSlashCommandValue(leadingSlashToken.command, nextTail));
+            }}
+            placeholder={placeholder}
+            disabled={disabled}
+            onKeyDown={handleKeyDown}
+            minRows={1}
+            maxRows={6}
+            className="chat-input__textarea chat-input__textarea--with-pill"
+            ref={textareaRef}
+          />
+        </div>
+      ) : (
+        <TextArea
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          onKeyDown={handleKeyDown}
+          minRows={1}
+          maxRows={6}
+          className="chat-input__textarea"
+          ref={textareaRef}
+        />
+      )}
       {slashState.isActive && (
         <div className="chat-input__slash-menu" role="listbox" aria-label="Slash commands">
           <div className="chat-input__slash-header">
