@@ -91,12 +91,6 @@ export function ChatContainer({
         <div className="chat-container__session-header">
           <div className="chat-container__session-title">{displayTitle ?? '新对话'}</div>
           <div className="chat-container__session-meta">
-            {displayModel && (
-              <div className="chat-container__meta-item">
-                <span className="chat-container__meta-label">模型</span>
-                <span className="chat-container__meta-value">{displayModel}</span>
-              </div>
-            )}
             <div className="chat-container__meta-item chat-container__meta-item--cwd">
               <FolderIcon size={14} />
               <span className="chat-container__meta-label">目录</span>
