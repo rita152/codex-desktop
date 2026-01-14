@@ -203,20 +203,6 @@ function formatJson(data: unknown): string {
   }
 }
 
-function getTextPreview(text: string, maxLines = 12, maxChars = 600): { text: string; isTruncated: boolean } {
-  if (!text) return { text: '', isTruncated: false };
-
-  const lines = text.split('\n');
-  const truncatedByLines = lines.length > maxLines;
-  const truncatedLines = truncatedByLines ? lines.slice(0, maxLines).join('\n') : text;
-
-  const truncatedByChars = truncatedLines.length > maxChars;
-  const truncatedText = truncatedByChars ? truncatedLines.slice(0, maxChars) : truncatedLines;
-
-  const isTruncated = truncatedByLines || truncatedByChars || truncatedText.length !== text.length;
-  return { text: isTruncated ? `${truncatedText}\n…` : truncatedText, isTruncated };
-}
-
 function getFileName(uri: string): string {
   const parts = uri.split('/');
   return parts[parts.length - 1] || uri;
@@ -243,7 +229,6 @@ export function ToolCall({
   status,
   content,
   locations,
-  rawInput,
   rawOutput,
   error,
   startTime,
@@ -252,7 +237,6 @@ export function ToolCall({
   className = '',
 }: ToolCallProps) {
   const hasContent =
-    rawInput !== undefined ||
     rawOutput !== undefined ||
     Boolean(error) ||
     (content && content.length > 0);
@@ -262,16 +246,6 @@ export function ToolCall({
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
 
   const [elapsedTime, setElapsedTime] = useState(0);
-
-  const formattedInput =
-    rawInput !== undefined && rawInput !== null ? formatJson(rawInput) : null;
-  const inputPreview = formattedInput ? getTextPreview(formattedInput) : null;
-  const inputIsLong = inputPreview?.isTruncated === true;
-  const [showFullInput, setShowFullInput] = useState(() => !inputIsLong);
-
-  useEffect(() => {
-    setShowFullInput(!inputIsLong);
-  }, [toolCallId]);
 
   // 实时计时
   useEffect(() => {
@@ -350,33 +324,6 @@ export function ToolCall({
       {hasContent && (
         <div className="tool-call__content">
           <div className="tool-call__content-inner">
-            {/* 原始输入 */}
-            {rawInput !== undefined && rawInput !== null && (
-              <div className="tool-call__section">
-                <div className="tool-call__section-header">
-                  <span className="tool-call__section-label">Input</span>
-                  {inputIsLong && (
-                    <button
-                      type="button"
-                      className="tool-call__section-toggle"
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        setShowFullInput((prev) => !prev);
-                      }}
-                      aria-expanded={showFullInput}
-                      aria-label={showFullInput ? '收起输入详情' : '展开输入详情'}
-                    >
-                      {showFullInput ? '收起' : '展开'}
-                    </button>
-                  )}
-                </div>
-                <pre className={cn('tool-call__code', !showFullInput && 'tool-call__code--preview')}>
-                  {showFullInput ? formattedInput : inputPreview?.text}
-                </pre>
-              </div>
-            )}
-
             {/* 内容块 */}
             {content && content.length > 0 && (
               <div className="tool-call__section">

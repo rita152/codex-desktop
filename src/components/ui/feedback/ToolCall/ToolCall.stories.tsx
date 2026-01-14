@@ -63,18 +63,6 @@ export const Default: Story = {
     locations: [
       { uri: 'src/App.tsx', range: { startLine: 1, endLine: 50 } },
     ],
-    rawInput: {
-      path: 'src/App.tsx',
-      options: {
-        encoding: 'utf-8',
-        includeLineNumbers: true,
-        includeMetadata: true,
-      },
-      extra: Array.from({ length: 40 }, (_, i) => ({
-        id: i + 1,
-        note: `extra-field-${i + 1}`,
-      })),
-    },
     content: [
       {
         type: 'text',
