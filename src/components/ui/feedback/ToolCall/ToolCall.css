@@ -75,13 +75,23 @@
   font-weight: 500;
   color: var(--color-text);
   min-width: 0;
+  overflow: hidden;
+}
+
+.tool-call__title-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 文件位置列表（内联在标题后） */
 .tool-call__locations {
   display: inline-flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: var(--spacing-xs);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tool-call__location {

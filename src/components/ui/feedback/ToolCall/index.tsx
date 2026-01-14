@@ -287,7 +287,9 @@ export function ToolCall({
           {getKindIcon(kind, 16)}
         </span>
         <span className="tool-call__title">
-          {title}
+          <span className="tool-call__title-text" title={title}>
+            {title}
+          </span>
           {locations && locations.length > 0 && (
             <span className="tool-call__locations">
               {locations.map((loc, idx) => (
