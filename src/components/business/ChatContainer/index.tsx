@@ -4,7 +4,7 @@ import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { IconButton } from '../../ui/data-entry/IconButton';
-import { FolderIcon, SidebarLeftIcon } from '../../ui/data-display/Icon';
+import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -61,7 +61,7 @@ export function ChatContainer({
       {!sidebarVisible && (
         <div className="chat-container__header">
           <IconButton
-            icon={<SidebarLeftIcon size={18} />}
+            icon={<SidebarRightIcon size={18} />}
             onClick={onSidebarToggle}
             aria-label="显示侧边栏"
             size="sm"
