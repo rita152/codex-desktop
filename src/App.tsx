@@ -72,6 +72,10 @@ function buildRecoveryPrompt(history: Message[], content: string): string {
   return `Restored session context (read-only):\n${context}\n\nUser message:\n${content}`;
 }
 
+function isLeadingSlashCommand(content: string): boolean {
+  return /^\s*\/\S+/.test(content);
+}
+
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord | null {
@@ -1354,7 +1358,10 @@ function App() {
       void (async () => {
         try {
           const codexSessionId = await ensureCodexSession(sessionId, shouldRecover);
-          const promptContent = shouldRecover ? buildRecoveryPrompt(messages, content) : content;
+          const promptContent =
+            shouldRecover && !isLeadingSlashCommand(content)
+              ? buildRecoveryPrompt(messages, content)
+              : content;
           await sendPrompt(codexSessionId, promptContent);
         } catch (err) {
           setSessionMessages((prev) => {

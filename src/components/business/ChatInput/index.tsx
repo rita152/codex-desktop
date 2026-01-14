@@ -99,6 +99,7 @@ export function ChatInput({
   const trySend = () => {
     if (disabled) return;
     if (!trimmedValue) return;
+    if (trimmedValue === '/') return;
     onSend(trimmedValue);
   };
 
@@ -127,6 +128,12 @@ export function ChatInput({
         if (command) applySlashCommand(command);
         return;
       }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const command = slashState.suggestions[activeSlashIndex] ?? slashState.suggestions[0];
+        if (command) applySlashCommand(command);
+        return;
+      }
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -139,7 +146,7 @@ export function ChatInput({
     trySend();
   };
 
-  const hasContent = trimmedValue.length > 0;
+  const hasContent = trimmedValue.length > 0 && trimmedValue !== '/';
 
   const style: React.CSSProperties = width
     ? { width: typeof width === 'number' ? `${width}px` : width }
