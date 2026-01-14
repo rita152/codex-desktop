@@ -78,6 +78,8 @@
   color: var(--color-text-secondary);
   font-size: 0.85rem;
   align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 .chat-container__meta-item {

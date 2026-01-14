@@ -89,7 +89,6 @@ export function ChatContainer({
 
       <div className="chat-container__main">
         <div className="chat-container__session-header">
-          <div className="chat-container__session-title">{displayTitle ?? '新对话'}</div>
           <div className="chat-container__session-meta">
             <div className="chat-container__meta-item chat-container__meta-item--cwd">
               <FolderIcon size={14} />
