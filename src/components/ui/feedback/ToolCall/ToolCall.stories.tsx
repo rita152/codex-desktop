@@ -63,12 +63,13 @@ export const Default: Story = {
     locations: [
       { uri: 'src/App.tsx', range: { startLine: 1, endLine: 50 } },
     ],
-    content: [
-      {
-        type: 'text',
-        text: 'import { useState } from "react";\n\nexport function App() {\n  const [count, setCount] = useState(0);\n  return (\n    <div>\n      <h1>Hello Codex</h1>\n      <button onClick={() => setCount(c => c + 1)}>\n        Count: {count}\n      </button>\n    </div>\n  );\n}',
-      },
-    ],
+    rawOutput: {
+      ok: true,
+      tool: 'read_file',
+      path: 'src/App.tsx',
+      bytes: 412,
+      preview: 'import { useState } from \"react\";',
+    },
     duration: 0.08,
     defaultOpen: true,
   },

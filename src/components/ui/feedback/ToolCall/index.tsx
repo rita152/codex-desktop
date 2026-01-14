@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 
 import { cn } from '../../../../utils/cn';
-import { GitDiff } from '../../data-display/GitDiff';
 
 import type {
   ToolCallProps,
@@ -227,19 +226,14 @@ export function ToolCall({
   title,
   kind,
   status,
-  content,
   locations,
   rawOutput,
-  error,
   startTime,
   duration,
   defaultOpen,
   className = '',
 }: ToolCallProps) {
-  const hasContent =
-    rawOutput !== undefined ||
-    Boolean(error) ||
-    (content && content.length > 0);
+  const hasContent = rawOutput !== undefined && rawOutput !== null;
 
   const isActive = status === 'in-progress';
 
@@ -324,64 +318,11 @@ export function ToolCall({
       {hasContent && (
         <div className="tool-call__content">
           <div className="tool-call__content-inner">
-            {/* 内容块 */}
-            {content && content.length > 0 && (
-              <div className="tool-call__section">
-                <span className="tool-call__section-label">Output</span>
-                {content.map((item, idx) => {
-                  if (item.type === 'text') {
-                    return (
-                      <pre key={idx} className="tool-call__code">
-                        {item.text}
-                      </pre>
-                    );
-                  }
-                  if (item.type === 'diff') {
-                    return (
-                      <div key={idx} className="tool-call__diff">
-                        <GitDiff diff={item.diff} fileName={item.path} />
-                      </div>
-                    );
-                  }
-                  if (item.type === 'terminal') {
-                    return (
-                      <div key={idx} className="tool-call__terminal">
-                        <div className="tool-call__terminal-header">
-                          <span>Terminal: {item.terminalId}</span>
-                          {item.cwd && (
-                            <span className="tool-call__terminal-meta">cwd: {item.cwd}</span>
-                          )}
-                          {item.exitCode !== undefined && item.exitCode !== null && (
-                            <span className="tool-call__terminal-meta">exit {item.exitCode}</span>
-                          )}
-                          {item.signal && (
-                            <span className="tool-call__terminal-meta">signal {item.signal}</span>
-                          )}
-                        </div>
-                        <pre className="tool-call__terminal-output">
-                          {item.output?.length ? item.output : '等待终端输出...'}
-                        </pre>
-                      </div>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            )}
-
             {/* 原始输出 */}
             {rawOutput !== undefined && rawOutput !== null && (
               <div className="tool-call__section">
                 <span className="tool-call__section-label">Output</span>
                 <pre className="tool-call__code">{formatJson(rawOutput)}</pre>
-              </div>
-            )}
-
-            {/* 错误信息 */}
-            {error && (
-              <div className="tool-call__section">
-                <span className="tool-call__section-label">Error</span>
-                <p className="tool-call__error">{error}</p>
               </div>
             )}
           </div>
