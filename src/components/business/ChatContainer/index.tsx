@@ -116,7 +116,10 @@ export function ChatContainer({
           </div>
           {sessionNotice && (
             <div
-              className={`chat-container__session-notice chat-container__session-notice--${sessionNotice.kind}`}
+              className={cn(
+                'chat-container__session-notice',
+                `chat-container__session-notice--${sessionNotice.kind}`
+              )}
             >
               {sessionNotice.message}
             </div>

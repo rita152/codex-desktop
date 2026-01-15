@@ -103,6 +103,15 @@ function formatLocation(location: ToolCallLocation): string {
   return fileName;
 }
 
+function formatLocationKey(location: ToolCallLocation): string {
+  const range = location.range;
+  if (!range) return location.uri;
+  const startColumn = range.startColumn ?? '';
+  const endLine = range.endLine ?? '';
+  const endColumn = range.endColumn ?? '';
+  return `${location.uri}:${range.startLine}:${startColumn}-${endLine}:${endColumn}`;
+}
+
 // ============ Main Component ============
 
 export const ToolCall = memo(function ToolCall({
@@ -117,7 +126,7 @@ export const ToolCall = memo(function ToolCall({
   defaultOpen,
   className = '',
 }: ToolCallProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const hasContent = rawOutput !== undefined && rawOutput !== null;
 
   const isActive = status === 'in-progress';
@@ -147,7 +156,7 @@ export const ToolCall = memo(function ToolCall({
     return () => clearInterval(timer);
   }, [isActive, startTime]);
 
-  const showDuration = useMemo(() => {
+  const showDuration = (() => {
     if (status === 'in-progress' && startTime) {
       return formatDurationShort(t, elapsedTime);
     }
@@ -155,14 +164,11 @@ export const ToolCall = memo(function ToolCall({
       return formatDurationShort(t, duration);
     }
     return null;
-  }, [duration, elapsedTime, startTime, status, t, i18n.language]);
+  })();
 
   const kindIcon = useMemo(() => getKindIcon(kind, 16), [kind]);
   const statusIcon = useMemo(() => getStatusIcon(status, 14), [status]);
-  const statusLabel = useMemo(
-    () => getStatusLabel(status, t),
-    [status, t, i18n.language]
-  );
+  const statusLabel = getStatusLabel(status, t);
 
   const canToggle = hasContent;
 
@@ -192,8 +198,12 @@ export const ToolCall = memo(function ToolCall({
           </span>
           {locations && locations.length > 0 && (
             <span className="tool-call__locations">
-              {locations.map((loc, idx) => (
-                <span key={idx} className="tool-call__location" title={loc.uri}>
+              {locations.map((loc) => (
+                <span
+                  key={formatLocationKey(loc)}
+                  className="tool-call__location"
+                  title={loc.uri}
+                >
                   <FileIcon size={12} />
                   <span>{formatLocation(loc)}</span>
                 </span>
@@ -204,7 +214,7 @@ export const ToolCall = memo(function ToolCall({
         <span className="tool-call__icon tool-call__icon--status">
           {statusIcon}
         </span>
-        <span className={`tool-call__status tool-call__status--${status}`}>
+        <span className={cn('tool-call__status', `tool-call__status--${status}`)}>
           {statusLabel}
         </span>
         {showDuration && (

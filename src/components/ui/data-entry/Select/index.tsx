@@ -167,43 +167,14 @@ export function Select({
     isDisabled && 'select__trigger--disabled',
     borderless && 'select__trigger--borderless'
   );
+  const containerClasses = cn('select', `select--${size}`, className);
 
   const containerStyle: React.CSSProperties = {
     width: typeof width === 'number' ? `${width}px` : width,
   };
 
-  return (
-    <div className={`select select--${size} ${className}`} ref={containerRef} style={containerStyle}>
-      <button
-        ref={triggerRef}
-        id={triggerId}
-        className={triggerClasses}
-        onClick={handleToggle}
-        onKeyDown={handleKeyDown}
-        disabled={isDisabled}
-        type="button"
-        role="combobox"
-        aria-expanded={isOpen}
-        aria-haspopup="listbox"
-        aria-controls={isOpen ? listboxId : undefined}
-        aria-activedescendant={
-          isOpen && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined
-        }
-        aria-label={ariaLabel}
-        aria-labelledby={ariaLabelledBy}
-      >
-        {(selectedOption?.icon || icon) && (
-          <span className="select__prefix-icon">{selectedOption?.icon ?? icon}</span>
-        )}
-        {selectedOption ? (
-          <span className="select__value">{selectedOption.label}</span>
-        ) : (
-          <span className="select__placeholder">{resolvedPlaceholder}</span>
-        )}
-        <ChevronDownIcon size={16} className="select__icon" />
-      </button>
-
-      {isOpen && createPortal(
+  const dropdown = isOpen
+    ? createPortal(
         <div
           ref={dropdownRef}
           className={cn(
@@ -221,9 +192,7 @@ export function Select({
             minWidth: dropdownPosition.width,
           }}
         >
-          {dropdownTitle && (
-            <div className="select__dropdown-title">{dropdownTitle}</div>
-          )}
+          {dropdownTitle && <div className="select__dropdown-title">{dropdownTitle}</div>}
           {options.map((option, index) => {
             const optionClasses = cn(
               'select__option',
@@ -254,7 +223,41 @@ export function Select({
           })}
         </div>,
         document.body
-      )}
+      )
+    : null;
+
+  return (
+    <div className={containerClasses} ref={containerRef} style={containerStyle}>
+      <button
+        ref={triggerRef}
+        id={triggerId}
+        className={triggerClasses}
+        onClick={handleToggle}
+        onKeyDown={handleKeyDown}
+        disabled={isDisabled}
+        type="button"
+        role="combobox"
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-controls={isOpen ? listboxId : undefined}
+        aria-activedescendant={
+          isOpen && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined
+        }
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy}
+      >
+        {(selectedOption?.icon || icon) && (
+          <span className="select__prefix-icon">{selectedOption?.icon ?? icon}</span>
+        )}
+        {selectedOption ? (
+          <span className="select__value">{selectedOption.label}</span>
+        ) : (
+          <span className="select__placeholder">{resolvedPlaceholder}</span>
+        )}
+        <ChevronDownIcon size={16} className="select__icon" />
+      </button>
+
+      {dropdown}
     </div>
   );
 }

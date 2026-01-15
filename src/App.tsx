@@ -24,6 +24,7 @@ import {
   normalizeToolKind,
   resolveModelOptions,
 } from './utils/codexParsing';
+import { devDebug } from './utils/logger';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
@@ -619,7 +620,7 @@ function App() {
       try {
         const feedback = approvalFeedback[key]?.trim();
         if (feedback) {
-          console.debug('[approval feedback]', { requestId: request.requestId, feedback });
+          devDebug('[approval feedback]', { requestId: request.requestId, feedback });
         }
         await approveRequest(request.sessionId, request.requestId, undefined, optionId);
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));

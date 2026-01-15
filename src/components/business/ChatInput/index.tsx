@@ -17,6 +17,7 @@ import {
   ForwardIcon,
   NotebookIcon,
 } from '../../ui/data-display/Icon';
+import { cn } from '../../../utils/cn';
 
 import type { ChatInputProps } from './types';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -60,14 +61,11 @@ export function ChatInput({
   width,
   className = '',
 }: ChatInputProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
-  const resolvedAgentOptions = useMemo(
-    () => agentOptions ?? buildAgentOptions(t),
-    [agentOptions, i18n.language, t]
-  );
+  const resolvedAgentOptions = agentOptions ?? buildAgentOptions(t);
 
   const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
 
@@ -199,12 +197,13 @@ export function ChatInput({
 
   const hasContent = trimmedValue.length > 0 && trimmedValue !== '/';
 
-  const style: React.CSSProperties = width
+  const containerStyle: React.CSSProperties = width
     ? { width: typeof width === 'number' ? `${width}px` : width }
     : {};
+  const containerClasses = cn('chat-input', className);
 
   return (
-    <div className={`chat-input ${className}`} style={style}>
+    <div className={containerClasses} style={containerStyle}>
       {leadingSlashToken ? (
         <div className="chat-input__textarea-row">
           <Card
@@ -262,7 +261,10 @@ export function ChatInput({
                 type="button"
                 role="option"
                 aria-selected={isActive}
-                className={`chat-input__slash-item ${isActive ? 'chat-input__slash-item--active' : ''}`}
+                className={cn(
+                  'chat-input__slash-item',
+                  isActive && 'chat-input__slash-item--active'
+                )}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => applySlashCommand(command)}
               >
@@ -320,7 +322,10 @@ export function ChatInput({
             size="sm"
             variant="ghost"
             disabled={disabled || !hasContent}
-            className={`chat-input__send-button ${hasContent ? 'chat-input__send-button--active' : ''}`}
+            className={cn(
+              'chat-input__send-button',
+              hasContent && 'chat-input__send-button--active'
+            )}
           />
         </div>
       </div>

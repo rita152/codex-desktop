@@ -169,7 +169,7 @@ export function Approval({
           {getStatusIcon(status, 16)}
         </span>
         <span className="approval__title">{title}</span>
-        <span className={`approval__status approval__status--${status}`}>
+        <span className={cn('approval__status', `approval__status--${status}`)}>
           {getStatusLabel(status, t)}
         </span>
         {showActions && (

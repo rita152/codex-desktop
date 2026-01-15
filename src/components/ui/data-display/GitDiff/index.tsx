@@ -77,6 +77,13 @@ function parseDiff(diffText: string): FileDiff {
   return result;
 }
 
+function getLineKey(line: DiffLine, index: number): string {
+  const oldNum = line.oldLineNumber ?? '';
+  const newNum = line.newLineNumber ?? '';
+  const base = `${line.type}-${oldNum}-${newNum}-${line.content}`;
+  return base || String(index);
+}
+
 export function GitDiff({
   diff,
   showLineNumbers = true,
@@ -99,7 +106,7 @@ export function GitDiff({
           <tbody>
             {fileDiff.lines.map((line, index) => (
               <DiffLineRow
-                key={index}
+                key={getLineKey(line, index)}
                 line={line}
                 showLineNumbers={showLineNumbers}
               />

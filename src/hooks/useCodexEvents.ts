@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 
 import { closeActiveAssistantMessages, closeActiveThoughtMessages } from '../utils/messageUtils';
+import { devDebug } from '../utils/logger';
 import {
   applyToolCallUpdate,
   asRecord,
@@ -50,7 +51,7 @@ export function useCodexEvents({
 }: UseCodexEventsParams) {
   useEffect(() => {
     const appendThoughtChunk = (sessionId: string, text: string) => {
-      console.debug('[appendThoughtChunk]', {
+      devDebug('[appendThoughtChunk]', {
         sessionId,
         textLen: text.length,
         text: text.slice(0, 50),
@@ -98,7 +99,7 @@ export function useCodexEvents({
     };
 
     const appendAssistantChunk = (sessionId: string, text: string) => {
-      console.debug('[appendAssistantChunk]', { sessionId, textLen: text.length });
+      devDebug('[appendAssistantChunk]', { sessionId, textLen: text.length });
       setSessionMessages((prev) => {
         const baseList = prev[sessionId] ?? [];
         const list = closeActiveThoughtMessages(baseList, Date.now());
@@ -220,7 +221,7 @@ export function useCodexEvents({
         appendAssistantChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
-        console.debug('[codex:thought] Received', {
+        devDebug('[codex:thought] Received', {
           sessionId: event.payload.sessionId,
           textLen: event.payload.text.length,
         });
