@@ -6,6 +6,7 @@ import { approveRequest, createSession, initCodex, sendPrompt, setSessionModel }
 import { loadModelOptionsCache, saveModelOptionsCache } from './api/storage';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
+import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { DEFAULT_MODEL_ID, DEFAULT_MODELS, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import {
@@ -59,17 +60,18 @@ function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const sidebarVisibilityRef = useRef(true);
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
-  const [sessionTokenUsage, setSessionTokenUsage] = useState<
-    Record<
-      string,
-      {
-        totalTokens: number;
-        lastTokens?: number;
-        contextWindow?: number | null;
-        percentRemaining?: number | null;
-      }
-    >
-  >({});
+  const {
+    sessionTokenUsage,
+    sessionNotices,
+    sessionSlashCommands,
+    sessionModelOptions,
+    setSessionTokenUsage,
+    setSessionNotices,
+    setSessionSlashCommands,
+    setSessionModelOptions,
+    clearSessionNotice,
+    removeSessionMeta,
+  } = useSessionMeta();
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const {
     pendingApprovals,
@@ -82,15 +84,6 @@ function App() {
     registerApprovalRequest,
     clearApproval,
   } = useApprovalState();
-  const [sessionNotices, setSessionNotices] = useState<
-    Record<string, { kind: 'error' | 'info'; message: string }>
-  >({});
-  const [sessionSlashCommands, setSessionSlashCommands] = useState<
-    Record<string, string[]>
-  >({});
-  const [sessionModelOptions, setSessionModelOptions] = useState<
-    Record<string, SelectOption[]>
-  >({});
 
   const activeSessionIdRef = useRef<string>(selectedSessionId);
   const codexSessionByChatRef = useRef<Record<string, string>>({});
@@ -110,7 +103,7 @@ function App() {
       }
       return changed ? next : prev;
     });
-  }, [modelCache.options, sessions]);
+  }, [modelCache.options, sessions, setSessionModelOptions]);
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -242,15 +235,6 @@ function App() {
     [selectedSessionId, setSessionDrafts]
   );
 
-  const clearSessionNotice = useCallback((sessionId: string) => {
-    setSessionNotices((prev) => {
-      if (!prev[sessionId]) return prev;
-      const next = { ...prev };
-      delete next[sessionId];
-      return next;
-    });
-  }, []);
-
   useEffect(() => {
     void initCodex().catch((err) => {
       console.warn('[codex] init failed', err);
@@ -377,6 +361,8 @@ function App() {
       clearSessionNotice,
       registerCodexSession,
       sessions,
+      setSessionModelOptions,
+      setSessionNotices,
       setSessions,
     ]
   );
@@ -445,30 +431,6 @@ function App() {
         }
         return next;
       });
-      setSessionNotices((prev) => {
-        const next = { ...prev };
-        delete next[sessionId];
-        if (shouldCreateNew) {
-          delete next[newSessionId];
-        }
-        return next;
-      });
-      setSessionSlashCommands((prev) => {
-        const next = { ...prev };
-        delete next[sessionId];
-        if (shouldCreateNew) {
-          delete next[newSessionId];
-        }
-        return next;
-      });
-      setSessionModelOptions((prev) => {
-        const next = { ...prev };
-        delete next[sessionId];
-        if (shouldCreateNew) {
-          delete next[newSessionId];
-        }
-        return next;
-      });
       setSessionDrafts((prev) => {
         const next = { ...prev };
         delete next[sessionId];
@@ -477,14 +439,7 @@ function App() {
         }
         return next;
       });
-      setSessionTokenUsage((prev) => {
-        const next = { ...prev };
-        delete next[sessionId];
-        if (shouldCreateNew) {
-          delete next[newSessionId];
-        }
-        return next;
-      });
+      removeSessionMeta(sessionId, shouldCreateNew ? newSessionId : undefined);
 
       // 如果删除的是当前选中的会话，切换到第一个会话
       if (sessionId === selectedSessionId) {
@@ -503,6 +458,7 @@ function App() {
     [
       clearCodexSession,
       clearSessionNotice,
+      removeSessionMeta,
       selectedCwd,
       sessions,
       selectedSessionId,
@@ -510,7 +466,6 @@ function App() {
       setSessionDrafts,
       setSessionMessages,
       setSessions,
-      setSessionTokenUsage,
     ]
   );
 
@@ -556,7 +511,13 @@ function App() {
         }));
       }
     },
-    [activeSession?.model, clearSessionNotice, selectedSessionId, setSessions]
+    [
+      activeSession?.model,
+      clearSessionNotice,
+      selectedSessionId,
+      setSessionNotices,
+      setSessions,
+    ]
   );
 
   const handleSelectCwd = useCallback(async () => {
@@ -679,7 +640,14 @@ function App() {
         }
       }
     },
-    [approvalFeedback, clearApproval, resolveChatSessionId, setApprovalLoading, setApprovalStatuses]
+    [
+      approvalFeedback,
+      clearApproval,
+      resolveChatSessionId,
+      setApprovalLoading,
+      setApprovalStatuses,
+      setSessionNotices,
+    ]
   );
 
   const approvalCards: ApprovalProps[] = useMemo(
