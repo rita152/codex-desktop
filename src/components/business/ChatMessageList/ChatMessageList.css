@@ -20,3 +20,19 @@
   color: var(--color-text-secondary);
   font-size: 14px;
 }
+
+.chat-message-list__virtualizer {
+  position: relative;
+}
+
+.chat-message-list__virtual-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-bottom: var(--spacing-lg);
+}
+
+.chat-message-list__virtual-item--last {
+  padding-bottom: 0;
+}

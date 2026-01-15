@@ -22,7 +22,7 @@ mod tests {
         ENV_LOCK
             .get_or_init(|| Mutex::new(()))
             .lock()
-            .expect("env mutex poisoned")
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 
     fn with_env_var(value: Option<&str>, f: impl FnOnce()) {

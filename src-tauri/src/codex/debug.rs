@@ -25,6 +25,12 @@ pub struct DebugState {
     emit_to_stderr: bool,
 }
 
+impl Default for DebugState {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DebugState {
     pub fn new() -> Self {
         let start_epoch_ms = SystemTime::now()
@@ -46,10 +52,7 @@ impl DebugState {
 
     pub fn mark_prompt(&self, session_id: &str) -> DebugTiming {
         let now = Instant::now();
-        self.last_prompt_by_session
-            .lock()
-            .expect("debug prompt mutex poisoned")
-            .insert(session_id.to_string(), now);
+        self.lock_last_prompt().insert(session_id.to_string(), now);
         let since_last = self.update_last_event(session_id, now);
 
         DebugTiming {
@@ -62,12 +65,12 @@ impl DebugState {
 
     pub fn mark_event(&self, session_id: &str) -> DebugTiming {
         let now = Instant::now();
-        let since_prompt = self
-            .last_prompt_by_session
-            .lock()
-            .expect("debug prompt mutex poisoned")
-            .get(session_id)
-            .map(|t| now.duration_since(*t).as_millis().try_into().unwrap_or(u64::MAX));
+        let since_prompt = self.lock_last_prompt().get(session_id).map(|t| {
+            now.duration_since(*t)
+                .as_millis()
+                .try_into()
+                .unwrap_or(u64::MAX)
+        });
         let since_last = self.update_last_event(session_id, now);
 
         DebugTiming {
@@ -107,28 +110,49 @@ impl DebugState {
 
         let _ = app.emit(EVENT_DEBUG, payload.clone());
         if self.emit_to_stderr {
-            eprintln!("{payload}");
+            tracing::info!(payload = %payload, "debug_timing");
         }
     }
 
     fn update_last_event(&self, session_id: &str, now: Instant) -> Option<u64> {
-        let mut guard = self
-            .last_event_by_session
-            .lock()
-            .expect("debug event mutex poisoned");
-        let since_last = guard
-            .get(session_id)
-            .map(|t| now.duration_since(*t).as_millis().try_into().unwrap_or(u64::MAX));
+        let mut guard = self.lock_last_event();
+        let since_last = guard.get(session_id).map(|t| {
+            now.duration_since(*t)
+                .as_millis()
+                .try_into()
+                .unwrap_or(u64::MAX)
+        });
         guard.insert(session_id.to_string(), now);
         since_last
     }
 
     fn now_ms(&self) -> u64 {
-        self.start_epoch_ms
-            .saturating_add(self.start.elapsed().as_millis().try_into().unwrap_or(u64::MAX))
+        self.start_epoch_ms.saturating_add(
+            self.start
+                .elapsed()
+                .as_millis()
+                .try_into()
+                .unwrap_or(u64::MAX),
+        )
     }
 
     fn dt_ms(&self) -> u64 {
-        self.start.elapsed().as_millis().try_into().unwrap_or(u64::MAX)
+        self.start
+            .elapsed()
+            .as_millis()
+            .try_into()
+            .unwrap_or(u64::MAX)
+    }
+
+    fn lock_last_prompt(&self) -> std::sync::MutexGuard<'_, HashMap<String, Instant>> {
+        self.last_prompt_by_session
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
+    fn lock_last_event(&self) -> std::sync::MutexGuard<'_, HashMap<String, Instant>> {
+        self.last_event_by_session
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 }

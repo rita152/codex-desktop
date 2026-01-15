@@ -12,10 +12,7 @@ use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 use super::config::{codex_home_dir, load_codex_cli_config, redact_api_key, CodexCliConfig};
 use crate::codex::{
-    binary::CodexAcpBinary,
-    events::*,
-    process::resolve_cwd,
-    thoughts::emit_thought_chunks,
+    binary::CodexAcpBinary, events::*, process::resolve_cwd, thoughts::emit_thought_chunks,
     util::content_block_text,
 };
 use tauri::Manager;
@@ -177,8 +174,9 @@ async fn prompt_once_inner(
     let cwd = resolve_cwd(cwd)?;
 
     let codex_home = codex_home_dir()?;
-    let binary = CodexAcpBinary::resolve(Some(&window.app_handle()))?;
-    eprintln!("{}", binary.diagnostics_line());
+    let app_handle = window.app_handle();
+    let binary = CodexAcpBinary::resolve(Some(app_handle))?;
+    tracing::info!(message = %binary.diagnostics_line(), "codex-acp diagnostics");
     let mut cmd = binary.command(&codex_home);
 
     // Dev: prefer reading ~/.codex/config.toml; if api_key is present there,

@@ -44,8 +44,8 @@ impl OutputLog {
                     .with_context(|| format!("failed to create log dir: {}", parent.display()))?;
             }
         }
-        let file =
-            File::create(&path).with_context(|| format!("failed to create log: {}", path.display()))?;
+        let file = File::create(&path)
+            .with_context(|| format!("failed to create log: {}", path.display()))?;
         Ok(Self {
             path,
             start_ms: now_ms(),
@@ -208,7 +208,9 @@ fn parse_args() -> Result<(String, PathBuf)> {
                 prompt_file = Some(PathBuf::from(path));
             }
             "--out" => {
-                let path = args.next().ok_or_else(|| anyhow!("--out requires a path"))?;
+                let path = args
+                    .next()
+                    .ok_or_else(|| anyhow!("--out requires a path"))?;
                 out = Some(PathBuf::from(path));
             }
             "--help" | "-h" => {
@@ -218,10 +220,10 @@ fn parse_args() -> Result<(String, PathBuf)> {
                 std::process::exit(0);
             }
             other => {
-                if prompt.is_none() {
-                    prompt = Some(other.to_string());
+                if let Some(existing) = prompt {
+                    prompt = Some(format!("{} {}", existing, other));
                 } else {
-                    prompt = Some(format!("{} {}", prompt.unwrap(), other));
+                    prompt = Some(other.to_string());
                 }
             }
         }
@@ -231,7 +233,9 @@ fn parse_args() -> Result<(String, PathBuf)> {
         std::fs::read_to_string(&path)
             .with_context(|| format!("failed to read prompt file: {}", path.display()))?
     } else {
-        prompt.unwrap_or_else(|| "请读取 README.md 并总结项目用途（如需读取文件请发起工具调用）".to_string())
+        prompt.unwrap_or_else(|| {
+            "请读取 README.md 并总结项目用途（如需读取文件请发起工具调用）".to_string()
+        })
     };
 
     let out = out.unwrap_or_else(|| default_out_path(&cwd));

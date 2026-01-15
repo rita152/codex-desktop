@@ -7,9 +7,9 @@ use crate::codex::{
     util::content_block_text,
 };
 use agent_client_protocol::{
-    Client, ClientSideConnection, PermissionOption, PermissionOptionId, PermissionOptionKind,
-    RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
-    SelectedPermissionOutcome, SessionNotification, SessionUpdate, ExtNotification,
+    Client, ClientSideConnection, ExtNotification, PermissionOption, PermissionOptionId,
+    PermissionOptionKind, RequestPermissionOutcome, RequestPermissionRequest,
+    RequestPermissionResponse, SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
 use anyhow::{anyhow, Context, Result};
 use serde_json::json;
@@ -54,7 +54,7 @@ impl ApprovalState {
         options: Vec<PermissionOption>,
         tx: oneshot::Sender<PermissionOptionId>,
     ) {
-        let mut guard = self.pending.lock().expect("approval mutex poisoned");
+        let mut guard = self.lock_pending();
         guard.insert(key.as_map_key(), PendingApproval { options, tx });
     }
 
@@ -64,7 +64,7 @@ impl ApprovalState {
         decision: Option<ApprovalDecision>,
         option_id: Option<String>,
     ) -> Result<()> {
-        let mut guard = self.pending.lock().expect("approval mutex poisoned");
+        let mut guard = self.lock_pending();
         let pending = guard
             .remove(&key.as_map_key())
             .ok_or_else(|| anyhow!("no pending approval for session/tool_call"))?;
@@ -91,6 +91,12 @@ impl ApprovalState {
 
         let _ = pending.tx.send(selected);
         Ok(())
+    }
+
+    fn lock_pending(&self) -> std::sync::MutexGuard<'_, HashMap<String, PendingApproval>> {
+        self.pending
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
     }
 }
 
@@ -281,10 +287,7 @@ impl Client for AcpClient {
         Ok(())
     }
 
-    async fn ext_notification(
-        &self,
-        args: ExtNotification,
-    ) -> agent_client_protocol::Result<()> {
+    async fn ext_notification(&self, args: ExtNotification) -> agent_client_protocol::Result<()> {
         if args.method.as_ref() == "codex/token-usage" {
             if let Ok(payload) = serde_json::from_str::<serde_json::Value>(args.params.get()) {
                 let _ = self.app.emit(EVENT_TOKEN_USAGE, payload);

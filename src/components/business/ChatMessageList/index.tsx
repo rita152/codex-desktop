@@ -337,10 +337,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   return (
     <div className={classNames} ref={containerRef}>
       <div
-        style={{
-          height: virtualizer.getTotalSize(),
-          position: 'relative',
-        }}
+        className="chat-message-list__virtualizer"
+        style={{ height: virtualizer.getTotalSize() }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const group = groups[virtualRow.index];
@@ -382,17 +380,18 @@ export const ChatMessageList = memo(function ChatMessageList({
             );
           }
 
+          const isLast = virtualRow.index === groups.length - 1;
+
           return (
             <div
               key={virtualRow.key}
+              className={cn(
+                'chat-message-list__virtual-item',
+                isLast && 'chat-message-list__virtual-item--last'
+              )}
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                paddingBottom: virtualRow.index === groups.length - 1 ? 0 : 'var(--spacing-lg)',
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >

@@ -49,7 +49,7 @@ impl CodexProcess {
             .unwrap_or_else(CodexAcpLaunchMode::default_for_build);
         let binary = CodexAcpBinary::resolve_with_mode(mode, app)?;
 
-        eprintln!("{}", binary.diagnostics_line());
+        tracing::info!(message = %binary.diagnostics_line(), "codex-acp diagnostics");
 
         let mut cmd = binary.command(&codex_home);
         if let Some(cwd) = cfg.cwd.as_ref() {
@@ -127,12 +127,15 @@ mod tests {
 
     #[tokio::test]
     #[ignore = "requires a working codex-acp spawn strategy (npx or sidecar)"]
-    async fn test_spawn_and_kill() {
-        let mut cfg = CodexProcessConfig::default();
-        cfg.mode = Some(CodexAcpLaunchMode::Npx);
-        let mut process = CodexProcess::spawn(None, cfg).await.unwrap();
+    async fn test_spawn_and_kill() -> Result<()> {
+        let cfg = CodexProcessConfig {
+            mode: Some(CodexAcpLaunchMode::Npx),
+            ..Default::default()
+        };
+        let mut process = CodexProcess::spawn(None, cfg).await?;
         assert!(process.is_alive());
-        process.kill().await.unwrap();
+        process.kill().await?;
         assert!(!process.is_alive());
+        Ok(())
     }
 }

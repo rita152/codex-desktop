@@ -30,10 +30,16 @@ impl CodexService {
             let approvals = approvals.clone();
             let debug = debug.clone();
             move || {
-                let rt = tokio::runtime::Builder::new_current_thread()
+                let rt = match tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()
-                    .expect("failed to build tokio runtime");
+                {
+                    Ok(rt) => rt,
+                    Err(err) => {
+                        tracing::error!(error = %err, "failed to build tokio runtime");
+                        return;
+                    }
+                };
 
                 rt.block_on(async move {
                     tokio::task::LocalSet::new()
@@ -315,9 +321,14 @@ async fn prompt_inner(
 
     let resp = conn.conn.prompt(request).await.context("prompt failed")?;
 
+    let stop_reason_value =
+        serde_json::to_value(resp.stop_reason).unwrap_or(serde_json::Value::Null);
     let _ = app.emit(
         crate::codex::events::EVENT_TURN_COMPLETE,
-        serde_json::json!({ "sessionId": session_id, "stopReason": resp.stop_reason }),
+        serde_json::json!({
+            "sessionId": session_id,
+            "stopReason": stop_reason_value.clone()
+        }),
     );
 
     let timing = debug.mark_event(&session_id);
@@ -326,13 +337,11 @@ async fn prompt_inner(
         Some(&session_id),
         "prompt_done",
         timing,
-        serde_json::json!({
-            "stopReason": serde_json::to_value(&resp.stop_reason).unwrap_or(serde_json::Value::Null),
-        }),
+        serde_json::json!({ "stopReason": stop_reason_value.clone() }),
     );
 
     Ok(PromptResult {
-        stop_reason: serde_json::to_value(resp.stop_reason).unwrap_or(serde_json::Value::Null),
+        stop_reason: stop_reason_value,
     })
 }
 
@@ -385,9 +394,13 @@ async fn worker_loop(
         match cmd {
             ServiceCommand::Initialize { reply } => {
                 let timing = state.debug.mark_global();
-                state
-                    .debug
-                    .emit(&state.app, None, "initialize_start", timing, serde_json::json!({}));
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "initialize_start",
+                    timing,
+                    serde_json::json!({}),
+                );
 
                 let start = Instant::now();
                 let result = initialize_inner(&mut state).await;
@@ -469,10 +482,10 @@ async fn worker_loop(
                 // separate local task so cancellation/config updates can still be processed.
                 match initialize_inner(&mut state).await {
                     Ok(_) => {
-                        let conn = state
-                            .conn
-                            .clone()
-                            .expect("initialized implies connection exists");
+                        let Some(conn) = state.conn.clone() else {
+                            let _ = reply.send(Err(anyhow!("initialized but connection missing")));
+                            continue;
+                        };
                         let app = state.app.clone();
                         let debug = state.debug.clone();
                         tokio::task::spawn_local(async move {

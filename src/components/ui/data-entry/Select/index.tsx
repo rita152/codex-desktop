@@ -188,7 +188,6 @@ export function Select({
           id={listboxId}
           aria-labelledby={triggerId}
           style={{
-            position: 'fixed',
             bottom: dropdownPosition.bottom,
             left: dropdownPosition.left,
             minWidth: dropdownPosition.width,
