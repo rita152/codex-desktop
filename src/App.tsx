@@ -22,6 +22,7 @@ import type {
 import type {
   ApprovalDiff,
   ApprovalProps,
+  ApprovalStatus,
   PermissionOption as ApprovalOption,
   PermissionOptionKind,
 } from './components/ui/feedback/Approval';
@@ -561,6 +562,19 @@ function mapApprovalOptions(options: PermissionOption[] | undefined): ApprovalOp
     .filter(Boolean) as ApprovalOption[];
 }
 
+function approvalStatusFromKind(kind: PermissionOptionKind): ApprovalStatus {
+  switch (kind) {
+    case 'allow-always':
+      return 'approved-for-session';
+    case 'reject-always':
+    case 'reject-once':
+      return 'rejected';
+    case 'allow-once':
+    default:
+      return 'approved';
+  }
+}
+
 function extractApprovalDiffs(toolCall: UnknownRecord): ApprovalDiff[] {
   const content = parseToolCallContent(toolCall.content);
   if (!content) return [];
@@ -602,6 +616,7 @@ function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
+  const [approvalStatuses, setApprovalStatuses] = useState<Record<string, ApprovalStatus>>({});
   const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
   const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
   const [sessionNotices, setSessionNotices] = useState<
@@ -981,6 +996,7 @@ function App() {
           const next = prev.filter((item) => `${item.sessionId}:${item.requestId}` !== key);
           return [...next, req];
         });
+        setApprovalStatuses((prev) => ({ ...prev, [key]: 'pending' }));
         setApprovalFeedback((prev) => ({ ...prev, [key]: prev[key] ?? '' }));
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
       }),
@@ -1337,34 +1353,58 @@ function App() {
     async (request: ApprovalRequest, optionId: string) => {
       const key = `${request.sessionId}:${request.requestId}`;
       setApprovalLoading((prev) => ({ ...prev, [key]: true }));
+      const optionKind =
+        mapApprovalOptions(request.options).find((option) => option.id === optionId)?.kind ??
+        'allow-once';
+      const nextStatus = approvalStatusFromKind(optionKind);
+      setApprovalStatuses((prev) => ({ ...prev, [key]: nextStatus }));
       try {
         const feedback = approvalFeedback[key]?.trim();
         if (feedback) {
           console.debug('[approval feedback]', { requestId: request.requestId, feedback });
         }
         await approveRequest(request.sessionId, request.requestId, undefined, optionId);
-        setPendingApprovals((prev) =>
-          prev.filter(
-            (item) =>
-              !(item.sessionId === request.sessionId && item.requestId === request.requestId)
-          )
-        );
-        setApprovalFeedback((prev) => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
-        setApprovalLoading((prev) => {
-          const next = { ...prev };
-          delete next[key];
-          return next;
-        });
+        setApprovalLoading((prev) => ({ ...prev, [key]: false }));
+        window.setTimeout(() => {
+          setPendingApprovals((prev) =>
+            prev.filter(
+              (item) =>
+                !(item.sessionId === request.sessionId && item.requestId === request.requestId)
+            )
+          );
+          setApprovalFeedback((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+          setApprovalLoading((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+          setApprovalStatuses((prev) => {
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+        }, 900);
       } catch (err) {
         console.error('[approval failed]', err);
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
+        setApprovalStatuses((prev) => ({ ...prev, [key]: 'pending' }));
+        const chatSessionId = resolveChatSessionId(request.sessionId);
+        if (chatSessionId) {
+          setSessionNotices((prev) => ({
+            ...prev,
+            [chatSessionId]: {
+              kind: 'error',
+              message: `审批提交失败：${formatError(err)}`,
+            },
+          }));
+        }
       }
     },
-    [approvalFeedback]
+    [approvalFeedback, resolveChatSessionId]
   );
 
   const approvalCards: ApprovalProps[] = pendingApprovals
@@ -1384,7 +1424,7 @@ function App() {
         callId: request.requestId,
         type,
         title,
-        status: 'pending',
+        status: approvalStatuses[key] ?? 'pending',
         description,
         command,
         diffs: diffs.length > 0 ? diffs : undefined,
