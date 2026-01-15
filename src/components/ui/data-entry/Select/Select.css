@@ -52,6 +52,21 @@
   border-color: var(--color-border-hover);
 }
 
+.select__trigger--borderless.select__trigger--open {
+  border-color: transparent;
+}
+
+.select__trigger--borderless:focus-visible {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+@supports (color: color-mix(in srgb, black 50%, white)) {
+  .select__trigger--borderless:focus-visible {
+    box-shadow: none;
+  }
+}
+
 /* 尺寸 */
 .select--sm .select__trigger {
   padding: var(--spacing-xs) var(--spacing-sm);
