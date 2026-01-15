@@ -1,3 +1,6 @@
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '../../../../utils/cn';
 import { Markdown } from '../../data-display/Markdown';
 import { GitDiff } from '../../data-display/GitDiff';
@@ -52,19 +55,19 @@ function XIcon({ size = 16 }: { size?: number }) {
 
 // ============ Default Options ============
 
-const EXEC_OPTIONS: PermissionOption[] = [
-  { id: 'approved-for-session', label: 'Always', kind: 'allow-always' },
-  { id: 'approved', label: 'Yes', kind: 'allow-once' },
-  { id: 'abort', label: 'No', kind: 'reject-once' },
-];
+function getDefaultOptions(t: TFunction, type: ApprovalType): PermissionOption[] {
+  if (type === 'exec') {
+    return [
+      { id: 'approved-for-session', label: t('approval.options.always'), kind: 'allow-always' },
+      { id: 'approved', label: t('approval.options.yes'), kind: 'allow-once' },
+      { id: 'abort', label: t('approval.options.no'), kind: 'reject-once' },
+    ];
+  }
 
-const PATCH_OPTIONS: PermissionOption[] = [
-  { id: 'approved', label: 'Yes', kind: 'allow-once' },
-  { id: 'abort', label: 'No', kind: 'reject-once' },
-];
-
-function getDefaultOptions(type: ApprovalType): PermissionOption[] {
-  return type === 'exec' ? EXEC_OPTIONS : PATCH_OPTIONS;
+  return [
+    { id: 'approved', label: t('approval.options.yes'), kind: 'allow-once' },
+    { id: 'abort', label: t('approval.options.no'), kind: 'reject-once' },
+  ];
 }
 
 // ============ Helpers ============
@@ -82,16 +85,16 @@ function getStatusIcon(status: ApprovalStatus, size = 14) {
   }
 }
 
-function getStatusLabel(status: ApprovalStatus): string {
+function getStatusLabel(status: ApprovalStatus, t: TFunction): string {
   switch (status) {
     case 'pending':
-      return 'Pending';
+      return t('approval.status.pending');
     case 'approved':
-      return 'Approved';
+      return t('approval.status.approved');
     case 'approved-for-session':
-      return 'Always Approved';
+      return t('approval.status.approvedForSession');
     case 'rejected':
-      return 'Rejected';
+      return t('approval.status.rejected');
   }
 }
 
@@ -124,15 +127,18 @@ export function Approval({
   feedback = '',
   onFeedbackChange,
   showFeedback,
-  feedbackPlaceholder = '请输入拒绝原因（可选）',
+  feedbackPlaceholder,
   onSelect,
   className = '',
 }: ApprovalProps) {
+  const { t } = useTranslation();
   const isPending = status === 'pending';
-  const resolvedOptions = options ?? getDefaultOptions(type);
+  const resolvedOptions = options ?? getDefaultOptions(t, type);
   const showActions = isPending && onSelect && resolvedOptions.length > 0;
   const canReject = resolvedOptions.some((option) => option.kind.startsWith('reject'));
   const shouldShowFeedback = showFeedback ?? canReject;
+  const resolvedFeedbackPlaceholder =
+    feedbackPlaceholder ?? t('approval.feedbackPlaceholder');
 
   const displayCommand = command ? command.replace(/\s*\n\s*/g, ' ').trim() : '';
 
@@ -164,7 +170,7 @@ export function Approval({
         </span>
         <span className="approval__title">{title}</span>
         <span className={`approval__status approval__status--${status}`}>
-          {getStatusLabel(status)}
+          {getStatusLabel(status, t)}
         </span>
         {showActions && (
           <div className="approval__actions">
@@ -191,13 +197,13 @@ export function Approval({
         <div className="approval__body">
           {description && (
             <div className="approval__section">
-              <span className="approval__section-label">说明</span>
+              <span className="approval__section-label">{t('approval.section.description')}</span>
               <Markdown content={description} compact className="approval__description" />
             </div>
           )}
           {command && (
             <div className="approval__section">
-              <span className="approval__section-label">命令</span>
+              <span className="approval__section-label">{t('approval.section.command')}</span>
               <pre className="approval__code" title={displayCommand}>
                 {displayCommand}
               </pre>
@@ -205,7 +211,7 @@ export function Approval({
           )}
           {diffs && diffs.length > 0 && (
             <div className="approval__section">
-              <span className="approval__section-label">变更</span>
+              <span className="approval__section-label">{t('approval.section.changes')}</span>
               <div className="approval__diffs">
                 {diffs.map((diffItem, idx) => (
                   <GitDiff
@@ -219,11 +225,11 @@ export function Approval({
           )}
           {shouldShowFeedback && (
             <div className="approval__section">
-              <span className="approval__section-label">拒绝反馈</span>
+              <span className="approval__section-label">{t('approval.section.feedback')}</span>
               <TextArea
                 value={feedback}
                 onChange={handleFeedbackChange}
-                placeholder={feedbackPlaceholder}
+                placeholder={resolvedFeedbackPlaceholder}
                 minRows={2}
                 maxRows={4}
                 className="approval__feedback"

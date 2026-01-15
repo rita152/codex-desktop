@@ -1,4 +1,5 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Thinking } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
@@ -13,13 +14,6 @@ import './ChatMessage.css';
 const TYPEWRITER_SPEED = 120;
 const TYPEWRITER_MAX_CHARS = 12;
 
-const formatTime = (date: Date): string => {
-  return date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
 export const ChatMessage = memo(function ChatMessage({
   role,
   content,
@@ -29,6 +23,15 @@ export const ChatMessage = memo(function ChatMessage({
   timestamp,
   className = '',
 }: ChatMessageProps) {
+  const { i18n } = useTranslation();
+  const timeFormatter = useMemo(
+    () =>
+      new Intl.DateTimeFormat(i18n.language, {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    [i18n.language]
+  );
   const streamedContent = useTypewriterText(
     content,
     role === 'assistant' && isStreaming,
@@ -103,7 +106,7 @@ export const ChatMessage = memo(function ChatMessage({
         </div>
       )}
       {timestamp && (role === 'user' || !isStreaming) && (
-        <span className="chat-message__timestamp">{formatTime(timestamp)}</span>
+        <span className="chat-message__timestamp">{timeFormatter.format(timestamp)}</span>
       )}
     </div>
   );

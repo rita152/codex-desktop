@@ -1,0 +1,107 @@
+{
+  "common": {
+    "add": "添加",
+    "send": "发送",
+    "rename": "重命名",
+    "delete": "删除"
+  },
+  "chat": {
+    "empty": "开始新的对话",
+    "defaultCwd": "默认目录",
+    "cwdLocked": "对话进行中，无法切换工作目录",
+    "newSessionTitle": "新对话",
+    "filePrefix": "文件: {{path}}"
+  },
+  "chatInput": {
+    "slashTitle": "Slash 命令",
+    "slashHint": "Tab 自动补全",
+    "slashAriaLabel": "Slash 命令",
+    "selectAgent": "选择智能体",
+    "selectModel": "选择模型",
+    "switchMode": "Switch mode",
+    "agentOptions": {
+      "chat": "Chat",
+      "agent": "Agent",
+      "agentFull": "Agent (full access)",
+      "custom": "Custom (config.toml)"
+    }
+  },
+  "sidebar": {
+    "show": "显示侧边栏",
+    "toggle": "切换分栏",
+    "newChat": "新建对话",
+    "menu": "菜单",
+    "resizeAria": "调整侧边栏宽度"
+  },
+  "errors": {
+    "modelSetFailed": "模型设置失败：{{error}}",
+    "modelSwitchFailed": "模型切换失败：{{error}}",
+    "requestFailed": "调用失败：{{error}}",
+    "approvalFailed": "审批提交失败：{{error}}",
+    "genericError": "发生错误：{{error}}"
+  },
+  "approval": {
+    "status": {
+      "pending": "等待审批",
+      "approved": "已批准",
+      "approvedForSession": "本会话始终允许",
+      "rejected": "已拒绝"
+    },
+    "options": {
+      "always": "始终允许",
+      "yes": "允许",
+      "no": "拒绝"
+    },
+    "section": {
+      "description": "说明",
+      "command": "命令",
+      "changes": "变更",
+      "feedback": "拒绝反馈"
+    },
+    "feedbackPlaceholder": "请输入拒绝原因 (可选)"
+  },
+  "toolCall": {
+    "status": {
+      "pending": "等待中",
+      "inProgress": "运行中",
+      "completed": "完成",
+      "failed": "失败"
+    },
+    "output": "输出"
+  },
+  "thinking": {
+    "label": {
+      "working": "处理中",
+      "thinking": "思考中",
+      "thinkingWithDuration": "思考中 {{duration}}",
+      "doneWithDuration": "思考了 {{duration}}",
+      "title": "思考过程"
+    }
+  },
+  "working": {
+    "title": "处理中",
+    "inProgress": "进行中",
+    "itemCount_one": "{{count}} 项",
+    "itemCount_other": "{{count}} 项",
+    "totalDuration": "总耗时 {{duration}}"
+  },
+  "duration": {
+    "ms": "{{value}} 毫秒",
+    "s": "{{value}} 秒",
+    "m": "{{minutes}} 分",
+    "m_s": "{{minutes}} 分 {{seconds}} 秒",
+    "seconds_one": "{{count}} 秒",
+    "seconds_other": "{{count}} 秒",
+    "minutes_one": "{{count}} 分钟",
+    "minutes_other": "{{count}} 分钟",
+    "minutes_seconds": "{{minutes}} 分 {{seconds}} 秒"
+  },
+  "remaining": {
+    "totalTokens": "总 token: {{count}}",
+    "remainingTokens": "剩余 token: {{count}}",
+    "ariaLabel": "剩余 {{count}}%"
+  },
+  "select": {
+    "placeholder": "请选择"
+  }
+}

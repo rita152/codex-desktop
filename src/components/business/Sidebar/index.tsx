@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
@@ -35,6 +36,7 @@ export function Sidebar({
   onWidthChange,
   className = '',
 }: SidebarProps) {
+  const { t } = useTranslation();
   const [internalWidth, setInternalWidth] = useState(DEFAULT_WIDTH);
   const [isDragging, setIsDragging] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -127,7 +129,7 @@ export function Sidebar({
       if (onSessionRename) {
         actions.push({
           icon: <PencilIcon size={14} />,
-          label: '重命名',
+          label: t('common.rename'),
           onClick: () => handleStartRename(sessionId, title),
         });
       }
@@ -135,14 +137,14 @@ export function Sidebar({
       if (onSessionDelete) {
         actions.push({
           icon: <TrashIcon size={14} />,
-          label: '删除',
+          label: t('common.delete'),
           onClick: () => onSessionDelete(sessionId),
         });
       }
 
       return actions;
     },
-    [onSessionDelete, onSessionRename, handleStartRename]
+    [onSessionDelete, onSessionRename, handleStartRename, t]
   );
 
   useEffect(() => {
@@ -172,7 +174,7 @@ export function Sidebar({
         <IconButton
           icon={<SidebarLeftIcon size={18} />}
           onClick={onSplitViewClick}
-          aria-label="切换分栏"
+          aria-label={t('sidebar.toggle')}
           size="sm"
           variant="ghost"
           disabled={!onSplitViewClick}
@@ -180,7 +182,7 @@ export function Sidebar({
         <IconButton
           icon={<EditIcon size={18} />}
           onClick={onNewChat}
-          aria-label="新建对话"
+          aria-label={t('sidebar.newChat')}
           size="sm"
           variant="ghost"
           disabled={!onNewChat}
@@ -213,7 +215,7 @@ export function Sidebar({
           type="button"
           className="sidebar__menu-button"
           onClick={onMenuClick}
-          aria-label="菜单"
+          aria-label={t('sidebar.menu')}
         >
           <MenuIcon size={20} />
         </button>
@@ -225,7 +227,7 @@ export function Sidebar({
         onKeyDown={handleResizeKeyDown}
         role="separator"
         aria-orientation="vertical"
-        aria-label="调整侧边栏宽度"
+        aria-label={t('sidebar.resizeAria')}
         aria-valuemin={MIN_WIDTH}
         aria-valuemax={MAX_WIDTH}
         aria-valuenow={Math.round(width)}

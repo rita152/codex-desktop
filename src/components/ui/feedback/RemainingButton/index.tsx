@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { cn } from '../../../../utils/cn';
 
 import type { RemainingButtonProps } from './types';
@@ -30,14 +32,15 @@ export function RemainingButton({
   disabled = false,
   className = '',
 }: RemainingButtonProps) {
+  const { t } = useTranslation();
   const clamped = Math.max(0, Math.min(100, Math.round(percent)));
   const classNames = cn('remaining-button', className);
   const titleParts: string[] = [];
   if (typeof totalTokens === 'number') {
-    titleParts.push(`总 token: ${Math.round(totalTokens)}`);
+    titleParts.push(t('remaining.totalTokens', { count: Math.round(totalTokens) }));
   }
   if (typeof remainingTokens === 'number') {
-    titleParts.push(`剩余 token: ${Math.round(remainingTokens)}`);
+    titleParts.push(t('remaining.remainingTokens', { count: Math.round(remainingTokens) }));
   }
   const title = titleParts.length > 0 ? titleParts.join(' · ') : undefined;
 
@@ -47,7 +50,7 @@ export function RemainingButton({
       className={classNames}
       onClick={onClick}
       disabled={disabled}
-      aria-label={`剩余 ${clamped}%`}
+      aria-label={t('remaining.ariaLabel', { count: clamped })}
       title={title}
     >
       <span className="remaining-button__icon">

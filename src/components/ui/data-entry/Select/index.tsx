@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
 import { ChevronDownIcon, CheckIcon } from '../../data-display/Icon';
@@ -13,7 +14,7 @@ export function Select({
   options,
   value,
   onChange,
-  placeholder = '请选择',
+  placeholder,
   disabled = false,
   size = 'md',
   borderless = false,
@@ -25,6 +26,7 @@ export function Select({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
 }: SelectProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({ bottom: 0, left: 0, width: 0 });
@@ -41,6 +43,7 @@ export function Select({
   const selectedOption = options.find((opt) => opt.value === value);
   const selectedIndex = options.findIndex((opt) => opt.value === value);
   const isDisabled = disabled || !onChange;
+  const resolvedPlaceholder = placeholder ?? t('select.placeholder');
 
   const handleToggle = () => {
     if (!isDisabled) {
@@ -195,7 +198,7 @@ export function Select({
         {selectedOption ? (
           <span className="select__value">{selectedOption.label}</span>
         ) : (
-          <span className="select__placeholder">{placeholder}</span>
+          <span className="select__placeholder">{resolvedPlaceholder}</span>
         )}
         <ChevronDownIcon size={16} className="select__icon" />
       </button>

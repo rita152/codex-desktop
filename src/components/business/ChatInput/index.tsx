@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { TFunction } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 import { DEFAULT_MODELS, DEFAULT_MODEL_ID } from '../../../constants/chat';
 
@@ -21,12 +23,19 @@ import type { SelectOption } from '../../ui/data-entry/Select/types';
 
 import './ChatInput.css';
 
-// Agent 选项带图标
-const AGENT_OPTIONS: SelectOption[] = [
-  { value: 'chat', label: 'Chat', icon: <ChatIcon size={18} /> },
-  { value: 'agent', label: 'Agent', icon: <RobotIcon size={18} /> },
-  { value: 'agent-full', label: 'Agent (full access)', icon: <ForwardIcon size={18} /> },
-  { value: 'custom', label: 'Custom (config.toml)', icon: <NotebookIcon size={18} /> },
+const buildAgentOptions = (t: TFunction): SelectOption[] => [
+  { value: 'chat', label: t('chatInput.agentOptions.chat'), icon: <ChatIcon size={18} /> },
+  { value: 'agent', label: t('chatInput.agentOptions.agent'), icon: <RobotIcon size={18} /> },
+  {
+    value: 'agent-full',
+    label: t('chatInput.agentOptions.agentFull'),
+    icon: <ForwardIcon size={18} />,
+  },
+  {
+    value: 'custom',
+    label: t('chatInput.agentOptions.custom'),
+    icon: <NotebookIcon size={18} />,
+  },
 ];
 
 export function ChatInput({
@@ -41,7 +50,7 @@ export function ChatInput({
   totalTokens,
   onRemainingClick,
   remainingDisabled = false,
-  agentOptions = AGENT_OPTIONS,
+  agentOptions,
   selectedAgent = 'agent-full',
   onAgentChange,
   modelOptions = DEFAULT_MODELS,
@@ -51,9 +60,14 @@ export function ChatInput({
   width,
   className = '',
 }: ChatInputProps) {
+  const { t, i18n } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
+  const resolvedAgentOptions = useMemo(
+    () => agentOptions ?? buildAgentOptions(t),
+    [agentOptions, i18n.language, t]
+  );
 
   const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
 
@@ -231,10 +245,14 @@ export function ChatInput({
         />
       )}
       {slashState.isActive && (
-        <div className="chat-input__slash-menu" role="listbox" aria-label="Slash commands">
+        <div
+          className="chat-input__slash-menu"
+          role="listbox"
+          aria-label={t('chatInput.slashAriaLabel')}
+        >
           <div className="chat-input__slash-header">
-            <span>Slash 命令</span>
-            <span className="chat-input__slash-hint">Tab 自动补全</span>
+            <span>{t('chatInput.slashTitle')}</span>
+            <span className="chat-input__slash-hint">{t('chatInput.slashHint')}</span>
           </div>
           {slashState.suggestions.map((command, index) => {
             const isActive = index === activeSlashIndex;
@@ -259,13 +277,13 @@ export function ChatInput({
           <IconButton
             icon={<PlusIcon size={20} />}
             onClick={onAddClick}
-            aria-label="添加"
+            aria-label={t('common.add')}
             size="sm"
             variant="ghost"
             disabled={disabled || !onAddClick}
           />
           <Select
-            options={agentOptions}
+            options={resolvedAgentOptions}
             value={selectedAgent}
             onChange={onAgentChange}
             icon={<RobotIcon size={18} />}
@@ -273,8 +291,8 @@ export function ChatInput({
             size="sm"
             disabled={disabled}
             variant="glass"
-            dropdownTitle="Switch mode"
-            aria-label="选择智能体"
+            dropdownTitle={t('chatInput.switchMode')}
+            aria-label={t('chatInput.selectAgent')}
           />
           <RemainingButton
             percent={remainingPercent}
@@ -293,12 +311,12 @@ export function ChatInput({
             borderless
             size="sm"
             disabled={disabled}
-            aria-label="选择模型"
+            aria-label={t('chatInput.selectModel')}
           />
           <IconButton
             icon={<SendIcon size={20} />}
             onClick={handleSend}
-            aria-label="发送"
+            aria-label={t('common.send')}
             size="sm"
             variant="ghost"
             disabled={disabled || !hasContent}

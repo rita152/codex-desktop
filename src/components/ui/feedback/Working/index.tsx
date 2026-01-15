@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WheelEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../../utils/cn';
 import { Thinking } from '../Thinking';
 import { ToolCall } from '../ToolCall';
 import { Approval } from '../Approval';
+import { formatDurationLong } from '../../../../i18n/format';
 
 import type { WorkingItem, WorkingProps } from './types';
 
@@ -98,17 +100,6 @@ const extractEndTime = (item: WorkingItem): number | null => {
   return null;
 };
 
-const formatDuration = (seconds: number): string => {
-  if (seconds < 60) {
-    return `${Math.round(seconds)} 秒`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return remainingSeconds > 0
-    ? `${minutes} 分 ${remainingSeconds} 秒`
-    : `${minutes} 分钟`;
-};
-
 export function Working({
   items,
   startTime,
@@ -117,6 +108,7 @@ export function Working({
   onToggle,
   className = '',
 }: WorkingProps) {
+  const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(isOpen ?? false);
   const contentRef = useRef<HTMLDivElement>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -159,7 +151,7 @@ export function Working({
   };
 
   const itemCount = items.length;
-  const itemLabel = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
+  const itemLabel = t('working.itemCount', { count: itemCount });
   const effectiveStart = useMemo(() => {
     if (typeof startTime === 'number') return startTime;
     const timestamps = items
@@ -214,16 +206,20 @@ export function Working({
         <span className="working__icon">
           <ActivityIcon size={16} />
         </span>
-        <span className="working__label">Working</span>
+        <span className="working__label">{t('working.title')}</span>
         <span className="working__meta">
           <span className="working__count">{itemLabel}</span>
-          <span className="working__duration">总耗时 {formatDuration(totalSeconds)}</span>
+          <span className="working__duration">
+            {t('working.totalDuration', {
+              duration: formatDurationLong(t, totalSeconds),
+            })}
+          </span>
           <span className="working__chevron">
             <ChevronDownIcon size={14} />
           </span>
         </span>
         <span className="working__spacer" />
-        {isActive && <span className="working__status">In progress</span>}
+        {isActive && <span className="working__status">{t('working.inProgress')}</span>}
       </button>
       {open && (
         <div className="working__content" ref={contentRef} onWheel={handleWheel}>

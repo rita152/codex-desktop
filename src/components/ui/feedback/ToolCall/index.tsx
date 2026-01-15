@@ -1,6 +1,8 @@
 import { memo, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../../utils/cn';
+import { formatDurationShort } from '../../../../i18n/format';
 
 import {
   AlertCircleIcon,
@@ -63,29 +65,17 @@ function getStatusIcon(status: ToolCallStatus, size = 16) {
   }
 }
 
-function getStatusLabel(status: ToolCallStatus): string {
+function getStatusLabel(status: ToolCallStatus, t: (key: string) => string): string {
   switch (status) {
     case 'pending':
-      return 'Pending';
+      return t('toolCall.status.pending');
     case 'in-progress':
-      return 'Running';
+      return t('toolCall.status.inProgress');
     case 'completed':
-      return 'Done';
+      return t('toolCall.status.completed');
     case 'failed':
-      return 'Failed';
+      return t('toolCall.status.failed');
   }
-}
-
-function formatDuration(seconds: number): string {
-  if (seconds < 1) {
-    return `${Math.round(seconds * 1000)}ms`;
-  }
-  if (seconds < 60) {
-    return `${seconds.toFixed(1)}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.round(seconds % 60);
-  return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
 }
 
 function formatJson(data: unknown): string {
@@ -127,6 +117,7 @@ export const ToolCall = memo(function ToolCall({
   defaultOpen,
   className = '',
 }: ToolCallProps) {
+  const { t, i18n } = useTranslation();
   const hasContent = rawOutput !== undefined && rawOutput !== null;
 
   const isActive = status === 'in-progress';
@@ -158,17 +149,20 @@ export const ToolCall = memo(function ToolCall({
 
   const showDuration = useMemo(() => {
     if (status === 'in-progress' && startTime) {
-      return formatDuration(elapsedTime);
+      return formatDurationShort(t, elapsedTime);
     }
     if ((status === 'completed' || status === 'failed') && duration !== undefined) {
-      return formatDuration(duration);
+      return formatDurationShort(t, duration);
     }
     return null;
-  }, [duration, elapsedTime, startTime, status]);
+  }, [duration, elapsedTime, startTime, status, t, i18n.language]);
 
   const kindIcon = useMemo(() => getKindIcon(kind, 16), [kind]);
   const statusIcon = useMemo(() => getStatusIcon(status, 14), [status]);
-  const statusLabel = useMemo(() => getStatusLabel(status), [status]);
+  const statusLabel = useMemo(
+    () => getStatusLabel(status, t),
+    [status, t, i18n.language]
+  );
 
   const canToggle = hasContent;
 
@@ -229,7 +223,7 @@ export const ToolCall = memo(function ToolCall({
             {/* 原始输出 */}
             {rawOutput !== undefined && rawOutput !== null && (
               <div className="tool-call__section">
-                <span className="tool-call__section-label">Output</span>
+                <span className="tool-call__section-label">{t('toolCall.output')}</span>
                 <pre className="tool-call__code">{formattedOutput}</pre>
               </div>
             )}

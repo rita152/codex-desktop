@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
@@ -46,6 +47,7 @@ export function ChatContainer({
   welcomeContent,
   className = '',
 }: ChatContainerProps) {
+  const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [selectedAgent, setSelectedAgent] = useState('agent-full');
 
@@ -58,7 +60,7 @@ export function ChatContainer({
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
   const displayCwd =
-    sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : '默认目录';
+    sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : t('chat.defaultCwd');
 
   return (
     <div className={classNames}>
@@ -68,7 +70,7 @@ export function ChatContainer({
           <IconButton
             icon={<SidebarRightIcon size={18} />}
             onClick={onSidebarToggle}
-            aria-label="显示侧边栏"
+            aria-label={t('sidebar.show')}
             size="sm"
             variant="ghost"
           />
@@ -106,7 +108,7 @@ export function ChatContainer({
               className="chat-container__cwd-button"
               onClick={onSelectCwd}
               disabled={!onSelectCwd || cwdLocked}
-              title={cwdLocked ? '对话进行中，无法切换工作目录' : displayCwd}
+              title={cwdLocked ? t('chat.cwdLocked') : displayCwd}
             >
               <FolderIcon size={14} />
               <span className="chat-container__meta-value">{displayCwd}</span>

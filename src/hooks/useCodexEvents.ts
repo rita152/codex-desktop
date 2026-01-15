@@ -10,6 +10,7 @@ import {
   newMessageId,
   parseToolCall,
 } from '../utils/codexParsing';
+import i18n from '../i18n';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
@@ -298,7 +299,7 @@ export function useCodexEvents({
         const errMsg: Message = {
           id: newMessageId(),
           role: 'assistant',
-          content: `发生错误：${event.payload.error}`,
+          content: i18n.t('errors.genericError', { error: event.payload.error }),
           isStreaming: false,
           timestamp: new Date(),
         };

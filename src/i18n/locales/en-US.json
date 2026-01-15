@@ -1,0 +1,107 @@
+{
+  "common": {
+    "add": "Add",
+    "send": "Send",
+    "rename": "Rename",
+    "delete": "Delete"
+  },
+  "chat": {
+    "empty": "Start a new conversation",
+    "defaultCwd": "Default directory",
+    "cwdLocked": "Conversation in progress, cannot change working directory",
+    "newSessionTitle": "New chat",
+    "filePrefix": "File: {{path}}"
+  },
+  "chatInput": {
+    "slashTitle": "Slash commands",
+    "slashHint": "Tab to autocomplete",
+    "slashAriaLabel": "Slash commands",
+    "selectAgent": "Select agent",
+    "selectModel": "Select model",
+    "switchMode": "Switch mode",
+    "agentOptions": {
+      "chat": "Chat",
+      "agent": "Agent",
+      "agentFull": "Agent (full access)",
+      "custom": "Custom (config.toml)"
+    }
+  },
+  "sidebar": {
+    "show": "Show sidebar",
+    "toggle": "Toggle sidebar",
+    "newChat": "New chat",
+    "menu": "Menu",
+    "resizeAria": "Resize sidebar"
+  },
+  "errors": {
+    "modelSetFailed": "Failed to set model: {{error}}",
+    "modelSwitchFailed": "Failed to switch model: {{error}}",
+    "requestFailed": "Request failed: {{error}}",
+    "approvalFailed": "Failed to submit approval: {{error}}",
+    "genericError": "Error: {{error}}"
+  },
+  "approval": {
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "approvedForSession": "Always Approved",
+      "rejected": "Rejected"
+    },
+    "options": {
+      "always": "Always",
+      "yes": "Yes",
+      "no": "No"
+    },
+    "section": {
+      "description": "Description",
+      "command": "Command",
+      "changes": "Changes",
+      "feedback": "Rejection feedback"
+    },
+    "feedbackPlaceholder": "Optional reason for rejection"
+  },
+  "toolCall": {
+    "status": {
+      "pending": "Pending",
+      "inProgress": "Running",
+      "completed": "Done",
+      "failed": "Failed"
+    },
+    "output": "Output"
+  },
+  "thinking": {
+    "label": {
+      "working": "Working",
+      "thinking": "Thinking",
+      "thinkingWithDuration": "Thinking {{duration}}",
+      "doneWithDuration": "Thought for {{duration}}",
+      "title": "Thought process"
+    }
+  },
+  "working": {
+    "title": "Working",
+    "inProgress": "In progress",
+    "itemCount_one": "{{count}} item",
+    "itemCount_other": "{{count}} items",
+    "totalDuration": "Total time {{duration}}"
+  },
+  "duration": {
+    "ms": "{{value}}ms",
+    "s": "{{value}}s",
+    "m": "{{minutes}}m",
+    "m_s": "{{minutes}}m {{seconds}}s",
+    "seconds_one": "{{count}} second",
+    "seconds_other": "{{count}} seconds",
+    "minutes_one": "{{count}} minute",
+    "minutes_other": "{{count}} minutes",
+    "minutes_seconds": "{{minutes}} min {{seconds}} sec"
+  },
+  "remaining": {
+    "totalTokens": "Total tokens: {{count}}",
+    "remainingTokens": "Remaining tokens: {{count}}",
+    "ariaLabel": "Remaining {{count}}%"
+  },
+  "select": {
+    "placeholder": "Select"
+  }
+}

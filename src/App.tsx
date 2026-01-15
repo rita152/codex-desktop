@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -35,6 +36,7 @@ import './App.css';
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
 
 function App() {
+  const { t } = useTranslation();
   const {
     sessions,
     setSessions,
@@ -335,7 +337,7 @@ function App() {
               ...prev,
               [chatSessionId]: {
                 kind: 'error',
-                message: `模型设置失败：${formatError(err)}`,
+                message: t('errors.modelSetFailed', { error: formatError(err) }),
               },
             }));
             setSessions((prev) =>
@@ -364,6 +366,7 @@ function App() {
       setSessionModelOptions,
       setSessionNotices,
       setSessions,
+      t,
     ]
   );
 
@@ -373,7 +376,7 @@ function App() {
     const newId = String(Date.now());
     const newSession: ChatSession = {
       id: newId,
-      title: '新对话',
+      title: t('chat.newSessionTitle'),
       cwd: selectedCwd, // 继承当前会话的工作目录
       model: DEFAULT_MODEL_ID,
     };
@@ -391,6 +394,7 @@ function App() {
     setSessionDrafts,
     setSessionMessages,
     setSessions,
+    t,
   ]);
 
   const handleSessionSelect = useCallback((sessionId: string) => {
@@ -405,7 +409,7 @@ function App() {
       const newSessionId = String(Date.now());
       const newSession: ChatSession = {
         id: newSessionId,
-        title: '新对话',
+        title: t('chat.newSessionTitle'),
         cwd: sessionMeta?.cwd ?? selectedCwd,
         model: DEFAULT_MODEL_ID,
       };
@@ -466,6 +470,7 @@ function App() {
       setSessionDrafts,
       setSessionMessages,
       setSessions,
+      t,
     ]
   );
 
@@ -506,7 +511,7 @@ function App() {
           ...prev,
           [sessionId]: {
             kind: 'error',
-            message: `模型切换失败：${formatError(err)}`,
+            message: t('errors.modelSwitchFailed', { error: formatError(err) }),
           },
         }));
       }
@@ -517,6 +522,7 @@ function App() {
       selectedSessionId,
       setSessionNotices,
       setSessions,
+      t,
     ]
   );
 
@@ -542,29 +548,31 @@ function App() {
     setSessionDrafts((prev) => {
       const current = prev[sessionId] ?? '';
       const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : '';
-      const nextValue = `${current}${separator}${files.map((file) => `File: ${file}`).join('\n')}`;
+      const nextValue = `${current}${separator}${files
+        .map((file) => t('chat.filePrefix', { path: file }))
+        .join('\n')}`;
       return { ...prev, [sessionId]: nextValue };
     });
-  }, [pickFiles, selectedSessionId, setSessionDrafts]);
+  }, [pickFiles, selectedSessionId, setSessionDrafts, t]);
 
   const handleSendMessage = useCallback(
-	    (content: string) => {
-	      const now = Date.now();
-	      const sessionId = selectedSessionId;
-	      const userMessage: Message = {
-	        id: String(now),
-	        role: 'user',
-	        content,
-	        timestamp: new Date(),
-	      };
+    (content: string) => {
+      const now = Date.now();
+      const sessionId = selectedSessionId;
+      const userMessage: Message = {
+        id: String(now),
+        role: 'user',
+        content,
+        timestamp: new Date(),
+      };
 
-	      activeSessionIdRef.current = sessionId;
-	      setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: true }));
+      activeSessionIdRef.current = sessionId;
+      setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: true }));
 
-	      setSessionMessages((prev) => {
-	        const list = prev[sessionId] ?? [];
-	        return { ...prev, [sessionId]: [...list, userMessage] };
-	      });
+      setSessionMessages((prev) => {
+        const list = prev[sessionId] ?? [];
+        return { ...prev, [sessionId]: [...list, userMessage] };
+      });
 
       // 如果是第一条消息，用消息内容更新会话标题
       if (messages.length === 0) {
@@ -574,16 +582,16 @@ function App() {
         );
       }
 
-	      void (async () => {
-	        try {
-	          const codexSessionId = await ensureCodexSession(sessionId);
-	          await sendPrompt(codexSessionId, content);
-	        } catch (err) {
-	          setSessionMessages((prev) => {
-	            const errMsg: Message = {
-	              id: newMessageId(),
+      void (async () => {
+        try {
+          const codexSessionId = await ensureCodexSession(sessionId);
+          await sendPrompt(codexSessionId, content);
+        } catch (err) {
+          setSessionMessages((prev) => {
+            const errMsg: Message = {
+              id: newMessageId(),
               role: 'assistant',
-              content: `调用失败：${String(err)}`,
+              content: t('errors.requestFailed', { error: formatError(err) }),
               isStreaming: false,
               timestamp: new Date(),
             };
@@ -596,14 +604,8 @@ function App() {
         }
       })();
     },
-	    [
-	      ensureCodexSession,
-	      messages,
-	      selectedSessionId,
-	      setSessions,
-	      setSessionMessages,
-	    ]
-	  );
+    [ensureCodexSession, messages, selectedSessionId, setSessions, setSessionMessages, t]
+  );
 
   const handleApprovalSelect = useCallback(
     async (request: ApprovalRequest, optionId: string) => {
@@ -634,7 +636,7 @@ function App() {
             ...prev,
             [chatSessionId]: {
               kind: 'error',
-              message: `审批提交失败：${formatError(err)}`,
+              message: t('errors.approvalFailed', { error: formatError(err) }),
             },
           }));
         }
@@ -647,6 +649,7 @@ function App() {
       setApprovalLoading,
       setApprovalStatuses,
       setSessionNotices,
+      t,
     ]
   );
 

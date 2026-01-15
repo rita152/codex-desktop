@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { DEFAULT_MODEL_ID } from '../constants/chat';
+import i18n from '../i18n';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
 import type { Message } from '../components/business/ChatMessageList/types';
@@ -27,7 +28,7 @@ export function useSessionPersistence(): SessionPersistenceResult {
     const newSessionId = String(Date.now());
     const newSession: ChatSession = {
       id: newSessionId,
-      title: '新对话',
+      title: i18n.t('chat.newSessionTitle'),
       model: DEFAULT_MODEL_ID,
     };
 

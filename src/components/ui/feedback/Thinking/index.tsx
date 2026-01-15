@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../../utils/cn';
 import { Markdown } from '../../data-display/Markdown';
+import { formatDurationLong } from '../../../../i18n/format';
 
 import type { ThinkingProps } from './types';
 
@@ -60,6 +62,7 @@ export function Thinking({
   defaultOpen,
   className = '',
 }: ThinkingProps) {
+  const { t } = useTranslation();
   const isActive = phase === 'working' || phase === 'thinking';
 
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
@@ -81,17 +84,6 @@ export function Thinking({
 
     return () => clearInterval(timer);
   }, [isActive, startTime]);
-
-  const formatDuration = (seconds: number): string => {
-    if (seconds < 60) {
-      return `${Math.round(seconds)} 秒`;
-    }
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-    return remainingSeconds > 0
-      ? `${minutes} 分 ${remainingSeconds} 秒`
-      : `${minutes} 分钟`;
-  };
 
   const extractTitleAndBody = (raw: string): { title: string | null; body: string } => {
     const lines = raw.split('\n');
@@ -121,24 +113,30 @@ export function Thinking({
 
   const getLabel = (): string => {
     if (phase === 'working') {
-      return 'Working';
+      return t('thinking.label.working');
     }
     if (phase === 'thinking') {
       if (startTime) {
-        return `Thinking ${formatDuration(elapsedTime)}`;
+        return t('thinking.label.thinkingWithDuration', {
+          duration: formatDurationLong(t, elapsedTime),
+        });
       }
-      return 'Thinking';
+      return t('thinking.label.thinking');
     }
     // phase === 'done'
     if (duration !== undefined) {
-      return `思考了 ${formatDuration(duration)}`;
+      return t('thinking.label.doneWithDuration', {
+        duration: formatDurationLong(t, duration),
+      });
     }
-    return '思考过程';
+    return t('thinking.label.title');
   };
 
   const { title: extractedTitle, body: extractedBody } = extractTitleAndBody(content);
   const labelMarkdown =
-    headerVariant === 'title' ? title ?? extractedTitle ?? '思考过程' : getLabel();
+    headerVariant === 'title'
+      ? title ?? extractedTitle ?? t('thinking.label.title')
+      : getLabel();
   const displayContent = headerVariant === 'title' ? extractedBody : content;
   const hasBodyContent = displayContent.trim().length > 0;
 

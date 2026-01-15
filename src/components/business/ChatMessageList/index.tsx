@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { ChatMessage } from '../ChatMessage';
@@ -243,6 +244,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   autoScroll = true,
   className = '',
 }: ChatMessageListProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const isUserScrollingRef = useRef(false);
   const [workingOpenMap, setWorkingOpenMap] = useState<Record<string, boolean>>({});
@@ -340,7 +342,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   if (!isGenerating && messages.length === 0 && approvalCount === 0) {
     return (
       <div className={classNames} ref={containerRef}>
-        <div className="chat-message-list__empty">开始新的对话</div>
+        <div className="chat-message-list__empty">{t('chat.empty')}</div>
       </div>
     );
   }
