@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { Thinking } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
 import { ToolCall } from '../../ui/feedback/ToolCall';
@@ -18,7 +20,7 @@ const formatTime = (date: Date): string => {
   });
 };
 
-export function ChatMessage({
+export const ChatMessage = memo(function ChatMessage({
   role,
   content,
   thinking,
@@ -105,6 +107,8 @@ export function ChatMessage({
       )}
     </div>
   );
-}
+});
+
+ChatMessage.displayName = 'ChatMessage';
 
 export type { ChatMessageProps, MessageRole, ThinkingData } from './types';

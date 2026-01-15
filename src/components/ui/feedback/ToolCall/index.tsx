@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 import { cn } from '../../../../utils/cn';
 
@@ -115,7 +115,7 @@ function formatLocation(location: ToolCallLocation): string {
 
 // ============ Main Component ============
 
-export function ToolCall({
+export const ToolCall = memo(function ToolCall({
   toolCallId,
   title,
   kind,
@@ -226,7 +226,9 @@ export function ToolCall({
       )}
     </div>
   );
-}
+});
+
+ToolCall.displayName = 'ToolCall';
 
 export type {
   ToolCallProps,
