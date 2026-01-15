@@ -1,4 +1,4 @@
-import { useRef, useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 
 import { ChatMessage } from '../ChatMessage';
 import { Working } from '../../ui/feedback/Working';
@@ -235,7 +235,7 @@ const buildChatGroups = (
   return groups;
 };
 
-export function ChatMessageList({
+export const ChatMessageList = memo(function ChatMessageList({
   messages,
   approvals,
   isGenerating = false,
@@ -376,6 +376,8 @@ export function ChatMessageList({
       })}
     </div>
   );
-}
+});
+
+ChatMessageList.displayName = 'ChatMessageList';
 
 export type { ChatMessageListProps, Message } from './types';

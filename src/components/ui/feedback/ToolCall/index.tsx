@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 import { cn } from '../../../../utils/cn';
 
@@ -135,6 +135,11 @@ export const ToolCall = memo(function ToolCall({
 
   const [elapsedTime, setElapsedTime] = useState(0);
 
+  const formattedOutput = useMemo(() => {
+    if (!isOpen || rawOutput === undefined || rawOutput === null) return null;
+    return formatJson(rawOutput);
+  }, [isOpen, rawOutput]);
+
   // 实时计时
   useEffect(() => {
     if (!isActive || !startTime) {
@@ -218,7 +223,7 @@ export const ToolCall = memo(function ToolCall({
             {rawOutput !== undefined && rawOutput !== null && (
               <div className="tool-call__section">
                 <span className="tool-call__section-label">Output</span>
-                <pre className="tool-call__code">{formatJson(rawOutput)}</pre>
+                <pre className="tool-call__code">{formattedOutput}</pre>
               </div>
             )}
           </div>
