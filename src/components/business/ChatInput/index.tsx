@@ -39,6 +39,29 @@ const buildAgentOptions = (t: TFunction): SelectOption[] => [
   },
 ];
 
+const resolveAgentIcon = (
+  option: SelectOption,
+  defaultIconMap: Map<string, SelectOption['icon']>
+) => {
+  if (option.icon) return option.icon;
+  const mapped = defaultIconMap.get(option.value);
+  if (mapped) return mapped;
+  const token = `${option.value ?? ''} ${option.label ?? ''}`.toLowerCase().replace(/_/g, ' ');
+  if (/read\s*only|readonly|read-only/.test(token) || token.includes('chat')) {
+    return <ChatIcon size={18} />;
+  }
+  if (/agent[-\s]*full|full\s*access|full-access/.test(token)) {
+    return <ForwardIcon size={18} />;
+  }
+  if (token.includes('agent')) {
+    return <RobotIcon size={18} />;
+  }
+  if (token.includes('custom') || token.includes('config')) {
+    return <NotebookIcon size={18} />;
+  }
+  return undefined;
+};
+
 export function ChatInput({
   value,
   onChange,
@@ -74,7 +97,7 @@ export function ChatInput({
     );
     return base.map((option) => ({
       ...option,
-      icon: option.icon ?? iconMap.get(option.value),
+      icon: resolveAgentIcon(option, iconMap),
     }));
   }, [agentOptions, defaultAgentOptions]);
   const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
