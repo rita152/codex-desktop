@@ -10,6 +10,8 @@ export type WorkingItem =
 export interface WorkingProps {
   /** 子项列表 */
   items: WorkingItem[];
+  /** 计时开始时间（毫秒） */
+  startTime?: number;
   /** 是否展开 */
   isOpen?: boolean;
   /** 是否正在进行中 */

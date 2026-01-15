@@ -24,6 +24,8 @@ export interface ChatMessageListProps {
   messages: Message[];
   /** 待审批列表 */
   approvals?: ApprovalProps[];
+  /** 是否正在生成 */
+  isGenerating?: boolean;
   /** 是否自动滚动到底部 */
   autoScroll?: boolean;
   /** 自定义类名 */

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { WheelEvent } from 'react';
 
 import { cn } from '../../../../utils/cn';
@@ -61,6 +61,43 @@ const renderItem = (item: WorkingItem, index: number) => {
   return <Approval key={getItemKey(item, index)} {...item.data} />;
 };
 
+const hasIncompleteWorkingItem = (item: WorkingItem): boolean => {
+  if (item.type === 'thinking') {
+    return item.data.startTime === undefined || item.data.duration === undefined;
+  }
+  if (item.type === 'toolcall') {
+    return (
+      item.data.startTime === undefined ||
+      item.data.duration === undefined ||
+      item.data.status === 'pending' ||
+      item.data.status === 'in-progress'
+    );
+  }
+  return item.data.status === 'pending' || Boolean(item.data.loading);
+};
+
+const extractStartTime = (item: WorkingItem): number | undefined => {
+  if (item.type === 'thinking') return item.data.startTime;
+  if (item.type === 'toolcall') return item.data.startTime;
+  return undefined;
+};
+
+const extractEndTime = (item: WorkingItem): number | null => {
+  if (item.type === 'thinking') {
+    if (item.data.startTime === undefined || item.data.duration === undefined) {
+      return null;
+    }
+    return item.data.startTime + item.data.duration * 1000;
+  }
+  if (item.type === 'toolcall') {
+    if (item.data.startTime === undefined || item.data.duration === undefined) {
+      return null;
+    }
+    return item.data.startTime + item.data.duration * 1000;
+  }
+  return null;
+};
+
 const formatDuration = (seconds: number): string => {
   if (seconds < 60) {
     return `${Math.round(seconds)} 秒`;
@@ -74,14 +111,16 @@ const formatDuration = (seconds: number): string => {
 
 export function Working({
   items,
+  startTime,
   isOpen,
   isActive = false,
   onToggle,
   className = '',
 }: WorkingProps) {
   const [internalOpen, setInternalOpen] = useState(isOpen ?? false);
-  const [now, setNow] = useState(() => Date.now());
   const contentRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const finishedAtRef = useRef<number | null>(null);
   const open = isOpen ?? internalOpen;
   const canToggle = items.length > 0;
 
@@ -90,11 +129,26 @@ export function Working({
     setInternalOpen(isOpen);
   }, [isOpen]);
 
+  const hasIncompleteItem = useMemo(
+    () => items.some(hasIncompleteWorkingItem),
+    [items]
+  );
+
   useEffect(() => {
-    if (!isActive) return;
+    if (!hasIncompleteItem) return;
     const timer = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(timer);
-  }, [isActive]);
+  }, [hasIncompleteItem]);
+
+  useEffect(() => {
+    if (hasIncompleteItem) {
+      finishedAtRef.current = null;
+      return;
+    }
+    if (finishedAtRef.current === null) {
+      finishedAtRef.current = Date.now();
+    }
+  }, [hasIncompleteItem]);
 
   const handleToggle = () => {
     if (!canToggle) return;
@@ -106,30 +160,26 @@ export function Working({
 
   const itemCount = items.length;
   const itemLabel = `${itemCount} item${itemCount === 1 ? '' : 's'}`;
-  const totalSeconds = items.reduce((total, item) => {
-    if (item.type === 'thinking') {
-      const { duration, startTime, isStreaming, phase } = item.data;
-      if (duration !== undefined) return total + duration;
-      const thinkingActive =
-        isStreaming === true || phase === 'thinking' || phase === 'working';
-      if (thinkingActive && startTime !== undefined) {
-        return total + (now - startTime) / 1000;
-      }
-      return total;
-    }
-    if (item.type === 'toolcall') {
-      const { duration, startTime, status } = item.data;
-      if (duration !== undefined) return total + duration;
-      if (
-        (status === 'pending' || status === 'in-progress') &&
-        startTime !== undefined
-      ) {
-        return total + (now - startTime) / 1000;
-      }
-      return total;
-    }
-    return total;
-  }, 0);
+  const effectiveStart = useMemo(() => {
+    if (typeof startTime === 'number') return startTime;
+    const timestamps = items
+      .map(extractStartTime)
+      .filter((value): value is number => typeof value === 'number');
+    return timestamps.length > 0 ? Math.min(...timestamps) : null;
+  }, [items, startTime]);
+
+  const effectiveEnd = useMemo(() => {
+    const endTimes = items
+      .map(extractEndTime)
+      .filter((value): value is number => value !== null);
+    return endTimes.length > 0 ? Math.max(...endTimes) : null;
+  }, [items]);
+
+  const resolvedEnd = hasIncompleteItem ? now : effectiveEnd ?? finishedAtRef.current;
+  const totalSeconds =
+    effectiveStart !== null && resolvedEnd !== null
+      ? Math.max(0, (resolvedEnd - effectiveStart) / 1000)
+      : 0;
 
   const classNames = cn(
     'working',

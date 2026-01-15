@@ -121,7 +121,11 @@ export function ChatContainer({
           </div>
         ) : (
           <div className="chat-container__messages">
-            <ChatMessageList messages={messages} approvals={approvals} />
+            <ChatMessageList
+              messages={messages}
+              approvals={approvals}
+              isGenerating={isGenerating}
+            />
           </div>
         )}
 

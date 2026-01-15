@@ -13,7 +13,13 @@ import './ChatMessageList.css';
 
 type ChatGroup =
   | { type: 'message'; id: string; message: Message }
-  | { type: 'working'; id: string; items: WorkingItem[]; isActive: boolean };
+  | {
+      type: 'working';
+      id: string;
+      items: WorkingItem[];
+      isActive: boolean;
+      startTime?: number;
+    };
 type WorkingGroup = Extract<ChatGroup, { type: 'working' }>;
 
 const buildThinkingItem = (message: Message): WorkingItem => {
@@ -65,18 +71,31 @@ const isWorkingItemActive = (item: WorkingItem): boolean => {
 
 const buildChatGroups = (
   messages: Message[],
-  approvals?: ApprovalProps[]
+  approvals?: ApprovalProps[],
+  isGenerating?: boolean
 ): ChatGroup[] => {
   const groups: ChatGroup[] = [];
   let currentWorking: WorkingGroup | null = null;
+  let lastUserMessageId: string | number | null = null;
+  let lastUserMessageTime: number | null = null;
+  const workingGroupCounts: Record<string, number> = {};
+
+  const getWorkingGroupId = (fallbackId: string) => {
+    const baseId =
+      lastUserMessageId !== null ? `user-${lastUserMessageId}` : `fallback-${fallbackId}`;
+    const count = workingGroupCounts[baseId] ?? 0;
+    workingGroupCounts[baseId] = count + 1;
+    return count === 0 ? `working-${baseId}` : `working-${baseId}-${count}`;
+  };
 
   const pushWorkingItem = (item: WorkingItem, itemId: string) => {
     if (!currentWorking) {
       currentWorking = {
         type: 'working',
-        id: `working-${itemId}`,
+        id: getWorkingGroupId(itemId),
         items: [],
         isActive: false,
+        startTime: lastUserMessageTime ?? Date.now(),
       };
       groups.push(currentWorking);
     }
@@ -88,6 +107,12 @@ const buildChatGroups = (
   };
 
   messages.forEach((message) => {
+    if (message.role === 'user') {
+      lastUserMessageId = message.id;
+      lastUserMessageTime =
+        message.timestamp instanceof Date ? message.timestamp.getTime() : Date.now();
+    }
+
     if (message.role === 'thought') {
       pushWorkingItem(buildThinkingItem(message), `thought-${message.id}`);
       return;
@@ -134,12 +159,52 @@ const buildChatGroups = (
     }
   });
 
+  if (isGenerating) {
+    for (let i = groups.length - 1; i >= 0; i -= 1) {
+      const group = groups[i];
+      if (group.type === 'working') {
+        group.isActive = true;
+        break;
+      }
+    }
+  }
+
+  if (isGenerating && !groups.some((group) => group.type === 'working')) {
+    const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+    const startTime =
+      lastUserMessage?.timestamp instanceof Date
+        ? lastUserMessage.timestamp.getTime()
+        : Date.now();
+    if (lastUserMessage?.id !== undefined) {
+      lastUserMessageId = lastUserMessage.id;
+    }
+    groups.push({
+      type: 'working',
+      id: getWorkingGroupId(String(lastUserMessage?.id ?? startTime)),
+      isActive: true,
+      startTime,
+      items: [
+        {
+          type: 'thinking',
+          data: {
+            content: '',
+            headerVariant: 'default',
+            isStreaming: true,
+            phase: 'working',
+            startTime,
+          },
+        },
+      ],
+    });
+  }
+
   return groups;
 };
 
 export function ChatMessageList({
   messages,
   approvals,
+  isGenerating = false,
   autoScroll = true,
   className = '',
 }: ChatMessageListProps) {
@@ -150,7 +215,10 @@ export function ChatMessageList({
   const approvalKey = approvals
     ? approvals.map((approval) => approval.callId).join('|')
     : '';
-  const groups = useMemo(() => buildChatGroups(messages, approvals), [messages, approvals]);
+  const groups = useMemo(
+    () => buildChatGroups(messages, approvals, isGenerating),
+    [messages, approvals, isGenerating]
+  );
   const lastWorkingId = useMemo(() => {
     for (let i = groups.length - 1; i >= 0; i -= 1) {
       const group = groups[i];
@@ -255,6 +323,7 @@ export function ChatMessageList({
           <Working
             key={group.id}
             items={group.items}
+            startTime={group.startTime}
             isOpen={isOpen}
             isActive={group.isActive}
             onToggle={handleToggle}
