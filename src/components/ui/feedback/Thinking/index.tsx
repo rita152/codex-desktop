@@ -6,7 +6,6 @@ import { Markdown } from '../../data-display/Markdown';
 import type { ThinkingProps } from './types';
 
 import './Thinking.css';
-export { ThinkingLoading } from './ThinkingLoading';
 
 function BrainIcon({ size = 16 }: { size?: number }) {
   return (

@@ -10,10 +10,6 @@ export interface ChatContainerProps {
   sessions: ChatSession[];
   /** 当前选中的会话 ID */
   selectedSessionId?: string;
-  /** 当前会话标题 */
-  sessionTitle?: string;
-  /** 当前会话模型 */
-  sessionModel?: string;
   /** 当前会话工作目录 */
   sessionCwd?: string;
   /** 当前会话提示信息 */
@@ -50,8 +46,6 @@ export interface ChatContainerProps {
   onSelectCwd?: () => void;
   /** 工作目录是否锁定（已发送过 prompt 时锁定） */
   cwdLocked?: boolean;
-  /** 停止生成回调 */
-  onStopGenerate?: () => void;
   /** 删除会话回调 */
   onSessionDelete?: (sessionId: string) => void;
   /** 重命名会话回调 */
@@ -60,6 +54,16 @@ export interface ChatContainerProps {
   sidebarVisible?: boolean;
   /** 侧边栏显示切换回调 */
   onSidebarToggle?: () => void;
+  /** 剩余上下文百分比 */
+  remainingPercent?: number;
+  /** 剩余 token 数 */
+  remainingTokens?: number;
+  /** 总 token 数 */
+  totalTokens?: number;
+  /** 剩余上下文按钮点击 */
+  onRemainingClick?: () => void;
+  /** 剩余上下文按钮禁用 */
+  remainingDisabled?: boolean;
   /** 欢迎内容（无消息时显示） */
   welcomeContent?: ReactNode;
   /** 自定义类名 */

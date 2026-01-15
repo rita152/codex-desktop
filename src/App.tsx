@@ -713,8 +713,6 @@ function App() {
     const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, modelCache.options ?? []);
     return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
   })();
-  const modelLabel =
-    modelOptions.find((option) => option.value === selectedModel)?.label ?? selectedModel;
   const slashCommands = useMemo(() => {
     const fromSession = sessionSlashCommands[selectedSessionId] ?? [];
     const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSession]);
@@ -1553,8 +1551,6 @@ function App() {
     <ChatContainer
       sessions={sessions}
       selectedSessionId={selectedSessionId}
-      sessionTitle={activeSession?.title}
-      sessionModel={modelLabel}
       sessionCwd={selectedCwd}
       sessionNotice={sessionNotice}
       messages={messages}

@@ -64,6 +64,10 @@
   justify-content: flex-start;
 }
 
+.chat-input__remaining-button {
+  margin-left: calc(-1 * var(--spacing-xs));
+}
+
 .chat-input__toolbar-right {
   display: flex;
   align-items: center;
@@ -145,40 +149,6 @@
   color: var(--color-text);
 }
 
-.chat-input__tool-button {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: none;
-  background: transparent;
-  color: var(--color-text);
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.chat-input__tool-button:hover {
-  background-color: var(--color-bg-muted);
-  color: var(--color-text);
-}
-
-.chat-input__tool-button:focus-visible {
-  outline: 2px solid var(--color-border-hover);
-  outline-offset: 2px;
-}
-
-.chat-input__tool-button:disabled {
-  cursor: not-allowed;
-}
-
-.chat-input__tool-button:disabled:hover {
-  background-color: transparent;
-  color: var(--color-text);
-}
-
 .chat-input__send-button {
   color: var(--color-text-secondary);
   opacity: 0.5;
@@ -189,21 +159,8 @@
   opacity: 1;
 }
 
-/* 工具按钮文字 */
-.chat-input__tool-text {
-  transition: opacity 0.2s ease;
-}
-
 /* 响应式：空间不足时隐藏文字，只显示图标 */
 @container (max-width: 480px) {
-  .chat-input__tool-text {
-    display: none;
-  }
-  
-  .chat-input__tool-button {
-    padding: var(--spacing-xs);
-  }
-  
   .chat-input__toolbar .select__value {
     display: none;
   }

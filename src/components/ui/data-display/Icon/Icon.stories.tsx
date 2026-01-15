@@ -1,34 +1,27 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import {
-  BoltIcon,
   ChatIcon,
   CheckIcon,
   ChevronDownIcon,
-  CloseIcon,
   CommentIcon,
-  CopyIcon,
   EditIcon,
   FolderIcon,
   ForwardIcon,
-  HistoryIcon,
   MenuIcon,
-  MicrophoneIcon,
   NotebookIcon,
+  PencilIcon,
   PlusIcon,
   RobotIcon,
   SendIcon,
-  SettingsIcon,
   SidebarLeftIcon,
   SidebarRightIcon,
-  SlashIcon,
-  SlidersIcon,
   TrashIcon,
 } from './index';
 
-const meta: Meta<typeof CopyIcon> = {
+const meta: Meta<typeof ChatIcon> = {
   title: 'UI/DataDisplay/Icon',
-  component: CopyIcon,
+  component: ChatIcon,
   tags: ['autodocs'],
   argTypes: {
     size: {
@@ -38,7 +31,7 @@ const meta: Meta<typeof CopyIcon> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof CopyIcon>;
+type Story = StoryObj<typeof ChatIcon>;
 
 export const Default: Story = {
   args: {
@@ -46,28 +39,21 @@ export const Default: Story = {
   },
   render: (args) => (
     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
-      <BoltIcon {...args} />
       <ChatIcon {...args} />
       <CheckIcon {...args} />
       <ChevronDownIcon {...args} />
-      <CloseIcon {...args} />
       <CommentIcon {...args} />
-      <CopyIcon {...args} />
       <EditIcon {...args} />
       <FolderIcon {...args} />
       <ForwardIcon {...args} />
-      <HistoryIcon {...args} />
       <MenuIcon {...args} />
-      <MicrophoneIcon {...args} />
       <NotebookIcon {...args} />
+      <PencilIcon {...args} />
       <PlusIcon {...args} />
       <RobotIcon {...args} />
       <SendIcon {...args} />
-      <SettingsIcon {...args} />
       <SidebarLeftIcon {...args} />
       <SidebarRightIcon {...args} />
-      <SlashIcon {...args} />
-      <SlidersIcon {...args} />
       <TrashIcon {...args} />
     </div>
   ),

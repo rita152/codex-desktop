@@ -81,8 +81,6 @@ function ChatContainerWithState() {
     <ChatContainer
       sessions={sessions}
       selectedSessionId={selectedSessionId}
-      sessionTitle={activeSession?.title}
-      sessionModel={activeSession?.model}
       sessionCwd={activeSession?.cwd}
       inputValue={inputValue}
       onInputChange={setInputValue}

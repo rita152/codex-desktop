@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { PlusIcon, SlidersIcon, MicrophoneIcon, SendIcon } from '../../data-display/Icon';
+import { FolderIcon, MenuIcon, PlusIcon, SendIcon } from '../../data-display/Icon';
 
 import { IconButton } from './index';
 
@@ -36,8 +36,8 @@ export const Default: Story = {
   render: (args) => (
     <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
       <IconButton {...args} icon={<PlusIcon size={20} />} aria-label="添加" />
-      <IconButton {...args} icon={<SlidersIcon size={20} />} aria-label="设置" />
-      <IconButton {...args} icon={<MicrophoneIcon size={20} />} aria-label="语音" />
+      <IconButton {...args} icon={<MenuIcon size={20} />} aria-label="菜单" />
+      <IconButton {...args} icon={<FolderIcon size={20} />} aria-label="目录" />
       <IconButton {...args} icon={<SendIcon size={20} />} aria-label="发送" variant="primary" />
     </div>
   ),
