@@ -69,21 +69,29 @@ export function ChatContainer({
           />
         </div>
       )}
-      {sidebarVisible && (
-        <div className="chat-container__sidebar">
-          <Sidebar
-            sessions={sessions}
-            selectedSessionId={selectedSessionId}
-            onSessionSelect={onSessionSelect}
-            onNewChat={onNewChat}
-            onSplitViewClick={onSidebarToggle}
-            onSessionDelete={onSessionDelete}
-            onSessionRename={onSessionRename}
-            width={sidebarWidth}
-            onWidthChange={setSidebarWidth}
-          />
-        </div>
-      )}
+      <div
+        className={cn(
+          'chat-container__sidebar',
+          !sidebarVisible && 'chat-container__sidebar--hidden'
+        )}
+        style={{
+          width: sidebarWidth,
+          marginLeft: sidebarVisible ? 0 : -sidebarWidth,
+        }}
+        aria-hidden={!sidebarVisible}
+      >
+        <Sidebar
+          sessions={sessions}
+          selectedSessionId={selectedSessionId}
+          onSessionSelect={onSessionSelect}
+          onNewChat={onNewChat}
+          onSplitViewClick={onSidebarToggle}
+          onSessionDelete={onSessionDelete}
+          onSessionRename={onSessionRename}
+          width={sidebarWidth}
+          onWidthChange={setSidebarWidth}
+        />
+      </div>
 
       <div className="chat-container__main">
         <div className="chat-container__session-header">
