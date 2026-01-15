@@ -45,6 +45,7 @@
 }
 
 .select__trigger--borderless:hover:not(.select__trigger--disabled) {
+  border-color: transparent;
   background-color: var(--color-bg-secondary);
 }
 
