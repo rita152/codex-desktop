@@ -11,7 +11,12 @@ import {
   setSessionMode,
   setSessionModel,
 } from './api/codex';
-import { loadModelOptionsCache, saveModelOptionsCache } from './api/storage';
+import {
+  loadModeOptionsCache,
+  loadModelOptionsCache,
+  saveModeOptionsCache,
+  saveModelOptionsCache,
+} from './api/storage';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
 import { useSessionMeta } from './hooks/useSessionMeta';
@@ -73,6 +78,16 @@ export function App() {
       currentModelId: cached?.currentModelId ?? DEFAULT_MODEL_ID,
     };
   });
+  const [modeCache, setModeCache] = useState<{
+    options: SelectOption[] | null;
+    currentModeId?: string;
+  }>(() => {
+    const cached = loadModeOptionsCache();
+    return {
+      options: cached?.options ?? null,
+      currentModeId: cached?.currentModeId ?? DEFAULT_MODE_ID,
+    };
+  });
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const sidebarVisibilityRef = useRef(true);
@@ -123,6 +138,21 @@ export function App() {
       return changed ? next : prev;
     });
   }, [defaultModels, modelCache.options, sessions, setSessionModelOptions]);
+
+  useEffect(() => {
+    const cachedOptions = modeCache.options;
+    if (!cachedOptions || cachedOptions.length === 0) return;
+    setSessionModeOptions((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const session of sessions) {
+        if (next[session.id]?.length) continue;
+        next[session.id] = cachedOptions;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [modeCache.options, sessions, setSessionModeOptions]);
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -303,6 +333,16 @@ export function App() {
     setSessionSlashCommands,
     setSessionModeOptions,
     setSessionMode: updateSessionMode,
+    onModeOptionsResolved: (modeState) => {
+      setModeCache({
+        options: modeState.options,
+        currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+      });
+      saveModeOptionsCache({
+        options: modeState.options,
+        currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+      });
+    },
     registerApprovalRequest,
   });
 
@@ -344,6 +384,14 @@ export function App() {
             }
             next[chatSessionId] = modeState.options;
             return next;
+          });
+          setModeCache({
+            options: modeState.options,
+            currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+          });
+          saveModeOptionsCache({
+            options: modeState.options,
+            currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
           });
         }
         const modelState = resolveModelOptions(result.models, result.configOptions);
@@ -466,6 +514,7 @@ export function App() {
       clearSessionNotice,
       registerCodexSession,
       sessions,
+      setModeCache,
       setSessionModeOptions,
       setSessionModelOptions,
       setSessionNotices,

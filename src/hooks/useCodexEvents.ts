@@ -42,6 +42,7 @@ export interface UseCodexEventsParams {
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
   setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
   setSessionMode: (sessionId: string, modeId: string) => void;
+  onModeOptionsResolved?: (modeState: { options: SelectOption[]; currentModeId?: string }) => void;
   registerApprovalRequest: (request: ApprovalRequest) => void;
 }
 
@@ -54,6 +55,7 @@ export function useCodexEvents({
   setSessionSlashCommands,
   setSessionModeOptions,
   setSessionMode,
+  onModeOptionsResolved,
   registerApprovalRequest,
 }: UseCodexEventsParams) {
   useEffect(() => {
@@ -342,6 +344,7 @@ export function useCodexEvents({
         const modeState = resolveModeOptions(undefined, configOptions);
         if (modeState?.options.length) {
           setSessionModeOptions((prev) => ({ ...prev, [sessionId]: modeState.options }));
+          onModeOptionsResolved?.(modeState);
         }
         if (modeState?.currentModeId) {
           setSessionMode(sessionId, modeState.currentModeId);
@@ -379,5 +382,6 @@ export function useCodexEvents({
     setSessionModeOptions,
     setSessionSlashCommands,
     setSessionTokenUsage,
+    onModeOptionsResolved,
   ]);
 }
