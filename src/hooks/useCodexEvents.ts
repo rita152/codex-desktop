@@ -11,6 +11,7 @@ import {
   getToolCallId,
   newMessageId,
   parseToolCall,
+  resolveModelOptions,
   resolveModeOptions,
 } from '../utils/codexParsing';
 import i18n from '../i18n';
@@ -41,8 +42,14 @@ export interface UseCodexEventsParams {
   setSessionTokenUsage: Dispatch<SetStateAction<SessionTokenUsage>>;
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
   setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
+  setSessionModelOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
   setSessionMode: (sessionId: string, modeId: string) => void;
+  setSessionModel: (sessionId: string, modelId: string) => void;
   onModeOptionsResolved?: (modeState: { options: SelectOption[]; currentModeId?: string }) => void;
+  onModelOptionsResolved?: (modelState: {
+    options: SelectOption[];
+    currentModelId?: string;
+  }) => void;
   registerApprovalRequest: (request: ApprovalRequest) => void;
 }
 
@@ -54,8 +61,11 @@ export function useCodexEvents({
   setSessionTokenUsage,
   setSessionSlashCommands,
   setSessionModeOptions,
+  setSessionModelOptions,
   setSessionMode,
+  setSessionModel,
   onModeOptionsResolved,
+  onModelOptionsResolved,
   registerApprovalRequest,
 }: UseCodexEventsParams) {
   useEffect(() => {
@@ -349,6 +359,14 @@ export function useCodexEvents({
         if (modeState?.currentModeId) {
           setSessionMode(sessionId, modeState.currentModeId);
         }
+        const modelState = resolveModelOptions(undefined, configOptions);
+        if (modelState?.options.length) {
+          setSessionModelOptions((prev) => ({ ...prev, [sessionId]: modelState.options }));
+          onModelOptionsResolved?.(modelState);
+        }
+        if (modelState?.currentModelId) {
+          setSessionModel(sessionId, modelState.currentModelId);
+        }
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         const sessionId = resolveChatSessionId(event.payload.sessionId);
@@ -378,10 +396,13 @@ export function useCodexEvents({
     resolveChatSessionId,
     setIsGeneratingBySession,
     setSessionMessages,
+    setSessionModel,
+    setSessionModelOptions,
     setSessionMode,
     setSessionModeOptions,
     setSessionSlashCommands,
     setSessionTokenUsage,
     onModeOptionsResolved,
+    onModelOptionsResolved,
   ]);
 }

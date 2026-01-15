@@ -278,6 +278,19 @@ export function App() {
     [setSessions]
   );
 
+  const updateSessionModel = useCallback(
+    (sessionId: string, modelId: string) => {
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId && session.model !== modelId
+            ? { ...session, model: modelId }
+            : session
+        )
+      );
+    },
+    [setSessions]
+  );
+
   const pickWorkingDirectory = useCallback(async (defaultPath?: string): Promise<string | null> => {
     try {
       const selection = await open({
@@ -332,7 +345,9 @@ export function App() {
     setSessionTokenUsage,
     setSessionSlashCommands,
     setSessionModeOptions,
+    setSessionModelOptions,
     setSessionMode: updateSessionMode,
+    setSessionModel: updateSessionModel,
     onModeOptionsResolved: (modeState) => {
       setModeCache({
         options: modeState.options,
@@ -341,6 +356,16 @@ export function App() {
       saveModeOptionsCache({
         options: modeState.options,
         currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+      });
+    },
+    onModelOptionsResolved: (modelState) => {
+      setModelCache({
+        options: modelState.options,
+        currentModelId: modelState.currentModelId ?? DEFAULT_MODEL_ID,
+      });
+      saveModelOptionsCache({
+        options: modelState.options,
+        currentModelId: modelState.currentModelId ?? DEFAULT_MODEL_ID,
       });
     },
     registerApprovalRequest,
