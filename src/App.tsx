@@ -596,6 +596,19 @@ function extractApprovalDescription(toolCall: UnknownRecord): string | undefined
   return texts.length > 0 ? texts.join('\n\n') : undefined;
 }
 
+function mergeSelectOptions(primary: SelectOption[], fallback: SelectOption[]): SelectOption[] {
+  if (primary.length === 0) return fallback;
+  if (fallback.length === 0) return primary;
+  const seen = new Set(primary.map((option) => option.value));
+  const merged = [...primary];
+  for (const option of fallback) {
+    if (seen.has(option.value)) continue;
+    seen.add(option.value);
+    merged.push(option);
+  }
+  return merged;
+}
+
 function App() {
   const {
     sessions,
@@ -666,12 +679,12 @@ function App() {
   const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
   const selectedCwd = activeSession?.cwd;
   const sessionNotice = sessionNotices[selectedSessionId] ?? null;
-  const modelOptions =
-    sessionModelOptions[selectedSessionId]?.length > 0
-      ? sessionModelOptions[selectedSessionId]
-      : cachedModelOptions && cachedModelOptions.length > 0
-        ? cachedModelOptions
-        : DEFAULT_MODELS;
+  const modelOptions = (() => {
+    const fromSession = sessionModelOptions[selectedSessionId];
+    if (fromSession?.length) return fromSession;
+    const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, cachedModelOptions ?? []);
+    return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
+  })();
   const modelLabel =
     modelOptions.find((option) => option.value === selectedModel)?.label ?? selectedModel;
   const slashCommands = useMemo(() => {
