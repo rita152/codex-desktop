@@ -6,6 +6,7 @@ import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
 import { Card } from '../../ui/data-display/Card';
+import { RemainingButton } from '../../ui/feedback/RemainingButton';
 import {
   PlusIcon,
   RobotIcon,
@@ -35,6 +36,11 @@ export function ChatInput({
   onAddClick,
   placeholder = '',
   disabled = false,
+  remainingPercent = 0,
+  remainingTokens,
+  totalTokens,
+  onRemainingClick,
+  remainingDisabled = false,
   agentOptions = AGENT_OPTIONS,
   selectedAgent = 'agent-full',
   onAgentChange,
@@ -269,6 +275,14 @@ export function ChatInput({
             variant="glass"
             dropdownTitle="Switch mode"
             aria-label="选择智能体"
+          />
+          <RemainingButton
+            percent={remainingPercent}
+            remainingTokens={remainingTokens}
+            totalTokens={totalTokens}
+            onClick={onRemainingClick}
+            disabled={remainingDisabled || disabled}
+            className="chat-input__remaining-button"
           />
         </div>
         <div className="chat-input__toolbar-right">

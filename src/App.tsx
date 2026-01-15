@@ -26,7 +26,7 @@ import type {
   PermissionOption as ApprovalOption,
   PermissionOptionKind,
 } from './components/ui/feedback/Approval';
-import type { ApprovalRequest, PermissionOption } from './types/codex';
+import type { ApprovalRequest, PermissionOption, TokenUsageEvent } from './types/codex';
 import { buildUnifiedDiff } from './utils/diff';
 
 import './App.css';
@@ -637,6 +637,17 @@ function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const sidebarVisibilityRef = useRef(true);
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
+  const [sessionTokenUsage, setSessionTokenUsage] = useState<
+    Record<
+      string,
+      {
+        totalTokens: number;
+        lastTokens?: number;
+        contextWindow?: number | null;
+        percentRemaining?: number | null;
+      }
+    >
+  >({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalStatuses, setApprovalStatuses] = useState<Record<string, ApprovalStatus>>({});
@@ -713,6 +724,17 @@ function App() {
     const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, modelCache.options ?? []);
     return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
   })();
+  const activeTokenUsage = selectedSessionId
+    ? sessionTokenUsage[selectedSessionId]
+    : undefined;
+  const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
+  const totalTokens = activeTokenUsage?.totalTokens;
+  const remainingTokens =
+    activeTokenUsage?.contextWindow !== undefined &&
+    activeTokenUsage?.contextWindow !== null &&
+    typeof totalTokens === 'number'
+      ? Math.max(0, activeTokenUsage.contextWindow - totalTokens)
+      : undefined;
   const slashCommands = useMemo(() => {
     const fromSession = sessionSlashCommands[selectedSessionId] ?? [];
     const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSession]);
@@ -1036,6 +1058,19 @@ function App() {
 
         setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
       }),
+      listen<TokenUsageEvent>('codex:token-usage', (event) => {
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        setSessionTokenUsage((prev) => ({
+          ...prev,
+          [sessionId]: {
+            totalTokens: event.payload.totalTokens,
+            lastTokens: event.payload.lastTokens,
+            contextWindow: event.payload.contextWindow,
+            percentRemaining: event.payload.percentRemaining,
+          },
+        }));
+      }),
       listen<{ error: string }>('codex:error', (event) => {
         const sessionId = activeSessionIdRef.current;
         const errMsg: Message = {
@@ -1304,6 +1339,14 @@ function App() {
         }
         return next;
       });
+      setSessionTokenUsage((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        if (shouldCreateNew) {
+          delete next[newSessionId];
+        }
+        return next;
+      });
 
       // 如果删除的是当前选中的会话，切换到第一个会话
       if (sessionId === selectedSessionId) {
@@ -1326,6 +1369,7 @@ function App() {
       sessions,
       selectedSessionId,
       setSessionDrafts,
+      setSessionTokenUsage,
     ]
   );
 
@@ -1557,6 +1601,9 @@ function App() {
       approvals={approvalCards}
       sidebarVisible={sidebarVisible}
       isGenerating={isGenerating}
+      remainingPercent={remainingPercent}
+      remainingTokens={remainingTokens}
+      totalTokens={totalTokens}
       inputValue={draftMessage}
       onInputChange={handleDraftChange}
       modelOptions={modelOptions}

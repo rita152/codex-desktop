@@ -214,7 +214,6 @@ export function Sidebar({
           className="sidebar__menu-button"
           onClick={onMenuClick}
           aria-label="菜单"
-          disabled={!onMenuClick}
         >
           <MenuIcon size={20} />
         </button>

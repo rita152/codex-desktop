@@ -1,0 +1,39 @@
+.remaining-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+  background-color: #ffffff;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.remaining-button:hover:not(:disabled) {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+}
+
+.remaining-button:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
+}
+
+.remaining-button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.remaining-button__icon {
+  display: inline-flex;
+  align-items: center;
+}
+
+.remaining-button__value {
+  letter-spacing: 0.02em;
+}
