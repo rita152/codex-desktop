@@ -621,13 +621,15 @@ function App() {
     setSessionDrafts,
   } = useSessionPersistence();
 
-  const [cachedModelOptions, setCachedModelOptions] = useState<SelectOption[] | null>(() => {
+  const [modelCache, setModelCache] = useState<{
+    options: SelectOption[] | null;
+    currentModelId?: string;
+  }>(() => {
     const cached = loadModelOptionsCache();
-    return cached?.options ?? null;
-  });
-  const [cachedModelId, setCachedModelId] = useState<string | undefined>(() => {
-    const cached = loadModelOptionsCache();
-    return cached?.currentModelId ?? DEFAULT_MODEL_ID;
+    return {
+      options: cached?.options ?? null,
+      currentModelId: cached?.currentModelId ?? DEFAULT_MODEL_ID,
+    };
   });
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
@@ -652,18 +654,19 @@ function App() {
   const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
 
   useEffect(() => {
-    if (!cachedModelOptions || cachedModelOptions.length === 0) return;
+    const cachedOptions = modelCache.options;
+    if (!cachedOptions || cachedOptions.length === 0) return;
     setSessionModelOptions((prev) => {
       let changed = false;
       const next = { ...prev };
       for (const session of sessions) {
         if (next[session.id]?.length) continue;
-        next[session.id] = mergeSelectOptions(DEFAULT_MODELS, cachedModelOptions);
+        next[session.id] = mergeSelectOptions(DEFAULT_MODELS, cachedOptions);
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [cachedModelOptions, sessions]);
+  }, [modelCache.options, sessions]);
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -682,7 +685,7 @@ function App() {
   const modelOptions = (() => {
     const fromSession = sessionModelOptions[selectedSessionId];
     if (fromSession?.length) return fromSession;
-    const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, cachedModelOptions ?? []);
+    const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, modelCache.options ?? []);
     return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
   })();
   const modelLabel =
@@ -703,7 +706,9 @@ function App() {
 
     const preferred =
       (available.has(DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : undefined) ??
-      (cachedModelId && available.has(cachedModelId) ? cachedModelId : undefined) ??
+      (modelCache.currentModelId && available.has(modelCache.currentModelId)
+        ? modelCache.currentModelId
+        : undefined) ??
       modelOptions[0]?.value ??
       DEFAULT_MODEL_ID;
 
@@ -713,7 +718,7 @@ function App() {
         session.id === selectedSessionId ? { ...session, model: preferred } : session
       )
     );
-  }, [cachedModelId, modelOptions, selectedModel, selectedSessionId, setSessions]);
+  }, [modelCache.currentModelId, modelOptions, selectedModel, selectedSessionId, setSessions]);
 
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
@@ -1106,8 +1111,7 @@ function App() {
             next[chatSessionId] = modelState.options;
             return next;
           });
-          setCachedModelOptions(modelState.options);
-          setCachedModelId(modelState.currentModelId);
+          setModelCache({ options: modelState.options, currentModelId: modelState.currentModelId });
           saveModelOptionsCache({
             options: modelState.options,
             currentModelId: modelState.currentModelId,
