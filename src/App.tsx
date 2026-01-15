@@ -658,7 +658,7 @@ function App() {
       const next = { ...prev };
       for (const session of sessions) {
         if (next[session.id]?.length) continue;
-        next[session.id] = cachedModelOptions;
+        next[session.id] = mergeSelectOptions(DEFAULT_MODELS, cachedModelOptions);
         changed = true;
       }
       return changed ? next : prev;
