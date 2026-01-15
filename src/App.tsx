@@ -612,6 +612,10 @@ function App() {
     const cached = loadModelOptionsCache();
     return cached?.options ?? null;
   });
+  const [cachedModelId, setCachedModelId] = useState<string | undefined>(() => {
+    const cached = loadModelOptionsCache();
+    return cached?.currentModelId ?? DEFAULT_MODEL_ID;
+  });
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
@@ -678,6 +682,25 @@ function App() {
   const isGenerating = isGeneratingBySession[selectedSessionId] ?? false;
   // 当对话已有消息时，锁定工作目录（无法切换）
   const cwdLocked = messages.length > 0;
+
+  useEffect(() => {
+    if (!modelOptions || modelOptions.length === 0) return;
+    const available = new Set(modelOptions.map((option) => option.value));
+    if (available.has(selectedModel)) return;
+
+    const preferred =
+      (available.has(DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : undefined) ??
+      (cachedModelId && available.has(cachedModelId) ? cachedModelId : undefined) ??
+      modelOptions[0]?.value ??
+      DEFAULT_MODEL_ID;
+
+    if (!preferred || preferred === selectedModel) return;
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === selectedSessionId ? { ...session, model: preferred } : session
+      )
+    );
+  }, [cachedModelId, modelOptions, selectedModel, selectedSessionId, setSessions]);
 
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
@@ -1071,6 +1094,7 @@ function App() {
             return next;
           });
           setCachedModelOptions(modelState.options);
+          setCachedModelId(modelState.currentModelId);
           saveModelOptionsCache({
             options: modelState.options,
             currentModelId: modelState.currentModelId,
