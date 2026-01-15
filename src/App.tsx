@@ -1243,46 +1243,92 @@ function App() {
 
   const handleSessionDelete = useCallback(
     (sessionId: string) => {
-      // 不允许删除最后一个会话
-      if (sessions.length <= 1) return;
+      const shouldCreateNew = sessions.length <= 1;
+      const sessionMeta = sessions.find((session) => session.id === sessionId);
+      const newSessionId = String(Date.now());
+      const newSession: ChatSession = {
+        id: newSessionId,
+        title: '新对话',
+        cwd: sessionMeta?.cwd ?? selectedCwd,
+        model: DEFAULT_MODEL_ID,
+      };
 
       clearCodexSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      setSessions((prev) => {
+        const next = prev.filter((s) => s.id !== sessionId);
+        return shouldCreateNew ? [newSession] : next;
+      });
       setSessionMessages((prev) => {
         const next = { ...prev };
         delete next[sessionId];
+        if (shouldCreateNew) {
+          next[newSessionId] = [];
+        }
         return next;
       });
       setIsGeneratingBySession((prev) => {
         const next = { ...prev };
         delete next[sessionId];
+        if (shouldCreateNew) {
+          next[newSessionId] = false;
+        }
         return next;
       });
       setSessionNotices((prev) => {
         const next = { ...prev };
         delete next[sessionId];
+        if (shouldCreateNew) {
+          delete next[newSessionId];
+        }
         return next;
       });
       setSessionSlashCommands((prev) => {
         const next = { ...prev };
         delete next[sessionId];
+        if (shouldCreateNew) {
+          delete next[newSessionId];
+        }
         return next;
       });
       setSessionModelOptions((prev) => {
         const next = { ...prev };
         delete next[sessionId];
+        if (shouldCreateNew) {
+          delete next[newSessionId];
+        }
+        return next;
+      });
+      setSessionDrafts((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        if (shouldCreateNew) {
+          next[newSessionId] = '';
+        }
         return next;
       });
 
       // 如果删除的是当前选中的会话，切换到第一个会话
       if (sessionId === selectedSessionId) {
-        const remaining = sessions.filter((s) => s.id !== sessionId);
-        if (remaining.length > 0) {
-          setSelectedSessionId(remaining[0].id);
+        if (shouldCreateNew) {
+          setSelectedSessionId(newSessionId);
+          clearSessionNotice(newSessionId);
+          activeSessionIdRef.current = newSessionId;
+        } else {
+          const remaining = sessions.filter((s) => s.id !== sessionId);
+          if (remaining.length > 0) {
+            setSelectedSessionId(remaining[0].id);
+          }
         }
       }
     },
-    [clearCodexSession, sessions, selectedSessionId]
+    [
+      clearCodexSession,
+      clearSessionNotice,
+      selectedCwd,
+      sessions,
+      selectedSessionId,
+      setSessionDrafts,
+    ]
   );
 
   const handleSessionRename = useCallback(
