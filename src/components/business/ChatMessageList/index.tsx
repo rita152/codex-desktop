@@ -246,9 +246,10 @@ export function ChatMessageList({
   const isUserScrollingRef = useRef(false);
   const [workingOpenMap, setWorkingOpenMap] = useState<Record<string, boolean>>({});
   const approvalCount = approvals?.length ?? 0;
-  const approvalKey = approvals
-    ? approvals.map((approval) => approval.callId).join('|')
-    : '';
+  const approvalKey = useMemo(
+    () => (approvals ? approvals.map((approval) => approval.callId).join('|') : ''),
+    [approvals]
+  );
   const groups = useMemo(
     () => buildChatGroups(messages, approvals, isGenerating),
     [messages, approvals, isGenerating]
@@ -290,6 +291,15 @@ export function ChatMessageList({
   useEffect(() => {
     if (!autoScroll) return;
 
+    const hasStreaming = messages.some(
+      (message) =>
+        message.isStreaming === true ||
+        message.thinking?.isStreaming === true ||
+        message.thinking?.phase === 'thinking' ||
+        message.thinking?.phase === 'working'
+    );
+    if (!hasStreaming && !isGenerating) return;
+
     const container = containerRef.current;
     if (!container) return;
 
@@ -314,7 +324,7 @@ export function ChatMessageList({
       observer.disconnect();
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [autoScroll]);
+  }, [autoScroll, isGenerating, messages]);
 
   const classNames = cn('chat-message-list', className);
 
