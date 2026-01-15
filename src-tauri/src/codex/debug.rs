@@ -1,3 +1,5 @@
+//! Debug timing helpers for Codex event tracing.
+
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
@@ -9,14 +11,20 @@ use tauri::{AppHandle, Emitter};
 use super::events::EVENT_DEBUG;
 
 #[derive(Debug, Clone)]
+/// Timing metrics emitted for debug instrumentation.
 pub struct DebugTiming {
+    /// Absolute timestamp (ms since epoch).
     pub ts_ms: u64,
+    /// Time since process start (ms).
     pub dt_ms: u64,
+    /// Time since last prompt for the session (ms).
     pub since_prompt_ms: Option<u64>,
+    /// Time since last event for the session (ms).
     pub since_last_event_ms: Option<u64>,
 }
 
 #[derive(Debug)]
+/// Stateful timing tracker for Codex backend events.
 pub struct DebugState {
     start: Instant,
     start_epoch_ms: u64,
@@ -32,6 +40,7 @@ impl Default for DebugState {
 }
 
 impl DebugState {
+    /// Create a new debug timing state.
     pub fn new() -> Self {
         let start_epoch_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -50,6 +59,7 @@ impl DebugState {
         }
     }
 
+    /// Record a prompt start for a session and return timing metrics.
     pub fn mark_prompt(&self, session_id: &str) -> DebugTiming {
         let now = Instant::now();
         self.lock_last_prompt().insert(session_id.to_string(), now);
@@ -63,6 +73,7 @@ impl DebugState {
         }
     }
 
+    /// Record a generic event for a session and return timing metrics.
     pub fn mark_event(&self, session_id: &str) -> DebugTiming {
         let now = Instant::now();
         let since_prompt = self.lock_last_prompt().get(session_id).map(|t| {
@@ -81,6 +92,7 @@ impl DebugState {
         }
     }
 
+    /// Record a global (non-session) event and return timing metrics.
     pub fn mark_global(&self) -> DebugTiming {
         DebugTiming {
             ts_ms: self.now_ms(),
@@ -90,6 +102,7 @@ impl DebugState {
         }
     }
 
+    /// Emit a debug timing payload to the frontend and optional stderr.
     pub fn emit(
         &self,
         app: &AppHandle,

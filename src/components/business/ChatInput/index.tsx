@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { DEFAULT_MODELS, DEFAULT_MODEL_ID } from '../../../constants/chat';
+import { buildDefaultModels, DEFAULT_MODEL_ID } from '../../../constants/chat';
 
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
@@ -54,7 +54,7 @@ export function ChatInput({
   agentOptions,
   selectedAgent = 'agent-full',
   onAgentChange,
-  modelOptions = DEFAULT_MODELS,
+  modelOptions,
   selectedModel = DEFAULT_MODEL_ID,
   onModelChange,
   slashCommands = [],
@@ -66,6 +66,8 @@ export function ChatInput({
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
   const resolvedAgentOptions = agentOptions ?? buildAgentOptions(t);
+  const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
+  const resolvedModelOptions = modelOptions ?? defaultModels;
 
   const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
 
@@ -301,7 +303,7 @@ export function ChatInput({
         </div>
         <div className="chat-input__toolbar-right">
           <Select
-            options={modelOptions}
+            options={resolvedModelOptions}
             value={selectedModel}
             onChange={onModelChange}
             borderless

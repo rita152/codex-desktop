@@ -1,3 +1,5 @@
+//! Load and redact Codex CLI configuration for dev workflows.
+
 use anyhow::{Context, Result};
 use std::{
     fs,
@@ -5,17 +7,23 @@ use std::{
 };
 
 #[derive(Debug, Clone, Default)]
+/// Parsed Codex CLI configuration values used by dev tooling.
 pub struct CodexCliConfig {
+    /// Optional model provider identifier.
     pub model_provider: Option<String>,
+    /// Optional base URL override for the provider.
     pub base_url: Option<String>,
+    /// Optional API key loaded from config.
     pub api_key: Option<String>,
 }
 
+/// Resolve the default Codex home directory (e.g. `$HOME/.codex`).
 pub fn codex_home_dir() -> Result<PathBuf> {
     let home = std::env::var_os("HOME").context("$HOME is not set")?;
     Ok(PathBuf::from(home).join(".codex"))
 }
 
+/// Load the Codex CLI config from the provided Codex home directory.
 pub fn load_codex_cli_config(codex_home: &Path) -> Result<CodexCliConfig> {
     let config_path = codex_home.join("config.toml");
     let raw = fs::read_to_string(&config_path)
@@ -86,6 +94,7 @@ fn get_string_by_path(doc: &toml::Value, path: &[&str]) -> Option<String> {
     current.as_str().map(|s| s.to_string())
 }
 
+/// Redact an API key while keeping a tiny prefix/suffix for debugging.
 pub fn redact_api_key(api_key: &str) -> String {
     // Keep a tiny prefix/suffix to help debugging without leaking secrets.
     let trimmed = api_key.trim();

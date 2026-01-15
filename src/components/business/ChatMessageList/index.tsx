@@ -244,7 +244,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     () => buildChatGroups(messages, approvals, isGenerating),
     [messages, approvals, isGenerating]
   );
-  // eslint-disable-next-line react-hooks/incompatible-library
+  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer follows hooks rules but is not recognized by this eslint rule.
   const virtualizer = useVirtualizer({
     count: groups.length,
     getScrollElement: () => containerRef.current,

@@ -1,9 +1,12 @@
+//! Tauri command handlers for Codex interactions.
+
 use crate::codex::service::CodexService;
 use crate::codex::types::{ApprovalDecision, InitializeResult, NewSessionResult, PromptResult};
 use std::path::PathBuf;
 use tauri::{AppHandle, State};
 
 #[derive(Default)]
+/// Tauri state wrapper for the Codex service.
 pub struct CodexManager {
     service: tokio::sync::Mutex<Option<CodexService>>,
 }
@@ -24,6 +27,7 @@ impl CodexManager {
     }
 }
 
+/// Initialize the Codex backend and return agent metadata.
 #[tauri::command]
 pub async fn codex_init(
     app: AppHandle,
@@ -33,6 +37,7 @@ pub async fn codex_init(
     svc.initialize().await.map_err(|e| e.to_string())
 }
 
+/// Authenticate with the selected provider and optional API key.
 #[tauri::command]
 pub async fn codex_auth(
     state: State<'_, CodexManager>,
@@ -48,6 +53,7 @@ pub async fn codex_auth(
         .map_err(|e| e.to_string())
 }
 
+/// Create a new ACP session rooted at the provided working directory.
 #[tauri::command]
 pub async fn codex_new_session(
     state: State<'_, CodexManager>,
@@ -62,6 +68,7 @@ pub async fn codex_new_session(
         .map_err(|e| e.to_string())
 }
 
+/// Send a prompt to the ACP session.
 #[tauri::command]
 pub async fn codex_prompt(
     state: State<'_, CodexManager>,
@@ -77,6 +84,7 @@ pub async fn codex_prompt(
         .map_err(|e| e.to_string())
 }
 
+/// Cancel an in-flight prompt for the session.
 #[tauri::command]
 pub async fn codex_cancel(
     state: State<'_, CodexManager>,
@@ -89,6 +97,7 @@ pub async fn codex_cancel(
     svc.cancel(session_id).await.map_err(|e| e.to_string())
 }
 
+/// Respond to a permission request.
 #[tauri::command]
 pub async fn codex_approve(
     state: State<'_, CodexManager>,
@@ -105,6 +114,7 @@ pub async fn codex_approve(
         .map_err(|e| e.to_string())
 }
 
+/// Update a session config option by id.
 #[tauri::command]
 pub async fn codex_set_config_option(
     state: State<'_, CodexManager>,
@@ -121,6 +131,7 @@ pub async fn codex_set_config_option(
         .map_err(|e| e.to_string())
 }
 
+/// Convenience wrapper to update the session mode.
 #[tauri::command]
 pub async fn codex_set_mode(
     state: State<'_, CodexManager>,
@@ -130,6 +141,7 @@ pub async fn codex_set_mode(
     codex_set_config_option(state, session_id, "mode".to_string(), mode_id).await
 }
 
+/// Convenience wrapper to update the session model.
 #[tauri::command]
 pub async fn codex_set_model(
     state: State<'_, CodexManager>,

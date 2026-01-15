@@ -1,5 +1,9 @@
+//! Helpers for gating thought chunk emission.
+
+/// Environment flag controlling whether thought chunks are emitted.
 pub const EMIT_THOUGHT_CHUNKS_ENV: &str = "CODEX_DESKTOP_EMIT_THOUGHT_CHUNKS";
 
+/// Return true if thought chunks should be forwarded to the frontend.
 pub fn emit_thought_chunks() -> bool {
     match std::env::var(EMIT_THOUGHT_CHUNKS_ENV) {
         Ok(value) => match value.trim().to_ascii_lowercase().as_str() {

@@ -1,3 +1,5 @@
+//! Core Codex backend modules used by the Tauri application.
+
 pub mod binary;
 pub mod commands;
 pub mod debug;

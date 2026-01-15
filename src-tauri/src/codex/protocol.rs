@@ -1,3 +1,5 @@
+//! ACP client wiring and permission handling.
+
 use crate::codex::{
     debug::DebugState,
     events::*,
@@ -19,12 +21,16 @@ use tokio::sync::oneshot;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// Composite key for an approval request.
 pub struct ApprovalKey {
+    /// ACP session id.
     pub session_id: String,
+    /// Tool call id.
     pub tool_call_id: String,
 }
 
 impl ApprovalKey {
+    /// Create a new approval key from session and tool call ids.
     pub fn new(session_id: impl Into<String>, tool_call_id: impl Into<String>) -> Self {
         Self {
             session_id: session_id.into(),
@@ -32,6 +38,7 @@ impl ApprovalKey {
         }
     }
 
+    /// Convert the key to a stable map-friendly string.
     pub fn as_map_key(&self) -> String {
         format!("{}:{}", self.session_id, self.tool_call_id)
     }
@@ -43,11 +50,13 @@ struct PendingApproval {
 }
 
 #[derive(Default)]
+/// Shared state for pending approval requests.
 pub struct ApprovalState {
     pending: std::sync::Mutex<HashMap<String, PendingApproval>>,
 }
 
 impl ApprovalState {
+    /// Register a pending approval request.
     pub fn insert(
         &self,
         key: ApprovalKey,
@@ -58,6 +67,7 @@ impl ApprovalState {
         guard.insert(key.as_map_key(), PendingApproval { options, tx });
     }
 
+    /// Resolve a pending approval request with a decision or explicit option id.
     pub fn respond(
         &self,
         key: ApprovalKey,
@@ -297,12 +307,15 @@ impl Client for AcpClient {
     }
 }
 
+/// Running ACP connection plus the managed child process.
 pub struct AcpConnection {
+    /// Shared connection handle for issuing ACP requests.
     pub conn: Arc<ClientSideConnection>,
     process: tokio::sync::Mutex<CodexProcess>,
 }
 
 impl AcpConnection {
+    /// Spawn an ACP connection and background IO task.
     pub async fn spawn(
         app: AppHandle,
         approvals: Arc<ApprovalState>,
@@ -353,6 +366,7 @@ impl AcpConnection {
         })
     }
 
+    /// Terminate the underlying ACP process.
     pub async fn kill(&self) -> Result<()> {
         let mut guard = self.process.lock().await;
         guard.kill().await

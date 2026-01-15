@@ -1,3 +1,5 @@
+//! Tauri backend entrypoint and command wiring for Codex Desktop.
+
 use std::sync::Once;
 
 static INIT_TRACING: Once = Once::new();
@@ -20,7 +22,9 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+/// Codex backend implementation and commands.
 pub mod codex;
+/// Development-only helpers for Codex ACP.
 pub mod codex_dev;
 
 #[tauri::command]
@@ -35,6 +39,7 @@ async fn codex_dev_prompt_once(
         .map_err(|e| e.to_string())
 }
 
+/// Start the Tauri application and register Codex commands.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     init_tracing();

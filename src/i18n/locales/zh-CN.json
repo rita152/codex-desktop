@@ -26,6 +26,11 @@
       "custom": "Custom (config.toml)"
     }
   },
+  "models": {
+    "gpt52High": "gpt-5.2 (high)",
+    "gpt52": "gpt-5.2",
+    "gpt41": "gpt-4.1"
+  },
   "sidebar": {
     "show": "显示侧边栏",
     "toggle": "切换分栏",

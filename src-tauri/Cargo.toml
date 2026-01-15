@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Codex Desktop App"
 authors = ["you"]
 edition = "2021"
+rust-version = "1.70"
 default-run = "codex-desktop"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

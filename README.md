@@ -33,7 +33,7 @@ Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rus
 ### 环境要求
 
 - Node.js 18+
-- Rust 1.70+
+- Rust 1.70+ (MSRV: 1.70)
 - 平台特定依赖（参考 [Tauri 官方文档](https://tauri.app/start/prerequisites/)）
 
 ### 安装依赖

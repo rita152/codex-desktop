@@ -9,7 +9,7 @@ import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
-import { DEFAULT_MODEL_ID, DEFAULT_MODELS, DEFAULT_SLASH_COMMANDS } from './constants/chat';
+import { buildDefaultModels, DEFAULT_MODEL_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import {
   approvalStatusFromKind,
   asRecord,
@@ -38,6 +38,7 @@ const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
 
 export function App() {
   const { t } = useTranslation();
+  const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
   const {
     sessions,
     setSessions,
@@ -101,12 +102,12 @@ export function App() {
       const next = { ...prev };
       for (const session of sessions) {
         if (next[session.id]?.length) continue;
-        next[session.id] = mergeSelectOptions(DEFAULT_MODELS, cachedOptions);
+        next[session.id] = mergeSelectOptions(defaultModels, cachedOptions);
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [modelCache.options, sessions, setSessionModelOptions]);
+  }, [defaultModels, modelCache.options, sessions, setSessionModelOptions]);
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -149,9 +150,9 @@ export function App() {
   const modelOptions = useMemo(() => {
     const fromSession = sessionModelOptions[selectedSessionId];
     if (fromSession?.length) return fromSession;
-    const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, modelCache.options ?? []);
-    return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
-  }, [modelCache.options, selectedSessionId, sessionModelOptions]);
+    const mergedFallback = mergeSelectOptions(defaultModels, modelCache.options ?? []);
+    return mergedFallback.length > 0 ? mergedFallback : defaultModels;
+  }, [defaultModels, modelCache.options, selectedSessionId, sessionModelOptions]);
   const activeTokenUsage = selectedSessionId ? sessionTokenUsage[selectedSessionId] : undefined;
   const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
   const totalTokens = activeTokenUsage?.totalTokens;

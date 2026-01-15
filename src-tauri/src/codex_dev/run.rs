@@ -1,3 +1,5 @@
+//! Dev-only ACP runner utilities.
+
 use agent_client_protocol::{
     Agent, AuthenticateRequest, Client, ClientCapabilities, ClientSideConnection, ContentBlock,
     Implementation, InitializeRequest, Meta, PermissionOptionKind, PromptRequest, ProtocolVersion,
@@ -130,6 +132,7 @@ impl Client for DevClient {
     }
 }
 
+/// Validate dev prerequisites and emit the resolved config to the window.
 pub async fn check_dev_prereqs(window: &Window) -> Result<CodexCliConfig> {
     let codex_home = codex_home_dir()?;
     let cfg = load_codex_cli_config(&codex_home)?;
@@ -147,6 +150,7 @@ pub async fn check_dev_prereqs(window: &Window) -> Result<CodexCliConfig> {
     Ok(cfg)
 }
 
+/// Run a single Codex ACP prompt round-trip for dev smoke testing.
 pub async fn prompt_once(window: Window, cwd: PathBuf, content: String) -> Result<()> {
     let cfg = check_dev_prereqs(&window).await?;
     tauri::async_runtime::spawn_blocking(move || {

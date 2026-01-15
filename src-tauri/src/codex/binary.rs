@@ -1,3 +1,5 @@
+//! Resolve and spawn the codex-acp binary.
+
 use anyhow::{anyhow, Context, Result};
 use std::{
     ffi::OsString,
@@ -8,12 +10,16 @@ use tauri::Manager;
 use tokio::process::Command;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Launch strategy for the codex-acp binary.
 pub enum CodexAcpLaunchMode {
+    /// Use `npx` to resolve and run codex-acp.
     Npx,
+    /// Use a bundled sidecar binary.
     Sidecar,
 }
 
 impl CodexAcpLaunchMode {
+    /// Resolve the launch mode from `CODEX_DESKTOP_ACP_MODE`, if set.
     pub fn from_env() -> Option<Self> {
         match std::env::var("CODEX_DESKTOP_ACP_MODE")
             .ok()
@@ -28,6 +34,7 @@ impl CodexAcpLaunchMode {
         }
     }
 
+    /// Pick a default launch mode based on build type.
     pub fn default_for_build() -> Self {
         if cfg!(debug_assertions) {
             Self::Npx
@@ -38,19 +45,23 @@ impl CodexAcpLaunchMode {
 }
 
 #[derive(Debug, Clone)]
+/// Resolved codex-acp program path and args.
 pub struct CodexAcpBinary {
+    /// Launch mode used to resolve this binary.
     pub mode: CodexAcpLaunchMode,
     program: OsString,
     args: Vec<OsString>,
 }
 
 impl CodexAcpBinary {
+    /// Resolve the codex-acp binary using environment overrides.
     pub fn resolve(app: Option<&tauri::AppHandle>) -> Result<Self> {
         let mode =
             CodexAcpLaunchMode::from_env().unwrap_or_else(CodexAcpLaunchMode::default_for_build);
         Self::resolve_with_mode(mode, app)
     }
 
+    /// Resolve the codex-acp binary using an explicit launch mode.
     pub fn resolve_with_mode(
         mode: CodexAcpLaunchMode,
         app: Option<&tauri::AppHandle>,
@@ -61,6 +72,7 @@ impl CodexAcpBinary {
         }
     }
 
+    /// Format a human-readable diagnostics line for logging.
     pub fn diagnostics_line(&self) -> String {
         let mut s = format!(
             "codex-acp spawn: mode={:?} program={}",
@@ -81,6 +93,7 @@ impl CodexAcpBinary {
         s
     }
 
+    /// Build a command ready to spawn codex-acp.
     pub fn command(&self, codex_home: &Path) -> Command {
         let mut cmd = Command::new(&self.program);
         cmd.args(&self.args)
@@ -151,6 +164,7 @@ impl CodexAcpBinary {
         })
     }
 
+    /// Resolve the default Codex home directory based on environment and app data.
     pub fn default_codex_home(app: Option<&tauri::AppHandle>) -> Result<PathBuf> {
         if let Some(explicit) =
             std::env::var_os("CODEX_DESKTOP_CODEX_HOME").or_else(|| std::env::var_os("CODEX_HOME"))

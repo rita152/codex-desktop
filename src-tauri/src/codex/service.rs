@@ -1,3 +1,5 @@
+//! Background service for Codex ACP requests.
+
 use crate::codex::{
     debug::DebugState,
     process::{resolve_cwd, CodexProcessConfig},
@@ -15,12 +17,14 @@ use tauri::{AppHandle, Emitter};
 use tokio::sync::{mpsc, oneshot};
 
 #[derive(Clone)]
+/// Background worker for Codex ACP requests.
 pub struct CodexService {
     tx: mpsc::UnboundedSender<ServiceCommand>,
     approvals: Arc<ApprovalState>,
 }
 
 impl CodexService {
+    /// Start a new Codex service worker bound to the Tauri app handle.
     pub fn new(app: AppHandle) -> Self {
         let approvals = Arc::new(ApprovalState::default());
         let debug = Arc::new(DebugState::new());
@@ -52,6 +56,7 @@ impl CodexService {
         Self { tx, approvals }
     }
 
+    /// Initialize the ACP connection and return agent metadata.
     pub async fn initialize(&self) -> Result<InitializeResult> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
@@ -62,6 +67,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Authenticate the ACP connection using the specified method and key.
     pub async fn authenticate(&self, method_id: String, api_key: Option<String>) -> Result<()> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
@@ -76,6 +82,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Create a new ACP session rooted at the provided working directory.
     pub async fn create_session(&self, cwd: PathBuf) -> Result<NewSessionResult> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
@@ -89,6 +96,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Send a prompt to the ACP session.
     pub async fn send_prompt(&self, session_id: String, content: String) -> Result<PromptResult> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
@@ -103,6 +111,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Cancel an in-flight prompt for the ACP session.
     pub async fn cancel(&self, session_id: String) -> Result<()> {
         let (reply_tx, reply_rx) = oneshot::channel();
         self.tx
@@ -116,6 +125,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Update a session config option by id.
     pub async fn set_config_option(
         &self,
         session_id: String,
@@ -136,6 +146,7 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Respond to a pending approval request.
     pub fn respond_permission(
         &self,
         session_id: String,

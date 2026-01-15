@@ -192,7 +192,7 @@ function ConversationDemo() {
 
         {isActive && (
           <ChatMessage
-            // eslint-disable-next-line jsx-a11y/aria-role
+            // eslint-disable-next-line jsx-a11y/aria-role -- ChatMessage role prop is app-specific, not an ARIA role.
             role="assistant"
             content={streamContent}
             isStreaming={isStreaming}
