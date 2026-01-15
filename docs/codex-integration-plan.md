@@ -14,7 +14,7 @@
 
 - **协议实现建议**：优先在 Desktop 后端直接使用 Rust crate `agent-client-protocol` 作为 ACP 客户端实现（避免手写 JSON-RPC、类型与双向请求）。
 - **审批流方向**：codex-acp 会通过 ACP 的 `request_permission` 向客户端“发起请求”，客户端需要返回所选 `option_id`（不是单纯 allow/reject）。
-- **会话恢复现状**：codex-acp 目前仅能 `load_session` 已存在于内存的 session；应用重启后无法直接恢复真实会话，需要定义“恢复策略”（例如：只恢复 UI 历史，继续对话时新建 session 并注入摘要/上下文）。
+- **会话加载限制**：codex-acp 的 `load_session` 仅能加载当前进程内已存在的 session；应用重启后无法加载历史会话。
 - **能力协商**：若客户端希望收到“终端输出流式更新”，需在 Initialize 的 `client_capabilities.meta` 中声明 `terminal_output: true`（否则工具输出可能不走 terminal meta 通道）。
 
 ---
@@ -512,25 +512,12 @@ npm run storybook
 
 ---
 
-### Task 4.2：会话状态持久化
+### Task 4.2：会话状态持久化（暂不支持）
 
-**目标**：保存和恢复会话状态
+**目标**：暂不做会话保存/恢复；每次启动从新会话开始。
 
-**文件**：
-- `src/hooks/useSessionPersistence.ts`
-- `src/api/storage.ts`
-
-**内容**：
-- [x] 保存会话列表到本地存储
-- [x] 保存每个会话的消息历史
-- [x] 应用启动时恢复会话
-- [x] 会话切换时的状态管理
-- [x] （补充）定义“会话恢复策略”：重启后 UI 会话为只读；继续对话时新建 codex session 并注入摘要/关键上下文（或另行实现 codex-acp 的可恢复加载能力）
-
-**验收标准**：
-- 关闭应用后重新打开，会话列表保留
-- 历史消息可以查看
-- 继续对话时不会误用失效的 session_id（应自动创建新 session 并提示用户）
+**说明**：
+- codex-acp 当前不支持跨重启续接同一会话；为避免“看似续聊但上下文丢失”的误导，暂时移除本地会话续接相关逻辑。
 
 ---
 

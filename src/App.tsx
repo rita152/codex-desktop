@@ -47,35 +47,6 @@ function newMessageId(): string {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const RECOVERY_CONTEXT_LIMIT = 12;
-const RECOVERY_CHAR_LIMIT = 1800;
-const RECOVERY_NOTICE =
-  '系统提示：此会话已从本地恢复，继续对话会创建新的 Codex 会话，并注入最近上下文。';
-
-function buildRecoveryPrompt(history: Message[], content: string): string {
-  const contextLines = history
-    .filter((message) => message.role === 'user' || message.role === 'assistant')
-    .map((message) => {
-      const role = message.role === 'user' ? 'User' : 'Assistant';
-      return `${role}: ${message.content}`;
-    })
-    .filter((line) => line.trim() !== '')
-    .slice(-RECOVERY_CONTEXT_LIMIT);
-
-  if (contextLines.length === 0) return content;
-
-  let context = contextLines.join('\n');
-  if (context.length > RECOVERY_CHAR_LIMIT) {
-    context = context.slice(context.length - RECOVERY_CHAR_LIMIT);
-  }
-
-  return `Restored session context (read-only):\n${context}\n\nUser message:\n${content}`;
-}
-
-function isLeadingSlashCommand(content: string): boolean {
-  return /^\s*\/\S+/.test(content);
-}
-
 type UnknownRecord = Record<string, unknown>;
 
 function asRecord(value: unknown): UnknownRecord | null {
@@ -621,8 +592,6 @@ function App() {
     setSessionMessages,
     sessionDrafts,
     setSessionDrafts,
-    restoredSessionIds,
-    clearRestoredSession,
   } = useSessionPersistence();
 
   const [cachedModelOptions, setCachedModelOptions] = useState<SelectOption[] | null>(() => {
@@ -1060,20 +1029,14 @@ function App() {
   }, []);
 
   const ensureCodexSession = useCallback(
-    async (chatSessionId: string, forceNew: boolean) => {
+    async (chatSessionId: string) => {
       const existing = codexSessionByChatRef.current[chatSessionId];
-      if (existing && !forceNew) return existing;
+      if (existing) return existing;
 
-      if (!forceNew) {
-        const pending = pendingSessionInitRef.current[chatSessionId];
-        if (pending) return pending;
-      }
+      const pending = pendingSessionInitRef.current[chatSessionId];
+      if (pending) return pending;
 
       const task = (async () => {
-        if (existing) {
-          delete chatSessionByCodexRef.current[existing];
-        }
-
         const sessionMeta = sessions.find((session) => session.id === chatSessionId);
         const cwd =
           typeof sessionMeta?.cwd === 'string' && sessionMeta.cwd.trim() !== ''
@@ -1148,25 +1111,17 @@ function App() {
             );
           }
         }
-        if (forceNew) {
-          clearRestoredSession(chatSessionId);
-        }
         return result.sessionId;
       })();
 
-      if (!forceNew) {
-        pendingSessionInitRef.current[chatSessionId] = task;
-        try {
-          return await task;
-        } finally {
-          delete pendingSessionInitRef.current[chatSessionId];
-        }
+      pendingSessionInitRef.current[chatSessionId] = task;
+      try {
+        return await task;
+      } finally {
+        delete pendingSessionInitRef.current[chatSessionId];
       }
-
-      return task;
     },
     [
-      clearRestoredSession,
       clearSessionNotice,
       registerCodexSession,
       sessions,
@@ -1189,11 +1144,9 @@ function App() {
     setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
     setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
     setSelectedSessionId(newId);
-    clearRestoredSession(newId);
     clearSessionNotice(newId);
     activeSessionIdRef.current = newId;
   }, [
-    clearRestoredSession,
     clearSessionNotice,
     selectedCwd,
     setSessionDrafts,
@@ -1212,7 +1165,6 @@ function App() {
       if (sessions.length <= 1) return;
 
       clearCodexSession(sessionId);
-      clearRestoredSession(sessionId);
       setSessions((prev) => prev.filter((s) => s.id !== sessionId));
       setSessionMessages((prev) => {
         const next = { ...prev };
@@ -1248,7 +1200,7 @@ function App() {
         }
       }
     },
-    [clearCodexSession, clearRestoredSession, sessions, selectedSessionId]
+    [clearCodexSession, sessions, selectedSessionId]
   );
 
   const handleSessionRename = useCallback(
@@ -1324,37 +1276,23 @@ function App() {
   }, [pickFiles, selectedSessionId, setSessionDrafts]);
 
   const handleSendMessage = useCallback(
-    (content: string) => {
-      const now = Date.now();
-      const sessionId = selectedSessionId;
-      const shouldRecover = restoredSessionIds.has(sessionId);
-      const userMessage: Message = {
-        id: String(now),
-        role: 'user',
-        content,
-        timestamp: new Date(),
-      };
-      const recoveryNotice: Message | null = shouldRecover
-        ? {
-          id: newMessageId(),
-          role: 'assistant',
-          content: RECOVERY_NOTICE,
-          isStreaming: false,
-          timestamp: new Date(),
-        }
-        : null;
+	    (content: string) => {
+	      const now = Date.now();
+	      const sessionId = selectedSessionId;
+	      const userMessage: Message = {
+	        id: String(now),
+	        role: 'user',
+	        content,
+	        timestamp: new Date(),
+	      };
 
-      activeSessionIdRef.current = sessionId;
-      setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: true }));
+	      activeSessionIdRef.current = sessionId;
+	      setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: true }));
 
-      // 更新当前会话的消息：添加用户消息（恢复会话时先追加提示）
-      setSessionMessages((prev) => {
-        const list = prev[sessionId] ?? [];
-        const nextList = recoveryNotice
-          ? [...list, recoveryNotice, userMessage]
-          : [...list, userMessage];
-        return { ...prev, [sessionId]: nextList };
-      });
+	      setSessionMessages((prev) => {
+	        const list = prev[sessionId] ?? [];
+	        return { ...prev, [sessionId]: [...list, userMessage] };
+	      });
 
       // 如果是第一条消息，用消息内容更新会话标题
       if (messages.length === 0) {
@@ -1364,18 +1302,14 @@ function App() {
         );
       }
 
-      void (async () => {
-        try {
-          const codexSessionId = await ensureCodexSession(sessionId, shouldRecover);
-          const promptContent =
-            shouldRecover && !isLeadingSlashCommand(content)
-              ? buildRecoveryPrompt(messages, content)
-              : content;
-          await sendPrompt(codexSessionId, promptContent);
-        } catch (err) {
-          setSessionMessages((prev) => {
-            const errMsg: Message = {
-              id: newMessageId(),
+	      void (async () => {
+	        try {
+	          const codexSessionId = await ensureCodexSession(sessionId);
+	          await sendPrompt(codexSessionId, content);
+	        } catch (err) {
+	          setSessionMessages((prev) => {
+	            const errMsg: Message = {
+	              id: newMessageId(),
               role: 'assistant',
               content: `调用失败：${String(err)}`,
               isStreaming: false,
@@ -1390,15 +1324,14 @@ function App() {
         }
       })();
     },
-    [
-      ensureCodexSession,
-      messages,
-      restoredSessionIds,
-      selectedSessionId,
-      setSessions,
-      setSessionMessages,
-    ]
-  );
+	    [
+	      ensureCodexSession,
+	      messages,
+	      selectedSessionId,
+	      setSessions,
+	      setSessionMessages,
+	    ]
+	  );
 
   const handleApprovalSelect = useCallback(
     async (request: ApprovalRequest, optionId: string) => {

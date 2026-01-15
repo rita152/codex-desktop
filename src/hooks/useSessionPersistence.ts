@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
-import { loadSessionState, saveSessionState } from '../api/storage';
 import { DEFAULT_MODEL_ID } from '../constants/chat';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
@@ -21,24 +20,11 @@ export interface SessionPersistenceResult {
   setSessionMessages: Dispatch<SetStateAction<SessionMessages>>;
   sessionDrafts: SessionDrafts;
   setSessionDrafts: Dispatch<SetStateAction<SessionDrafts>>;
-  restoredSessionIds: Set<string>;
-  clearRestoredSession: (sessionId: string) => void;
-  markRestoredSession: (sessionId: string) => void;
 }
 
 export function useSessionPersistence(): SessionPersistenceResult {
   const initial = useMemo(() => {
-    const loaded = loadSessionState();
-    const restoredSessions = (loaded?.sessions ?? []).map((session) => ({
-      ...session,
-      model: session.model ?? DEFAULT_MODEL_ID,
-    }));
-    const restoredMessages = loaded?.sessionMessages ?? {};
-    const restoredDrafts = loaded?.sessionDrafts ?? {};
-    let newSessionId = String(Date.now());
-    if (restoredSessions.some((session) => session.id === newSessionId)) {
-      newSessionId = `${newSessionId}-${Math.random().toString(16).slice(2)}`;
-    }
+    const newSessionId = String(Date.now());
     const newSession: ChatSession = {
       id: newSessionId,
       title: '新对话',
@@ -46,11 +32,10 @@ export function useSessionPersistence(): SessionPersistenceResult {
     };
 
     return {
-      sessions: [newSession, ...restoredSessions],
+      sessions: [newSession],
       selectedSessionId: newSessionId,
-      sessionMessages: { ...restoredMessages, [newSessionId]: [] },
-      sessionDrafts: { ...restoredDrafts, [newSessionId]: '' },
-      restoredSessionIds: new Set(restoredSessions.map((session) => session.id)),
+      sessionMessages: { [newSessionId]: [] },
+      sessionDrafts: { [newSessionId]: '' },
     };
   }, []);
 
@@ -63,9 +48,6 @@ export function useSessionPersistence(): SessionPersistenceResult {
   );
   const [sessionDrafts, setSessionDrafts] = useState<SessionDrafts>(
     initial.sessionDrafts
-  );
-  const [restoredSessionIds, setRestoredSessionIds] = useState<Set<string>>(
-    initial.restoredSessionIds
   );
 
   useEffect(() => {
@@ -115,41 +97,23 @@ export function useSessionPersistence(): SessionPersistenceResult {
   }, [sessions]);
 
   useEffect(() => {
-    setRestoredSessionIds((prev) => {
-      const next = new Set(
-        [...prev].filter((id) => sessions.some((session) => session.id === id))
-      );
-      return next.size === prev.size ? prev : next;
-    });
-  }, [sessions]);
-
-  useEffect(() => {
     if (!sessions.some((session) => session.id === selectedSessionId)) {
       setSelectedSessionId(sessions[0]?.id ?? DEFAULT_SESSION_ID);
     }
   }, [sessions, selectedSessionId]);
 
+  const normalizeSessionModel = useCallback(() => {
+    setSessions((prev) =>
+      prev.map((session) => ({
+        ...session,
+        model: session.model ?? DEFAULT_MODEL_ID,
+      }))
+    );
+  }, []);
+
   useEffect(() => {
-    saveSessionState({ sessions, selectedSessionId, sessionMessages, sessionDrafts });
-  }, [sessions, selectedSessionId, sessionMessages, sessionDrafts]);
-
-  const clearRestoredSession = useCallback((sessionId: string) => {
-    setRestoredSessionIds((prev) => {
-      if (!prev.has(sessionId)) return prev;
-      const next = new Set(prev);
-      next.delete(sessionId);
-      return next;
-    });
-  }, []);
-
-  const markRestoredSession = useCallback((sessionId: string) => {
-    setRestoredSessionIds((prev) => {
-      if (prev.has(sessionId)) return prev;
-      const next = new Set(prev);
-      next.add(sessionId);
-      return next;
-    });
-  }, []);
+    normalizeSessionModel();
+  }, [normalizeSessionModel]);
 
   return {
     sessions,
@@ -160,8 +124,5 @@ export function useSessionPersistence(): SessionPersistenceResult {
     setSessionMessages,
     sessionDrafts,
     setSessionDrafts,
-    restoredSessionIds,
-    clearRestoredSession,
-    markRestoredSession,
   };
 }
