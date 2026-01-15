@@ -26,6 +26,13 @@
       "custom": "Custom (config.toml)"
     }
   },
+  "chatSideActions": {
+    "label": "快捷操作",
+    "files": "文件",
+    "tools": "工具",
+    "terminal": "终端",
+    "web": "网页"
+  },
   "models": {
     "gpt52High": "gpt-5.2 (high)",
     "gpt52": "gpt-5.2",

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
+import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
@@ -102,6 +103,7 @@ export function ChatContainer({
       </div>
 
       <div className="chat-container__main">
+        <ChatSideActions />
         <div className="chat-container__session-header">
           <div className="chat-container__session-meta">
             <button

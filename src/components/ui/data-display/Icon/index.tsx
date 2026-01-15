@@ -66,6 +66,27 @@ export function ChevronDownIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+export function CodeIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+    </svg>
+  );
+}
+
 export function EditIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg
@@ -83,6 +104,29 @@ export function EditIcon({ size = 24, className = '' }: IconProps) {
     >
       <path d="M12 3H5C4.46957 3 3.96086 3.21071 3.58579 3.58579C3.21071 3.96086 3 4.46957 3 5V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V12" />
       <path d="M18.375 2.625C18.7728 2.22717 19.3124 2.00368 19.875 2.00368C20.4376 2.00368 20.9772 2.22717 21.375 2.625C21.7728 3.02283 21.9963 3.56239 21.9963 4.125C21.9963 4.68761 21.7728 5.22717 21.375 5.625L12 15L8 16L9 12L18.375 2.625Z" />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12H21" />
+      <path d="M12 3c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9" />
+      <path d="M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9" />
     </svg>
   );
 }
@@ -120,6 +164,34 @@ export function ForwardIcon({ size = 24, className = '' }: IconProps) {
     >
       <path d="M5 4L12 12L5 20" />
       <path d="M13 4L20 12L13 20" />
+    </svg>
+  );
+}
+
+export function SlidersIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
     </svg>
   );
 }
@@ -183,6 +255,27 @@ export function PlusIcon({ size = 24, className = '' }: IconProps) {
     >
       <path d="M12 5V19" />
       <path d="M5 12H19" />
+    </svg>
+  );
+}
+
+export function TerminalIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="4 7 10 12 4 17" />
+      <line x1="12" y1="17" x2="20" y2="17" />
     </svg>
   );
 }

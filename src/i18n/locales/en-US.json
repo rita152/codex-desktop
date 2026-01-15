@@ -26,6 +26,13 @@
       "custom": "Custom (config.toml)"
     }
   },
+  "chatSideActions": {
+    "label": "Quick actions",
+    "files": "Files",
+    "tools": "Tools",
+    "terminal": "Terminal",
+    "web": "Web"
+  },
   "models": {
     "gpt52High": "gpt-5.2 (high)",
     "gpt52": "gpt-5.2",

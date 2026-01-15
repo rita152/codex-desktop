@@ -1,0 +1,32 @@
+.chat-side-actions {
+  position: absolute;
+  right: var(--spacing-xs);
+  top: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background-color: var(--color-bg-elevated);
+  border: var(--border-width-thin) solid var(--color-border);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-lg);
+  z-index: 30;
+}
+
+.chat-side-actions .icon-button {
+  border-radius: var(--radius-full);
+}
+
+@media (max-width: 900px) {
+  .chat-side-actions {
+    right: var(--spacing-xs);
+    top: 64px;
+  }
+}
+
+@media (max-width: 720px) {
+  .chat-side-actions {
+    display: none;
+  }
+}
