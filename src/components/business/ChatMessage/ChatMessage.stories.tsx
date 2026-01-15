@@ -183,6 +183,7 @@ function ConversationDemo() {
 
         {isActive && (
           <ChatMessage
+            // eslint-disable-next-line jsx-a11y/aria-role
             role="assistant"
             content={streamContent}
             isStreaming={isStreaming}

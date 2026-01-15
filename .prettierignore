@@ -1,0 +1,10 @@
+node_modules
+dist
+build
+coverage
+storybook-static
+src-tauri
+codex-acp
+public
+docs
+package-lock.json

@@ -5,3 +5,14 @@ export const DEFAULT_MODELS = [
 ];
 
 export const DEFAULT_MODEL_ID = DEFAULT_MODELS[0]?.value ?? 'gpt-5.2-high';
+
+// Keep in sync with codex-acp built-in commands.
+export const DEFAULT_SLASH_COMMANDS = [
+  'review',
+  'review-branch',
+  'review-commit',
+  'init',
+  'compact',
+  'undo',
+  'logout',
+];
