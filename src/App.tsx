@@ -31,6 +31,8 @@ import { buildUnifiedDiff } from './utils/diff';
 
 import './App.css';
 
+const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
+
 function safeJson(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
@@ -633,6 +635,8 @@ function App() {
   });
 
   const [sidebarVisible, setSidebarVisible] = useState(true);
+  const sidebarVisibilityRef = useRef(true);
+  const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalStatuses, setApprovalStatuses] = useState<Record<string, ApprovalStatus>>({});
@@ -671,6 +675,27 @@ function App() {
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
   }, [selectedSessionId]);
+
+  useEffect(() => {
+    const media = window.matchMedia(`(max-width: ${SIDEBAR_AUTO_HIDE_MAX_WIDTH}px)`);
+    const handleChange = () => setIsNarrowLayout(media.matches);
+    handleChange();
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (isNarrowLayout) {
+      setSidebarVisible(false);
+      return;
+    }
+    setSidebarVisible(sidebarVisibilityRef.current);
+  }, [isNarrowLayout]);
+
+  useEffect(() => {
+    if (isNarrowLayout) return;
+    sidebarVisibilityRef.current = sidebarVisible;
+  }, [isNarrowLayout, sidebarVisible]);
 
   const activeSession = useMemo(
     () => sessions.find((session) => session.id === selectedSessionId),
@@ -1504,7 +1529,11 @@ function App() {
       cwdLocked={cwdLocked}
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
-      onSidebarToggle={() => setSidebarVisible((v) => !v)}
+      onSidebarToggle={
+        isNarrowLayout
+          ? undefined
+          : () => setSidebarVisible((v) => !v)
+      }
     />
   );
 }
