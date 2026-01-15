@@ -9,6 +9,19 @@ import type { MarkdownProps } from './types';
 
 import './Markdown.css';
 
+const normalizeMathDelimiters = (raw: string): string => {
+  if (!raw) return raw;
+  const segments = raw.split(/(```[\s\S]*?```|`[^`]*`)/g);
+  return segments
+    .map((segment) => {
+      if (!segment || segment.startsWith('`')) return segment;
+      return segment
+        .replace(/\\\[((?:.|\n)*?)\\\]/g, '$$$$ $1 $$$$')
+        .replace(/\\\(((?:.|\n)*?)\\\)/g, '$$$1$$');
+    })
+    .join('');
+};
+
 export function Markdown({ content, compact = false, className = '' }: MarkdownProps) {
   let normalizedContent = content;
   if (compact) {
@@ -19,6 +32,7 @@ export function Markdown({ content, compact = false, className = '' }: MarkdownP
       .filter(p => p.length > 0) // 移除空段落
       .join('\n\n');             // 用双换行重新连接段落
   }
+  normalizedContent = normalizeMathDelimiters(normalizedContent);
 
   return (
     <div className={cn('markdown', className)}>

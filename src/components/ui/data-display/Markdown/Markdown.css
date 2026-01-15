@@ -159,3 +159,24 @@
 .markdown em {
   font-style: italic;
 }
+
+/* KaTeX */
+.markdown .katex {
+  font-size: 1.05em;
+  line-height: 1.4;
+  color: inherit;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.markdown .katex-display {
+  margin: var(--spacing-sm) 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.markdown .katex-display > .katex {
+  display: inline-block;
+  padding: 0.2em 0;
+}
