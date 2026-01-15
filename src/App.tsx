@@ -21,12 +21,7 @@ import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
-import {
-  buildDefaultModels,
-  DEFAULT_MODEL_ID,
-  DEFAULT_MODE_ID,
-  DEFAULT_SLASH_COMMANDS,
-} from './constants/chat';
+import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import {
   approvalStatusFromKind,
   asRecord,
@@ -36,7 +31,6 @@ import {
   formatError,
   getString,
   mapApprovalOptions,
-  mergeSelectOptions,
   newMessageId,
   normalizeToolKind,
   resolveModelOptions,
@@ -56,7 +50,6 @@ const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
 
 export function App() {
   const { t } = useTranslation();
-  const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
   const {
     sessions,
     setSessions,
@@ -132,12 +125,12 @@ export function App() {
       const next = { ...prev };
       for (const session of sessions) {
         if (next[session.id]?.length) continue;
-        next[session.id] = mergeSelectOptions(defaultModels, cachedOptions);
+        next[session.id] = cachedOptions;
         changed = true;
       }
       return changed ? next : prev;
     });
-  }, [defaultModels, modelCache.options, sessions, setSessionModelOptions]);
+  }, [modelCache.options, sessions, setSessionModelOptions]);
 
   useEffect(() => {
     const cachedOptions = modeCache.options;
@@ -200,16 +193,16 @@ export function App() {
   const modelOptions = useMemo(() => {
     const fromSession = sessionModelOptions[selectedSessionId];
     if (fromSession?.length) return fromSession;
-    const mergedFallback = mergeSelectOptions(defaultModels, modelCache.options ?? []);
-    return mergedFallback.length > 0 ? mergedFallback : defaultModels;
-  }, [defaultModels, modelCache.options, selectedSessionId, sessionModelOptions]);
+    // Model list is fetched from remote, use cache as fallback
+    return modelCache.options ?? [];
+  }, [modelCache.options, selectedSessionId, sessionModelOptions]);
   const activeTokenUsage = selectedSessionId ? sessionTokenUsage[selectedSessionId] : undefined;
   const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
   const totalTokens = activeTokenUsage?.totalTokens;
   const remainingTokens =
     activeTokenUsage?.contextWindow !== undefined &&
-    activeTokenUsage?.contextWindow !== null &&
-    typeof totalTokens === 'number'
+      activeTokenUsage?.contextWindow !== null &&
+      typeof totalTokens === 'number'
       ? Math.max(0, activeTokenUsage.contextWindow - totalTokens)
       : undefined;
   const slashCommands = useMemo(() => {

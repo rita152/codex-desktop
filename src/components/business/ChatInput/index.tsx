@@ -2,8 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
-import { buildDefaultModels, DEFAULT_MODEL_ID } from '../../../constants/chat';
-
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
@@ -78,7 +76,7 @@ export function ChatInput({
   selectedAgent = 'agent-full',
   onAgentChange,
   modelOptions,
-  selectedModel = DEFAULT_MODEL_ID,
+  selectedModel,
   onModelChange,
   slashCommands = [],
   width,
@@ -100,8 +98,8 @@ export function ChatInput({
       icon: resolveAgentIcon(option, iconMap),
     }));
   }, [agentOptions, defaultAgentOptions]);
-  const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
-  const resolvedModelOptions = modelOptions ?? defaultModels;
+  // Model options are fetched from remote, no local fallback
+  const resolvedModelOptions = modelOptions ?? [];
 
   const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
 
