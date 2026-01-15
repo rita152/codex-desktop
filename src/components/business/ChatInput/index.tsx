@@ -343,6 +343,7 @@ export function ChatInput({
             borderless
             size="sm"
             disabled={disabled}
+            variant="glass"
             aria-label={t('chatInput.selectModel')}
           />
           <IconButton
