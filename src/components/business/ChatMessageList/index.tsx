@@ -159,17 +159,46 @@ const buildChatGroups = (
     }
   });
 
-  if (isGenerating) {
+  const lastUserGroupIndex = (() => {
     for (let i = groups.length - 1; i >= 0; i -= 1) {
       const group = groups[i];
-      if (group.type === 'working') {
-        group.isActive = true;
-        break;
+      if (group.type === 'message' && group.message.role === 'user') {
+        return i;
       }
+    }
+    return -1;
+  })();
+  const lastWorkingGroup =
+    [...groups].reverse().find((group): group is WorkingGroup => group.type === 'working') ??
+    null;
+  const currentWorkingGroup =
+    lastUserMessageId !== null
+      ? [...groups]
+          .reverse()
+          .find(
+            (group): group is WorkingGroup =>
+              group.type === 'working' &&
+              group.id.startsWith(`working-user-${lastUserMessageId}`)
+          ) ?? null
+      : null;
+
+  if (isGenerating) {
+    let activeWorking: WorkingGroup | null = null;
+    if (currentWorkingGroup) {
+      activeWorking = currentWorkingGroup;
+    } else {
+      activeWorking = lastWorkingGroup;
+    }
+
+    if (activeWorking) {
+      activeWorking.isActive = true;
     }
   }
 
-  if (isGenerating && !groups.some((group) => group.type === 'working')) {
+  if (
+    isGenerating &&
+    (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup))
+  ) {
     const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
     const startTime =
       lastUserMessage?.timestamp instanceof Date
@@ -178,7 +207,7 @@ const buildChatGroups = (
     if (lastUserMessage?.id !== undefined) {
       lastUserMessageId = lastUserMessage.id;
     }
-    groups.push({
+    const placeholderGroup: WorkingGroup = {
       type: 'working',
       id: getWorkingGroupId(String(lastUserMessage?.id ?? startTime)),
       isActive: true,
@@ -195,7 +224,12 @@ const buildChatGroups = (
           },
         },
       ],
-    });
+    };
+    if (lastUserGroupIndex >= 0 && lastUserGroupIndex < groups.length - 1) {
+      groups.splice(lastUserGroupIndex + 1, 0, placeholderGroup);
+    } else {
+      groups.push(placeholderGroup);
+    }
   }
 
   return groups;
@@ -284,7 +318,7 @@ export function ChatMessageList({
 
   const classNames = cn('chat-message-list', className);
 
-  if (messages.length === 0 && approvalCount === 0) {
+  if (!isGenerating && messages.length === 0 && approvalCount === 0) {
     return (
       <div className={classNames} ref={containerRef}>
         <div className="chat-message-list__empty">开始新的对话</div>
