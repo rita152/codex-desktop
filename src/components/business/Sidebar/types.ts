@@ -3,6 +3,7 @@ export interface ChatSession {
   title: string;
   cwd?: string;
   model?: string;
+  mode?: string;
 }
 
 export interface SidebarProps {

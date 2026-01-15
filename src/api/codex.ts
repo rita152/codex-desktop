@@ -48,3 +48,12 @@ export async function setSessionModel(sessionId: string, modelId: string): Promi
     model_id: modelId,
   });
 }
+
+export async function setSessionMode(sessionId: string, modeId: string): Promise<void> {
+  await invoke<void>('codex_set_mode', {
+    sessionId,
+    session_id: sessionId,
+    modeId,
+    mode_id: modeId,
+  });
+}

@@ -3,13 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import { approveRequest, createSession, initCodex, sendPrompt, setSessionModel } from './api/codex';
+import {
+  approveRequest,
+  createSession,
+  initCodex,
+  sendPrompt,
+  setSessionMode,
+  setSessionModel,
+} from './api/codex';
 import { loadModelOptionsCache, saveModelOptionsCache } from './api/storage';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
-import { buildDefaultModels, DEFAULT_MODEL_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
+import {
+  buildDefaultModels,
+  DEFAULT_MODEL_ID,
+  DEFAULT_MODE_ID,
+  DEFAULT_SLASH_COMMANDS,
+} from './constants/chat';
 import {
   approvalStatusFromKind,
   asRecord,
@@ -23,6 +35,7 @@ import {
   newMessageId,
   normalizeToolKind,
   resolveModelOptions,
+  resolveModeOptions,
 } from './utils/codexParsing';
 import { devDebug } from './utils/logger';
 
@@ -69,10 +82,12 @@ export function App() {
     sessionNotices,
     sessionSlashCommands,
     sessionModelOptions,
+    sessionModeOptions,
     setSessionTokenUsage,
     setSessionNotices,
     setSessionSlashCommands,
     setSessionModelOptions,
+    setSessionModeOptions,
     clearSessionNotice,
     removeSessionMeta,
   } = useSessionMeta();
@@ -145,8 +160,13 @@ export function App() {
   );
   const draftMessage = sessionDrafts[selectedSessionId] ?? '';
   const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
+  const selectedMode = activeSession?.mode ?? DEFAULT_MODE_ID;
   const selectedCwd = activeSession?.cwd;
   const sessionNotice = sessionNotices[selectedSessionId] ?? null;
+  const agentOptions = useMemo(() => {
+    const fromSession = sessionModeOptions[selectedSessionId];
+    return fromSession?.length ? fromSession : undefined;
+  }, [selectedSessionId, sessionModeOptions]);
   const modelOptions = useMemo(() => {
     const fromSession = sessionModelOptions[selectedSessionId];
     if (fromSession?.length) return fromSession;
@@ -192,10 +212,41 @@ export function App() {
     );
   }, [modelCache.currentModelId, modelOptions, selectedModel, selectedSessionId, setSessions]);
 
+  useEffect(() => {
+    if (!agentOptions || agentOptions.length === 0) return;
+    const available = new Set(agentOptions.map((option) => option.value));
+    if (available.has(selectedMode)) return;
+
+    const preferred =
+      (available.has(DEFAULT_MODE_ID) ? DEFAULT_MODE_ID : undefined) ??
+      agentOptions[0]?.value ??
+      DEFAULT_MODE_ID;
+
+    if (!preferred || preferred === selectedMode) return;
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === selectedSessionId ? { ...session, mode: preferred } : session
+      )
+    );
+  }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
+
   const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
     if (!codexSessionId) return null;
     return chatSessionByCodexRef.current[codexSessionId] ?? null;
   }, []);
+
+  const updateSessionMode = useCallback(
+    (sessionId: string, modeId: string) => {
+      setSessions((prev) =>
+        prev.map((session) =>
+          session.id === sessionId && session.mode !== modeId
+            ? { ...session, mode: modeId }
+            : session
+        )
+      );
+    },
+    [setSessions]
+  );
 
   const pickWorkingDirectory = useCallback(async (defaultPath?: string): Promise<string | null> => {
     try {
@@ -250,6 +301,8 @@ export function App() {
     setIsGeneratingBySession,
     setSessionTokenUsage,
     setSessionSlashCommands,
+    setSessionModeOptions,
+    setSessionMode: updateSessionMode,
     registerApprovalRequest,
   });
 
@@ -282,6 +335,17 @@ export function App() {
             : '.';
         const result = await createSession(cwd);
         registerCodexSession(chatSessionId, result.sessionId);
+        const modeState = resolveModeOptions(result.modes, result.configOptions);
+        if (modeState?.options && modeState.options.length > 0) {
+          setSessionModeOptions((prev) => {
+            const next = { ...prev };
+            for (const session of sessions) {
+              next[session.id] = modeState.options;
+            }
+            next[chatSessionId] = modeState.options;
+            return next;
+          });
+        }
         const modelState = resolveModelOptions(result.models, result.configOptions);
         if (modelState?.options && modelState.options.length > 0) {
           setSessionModelOptions((prev) => {
@@ -297,6 +361,51 @@ export function App() {
             options: modelState.options,
             currentModelId: modelState.currentModelId,
           });
+        }
+
+        const availableModeIds = new Set(modeState?.options.map((option) => option.value) ?? []);
+        let desiredMode = sessionMeta?.mode;
+        if (desiredMode && availableModeIds.size > 0 && !availableModeIds.has(desiredMode)) {
+          desiredMode = undefined;
+        }
+        if (!desiredMode) {
+          desiredMode =
+            modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
+        }
+
+        if (desiredMode && desiredMode !== sessionMeta?.mode) {
+          setSessions((prev) =>
+            prev.map((session) =>
+              session.id === chatSessionId ? { ...session, mode: desiredMode } : session
+            )
+          );
+        }
+
+        const shouldSyncMode =
+          desiredMode &&
+          (modeState?.currentModeId ? desiredMode !== modeState.currentModeId : true) &&
+          (availableModeIds.size === 0 || availableModeIds.has(desiredMode));
+
+        if (shouldSyncMode && desiredMode) {
+          try {
+            await setSessionMode(result.sessionId, desiredMode);
+            clearSessionNotice(chatSessionId);
+          } catch (err) {
+            const fallbackMode =
+              modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
+            setSessionNotices((prev) => ({
+              ...prev,
+              [chatSessionId]: {
+                kind: 'error',
+                message: t('errors.modeSetFailed', { error: formatError(err) }),
+              },
+            }));
+            setSessions((prev) =>
+              prev.map((session) =>
+                session.id === chatSessionId ? { ...session, mode: fallbackMode } : session
+              )
+            );
+          }
         }
 
         const availableIds = new Set(modelState?.options.map((option) => option.value) ?? []);
@@ -357,6 +466,7 @@ export function App() {
       clearSessionNotice,
       registerCodexSession,
       sessions,
+      setSessionModeOptions,
       setSessionModelOptions,
       setSessionNotices,
       setSessions,
@@ -373,6 +483,7 @@ export function App() {
       title: t('chat.newSessionTitle'),
       cwd: selectedCwd, // 继承当前会话的工作目录
       model: DEFAULT_MODEL_ID,
+      mode: DEFAULT_MODE_ID,
     };
     setSessions((prev) => [newSession, ...prev]);
     setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
@@ -409,6 +520,7 @@ export function App() {
         title: t('chat.newSessionTitle'),
         cwd: sessionMeta?.cwd ?? selectedCwd,
         model: DEFAULT_MODEL_ID,
+        mode: DEFAULT_MODE_ID,
       };
 
       clearCodexSession(sessionId);
@@ -514,6 +626,40 @@ export function App() {
       }
     },
     [activeSession?.model, clearSessionNotice, selectedSessionId, setSessionNotices, setSessions, t]
+  );
+
+  const handleModeChange = useCallback(
+    async (modeId: string) => {
+      const sessionId = selectedSessionId;
+      const previousMode = activeSession?.mode ?? DEFAULT_MODE_ID;
+      if (modeId === previousMode) return;
+
+      setSessions((prev) =>
+        prev.map((session) => (session.id === sessionId ? { ...session, mode: modeId } : session))
+      );
+      clearSessionNotice(sessionId);
+
+      const codexSessionId = codexSessionByChatRef.current[sessionId];
+      if (!codexSessionId) return;
+
+      try {
+        await setSessionMode(codexSessionId, modeId);
+      } catch (err) {
+        setSessions((prev) =>
+          prev.map((session) =>
+            session.id === sessionId ? { ...session, mode: previousMode } : session
+          )
+        );
+        setSessionNotices((prev) => ({
+          ...prev,
+          [sessionId]: {
+            kind: 'error',
+            message: t('errors.modeSwitchFailed', { error: formatError(err) }),
+          },
+        }));
+      }
+    },
+    [activeSession?.mode, clearSessionNotice, selectedSessionId, setSessionNotices, setSessions, t]
   );
 
   const handleSelectCwd = useCallback(async () => {
@@ -700,6 +846,9 @@ export function App() {
       totalTokens={totalTokens}
       inputValue={draftMessage}
       onInputChange={handleDraftChange}
+      agentOptions={agentOptions}
+      selectedAgent={selectedMode}
+      onAgentChange={handleModeChange}
       modelOptions={modelOptions}
       selectedModel={selectedModel}
       onModelChange={handleModelChange}

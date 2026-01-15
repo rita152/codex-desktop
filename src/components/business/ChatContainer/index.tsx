@@ -24,6 +24,9 @@ export function ChatContainer({
   isGenerating = false,
   inputValue,
   onInputChange,
+  agentOptions,
+  selectedAgent,
+  onAgentChange,
   modelOptions,
   selectedModel,
   onModelChange,
@@ -49,7 +52,6 @@ export function ChatContainer({
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
-  const [selectedAgent, setSelectedAgent] = useState('agent-full');
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
@@ -145,7 +147,8 @@ export function ChatContainer({
             placeholder={inputPlaceholder}
             onAddClick={onAddClick}
             selectedAgent={selectedAgent}
-            onAgentChange={setSelectedAgent}
+            agentOptions={agentOptions}
+            onAgentChange={onAgentChange}
             selectedModel={selectedModel}
             modelOptions={modelOptions}
             onModelChange={onModelChange}

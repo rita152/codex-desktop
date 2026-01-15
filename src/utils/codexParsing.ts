@@ -374,6 +374,28 @@ function parseModelOptionsFromSessionModels(
   return { currentModelId, options };
 }
 
+function parseModeOptionsFromSessionModes(
+  raw: unknown
+): { currentModeId?: string; options: SelectOption[] } | null {
+  const record = asRecord(raw);
+  if (!record) return null;
+  const currentModeId = getString(record.currentModeId ?? record.current_mode_id);
+  const available = asArray(record.availableModes ?? record.available_modes);
+  const options = available
+    .map((item) => {
+      const optionRecord = asRecord(item);
+      if (!optionRecord) return null;
+      const value = getString(optionRecord.id ?? optionRecord.modeId ?? optionRecord.mode_id);
+      if (!value) return null;
+      const label = getString(optionRecord.name ?? optionRecord.label) ?? value;
+      return { value, label };
+    })
+    .filter(Boolean) as SelectOption[];
+
+  if (options.length === 0 && !currentModeId) return null;
+  return { currentModeId, options };
+}
+
 function parseModelOptionsFromConfigOptions(
   raw: unknown
 ): { currentModelId?: string; options: SelectOption[] } | null {
@@ -418,6 +440,50 @@ function parseModelOptionsFromConfigOptions(
   return { currentModelId, options };
 }
 
+function parseModeOptionsFromConfigOptions(
+  raw: unknown
+): { currentModeId?: string; options: SelectOption[] } | null {
+  const configOptions = asArray(raw);
+  if (configOptions.length === 0) return null;
+
+  const target = configOptions
+    .map((item) => asRecord(item))
+    .find((record) => {
+      if (!record) return false;
+      const id = getString(record.id);
+      return id?.toLowerCase() === 'mode';
+    });
+
+  if (!target) return null;
+  const currentModeId = getString(target.currentValue ?? target.current_value);
+  const optionsField = target.options;
+  const options: SelectOption[] = [];
+
+  const pushOption = (option: UnknownRecord) => {
+    const value = getString(option.value);
+    if (!value) return;
+    const label = getString(option.name) ?? value;
+    options.push({ value, label });
+  };
+
+  for (const item of asArray(optionsField)) {
+    const itemRecord = asRecord(item);
+    if (!itemRecord) continue;
+    const grouped = asArray(itemRecord.options);
+    if (grouped.length > 0) {
+      grouped.forEach((groupItem) => {
+        const optionRecord = asRecord(groupItem);
+        if (optionRecord) pushOption(optionRecord);
+      });
+      continue;
+    }
+    pushOption(itemRecord);
+  }
+
+  if (options.length === 0 && !currentModeId) return null;
+  return { currentModeId, options };
+}
+
 export function resolveModelOptions(
   models: unknown,
   configOptions: unknown
@@ -425,6 +491,13 @@ export function resolveModelOptions(
   return (
     parseModelOptionsFromSessionModels(models) ?? parseModelOptionsFromConfigOptions(configOptions)
   );
+}
+
+export function resolveModeOptions(
+  modes: unknown,
+  configOptions: unknown
+): { currentModeId?: string; options: SelectOption[] } | null {
+  return parseModeOptionsFromSessionModes(modes) ?? parseModeOptionsFromConfigOptions(configOptions);
 }
 
 export function extractSlashCommands(update: unknown): string[] {

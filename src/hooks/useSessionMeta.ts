@@ -23,6 +23,7 @@ export function useSessionMeta() {
   const [sessionModelOptions, setSessionModelOptions] = useState<Record<string, SelectOption[]>>(
     {}
   );
+  const [sessionModeOptions, setSessionModeOptions] = useState<Record<string, SelectOption[]>>({});
 
   const clearSessionNotice = useCallback((sessionId: string) => {
     setSessionNotices((prev) => {
@@ -52,6 +53,12 @@ export function useSessionMeta() {
       if (resetSessionId) delete next[resetSessionId];
       return next;
     });
+    setSessionModeOptions((prev) => {
+      const next = { ...prev };
+      delete next[sessionId];
+      if (resetSessionId) delete next[resetSessionId];
+      return next;
+    });
     setSessionTokenUsage((prev) => {
       const next = { ...prev };
       delete next[sessionId];
@@ -65,10 +72,12 @@ export function useSessionMeta() {
     sessionNotices,
     sessionSlashCommands,
     sessionModelOptions,
+    sessionModeOptions,
     setSessionTokenUsage,
     setSessionNotices,
     setSessionSlashCommands,
     setSessionModelOptions,
+    setSessionModeOptions,
     clearSessionNotice,
     removeSessionMeta,
   };

@@ -41,6 +41,8 @@
   "errors": {
     "modelSetFailed": "模型设置失败：{{error}}",
     "modelSwitchFailed": "模型切换失败：{{error}}",
+    "modeSetFailed": "模式设置失败：{{error}}",
+    "modeSwitchFailed": "模式切换失败：{{error}}",
     "requestFailed": "调用失败：{{error}}",
     "approvalFailed": "审批提交失败：{{error}}",
     "genericError": "发生错误：{{error}}"

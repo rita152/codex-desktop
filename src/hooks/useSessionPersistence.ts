@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
-import { DEFAULT_MODEL_ID } from '../constants/chat';
+import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 import i18n from '../i18n';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
@@ -30,6 +30,7 @@ export function useSessionPersistence(): SessionPersistenceResult {
       id: newSessionId,
       title: i18n.t('chat.newSessionTitle'),
       model: DEFAULT_MODEL_ID,
+      mode: DEFAULT_MODE_ID,
     };
 
     return {
@@ -106,9 +107,22 @@ export function useSessionPersistence(): SessionPersistenceResult {
     );
   }, []);
 
+  const normalizeSessionMode = useCallback(() => {
+    setSessions((prev) =>
+      prev.map((session) => ({
+        ...session,
+        mode: session.mode ?? DEFAULT_MODE_ID,
+      }))
+    );
+  }, []);
+
   useEffect(() => {
     normalizeSessionModel();
   }, [normalizeSessionModel]);
+
+  useEffect(() => {
+    normalizeSessionMode();
+  }, [normalizeSessionMode]);
 
   return {
     sessions,

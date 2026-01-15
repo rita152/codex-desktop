@@ -65,7 +65,18 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
-  const resolvedAgentOptions = agentOptions ?? buildAgentOptions(t);
+  const defaultAgentOptions = useMemo(() => buildAgentOptions(t), [t]);
+  const resolvedAgentOptions = useMemo(() => {
+    const base = agentOptions ?? defaultAgentOptions;
+    if (base.length === 0) return base;
+    const iconMap = new Map(
+      defaultAgentOptions.map((option) => [option.value, option.icon])
+    );
+    return base.map((option) => ({
+      ...option,
+      icon: option.icon ?? iconMap.get(option.value),
+    }));
+  }, [agentOptions, defaultAgentOptions]);
   const defaultModels = useMemo(() => buildDefaultModels(t), [t]);
   const resolvedModelOptions = modelOptions ?? defaultModels;
 

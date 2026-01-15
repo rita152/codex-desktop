@@ -41,6 +41,8 @@
   "errors": {
     "modelSetFailed": "Failed to set model: {{error}}",
     "modelSwitchFailed": "Failed to switch model: {{error}}",
+    "modeSetFailed": "Failed to set mode: {{error}}",
+    "modeSwitchFailed": "Failed to switch mode: {{error}}",
     "requestFailed": "Request failed: {{error}}",
     "approvalFailed": "Failed to submit approval: {{error}}",
     "genericError": "Error: {{error}}"

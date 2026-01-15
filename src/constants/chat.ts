@@ -7,6 +7,7 @@ const DEFAULT_MODEL_OPTIONS = [
 ] as const;
 
 export const DEFAULT_MODEL_ID = DEFAULT_MODEL_OPTIONS[0]?.value ?? 'gpt-5.2-high';
+export const DEFAULT_MODE_ID = 'agent-full';
 
 export const buildDefaultModels = (t: TFunction): Array<{ value: string; label: string }> =>
   DEFAULT_MODEL_OPTIONS.map((option) => ({

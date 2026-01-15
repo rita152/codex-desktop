@@ -7,14 +7,17 @@ import {
   applyToolCallUpdate,
   asRecord,
   extractSlashCommands,
+  getString,
   getToolCallId,
   newMessageId,
   parseToolCall,
+  resolveModeOptions,
 } from '../utils/codexParsing';
 import i18n from '../i18n';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
+import type { SelectOption } from '../components/ui/data-entry/Select/types';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
 import type { ApprovalRequest, TokenUsageEvent } from '../types/codex';
 
@@ -37,6 +40,8 @@ export interface UseCodexEventsParams {
   setIsGeneratingBySession: Dispatch<SetStateAction<Record<string, boolean>>>;
   setSessionTokenUsage: Dispatch<SetStateAction<SessionTokenUsage>>;
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
+  setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
+  setSessionMode: (sessionId: string, modeId: string) => void;
   registerApprovalRequest: (request: ApprovalRequest) => void;
 }
 
@@ -47,6 +52,8 @@ export function useCodexEvents({
   setIsGeneratingBySession,
   setSessionTokenUsage,
   setSessionSlashCommands,
+  setSessionModeOptions,
+  setSessionMode,
   registerApprovalRequest,
 }: UseCodexEventsParams) {
   useEffect(() => {
@@ -317,6 +324,29 @@ export function useCodexEvents({
         if (commands.length === 0) return;
         setSessionSlashCommands((prev) => ({ ...prev, [sessionId]: commands }));
       }),
+      listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) => {
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        const update = asRecord(event.payload.update);
+        if (!update) return;
+        const modeId = getString(update.currentModeId ?? update.current_mode_id);
+        if (!modeId) return;
+        setSessionMode(sessionId, modeId);
+      }),
+      listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) => {
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        const update = asRecord(event.payload.update);
+        if (!update) return;
+        const configOptions = update.configOptions ?? update.config_options ?? update.configOption;
+        const modeState = resolveModeOptions(undefined, configOptions);
+        if (modeState?.options.length) {
+          setSessionModeOptions((prev) => ({ ...prev, [sessionId]: modeState.options }));
+        }
+        if (modeState?.currentModeId) {
+          setSessionMode(sessionId, modeState.currentModeId);
+        }
+      }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
@@ -345,6 +375,8 @@ export function useCodexEvents({
     resolveChatSessionId,
     setIsGeneratingBySession,
     setSessionMessages,
+    setSessionMode,
+    setSessionModeOptions,
     setSessionSlashCommands,
     setSessionTokenUsage,
   ]);

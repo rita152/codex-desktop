@@ -6,6 +6,7 @@ import {
   mergeSelectOptions,
   parseToolCall,
   resolveModelOptions,
+  resolveModeOptions,
 } from './codexParsing';
 
 describe('codexParsing', () => {
@@ -73,5 +74,17 @@ describe('codexParsing', () => {
     );
     expect(result?.currentModelId).toBe('gpt');
     expect(result?.options).toEqual([{ value: 'gpt', label: 'GPT-Model' }]);
+  });
+
+  it('resolves mode options from session modes', () => {
+    const result = resolveModeOptions(
+      {
+        current_mode_id: 'agent-full',
+        available_modes: [{ id: 'agent-full', name: 'Agent (full access)' }],
+      },
+      []
+    );
+    expect(result?.currentModeId).toBe('agent-full');
+    expect(result?.options).toEqual([{ value: 'agent-full', label: 'Agent (full access)' }]);
   });
 });

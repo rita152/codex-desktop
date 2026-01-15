@@ -25,6 +25,12 @@ export interface ChatContainerProps {
   inputValue: string;
   /** 输入框内容变更 */
   onInputChange: (value: string) => void;
+  /** 模式列表 */
+  agentOptions?: SelectOption[];
+  /** 当前选中模式 */
+  selectedAgent?: string;
+  /** 切换模式回调 */
+  onAgentChange?: (agent: string) => void;
   /** 模型列表 */
   modelOptions?: SelectOption[];
   /** 当前选中模型 */
