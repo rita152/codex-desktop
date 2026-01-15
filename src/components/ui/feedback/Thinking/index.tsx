@@ -134,9 +134,7 @@ export function Thinking({
 
   const { title: extractedTitle, body: extractedBody } = extractTitleAndBody(content);
   const labelMarkdown =
-    headerVariant === 'title'
-      ? title ?? extractedTitle ?? t('thinking.label.title')
-      : getLabel();
+    headerVariant === 'title' ? (title ?? extractedTitle ?? t('thinking.label.title')) : getLabel();
   const displayContent = headerVariant === 'title' ? extractedBody : content;
   const hasBodyContent = displayContent.trim().length > 0;
 
@@ -170,11 +168,7 @@ export function Thinking({
         )}
         <div className="thinking__label">
           {headerVariant === 'title' ? (
-            <Markdown
-              content={labelMarkdown}
-              compact
-              className="thinking__label-markdown"
-            />
+            <Markdown content={labelMarkdown} compact className="thinking__label-markdown" />
           ) : (
             labelMarkdown
           )}
@@ -191,11 +185,7 @@ export function Thinking({
       {hasBodyContent && (
         <div className="thinking__content">
           <div className="thinking__content-inner">
-            <Markdown
-              content={displayContent}
-              compact={!isStreaming}
-              className="thinking__text"
-            />
+            <Markdown content={displayContent} compact={!isStreaming} className="thinking__text" />
           </div>
         </div>
       )}

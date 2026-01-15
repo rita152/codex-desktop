@@ -1,0 +1,6 @@
+.icon-story__grid {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}

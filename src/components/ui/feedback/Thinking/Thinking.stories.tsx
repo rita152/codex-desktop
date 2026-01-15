@@ -4,6 +4,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { Thinking } from './index';
 import type { ThinkingPhase } from './types';
+import { cn } from '../../../../utils/cn';
+
+import './Thinking.stories.css';
 
 const meta: Meta<typeof Thinking> = {
   title: 'UI/Thinking',
@@ -115,39 +118,27 @@ function StreamingDemo() {
   const isActive = phase === 'working' || phase === 'thinking';
 
   return (
-    <div style={{ maxWidth: 600 }}>
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+    <div className="thinking-story">
+      <div className="thinking-story__controls">
         <button
           onClick={startStreaming}
           disabled={isActive}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid var(--color-border)',
-            background: isActive ? 'var(--color-bg-muted)' : 'var(--color-primary)',
-            color: isActive ? 'var(--color-text-secondary)' : 'white',
-            cursor: isActive ? 'not-allowed' : 'pointer',
-            fontSize: 14,
-          }}
+          className={cn(
+            'thinking-story__button',
+            'thinking-story__button--primary',
+            isActive && 'thinking-story__button--disabled'
+          )}
         >
           {phase === 'working' ? 'Working...' : phase === 'thinking' ? 'Thinking...' : '开始模拟'}
         </button>
         <button
           onClick={reset}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-bg)',
-            color: 'var(--color-text)',
-            cursor: 'pointer',
-            fontSize: 14,
-          }}
+          className={cn('thinking-story__button', 'thinking-story__button--secondary')}
         >
           重置
         </button>
       </div>
-      
+
       {(content || isActive || duration) && (
         <Thinking
           content={content}
@@ -158,25 +149,24 @@ function StreamingDemo() {
         />
       )}
 
-      <div style={{ 
-        marginTop: 16, 
-        padding: 12, 
-        background: 'var(--color-bg-muted)', 
-        borderRadius: 6,
-        fontSize: 13,
-        color: 'var(--color-text-secondary)',
-      }}>
+      <div className="thinking-story__status">
         <strong>状态：</strong>
         {phase === 'working' ? (
-          <span style={{ color: 'var(--color-warning)' }}>Working (等待响应)</span>
+          <span
+            className={cn('thinking-story__status-text', 'thinking-story__status-text--working')}
+          >
+            Working (等待响应)
+          </span>
         ) : phase === 'thinking' ? (
-          <span style={{ color: 'var(--color-primary)' }}>
+          <span
+            className={cn('thinking-story__status-text', 'thinking-story__status-text--thinking')}
+          >
             Thinking ({duration?.toFixed(1)}s)
           </span>
         ) : duration ? (
-          <span>已完成，耗时 {duration.toFixed(1)} 秒</span>
+          <span className="thinking-story__status-text">已完成，耗时 {duration.toFixed(1)} 秒</span>
         ) : (
-          <span>等待开始</span>
+          <span className="thinking-story__status-text">等待开始</span>
         )}
       </div>
     </div>

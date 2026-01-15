@@ -20,7 +20,16 @@ import './Approval.css';
 
 function ClockIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <circle cx="12" cy="12" r="10" />
       <polyline points="12 6 12 12 16 14" />
     </svg>
@@ -29,7 +38,16 @@ function ClockIcon({ size = 16 }: { size?: number }) {
 
 function CheckIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );
@@ -37,7 +55,16 @@ function CheckIcon({ size = 16 }: { size?: number }) {
 
 function CheckDoubleIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <polyline points="18 6 9 17 4 12" />
       <polyline points="22 10 13 21 11 19" />
     </svg>
@@ -46,7 +73,16 @@ function CheckDoubleIcon({ size = 16 }: { size?: number }) {
 
 function XIcon({ size = 16 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
@@ -137,8 +173,7 @@ export function Approval({
   const showActions = isPending && onSelect && resolvedOptions.length > 0;
   const canReject = resolvedOptions.some((option) => option.kind.startsWith('reject'));
   const shouldShowFeedback = showFeedback ?? canReject;
-  const resolvedFeedbackPlaceholder =
-    feedbackPlaceholder ?? t('approval.feedbackPlaceholder');
+  const resolvedFeedbackPlaceholder = feedbackPlaceholder ?? t('approval.feedbackPlaceholder');
 
   const displayCommand = command ? command.replace(/\s*\n\s*/g, ' ').trim() : '';
 
@@ -160,14 +195,14 @@ export function Approval({
     onFeedbackChange?.(value);
   };
 
-  const hasDetails = Boolean(description || command || (diffs && diffs.length > 0) || shouldShowFeedback);
+  const hasDetails = Boolean(
+    description || command || (diffs && diffs.length > 0) || shouldShowFeedback
+  );
 
   return (
     <div className={classNames} data-call-id={callId}>
       <div className="approval__header">
-        <span className="approval__icon">
-          {getStatusIcon(status, 16)}
-        </span>
+        <span className="approval__icon">{getStatusIcon(status, 16)}</span>
         <span className="approval__title">{title}</span>
         <span className={cn('approval__status', `approval__status--${status}`)}>
           {getStatusLabel(status, t)}

@@ -1,6 +1,6 @@
 export type ApprovalDecision = 'allow-always' | 'allow-once' | 'reject-always' | 'reject-once';
 
-export interface ToolCall {
+export interface ToolCall extends Record<string, unknown> {
   toolCallId?: string;
   tool_call_id?: string;
   name?: string;
@@ -16,18 +16,21 @@ export interface ToolCall {
   _meta?: Record<string, unknown>;
   meta?: Record<string, unknown>;
   arguments?: unknown;
-  [key: string]: unknown;
 }
 
-
-export interface PermissionOption {
+export interface PermissionOption extends Record<string, unknown> {
   optionId?: string;
   option_id?: string;
-  kind?: ApprovalDecision | 'allow_once' | 'allow_always' | 'reject_once' | 'reject_always' | 'abort';
+  kind?:
+    | ApprovalDecision
+    | 'allow_once'
+    | 'allow_always'
+    | 'reject_once'
+    | 'reject_always'
+    | 'abort';
   label?: string;
   name?: string;
   description?: string;
-  [key: string]: unknown;
 }
 
 export interface ApprovalRequest {
@@ -43,11 +46,10 @@ export interface InitializeResult {
   protocolVersion: unknown;
 }
 
-export interface AuthMethod {
+export interface AuthMethod extends Record<string, unknown> {
   id?: string;
   label?: string;
   description?: string;
-  [key: string]: unknown;
 }
 
 export interface NewSessionResult {

@@ -41,6 +41,7 @@
     "genericError": "发生错误：{{error}}"
   },
   "approval": {
+    "title": "需要审批",
     "status": {
       "pending": "等待审批",
       "approved": "已批准",

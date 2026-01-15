@@ -61,7 +61,9 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--radius-md);
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .sidebar__menu-button:hover {
@@ -83,7 +85,6 @@
   background-color: transparent;
   color: var(--color-text-secondary);
 }
-
 
 .sidebar__resize-handle {
   position: absolute;

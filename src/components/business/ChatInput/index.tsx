@@ -76,9 +76,7 @@ export function ChatInput({
   };
 
   const normalizedSlashCommands = useMemo(() => {
-    const cleaned = slashCommands
-      .map((cmd) => cmd.trim().replace(/^\//, ''))
-      .filter(Boolean);
+    const cleaned = slashCommands.map((cmd) => cmd.trim().replace(/^\//, '')).filter(Boolean);
     return Array.from(new Set(cleaned)).sort();
   }, [slashCommands]);
 
@@ -97,9 +95,7 @@ export function ChatInput({
       return { isActive: false, suggestions: [], leading, query: '' };
     }
     const query = afterSlash;
-    const suggestions = normalizedSlashCommands
-      .filter((cmd) => cmd.startsWith(query))
-      .slice(0, 6);
+    const suggestions = normalizedSlashCommands.filter((cmd) => cmd.startsWith(query)).slice(0, 6);
     return {
       isActive: suggestions.length > 0,
       suggestions,
@@ -149,9 +145,7 @@ export function ChatInput({
     if (slashState.isActive && slashState.suggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveSlashIndex((prev) =>
-          Math.min(prev + 1, slashState.suggestions.length - 1)
-        );
+        setActiveSlashIndex((prev) => Math.min(prev + 1, slashState.suggestions.length - 1));
         return;
       }
       if (e.key === 'ArrowUp') {

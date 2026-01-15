@@ -4,6 +4,8 @@ import { FolderIcon, MenuIcon, PlusIcon, SendIcon } from '../../data-display/Ico
 
 import { IconButton } from './index';
 
+import './IconButton.stories.css';
+
 const meta: Meta<typeof IconButton> = {
   title: 'UI/DataEntry/IconButton',
   component: IconButton,
@@ -34,7 +36,7 @@ export const Default: Story = {
     variant: 'default',
   },
   render: (args) => (
-    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+    <div className="icon-button-story__row">
       <IconButton {...args} icon={<PlusIcon size={20} />} aria-label="添加" />
       <IconButton {...args} icon={<MenuIcon size={20} />} aria-label="菜单" />
       <IconButton {...args} icon={<FolderIcon size={20} />} aria-label="目录" />

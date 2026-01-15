@@ -27,6 +27,7 @@ codex-desktop/
 ## 架构模式
 
 前后端通信使用 Tauri 的 invoke 系统：
+
 - 在 `src-tauri/src/lib.rs` 中用 `#[tauri::command]` 定义 Rust 命令
 - 在 Tauri builder 的 `invoke_handler` 中注册命令
 - 前端使用 `invoke("command_name", { args })` 调用

@@ -18,7 +18,9 @@
   font-size: 13px;
   font-family: inherit;
   text-align: left;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .thinking__trigger:hover {
@@ -164,7 +166,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

@@ -125,17 +125,14 @@ export function useCodexEvents({
     };
 
     const upsertToolCallMessage = (sessionId: string, toolCall: ToolCallProps) => {
-      const isStreaming =
-        toolCall.status === 'in-progress' || toolCall.status === 'pending';
+      const isStreaming = toolCall.status === 'in-progress' || toolCall.status === 'pending';
 
       setSessionMessages((prev) => {
         const list = prev[sessionId] ?? [];
         let updated = false;
         const nextList = list.map((msg) => {
           if (!msg.toolCalls) return msg;
-          const index = msg.toolCalls.findIndex(
-            (call) => call.toolCallId === toolCall.toolCallId
-          );
+          const index = msg.toolCalls.findIndex((call) => call.toolCallId === toolCall.toolCallId);
           if (index === -1) return msg;
           updated = true;
           const nextCalls = [...msg.toolCalls];
@@ -180,8 +177,7 @@ export function useCodexEvents({
           if (index === -1) return msg;
           updated = true;
           const nextCall = applyToolCallUpdate(msg.toolCalls[index], update);
-          const isStreaming =
-            nextCall.status === 'in-progress' || nextCall.status === 'pending';
+          const isStreaming = nextCall.status === 'in-progress' || nextCall.status === 'pending';
           const nextCalls = [...msg.toolCalls];
           nextCalls[index] = nextCall;
           return {
@@ -194,8 +190,7 @@ export function useCodexEvents({
 
         if (!updated) {
           const nextCall = applyToolCallUpdate(undefined, update);
-          const isStreaming =
-            nextCall.status === 'in-progress' || nextCall.status === 'pending';
+          const isStreaming = nextCall.status === 'in-progress' || nextCall.status === 'pending';
           const now = Date.now();
           const nextListWithThoughts = closeActiveThoughtMessages(list, now);
           const nextListWithAssistant = closeActiveAssistantMessages(nextListWithThoughts, now);

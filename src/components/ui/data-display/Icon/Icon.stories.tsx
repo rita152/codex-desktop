@@ -19,6 +19,8 @@ import {
   TrashIcon,
 } from './index';
 
+import './Icon.stories.css';
+
 const meta: Meta<typeof ChatIcon> = {
   title: 'UI/DataDisplay/Icon',
   component: ChatIcon,
@@ -38,7 +40,7 @@ export const Default: Story = {
     size: 24,
   },
   render: (args) => (
-    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'center' }}>
+    <div className="icon-story__grid">
       <ChatIcon {...args} />
       <CheckIcon {...args} />
       <ChevronDownIcon {...args} />

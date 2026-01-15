@@ -1,6 +1,11 @@
 import { invoke } from '@tauri-apps/api/core';
 
-import type { ApprovalDecision, NewSessionResult, PromptResult, InitializeResult } from '../types/codex';
+import type {
+  ApprovalDecision,
+  NewSessionResult,
+  PromptResult,
+  InitializeResult,
+} from '../types/codex';
 
 export async function initCodex(): Promise<InitializeResult> {
   return invoke<InitializeResult>('codex_init');

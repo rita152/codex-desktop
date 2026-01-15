@@ -41,15 +41,9 @@ export function useSessionPersistence(): SessionPersistenceResult {
   }, []);
 
   const [sessions, setSessions] = useState<ChatSession[]>(initial.sessions);
-  const [selectedSessionId, setSelectedSessionId] = useState<string>(
-    initial.selectedSessionId
-  );
-  const [sessionMessages, setSessionMessages] = useState<SessionMessages>(
-    initial.sessionMessages
-  );
-  const [sessionDrafts, setSessionDrafts] = useState<SessionDrafts>(
-    initial.sessionDrafts
-  );
+  const [selectedSessionId, setSelectedSessionId] = useState<string>(initial.selectedSessionId);
+  const [sessionMessages, setSessionMessages] = useState<SessionMessages>(initial.sessionMessages);
+  const [sessionDrafts, setSessionDrafts] = useState<SessionDrafts>(initial.sessionDrafts);
 
   useEffect(() => {
     setSessionMessages((prev) => {

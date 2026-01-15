@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { Approval } from './index';
+import { devDebug } from '../../../../utils/logger';
 
 const meta: Meta<typeof Approval> = {
   title: 'UI/Feedback/Approval',
@@ -43,7 +44,7 @@ export const Default: Story = {
     loading: false,
     description: 'Need to install dependencies before build.',
     command: 'npm install @tauri-apps/api',
-    onSelect: (callId, optionId) => console.log('Selected:', callId, optionId),
+    onSelect: (callId, optionId) => devDebug('Selected:', callId, optionId),
   },
 };
 
@@ -55,7 +56,7 @@ export const LongCommand: Story = {
     status: 'pending',
     command:
       'python -m pip install -U "some-very-long-package-name[extra1,extra2,extra3]" --index-url https://example.com/simple --trusted-host example.com --no-cache-dir --disable-pip-version-check --timeout 120',
-    onSelect: (callId, optionId) => console.log('Selected:', callId, optionId),
+    onSelect: (callId, optionId) => devDebug('Selected:', callId, optionId),
   },
 };
 
@@ -80,7 +81,7 @@ export const PatchApproval: Story = {
 `,
       },
     ],
-    onSelect: (callId, optionId) => console.log('Selected:', callId, optionId),
+    onSelect: (callId, optionId) => devDebug('Selected:', callId, optionId),
   },
 };
 
@@ -92,7 +93,7 @@ export const RejectedWithFeedback: Story = {
     status: 'pending',
     command: 'rm -rf /',
     feedback: '该命令风险过高，请提供安全替代方案。',
-    onSelect: (callId, optionId) => console.log('Selected:', callId, optionId),
-    onFeedbackChange: (value) => console.log('Feedback:', value),
+    onSelect: (callId, optionId) => devDebug('Selected:', callId, optionId),
+    onFeedbackChange: (value) => devDebug('Feedback:', value),
   },
 };

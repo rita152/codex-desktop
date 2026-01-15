@@ -3,6 +3,9 @@ import { useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react';
 
 import { ChatInput } from './index';
+import { devDebug } from '../../../utils/logger';
+
+import './ChatInput.stories.css';
 
 const meta: Meta<typeof ChatInput> = {
   title: 'Business/ChatInput',
@@ -32,13 +35,13 @@ export const Default: Story = {
     const [model, setModel] = useState('gpt-5.2-high');
 
     return (
-      <div style={{ padding: '20px' }}>
+      <div className="chat-input-story__container">
         <ChatInput
           {...args}
           value={value}
           onChange={setValue}
           onSend={(msg) => {
-            console.log('发送:', msg);
+            devDebug('发送:', msg);
             setValue('');
           }}
           selectedAgent={agent}

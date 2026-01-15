@@ -4,6 +4,9 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { ChatMessage } from './index';
 import type { ThinkingPhase } from '../../ui/feedback/Thinking';
+import { cn } from '../../../utils/cn';
+
+import './ChatMessage.stories.css';
 
 const meta: Meta<typeof ChatMessage> = {
   title: 'Business/ChatMessage',
@@ -55,13 +58,20 @@ const thinkingContent = `让我思考一下这个问题...
 这个方案应该可行。`;
 
 function ConversationDemo() {
-  const [messages, setMessages] = useState<Array<{
-    id: number;
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp: Date;
-  }>>([
-    { id: 1, role: 'user', content: '帮我解释一下 React 组件设计的最佳实践', timestamp: new Date(Date.now() - 60000) },
+  const [messages, setMessages] = useState<
+    Array<{
+      id: number;
+      role: 'user' | 'assistant';
+      content: string;
+      timestamp: Date;
+    }>
+  >([
+    {
+      id: 1,
+      role: 'user',
+      content: '帮我解释一下 React 组件设计的最佳实践',
+      timestamp: new Date(Date.now() - 60000),
+    },
   ]);
   const [phase, setPhase] = useState<ThinkingPhase>('done');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -97,7 +107,7 @@ function ConversationDemo() {
             if (charIndex >= assistantResponse.length) {
               clearInterval(streamInterval);
               setIsStreaming(false);
-              setMessages(prev => [
+              setMessages((prev) => [
                 ...prev,
                 {
                   id: Date.now(),
@@ -125,7 +135,12 @@ function ConversationDemo() {
 
   const reset = useCallback(() => {
     setMessages([
-      { id: 1, role: 'user', content: '帮我解释一下 React 组件设计的最佳实践', timestamp: new Date(Date.now() - 60000) },
+      {
+        id: 1,
+        role: 'user',
+        content: '帮我解释一下 React 组件设计的最佳实践',
+        timestamp: new Date(Date.now() - 60000),
+      },
     ]);
     setPhase('done');
     setIsStreaming(false);
@@ -138,41 +153,35 @@ function ConversationDemo() {
   const isActive = phase === 'working' || phase === 'thinking' || isStreaming;
 
   return (
-    <div style={{ maxWidth: 700, display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+    <div className="chat-message-story">
+      <div className="chat-message-story__controls">
         <button
           onClick={simulateResponse}
           disabled={isActive}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid var(--color-border)',
-            background: isActive ? 'var(--color-bg-muted)' : 'var(--color-primary)',
-            color: isActive ? 'var(--color-text-secondary)' : 'var(--color-text-inverse)',
-            cursor: isActive ? 'not-allowed' : 'pointer',
-            fontSize: 14,
-          }}
+          className={cn(
+            'chat-message-story__button',
+            'chat-message-story__button--primary',
+            isActive && 'chat-message-story__button--disabled'
+          )}
         >
-          {phase === 'working' ? 'Working...' : phase === 'thinking' ? 'Thinking...' : isStreaming ? '输出中...' : '模拟 AI 回复'}
+          {phase === 'working'
+            ? 'Working...'
+            : phase === 'thinking'
+              ? 'Thinking...'
+              : isStreaming
+                ? '输出中...'
+                : '模拟 AI 回复'}
         </button>
         <button
           onClick={reset}
-          style={{
-            padding: '8px 16px',
-            borderRadius: 6,
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-bg)',
-            color: 'var(--color-text)',
-            cursor: 'pointer',
-            fontSize: 14,
-          }}
+          className={cn('chat-message-story__button', 'chat-message-story__button--secondary')}
         >
           重置
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {messages.map(msg => (
+      <div className="chat-message-story__list">
+        {messages.map((msg) => (
           <ChatMessage
             key={msg.id}
             role={msg.role}

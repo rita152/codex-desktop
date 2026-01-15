@@ -19,7 +19,9 @@
   font-size: 13px;
   font-family: inherit;
   text-align: left;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .tool-call__trigger:hover {

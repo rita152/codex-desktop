@@ -4,6 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { TextArea } from './index';
 
+import './TextArea.stories.css';
+
 const meta: Meta<typeof TextArea> = {
   title: 'UI/DataEntry/TextArea',
   component: TextArea,
@@ -33,7 +35,7 @@ export const Default: Story = {
   render: (args) => {
     const [value, setValue] = useState('');
     return (
-      <div style={{ maxWidth: '500px', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '8px' }}>
+      <div className="text-area-story__container">
         <TextArea {...args} value={value} onChange={setValue} />
       </div>
     );

@@ -36,7 +36,7 @@ import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
 
-function App() {
+export function App() {
   const { t } = useTranslation();
   const {
     sessions,
@@ -152,9 +152,7 @@ function App() {
     const mergedFallback = mergeSelectOptions(DEFAULT_MODELS, modelCache.options ?? []);
     return mergedFallback.length > 0 ? mergedFallback : DEFAULT_MODELS;
   }, [modelCache.options, selectedSessionId, sessionModelOptions]);
-  const activeTokenUsage = selectedSessionId
-    ? sessionTokenUsage[selectedSessionId]
-    : undefined;
+  const activeTokenUsage = selectedSessionId ? sessionTokenUsage[selectedSessionId] : undefined;
   const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
   const totalTokens = activeTokenUsage?.totalTokens;
   const remainingTokens =
@@ -209,7 +207,7 @@ function App() {
       if (Array.isArray(selection) && typeof selection[0] === 'string') return selection[0];
       return null;
     } catch (err) {
-      console.warn('[codex] Failed to open directory picker', err);
+      devDebug('[codex] Failed to open directory picker', err);
       return null;
     }
   }, []);
@@ -226,7 +224,7 @@ function App() {
       }
       return [];
     } catch (err) {
-      console.warn('[codex] Failed to open file picker', err);
+      devDebug('[codex] Failed to open file picker', err);
       return [];
     }
   }, []);
@@ -240,7 +238,7 @@ function App() {
 
   useEffect(() => {
     void initCodex().catch((err) => {
-      console.warn('[codex] init failed', err);
+      devDebug('[codex] init failed', err);
     });
   }, []);
 
@@ -307,9 +305,7 @@ function App() {
         }
         if (!desiredModel) {
           desiredModel =
-            modelState?.currentModelId ??
-            modelState?.options?.[0]?.value ??
-            DEFAULT_MODEL_ID;
+            modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
         }
 
         if (desiredModel && desiredModel !== sessionMeta?.model) {
@@ -331,9 +327,7 @@ function App() {
             clearSessionNotice(chatSessionId);
           } catch (err) {
             const fallbackModel =
-              modelState?.currentModelId ??
-              modelState?.options?.[0]?.value ??
-              DEFAULT_MODEL_ID;
+              modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
             setSessionNotices((prev) => ({
               ...prev,
               [chatSessionId]: {
@@ -343,9 +337,7 @@ function App() {
             }));
             setSessions((prev) =>
               prev.map((session) =>
-                session.id === chatSessionId
-                  ? { ...session, model: fallbackModel }
-                  : session
+                session.id === chatSessionId ? { ...session, model: fallbackModel } : session
               )
             );
           }
@@ -398,10 +390,13 @@ function App() {
     t,
   ]);
 
-  const handleSessionSelect = useCallback((sessionId: string) => {
-    setSelectedSessionId(sessionId);
-    activeSessionIdRef.current = sessionId;
-  }, [setSelectedSessionId]);
+  const handleSessionSelect = useCallback(
+    (sessionId: string) => {
+      setSelectedSessionId(sessionId);
+      activeSessionIdRef.current = sessionId;
+    },
+    [setSelectedSessionId]
+  );
 
   const handleSessionDelete = useCallback(
     (sessionId: string) => {
@@ -477,12 +472,14 @@ function App() {
 
   const handleSessionRename = useCallback(
     (sessionId: string, newTitle: string) => {
-      setSessions((prev) =>
-        prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s))
-      );
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)));
     },
     [setSessions]
   );
+
+  const handleSidebarToggle = useCallback(() => {
+    setSidebarVisible((prev) => !prev);
+  }, []);
 
   const handleModelChange = useCallback(
     async (modelId: string) => {
@@ -491,9 +488,7 @@ function App() {
       if (modelId === previousModel) return;
 
       setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId ? { ...session, model: modelId } : session
-        )
+        prev.map((session) => (session.id === sessionId ? { ...session, model: modelId } : session))
       );
       clearSessionNotice(sessionId);
 
@@ -517,14 +512,7 @@ function App() {
         }));
       }
     },
-    [
-      activeSession?.model,
-      clearSessionNotice,
-      selectedSessionId,
-      setSessionNotices,
-      setSessions,
-      t,
-    ]
+    [activeSession?.model, clearSessionNotice, selectedSessionId, setSessionNotices, setSessions, t]
   );
 
   const handleSelectCwd = useCallback(async () => {
@@ -533,9 +521,7 @@ function App() {
     if (!cwd) return;
 
     setSessions((prev) =>
-      prev.map((session) =>
-        session.id === sessionId ? { ...session, cwd } : session
-      )
+      prev.map((session) => (session.id === sessionId ? { ...session, cwd } : session))
     );
     clearSessionNotice(sessionId);
   }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId, setSessions]);
@@ -578,9 +564,7 @@ function App() {
       // 如果是第一条消息，用消息内容更新会话标题
       if (messages.length === 0) {
         const title = content.slice(0, 20) + (content.length > 20 ? '...' : '');
-        setSessions((prev) =>
-          prev.map((s) => (s.id === sessionId ? { ...s, title } : s))
-        );
+        setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, title } : s)));
       }
 
       void (async () => {
@@ -620,7 +604,10 @@ function App() {
       try {
         const feedback = approvalFeedback[key]?.trim();
         if (feedback) {
-          devDebug('[approval feedback]', { requestId: request.requestId, feedback });
+          devDebug('[approval feedback]', {
+            requestId: request.requestId,
+            length: feedback.length,
+          });
         }
         await approveRequest(request.sessionId, request.requestId, undefined, optionId);
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
@@ -628,7 +615,7 @@ function App() {
           clearApproval(key);
         }, 900);
       } catch (err) {
-        console.error('[approval failed]', err);
+        devDebug('[approval failed]', err);
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
         setApprovalStatuses((prev) => ({ ...prev, [key]: 'pending' }));
         const chatSessionId = resolveChatSessionId(request.sessionId);
@@ -662,7 +649,7 @@ function App() {
           const toolCall = asRecord(request.toolCall) ?? {};
           const toolKind = normalizeToolKind(toolCall.kind);
           const type = toolKind === 'edit' ? 'patch' : 'exec';
-          const title = getString(toolCall.title ?? toolCall.name) ?? 'Approval Required';
+          const title = getString(toolCall.title ?? toolCall.name) ?? t('approval.title');
           const description = extractApprovalDescription(toolCall);
           const command = extractCommand(toolCall.rawInput ?? toolCall.raw_input);
           const diffs = extractApprovalDiffs(toolCall);
@@ -679,8 +666,7 @@ function App() {
             diffs: diffs.length > 0 ? diffs : undefined,
             options: options.length > 0 ? options : undefined,
             feedback: approvalFeedback[key] ?? '',
-            onFeedbackChange: (next) =>
-              setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
+            onFeedbackChange: (next) => setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
             loading: approvalLoading[key] ?? false,
             onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
           };
@@ -694,6 +680,7 @@ function App() {
       resolveChatSessionId,
       selectedSessionId,
       setApprovalFeedback,
+      t,
     ]
   );
 
@@ -724,13 +711,7 @@ function App() {
       cwdLocked={cwdLocked}
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
-      onSidebarToggle={
-        isNarrowLayout
-          ? undefined
-          : () => setSidebarVisible((v) => !v)
-      }
+      onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
     />
   );
 }
-
-export default App;

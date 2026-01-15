@@ -1,21 +1,21 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
-import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
-import { playwright } from "@vitest/browser-playwright";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import { storybookTest } from '@storybook/addon-vitest/vitest-plugin';
+import { playwright } from '@vitest/browser-playwright';
 
 // @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react(), storybookTest({ configDir: ".storybook" })],
+  plugins: [react(), storybookTest({ configDir: '.storybook' })],
   test: {
-    setupFiles: [".storybook/vitest.setup.ts"],
+    setupFiles: ['.storybook/vitest.setup.ts'],
     browser: {
       enabled: true,
       provider: playwright(),
       headless: true,
-      instances: [{ browser: "chromium" }],
+      instances: [{ browser: 'chromium' }],
     },
   },
 
@@ -30,14 +30,14 @@ export default defineConfig(async () => ({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
+          protocol: 'ws',
           host,
           port: 1421,
         }
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      ignored: ['**/src-tauri/**'],
     },
   },
 }));

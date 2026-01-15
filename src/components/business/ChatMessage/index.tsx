@@ -38,16 +38,15 @@ export const ChatMessage = memo(function ChatMessage({
     TYPEWRITER_SPEED,
     TYPEWRITER_MAX_CHARS
   );
-  
-  const thoughtContent = role === 'thought'
-    ? (thinking?.content ?? content)
-    : (thinking?.content ?? '');
-  const thoughtPhase = role === 'thought'
-    ? (thinking?.phase ?? (isStreaming ? 'thinking' : 'done'))
-    : (thinking?.phase ?? 'done');
-  const thoughtStreaming = role === 'thought'
-    ? (thinking?.isStreaming ?? isStreaming)
-    : thinking?.isStreaming;
+
+  const thoughtContent =
+    role === 'thought' ? (thinking?.content ?? content) : (thinking?.content ?? '');
+  const thoughtPhase =
+    role === 'thought'
+      ? (thinking?.phase ?? (isStreaming ? 'thinking' : 'done'))
+      : (thinking?.phase ?? 'done');
+  const thoughtStreaming =
+    role === 'thought' ? (thinking?.isStreaming ?? isStreaming) : thinking?.isStreaming;
   const showCursor = role === 'assistant' && isStreaming;
   const hasToolCalls = Boolean(toolCalls && toolCalls.length > 0);
 
@@ -81,9 +80,7 @@ export const ChatMessage = memo(function ChatMessage({
   // 显示 Thinking 组件的条件：
   // 1. assistant 消息且有 thinking 数据（任何阶段都显示）
   // 2. thought 角色的消息
-  const showThinkingBlock = 
-    (role === 'assistant' && thinking !== undefined) || 
-    role === 'thought';
+  const showThinkingBlock = (role === 'assistant' && thinking !== undefined) || role === 'thought';
   const showBubble = role !== 'thought';
 
   return (

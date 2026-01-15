@@ -83,8 +83,10 @@ export function Select({
   const handleClickOutside = useCallback((event: MouseEvent) => {
     const target = event.target as Node;
     if (
-      containerRef.current && !containerRef.current.contains(target) &&
-      dropdownRef.current && !dropdownRef.current.contains(target)
+      containerRef.current &&
+      !containerRef.current.contains(target) &&
+      dropdownRef.current &&
+      !dropdownRef.current.contains(target)
     ) {
       setIsOpen(false);
       setHighlightedIndex(-1);
@@ -215,9 +217,7 @@ export function Select({
               >
                 {option.icon && <span className="select__option-icon">{option.icon}</span>}
                 <span className="select__option-label">{option.label}</span>
-                {option.value === value && (
-                  <CheckIcon size={16} className="select__option-check" />
-                )}
+                {option.value === value && <CheckIcon size={16} className="select__option-check" />}
               </div>
             );
           })}

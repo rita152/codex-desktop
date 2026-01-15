@@ -121,10 +121,7 @@ export function Working({
     setInternalOpen(isOpen);
   }, [isOpen]);
 
-  const hasIncompleteItem = useMemo(
-    () => items.some(hasIncompleteWorkingItem),
-    [items]
-  );
+  const hasIncompleteItem = useMemo(() => items.some(hasIncompleteWorkingItem), [items]);
 
   useEffect(() => {
     if (!hasIncompleteItem) return;
@@ -161,13 +158,11 @@ export function Working({
   }, [items, startTime]);
 
   const effectiveEnd = useMemo(() => {
-    const endTimes = items
-      .map(extractEndTime)
-      .filter((value): value is number => value !== null);
+    const endTimes = items.map(extractEndTime).filter((value): value is number => value !== null);
     return endTimes.length > 0 ? Math.max(...endTimes) : null;
   }, [items]);
 
-  const resolvedEnd = hasIncompleteItem ? now : effectiveEnd ?? finishedAtRef.current;
+  const resolvedEnd = hasIncompleteItem ? now : (effectiveEnd ?? finishedAtRef.current);
   const totalSeconds =
     effectiveStart !== null && resolvedEnd !== null
       ? Math.max(0, (resolvedEnd - effectiveStart) / 1000)

@@ -115,7 +115,7 @@ export function normalizePermissionKind(value: unknown): PermissionOptionKind {
 
 function extractMeta(raw: UnknownRecord | null): UnknownRecord | null {
   if (!raw) return null;
-  return (asRecord(raw._meta) ?? asRecord(raw.meta)) ?? null;
+  return asRecord(raw._meta) ?? asRecord(raw.meta) ?? null;
 }
 
 function parseToolCallLocations(raw: unknown): ToolCallLocation[] | undefined {
@@ -307,7 +307,7 @@ export function applyToolCallUpdate(
 ): ToolCallProps {
   const meta = extractMeta(raw);
   const toolCallId = getToolCallId(raw) || existing?.toolCallId || newMessageId();
-  const status = raw.status ? normalizeToolCallStatus(raw.status) : existing?.status ?? 'pending';
+  const status = raw.status ? normalizeToolCallStatus(raw.status) : (existing?.status ?? 'pending');
   const kind = normalizeToolKind(raw.kind ?? existing?.kind);
   const title = getString(raw.title) ?? existing?.title ?? 'Tool Call';
   const locations = raw.locations ? parseToolCallLocations(raw.locations) : existing?.locations;
@@ -320,7 +320,7 @@ export function applyToolCallUpdate(
   const startTime = existing?.startTime ?? (status === 'in-progress' ? Date.now() : undefined);
   const duration =
     (status === 'completed' || status === 'failed') && startTime
-      ? existing?.duration ?? (Date.now() - startTime) / 1000
+      ? (existing?.duration ?? (Date.now() - startTime) / 1000)
       : existing?.duration;
 
   return {
@@ -363,8 +363,7 @@ function parseModelOptionsFromSessionModels(
       const optionRecord = asRecord(item);
       if (!optionRecord) return null;
       const value =
-        getString(optionRecord.modelId ?? optionRecord.model_id ?? optionRecord.id) ??
-        undefined;
+        getString(optionRecord.modelId ?? optionRecord.model_id ?? optionRecord.id) ?? undefined;
       if (!value) return null;
       const label = getString(optionRecord.name) ?? value;
       return { value, label };
@@ -424,8 +423,7 @@ export function resolveModelOptions(
   configOptions: unknown
 ): { currentModelId?: string; options: SelectOption[] } | null {
   return (
-    parseModelOptionsFromSessionModels(models) ??
-    parseModelOptionsFromConfigOptions(configOptions)
+    parseModelOptionsFromSessionModels(models) ?? parseModelOptionsFromConfigOptions(configOptions)
   );
 }
 
@@ -433,7 +431,11 @@ export function extractSlashCommands(update: unknown): string[] {
   const updateRecord = asRecord(update);
   const candidates = Array.isArray(update)
     ? update
-    : asArray(updateRecord?.commands ?? updateRecord?.available_commands ?? updateRecord?.availableCommands);
+    : asArray(
+        updateRecord?.commands ??
+          updateRecord?.available_commands ??
+          updateRecord?.availableCommands
+      );
   if (candidates.length === 0) return [];
 
   const names = new Set<string>();
@@ -504,7 +506,10 @@ export function extractApprovalDescription(toolCall: UnknownRecord): string | un
   return texts.length > 0 ? texts.join('\n\n') : undefined;
 }
 
-export function mergeSelectOptions(primary: SelectOption[], fallback: SelectOption[]): SelectOption[] {
+export function mergeSelectOptions(
+  primary: SelectOption[],
+  fallback: SelectOption[]
+): SelectOption[] {
   if (primary.length === 0) return fallback;
   if (fallback.length === 0) return primary;
   const seen = new Set(primary.map((option) => option.value));

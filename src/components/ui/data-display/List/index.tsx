@@ -4,12 +4,7 @@ import type { ListProps } from './types';
 
 import './List.css';
 
-export function List({
-  children,
-  scrollable = false,
-  className = '',
-  ...listProps
-}: ListProps) {
+export function List({ children, scrollable = false, className = '', ...listProps }: ListProps) {
   const classes = cn('list', scrollable && 'list--scrollable', className);
 
   return (

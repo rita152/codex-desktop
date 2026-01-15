@@ -6,7 +6,9 @@
   padding: var(--spacing-lg);
   padding-bottom: var(--spacing-md);
   border: var(--border-width-thin) solid var(--color-border);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   container-type: inline-size;
 }
 
@@ -164,7 +166,7 @@
   .chat-input__toolbar .select__value {
     display: none;
   }
-  
+
   .chat-input__toolbar .select__icon {
     display: none;
   }

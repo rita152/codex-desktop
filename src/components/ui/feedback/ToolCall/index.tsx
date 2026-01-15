@@ -20,12 +20,7 @@ import {
   ToolIcon,
 } from './icons';
 
-import type {
-  ToolCallProps,
-  ToolCallStatus,
-  ToolKind,
-  ToolCallLocation,
-} from './types';
+import type { ToolCallProps, ToolCallStatus, ToolKind, ToolCallLocation } from './types';
 
 import './ToolCall.css';
 
@@ -189,9 +184,7 @@ export const ToolCall = memo(function ToolCall({
         aria-expanded={isOpen}
         disabled={!canToggle}
       >
-        <span className="tool-call__icon tool-call__icon--kind">
-          {kindIcon}
-        </span>
+        <span className="tool-call__icon tool-call__icon--kind">{kindIcon}</span>
         <span className="tool-call__title">
           <span className="tool-call__title-text" title={title}>
             {title}
@@ -199,11 +192,7 @@ export const ToolCall = memo(function ToolCall({
           {locations && locations.length > 0 && (
             <span className="tool-call__locations">
               {locations.map((loc) => (
-                <span
-                  key={formatLocationKey(loc)}
-                  className="tool-call__location"
-                  title={loc.uri}
-                >
+                <span key={formatLocationKey(loc)} className="tool-call__location" title={loc.uri}>
                   <FileIcon size={12} />
                   <span>{formatLocation(loc)}</span>
                 </span>
@@ -211,15 +200,11 @@ export const ToolCall = memo(function ToolCall({
             </span>
           )}
         </span>
-        <span className="tool-call__icon tool-call__icon--status">
-          {statusIcon}
-        </span>
+        <span className="tool-call__icon tool-call__icon--status">{statusIcon}</span>
         <span className={cn('tool-call__status', `tool-call__status--${status}`)}>
           {statusLabel}
         </span>
-        {showDuration && (
-          <span className="tool-call__duration">{showDuration}</span>
-        )}
+        {showDuration && <span className="tool-call__duration">{showDuration}</span>}
         {hasContent && (
           <span className="tool-call__chevron">
             <ChevronDownIcon size={14} />

@@ -6,6 +6,8 @@ import { ChatMessageList } from './index';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { ToolCallProps } from '../../ui/feedback/ToolCall';
 
+import './ChatMessageList.stories.css';
+
 const meta: Meta<typeof ChatMessageList> = {
   title: 'Business/ChatMessageList',
   component: ChatMessageList,
@@ -123,16 +125,7 @@ const approvals: ApprovalProps[] = [
 
 export const Default: Story = {
   render: () => (
-    <div
-      style={{
-        height: 520,
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid var(--color-border)',
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
-    >
+    <div className="chat-message-list-story__container">
       <ChatMessageList messages={messages} approvals={approvals} />
     </div>
   ),
@@ -162,16 +155,7 @@ const orderingMessages: Message[] = [
 
 export const WorkingPlacement: Story = {
   render: () => (
-    <div
-      style={{
-        height: 520,
-        display: 'flex',
-        flexDirection: 'column',
-        border: '1px solid var(--color-border)',
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
-    >
+    <div className="chat-message-list-story__container">
       <ChatMessageList messages={orderingMessages} isGenerating />
     </div>
   ),
@@ -180,11 +164,9 @@ export const WorkingPlacement: Story = {
       canvasElement.querySelectorAll('.chat-message')
     ) as HTMLElement[];
     const userMessage =
-      messageNodes.find((node) => node.textContent?.includes('New prompt message.')) ??
-      null;
+      messageNodes.find((node) => node.textContent?.includes('New prompt message.')) ?? null;
     const assistantMessage =
-      messageNodes.find((node) => node.textContent?.includes('Streaming response starts.')) ??
-      null;
+      messageNodes.find((node) => node.textContent?.includes('Streaming response starts.')) ?? null;
     const working = canvasElement.querySelector('.working') as HTMLElement | null;
 
     expect(userMessage).not.toBeNull();
@@ -198,8 +180,7 @@ export const WorkingPlacement: Story = {
     const workingBeforeAssistant =
       working &&
       assistantMessage &&
-      (working.compareDocumentPosition(assistantMessage) &
-        Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+      (working.compareDocumentPosition(assistantMessage) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
 
     expect(userBeforeWorking).toBe(true);
     expect(workingBeforeAssistant).toBe(true);

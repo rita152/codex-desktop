@@ -17,12 +17,14 @@ Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rus
 ## 技术栈
 
 ### 前端
+
 - React 19 + TypeScript
 - Vite 7
 - CSS Modules
 - Storybook 10
 
 ### 后端
+
 - Rust (2021 Edition)
 - Tauri 2
 

@@ -2,7 +2,10 @@ import { useCallback, useState } from 'react';
 
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
 
-export type SessionNotice = { kind: 'error' | 'info'; message: string };
+export interface SessionNotice {
+  kind: 'error' | 'info';
+  message: string;
+}
 export type SessionTokenUsage = Record<
   string,
   {
@@ -17,9 +20,9 @@ export function useSessionMeta() {
   const [sessionTokenUsage, setSessionTokenUsage] = useState<SessionTokenUsage>({});
   const [sessionNotices, setSessionNotices] = useState<Record<string, SessionNotice>>({});
   const [sessionSlashCommands, setSessionSlashCommands] = useState<Record<string, string[]>>({});
-  const [sessionModelOptions, setSessionModelOptions] = useState<
-    Record<string, SelectOption[]>
-  >({});
+  const [sessionModelOptions, setSessionModelOptions] = useState<Record<string, SelectOption[]>>(
+    {}
+  );
 
   const clearSessionNotice = useCallback((sessionId: string) => {
     setSessionNotices((prev) => {

@@ -6,8 +6,10 @@ export interface ListItemAction {
   onClick: () => void;
 }
 
-export interface ListItemProps
-  extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'onClick'> {
+export interface ListItemProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'children' | 'onClick'
+> {
   icon?: ReactNode;
   children: ReactNode;
   selected?: boolean;

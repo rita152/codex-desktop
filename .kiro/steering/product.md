@@ -9,5 +9,5 @@ Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rus
 ## 目标平台
 
 - macOS
-- Windows  
+- Windows
 - Linux

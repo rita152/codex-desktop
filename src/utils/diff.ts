@@ -1,7 +1,7 @@
-type DiffOp = {
+interface DiffOp {
   type: 'context' | 'add' | 'remove';
   text: string;
-};
+}
 
 function splitLines(text: string): string[] {
   if (!text) return [];

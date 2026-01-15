@@ -17,12 +17,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
   },
   ref
 ) {
-  const classes = cn(
-    'icon-button',
-    `icon-button--${size}`,
-    `icon-button--${variant}`,
-    className
-  );
+  const classes = cn('icon-button', `icon-button--${size}`, `icon-button--${variant}`, className);
 
   return (
     <button ref={ref} type="button" className={classes} {...buttonProps} aria-label={ariaLabel}>

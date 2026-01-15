@@ -33,8 +33,7 @@ const resolveInitialLanguage = (): SupportedLanguage => {
   }
   if (stored) return normalizeLanguage(stored);
 
-  const navLanguage =
-    navigator.languages?.[0] ?? navigator.language ?? navigator.languages?.[0];
+  const navLanguage = navigator.languages?.[0] ?? navigator.language ?? navigator.languages?.[0];
   return normalizeLanguage(navLanguage);
 };
 
@@ -71,7 +70,6 @@ i18n.on('languageChanged', (language) => {
   }
 });
 
-export const setLanguage = (language: string) =>
-  i18n.changeLanguage(normalizeLanguage(language));
+export const setLanguage = (language: string) => i18n.changeLanguage(normalizeLanguage(language));
 
 export default i18n;

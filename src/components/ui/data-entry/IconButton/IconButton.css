@@ -7,7 +7,9 @@
   cursor: pointer;
   border-radius: var(--radius-md);
   color: var(--color-text-secondary);
-  transition: background-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
 }
 
 .icon-button:focus-visible {

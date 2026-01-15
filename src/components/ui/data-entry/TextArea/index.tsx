@@ -7,15 +7,7 @@ import type { TextAreaProps } from './types';
 import './TextArea.css';
 
 export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(function TextArea(
-  {
-    value,
-    onChange,
-    maxRows = 6,
-    minRows = 1,
-    onKeyDown,
-    className = '',
-    ...textareaProps
-  },
+  { value, onChange, maxRows = 6, minRows = 1, onKeyDown, className = '', ...textareaProps },
   ref
 ) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);

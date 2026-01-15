@@ -22,7 +22,9 @@
   font-size: 13px;
   font-family: inherit;
   text-align: left;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .working__trigger:hover {
@@ -142,7 +144,8 @@
 }
 
 @keyframes working-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

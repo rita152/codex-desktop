@@ -59,8 +59,7 @@ export function ChatContainer({
   const classNames = cn('chat-container', className);
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
-  const displayCwd =
-    sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : t('chat.defaultCwd');
+  const displayCwd = sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : t('chat.defaultCwd');
 
   return (
     <div className={classNames}>
@@ -126,9 +125,7 @@ export function ChatContainer({
           )}
         </div>
         {showWelcome ? (
-          <div className="chat-container__welcome">
-            {welcomeContent}
-          </div>
+          <div className="chat-container__welcome">{welcomeContent}</div>
         ) : (
           <div className="chat-container__messages">
             <ChatMessageList
@@ -161,7 +158,6 @@ export function ChatContainer({
             className="chat-container__input"
           />
         </div>
-
       </div>
     </div>
   );

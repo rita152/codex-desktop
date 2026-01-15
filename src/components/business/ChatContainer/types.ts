@@ -4,6 +4,7 @@ import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
+import type { SessionNotice } from '../../../hooks/useSessionMeta';
 
 export interface ChatContainerProps {
   /** 会话列表 */
@@ -13,7 +14,7 @@ export interface ChatContainerProps {
   /** 当前会话工作目录 */
   sessionCwd?: string;
   /** 当前会话提示信息 */
-  sessionNotice?: { kind: 'error' | 'info'; message: string } | null;
+  sessionNotice?: SessionNotice | null;
   /** 当前会话的消息列表 */
   messages: Message[];
   /** 待审批列表 */

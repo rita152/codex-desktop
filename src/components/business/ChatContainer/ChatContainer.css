@@ -20,7 +20,9 @@
 .chat-container__sidebar {
   flex-shrink: 0;
   height: 100%;
-  transition: margin-left 0.2s ease, opacity 0.2s ease;
+  transition:
+    margin-left 0.2s ease,
+    opacity 0.2s ease;
 }
 
 /* .chat-container__sidebar--hidden: margin-left 由内联样式动态设置，基于实际 sidebar 宽度 */
@@ -101,7 +103,11 @@
   max-width: 420px;
   min-width: 0;
   font-family: inherit;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease, transform 0.08s ease;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.08s ease;
 }
 
 .chat-container__cwd-button:hover:not(:disabled) {

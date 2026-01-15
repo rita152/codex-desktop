@@ -16,8 +16,7 @@ export function closeActiveThoughtMessages(list: Message[], now: number): Messag
 
   const message = list[lastThoughtIdx];
   const startTime = message.thinking?.startTime;
-  const duration =
-    startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
+  const duration = startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
   const content = message.thinking?.content ?? message.content;
   const nextMessage: Message = {
     ...message,
@@ -46,8 +45,7 @@ export function closeActiveAssistantMessages(list: Message[], now: number): Mess
 
   const message = list[lastAssistantIdx];
   const startTime = message.thinking?.startTime;
-  const duration =
-    startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
+  const duration = startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
   const nextMessage: Message = {
     ...message,
     isStreaming: false,

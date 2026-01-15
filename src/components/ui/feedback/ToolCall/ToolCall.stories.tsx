@@ -60,9 +60,7 @@ export const Default: Story = {
     title: 'read_file',
     kind: 'read',
     status: 'completed',
-    locations: [
-      { uri: 'src/App.tsx', range: { startLine: 1, endLine: 50 } },
-    ],
+    locations: [{ uri: 'src/App.tsx', range: { startLine: 1, endLine: 50 } }],
     rawOutput: {
       ok: true,
       tool: 'read_file',

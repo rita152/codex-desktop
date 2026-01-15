@@ -5,6 +5,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 import type { WorkingItem } from './types';
 import { Working } from './index';
 
+import './Working.stories.css';
+
 const meta: Meta<typeof Working> = {
   title: 'UI/Feedback/Working',
   component: Working,
@@ -78,7 +80,7 @@ function WorkingDemo() {
 
 export const Default: Story = {
   render: () => (
-    <div style={{ maxWidth: 720 }}>
+    <div className="working-story__container">
       <WorkingDemo />
     </div>
   ),

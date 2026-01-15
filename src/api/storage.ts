@@ -1,4 +1,5 @@
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import { devDebug } from '../utils/logger';
 
 const MODEL_CACHE_KEY = 'codex-desktop.model-options';
 const MODEL_CACHE_VERSION = 1;
@@ -52,7 +53,7 @@ export function loadModelOptionsCache(maxAgeMs: number = MODEL_CACHE_MAX_AGE_MS)
         : undefined;
     return { options, currentModelId, updatedAt: parsed.updatedAt };
   } catch (err) {
-    console.warn('[storage] Failed to load model options cache', err);
+    devDebug('[storage] Failed to load model options cache', err);
     return null;
   }
 }
@@ -85,6 +86,6 @@ export function saveModelOptionsCache(payload: {
   try {
     localStorage.setItem(MODEL_CACHE_KEY, JSON.stringify(persisted));
   } catch (err) {
-    console.warn('[storage] Failed to save model options cache', err);
+    devDebug('[storage] Failed to save model options cache', err);
   }
 }

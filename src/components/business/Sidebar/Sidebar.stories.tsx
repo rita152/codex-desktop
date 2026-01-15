@@ -2,6 +2,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { Sidebar } from './index';
 
+import './Sidebar.stories.css';
+
 const mockSessions = [
   { id: '1', title: '今天的天气怎么样' },
   { id: '2', title: '今天的天气怎么...' },
@@ -18,7 +20,7 @@ const meta: Meta<typeof Sidebar> = {
   },
   decorators: [
     (Story) => (
-      <div style={{ height: '500px' }}>
+      <div className="sidebar-story__container">
         <Story />
       </div>
     ),

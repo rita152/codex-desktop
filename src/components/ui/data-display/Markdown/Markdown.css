@@ -34,10 +34,18 @@
   margin-top: 0;
 }
 
-.markdown h1 { font-size: 1.5em; }
-.markdown h2 { font-size: 1.3em; }
-.markdown h3 { font-size: 1.15em; }
-.markdown h4 { font-size: 1em; }
+.markdown h1 {
+  font-size: 1.5em;
+}
+.markdown h2 {
+  font-size: 1.3em;
+}
+.markdown h3 {
+  font-size: 1.15em;
+}
+.markdown h4 {
+  font-size: 1em;
+}
 
 /* 行内代码 */
 .markdown__code--inline {
@@ -142,7 +150,7 @@
 }
 
 /* 任务列表 */
-.markdown input[type="checkbox"] {
+.markdown input[type='checkbox'] {
   margin-right: var(--spacing-sm);
 }
 

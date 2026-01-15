@@ -158,12 +158,8 @@ function DiffLineRow({ line, showLineNumbers }: DiffLineRowProps) {
     <tr className={cn('git-diff__row', `git-diff__row--${line.type}`)}>
       {showLineNumbers && (
         <>
-          <td className="git-diff__line-number">
-            {line.oldLineNumber ?? ''}
-          </td>
-          <td className="git-diff__line-number">
-            {line.newLineNumber ?? ''}
-          </td>
+          <td className="git-diff__line-number">{line.oldLineNumber ?? ''}</td>
+          <td className="git-diff__line-number">{line.newLineNumber ?? ''}</td>
         </>
       )}
       <td className="git-diff__line-content">

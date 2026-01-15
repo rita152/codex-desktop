@@ -10,11 +10,7 @@ import {
 
 describe('codexParsing', () => {
   it('extracts and normalizes slash commands', () => {
-    const commands = extractSlashCommands([
-      { name: '/review' },
-      ' /init ',
-      { command: 'compact' },
-    ]);
+    const commands = extractSlashCommands([{ name: '/review' }, ' /init ', { command: 'compact' }]);
     expect(commands).toEqual(['compact', 'init', 'review']);
   });
 

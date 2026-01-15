@@ -89,7 +89,10 @@
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
-  transition: background-color 0.15s, border-color 0.15s, opacity 0.15s;
+  transition:
+    background-color 0.15s,
+    border-color 0.15s,
+    opacity 0.15s;
 }
 
 .approval__btn:focus-visible {

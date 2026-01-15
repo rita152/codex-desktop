@@ -131,11 +131,7 @@ const buildChatGroups = (
       extractedWorking = true;
     }
 
-    const hasToolCalls = addToolCallItems(
-      message.toolCalls,
-      pushWorkingItem,
-      `tool-${message.id}`
-    );
+    const hasToolCalls = addToolCallItems(message.toolCalls, pushWorkingItem, `tool-${message.id}`);
     extractedWorking = extractedWorking || hasToolCalls;
 
     const displayMessage = extractedWorking
@@ -148,9 +144,7 @@ const buildChatGroups = (
 
   if (approvals && approvals.length > 0) {
     approvals.forEach((approval, index) => {
-      const itemId = approval.callId
-        ? `approval-${approval.callId}`
-        : `approval-${index}`;
+      const itemId = approval.callId ? `approval-${approval.callId}` : `approval-${index}`;
       pushWorkingItem({ type: 'approval', data: approval }, itemId);
     });
   }
@@ -171,17 +165,15 @@ const buildChatGroups = (
     return -1;
   })();
   const lastWorkingGroup =
-    [...groups].reverse().find((group): group is WorkingGroup => group.type === 'working') ??
-    null;
+    [...groups].reverse().find((group): group is WorkingGroup => group.type === 'working') ?? null;
   const currentWorkingGroup =
     lastUserMessageId !== null
-      ? [...groups]
+      ? ([...groups]
           .reverse()
           .find(
             (group): group is WorkingGroup =>
-              group.type === 'working' &&
-              group.id.startsWith(`working-user-${lastUserMessageId}`)
-          ) ?? null
+              group.type === 'working' && group.id.startsWith(`working-user-${lastUserMessageId}`)
+          ) ?? null)
       : null;
 
   if (isGenerating) {
@@ -197,15 +189,10 @@ const buildChatGroups = (
     }
   }
 
-  if (
-    isGenerating &&
-    (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup))
-  ) {
+  if (isGenerating && (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup))) {
     const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
     const startTime =
-      lastUserMessage?.timestamp instanceof Date
-        ? lastUserMessage.timestamp.getTime()
-        : Date.now();
+      lastUserMessage?.timestamp instanceof Date ? lastUserMessage.timestamp.getTime() : Date.now();
     if (lastUserMessage?.id !== undefined) {
       lastUserMessageId = lastUserMessage.id;
     }
@@ -405,8 +392,7 @@ export const ChatMessageList = memo(function ChatMessageList({
                 top: 0,
                 left: 0,
                 width: '100%',
-                paddingBottom:
-                  virtualRow.index === groups.length - 1 ? 0 : 'var(--spacing-lg)',
+                paddingBottom: virtualRow.index === groups.length - 1 ? 0 : 'var(--spacing-lg)',
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
