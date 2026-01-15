@@ -9,6 +9,7 @@
     "build:tauri": "npm run fetch:codex-acp && npm run build",
     "fetch:codex-acp": "node scripts/fetch-codex-acp.mjs",
     "test": "vitest --browser --run",
+    "test:unit": "vitest --run --config vitest.unit.config.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "format": "prettier . --check",
