@@ -9,7 +9,7 @@ use crate::codex::{
 use agent_client_protocol::{
     Client, ClientSideConnection, PermissionOption, PermissionOptionId, PermissionOptionKind,
     RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
-    SelectedPermissionOutcome, SessionNotification, SessionUpdate,
+    SelectedPermissionOutcome, SessionNotification, SessionUpdate, ExtNotification,
 };
 use anyhow::{anyhow, Context, Result};
 use serde_json::json;
@@ -277,6 +277,18 @@ impl Client for AcpClient {
                 );
             }
             _ => {}
+        }
+        Ok(())
+    }
+
+    async fn ext_notification(
+        &self,
+        args: ExtNotification,
+    ) -> agent_client_protocol::Result<()> {
+        if args.method.as_ref() == "codex/token-usage" {
+            if let Ok(payload) = serde_json::from_str::<serde_json::Value>(args.params.get()) {
+                let _ = self.app.emit(EVENT_TOKEN_USAGE, payload);
+            }
         }
         Ok(())
     }

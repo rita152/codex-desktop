@@ -10,3 +10,4 @@ pub const EVENT_CONFIG_OPTION_UPDATE: &str = "codex:config-option-update";
 pub const EVENT_TURN_COMPLETE: &str = "codex:turn-complete";
 pub const EVENT_ERROR: &str = "codex:error";
 pub const EVENT_DEBUG: &str = "codex:debug";
+pub const EVENT_TOKEN_USAGE: &str = "codex:token-usage";
