@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { ChatMessage } from '../ChatMessage';
 import { Working } from '../../ui/feedback/Working';
@@ -254,6 +255,14 @@ export const ChatMessageList = memo(function ChatMessageList({
     () => buildChatGroups(messages, approvals, isGenerating),
     [messages, approvals, isGenerating]
   );
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const virtualizer = useVirtualizer({
+    count: groups.length,
+    getScrollElement: () => containerRef.current,
+    estimateSize: () => 120,
+    overscan: 6,
+    getItemKey: (index) => groups[index]?.id ?? index,
+  });
   const lastWorkingId = useMemo(() => {
     for (let i = groups.length - 1; i >= 0; i -= 1) {
       const group = groups[i];
@@ -338,42 +347,72 @@ export const ChatMessageList = memo(function ChatMessageList({
 
   return (
     <div className={classNames} ref={containerRef}>
-      {groups.map((group) => {
-        if (group.type === 'message') {
-          const message = group.message;
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          position: 'relative',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const group = groups[virtualRow.index];
+          if (!group) return null;
+
+          let content: JSX.Element | null = null;
+          if (group.type === 'message') {
+            const message = group.message;
+            content = (
+              <ChatMessage
+                key={`message-${group.id}`}
+                role={message.role}
+                content={message.content}
+                thinking={message.thinking}
+                toolCalls={message.toolCalls}
+                isStreaming={message.role !== 'user' ? message.isStreaming : false}
+                timestamp={message.timestamp}
+              />
+            );
+          } else {
+            const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
+            const handleToggle = () => {
+              const fallbackOpen = group.id === lastWorkingId;
+              setWorkingOpenMap((prev) => ({
+                ...prev,
+                [group.id]: !(prev[group.id] ?? fallbackOpen),
+              }));
+            };
+
+            content = (
+              <Working
+                key={group.id}
+                items={group.items}
+                startTime={group.startTime}
+                isOpen={isOpen}
+                isActive={group.isActive}
+                onToggle={handleToggle}
+              />
+            );
+          }
+
           return (
-            <ChatMessage
-              key={`message-${group.id}`}
-              role={message.role}
-              content={message.content}
-              thinking={message.thinking}
-              toolCalls={message.toolCalls}
-              isStreaming={message.role !== 'user' ? message.isStreaming : false}
-              timestamp={message.timestamp}
-            />
+            <div
+              key={virtualRow.key}
+              data-index={virtualRow.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                paddingBottom:
+                  virtualRow.index === groups.length - 1 ? 0 : 'var(--spacing-lg)',
+                transform: `translateY(${virtualRow.start}px)`,
+              }}
+            >
+              {content}
+            </div>
           );
-        }
-
-        const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
-        const handleToggle = () => {
-          const fallbackOpen = group.id === lastWorkingId;
-          setWorkingOpenMap((prev) => ({
-            ...prev,
-            [group.id]: !(prev[group.id] ?? fallbackOpen),
-          }));
-        };
-
-        return (
-          <Working
-            key={group.id}
-            items={group.items}
-            startTime={group.startTime}
-            isOpen={isOpen}
-            isActive={group.isActive}
-            onToggle={handleToggle}
-          />
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 });

@@ -156,12 +156,19 @@ export const ToolCall = memo(function ToolCall({
     return () => clearInterval(timer);
   }, [isActive, startTime]);
 
-  const showDuration =
-    status === 'in-progress' && startTime
-      ? formatDuration(elapsedTime)
-      : (status === 'completed' || status === 'failed') && duration !== undefined
-        ? formatDuration(duration)
-        : null;
+  const showDuration = useMemo(() => {
+    if (status === 'in-progress' && startTime) {
+      return formatDuration(elapsedTime);
+    }
+    if ((status === 'completed' || status === 'failed') && duration !== undefined) {
+      return formatDuration(duration);
+    }
+    return null;
+  }, [duration, elapsedTime, startTime, status]);
+
+  const kindIcon = useMemo(() => getKindIcon(kind, 16), [kind]);
+  const statusIcon = useMemo(() => getStatusIcon(status, 14), [status]);
+  const statusLabel = useMemo(() => getStatusLabel(status), [status]);
 
   const canToggle = hasContent;
 
@@ -183,7 +190,7 @@ export const ToolCall = memo(function ToolCall({
         disabled={!canToggle}
       >
         <span className="tool-call__icon tool-call__icon--kind">
-          {getKindIcon(kind, 16)}
+          {kindIcon}
         </span>
         <span className="tool-call__title">
           <span className="tool-call__title-text" title={title}>
@@ -201,10 +208,10 @@ export const ToolCall = memo(function ToolCall({
           )}
         </span>
         <span className="tool-call__icon tool-call__icon--status">
-          {getStatusIcon(status, 14)}
+          {statusIcon}
         </span>
         <span className={`tool-call__status tool-call__status--${status}`}>
-          {getStatusLabel(status)}
+          {statusLabel}
         </span>
         {showDuration && (
           <span className="tool-call__duration">{showDuration}</span>
