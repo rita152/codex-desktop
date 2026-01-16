@@ -2,6 +2,8 @@
   flex: 0 0 var(--terminal-panel-width, 360px);
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 101;
   background: var(--color-bg-elevated);
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-lg);

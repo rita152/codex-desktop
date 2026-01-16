@@ -849,7 +849,14 @@ export function App() {
 
   const handleTerminalClose = useCallback(() => {
     setTerminalVisible(false);
-  }, []);
+    if (!selectedSessionId || !activeTerminalId) return;
+    setTerminalBySession((prev) => {
+      const next = { ...prev };
+      delete next[selectedSessionId];
+      return next;
+    });
+    void terminalKill(activeTerminalId);
+  }, [activeTerminalId, selectedSessionId, setTerminalBySession, setTerminalVisible]);
 
   const handleSendMessage = useCallback(
     (content: string) => {
