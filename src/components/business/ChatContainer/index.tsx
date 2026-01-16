@@ -5,6 +5,7 @@ import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
+import { TerminalPanel } from '../TerminalPanel';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
@@ -34,6 +35,10 @@ export function ChatContainer({
   slashCommands,
   inputPlaceholder,
   onAddClick,
+  onSideAction,
+  terminalVisible = false,
+  terminalId,
+  onTerminalClose,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -59,6 +64,7 @@ export function ChatContainer({
     onInputChange('');
   };
 
+  const hasTerminalPanel = terminalVisible;
   const classNames = cn('chat-container', className);
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
@@ -102,8 +108,20 @@ export function ChatContainer({
         />
       </div>
 
-      <div className="chat-container__main">
-        <ChatSideActions />
+      <div
+        className={cn(
+          'chat-container__main',
+          hasTerminalPanel && 'chat-container__main--terminal-open'
+        )}
+      >
+        <ChatSideActions onAction={onSideAction} />
+        {(terminalVisible || terminalId) && (
+          <TerminalPanel
+            terminalId={terminalId}
+            visible={terminalVisible}
+            onClose={onTerminalClose}
+          />
+        )}
         <div className="chat-container__session-header">
           <div className="chat-container__session-meta">
             <button

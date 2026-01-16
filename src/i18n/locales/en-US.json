@@ -33,6 +33,11 @@
     "terminal": "Terminal",
     "web": "Web"
   },
+  "terminalPanel": {
+    "title": "Terminal",
+    "close": "Close",
+    "starting": "Starting terminal..."
+  },
   "models": {
     "gpt52High": "gpt-5.2 (high)",
     "gpt52": "gpt-5.2",

@@ -33,6 +33,11 @@
     "terminal": "终端",
     "web": "网页"
   },
+  "terminalPanel": {
+    "title": "终端",
+    "close": "关闭",
+    "starting": "正在启动终端..."
+  },
   "models": {
     "gpt52High": "gpt-5.2 (high)",
     "gpt52": "gpt-5.2",

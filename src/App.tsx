@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -37,6 +38,7 @@ import {
   resolveModeOptions,
 } from './utils/codexParsing';
 import { devDebug } from './utils/logger';
+import { terminalKill, terminalSpawn } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
@@ -47,6 +49,10 @@ import type { ApprovalRequest } from './types/codex';
 import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
+
+type TerminalExitEvent = {
+  terminalId: string;
+};
 
 export function App() {
   const { t } = useTranslation();
@@ -85,6 +91,8 @@ export function App() {
   const [sidebarVisible, setSidebarVisible] = useState(true);
   const sidebarVisibilityRef = useRef(true);
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
+  const [terminalVisible, setTerminalVisible] = useState(false);
+  const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const {
     sessionTokenUsage,
     sessionNotices,
@@ -213,6 +221,7 @@ export function App() {
   const isGenerating = isGeneratingBySession[selectedSessionId] ?? false;
   // 当对话已有消息时，锁定工作目录（无法切换）
   const cwdLocked = messages.length > 0;
+  const activeTerminalId = selectedSessionId ? terminalBySession[selectedSessionId] : undefined;
 
   useEffect(() => {
     if (!modelOptions || modelOptions.length === 0) return;
@@ -329,6 +338,36 @@ export function App() {
       devDebug('[codex] init failed', err);
     });
   }, []);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    const setupListener = async () => {
+      unlisten = await listen<TerminalExitEvent>('terminal-exit', (event) => {
+        const terminalId = event.payload.terminalId;
+        setTerminalBySession((prev) => {
+          const entries = Object.entries(prev);
+          const next = entries.reduce<Record<string, string>>((acc, [sessionId, id]) => {
+            if (id !== terminalId) {
+              acc[sessionId] = id;
+            }
+            return acc;
+          }, {});
+          return next;
+        });
+        void terminalKill(terminalId);
+        if (activeTerminalId === terminalId) {
+          setTerminalVisible(false);
+        }
+      });
+    };
+
+    void setupListener();
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, [activeTerminalId, setTerminalBySession, setTerminalVisible]);
 
   useCodexEvents({
     resolveChatSessionId,
@@ -591,6 +630,15 @@ export function App() {
       };
 
       clearCodexSession(sessionId);
+      const terminalId = terminalBySession[sessionId];
+      if (terminalId) {
+        void terminalKill(terminalId);
+        setTerminalBySession((prev) => {
+          const next = { ...prev };
+          delete next[sessionId];
+          return next;
+        });
+      }
       setSessions((prev) => {
         const next = prev.filter((s) => s.id !== sessionId);
         return shouldCreateNew ? [newSession] : next;
@@ -646,6 +694,8 @@ export function App() {
       setSessionDrafts,
       setSessionMessages,
       setSessions,
+      terminalBySession,
+      setTerminalBySession,
       t,
     ]
   );
@@ -755,6 +805,51 @@ export function App() {
       return { ...prev, [sessionId]: nextValue };
     });
   }, [pickFiles, selectedSessionId, setSessionDrafts, t]);
+
+  useEffect(() => {
+    if (!terminalVisible) return;
+    if (!selectedSessionId) return;
+    if (activeTerminalId) return;
+
+    const spawnTerminalSession = async () => {
+      try {
+        const terminalId = await terminalSpawn({ cwd: selectedCwd });
+        setTerminalBySession((prev) => ({ ...prev, [selectedSessionId]: terminalId }));
+      } catch (err) {
+        devDebug('[terminal] spawn failed', err);
+        setSessionNotices((prev) => ({
+          ...prev,
+          [selectedSessionId]: {
+            kind: 'error',
+            message: t('errors.genericError', { error: formatError(err) }),
+          },
+        }));
+      }
+    };
+
+    void spawnTerminalSession();
+  }, [
+    activeTerminalId,
+    selectedCwd,
+    selectedSessionId,
+    setSessionNotices,
+    setTerminalBySession,
+    terminalVisible,
+    t,
+  ]);
+
+  const handleSideAction = useCallback(
+    (actionId: string) => {
+      if (actionId !== 'terminal') return;
+      if (!selectedSessionId) return;
+      setTerminalVisible((prev) => !prev);
+    },
+    [selectedSessionId, setTerminalVisible]
+  );
+
+  const handleTerminalClose = useCallback(() => {
+    setTerminalVisible(false);
+  }, []);
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -924,6 +1019,10 @@ export function App() {
       onNewChat={handleNewChat}
       onSendMessage={handleSendMessage}
       onAddClick={handleAddFile}
+      onSideAction={handleSideAction}
+      terminalVisible={terminalVisible}
+      terminalId={activeTerminalId ?? null}
+      onTerminalClose={handleTerminalClose}
       onSelectCwd={handleSelectCwd}
       cwdLocked={cwdLocked}
       onSessionDelete={handleSessionDelete}

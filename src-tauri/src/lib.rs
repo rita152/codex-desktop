@@ -26,6 +26,8 @@ fn greet(name: &str) -> String {
 pub mod codex;
 /// Development-only helpers for Codex ACP.
 pub mod codex_dev;
+/// Local terminal PTY integration.
+pub mod terminal;
 
 #[tauri::command]
 async fn codex_dev_prompt_once(
@@ -48,6 +50,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(codex::commands::CodexManager::default())
+        .manage(terminal::TerminalManager::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             codex_dev_prompt_once,
@@ -59,7 +62,11 @@ pub fn run() {
             codex::commands::codex_approve,
             codex::commands::codex_set_mode,
             codex::commands::codex_set_model,
-            codex::commands::codex_set_config_option
+            codex::commands::codex_set_config_option,
+            terminal::terminal_spawn,
+            terminal::terminal_write,
+            terminal::terminal_resize,
+            terminal::terminal_kill
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|err| {

@@ -44,6 +44,7 @@
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-xl);
   border: var(--border-width-thin) solid transparent;
+  --terminal-panel-width: 360px;
 }
 
 .chat-container__header {
@@ -223,6 +224,22 @@
 
 @media (max-width: 720px) {
   .chat-container__messages {
+    padding-right: 0;
+  }
+}
+
+.chat-container__main--terminal-open .chat-container__messages {
+  padding-right: calc(var(--spacing-lg) + var(--terminal-panel-width));
+}
+
+@media (max-width: 900px) {
+  .chat-container__main--terminal-open .chat-container__messages {
+    padding-right: var(--spacing-lg);
+  }
+}
+
+@media (max-width: 720px) {
+  .chat-container__main--terminal-open .chat-container__messages {
     padding-right: 0;
   }
 }

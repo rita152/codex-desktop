@@ -43,6 +43,14 @@ export interface ChatContainerProps {
   inputPlaceholder?: string;
   /** 上传文件回调 */
   onAddClick?: () => void;
+  /** 侧边快捷操作 */
+  onSideAction?: (actionId: string) => void;
+  /** 是否显示终端面板 */
+  terminalVisible?: boolean;
+  /** 终端会话 ID */
+  terminalId?: string | null;
+  /** 关闭终端面板 */
+  onTerminalClose?: () => void;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */
