@@ -16,6 +16,16 @@
 
 .chat-side-actions .icon-button {
   border-radius: var(--radius-full);
+  color: var(--color-text-secondary);
+}
+
+.chat-side-actions .icon-button:hover:not(:disabled),
+.chat-side-actions .icon-button:focus-visible {
+  color: var(--color-text-secondary);
+}
+
+.chat-side-actions .icon {
+  color: var(--color-text-secondary);
 }
 
 @media (max-width: 900px) {
