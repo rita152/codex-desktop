@@ -108,7 +108,7 @@ export function TerminalPanel({ terminalId, visible = false, onClose }: Terminal
       className={cn('terminal-panel', !visible && 'terminal-panel--hidden')}
       aria-hidden={!visible}
     >
-      <header className="terminal-panel__header">
+      <header className="terminal-panel__header" data-tauri-drag-region>
         <div className="terminal-panel__title">
           <TerminalIcon size={16} />
           <span>{t('terminalPanel.title')}</span>

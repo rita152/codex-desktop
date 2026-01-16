@@ -57,6 +57,7 @@
   top: 11px;
   left: 80px;
   z-index: 1000;
+  -webkit-app-region: drag;
 }
 
 .chat-container__body {
@@ -130,6 +131,7 @@
   /* 确保 session-header 位于 drag-region (z-index: 100) 之上，以便子元素可点击 */
   position: relative;
   z-index: 101;
+  -webkit-app-region: drag;
 }
 
 .chat-container__session-title {
@@ -169,6 +171,12 @@
     color 0.15s ease,
     background-color 0.15s ease,
     transform 0.08s ease;
+  -webkit-app-region: no-drag;
+}
+
+.chat-container__header .icon-button,
+.chat-container__session-header button {
+  -webkit-app-region: no-drag;
 }
 
 .chat-container__cwd-button:hover:not(:disabled) {

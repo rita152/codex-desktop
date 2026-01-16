@@ -170,7 +170,7 @@ export function Sidebar({
       className={cn('sidebar', isDragging && 'sidebar--dragging', className)}
       style={{ width }}
     >
-      <div className="sidebar__header">
+      <div className="sidebar__header" data-tauri-drag-region>
         <IconButton
           icon={<SidebarLeftIcon size={18} />}
           onClick={onSplitViewClick}

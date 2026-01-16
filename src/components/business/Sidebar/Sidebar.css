@@ -38,6 +38,11 @@
   padding-top: 6px;
   height: 40px;
   box-sizing: border-box;
+  -webkit-app-region: drag;
+}
+
+.sidebar__header .icon-button {
+  -webkit-app-region: no-drag;
 }
 
 .sidebar__content {

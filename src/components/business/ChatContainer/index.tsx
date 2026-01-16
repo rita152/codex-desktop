@@ -110,7 +110,7 @@ export function ChatContainer({
     <div className={classNames}>
       <div className="chat-container__drag-region" data-tauri-drag-region />
       {!sidebarVisible && onSidebarToggle && (
-        <div className="chat-container__header">
+        <div className="chat-container__header" data-tauri-drag-region>
           <IconButton
             icon={<SidebarRightIcon size={18} />}
             onClick={onSidebarToggle}
@@ -164,7 +164,7 @@ export function ChatContainer({
           ref={bodyRef}
         >
           <div className="chat-container__conversation">
-            <div className="chat-container__session-header">
+            <div className="chat-container__session-header" data-tauri-drag-region>
               <div className="chat-container__session-meta">
                 <button
                   type="button"
