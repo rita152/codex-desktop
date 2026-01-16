@@ -28,13 +28,6 @@
   color: var(--color-text-secondary);
 }
 
-@media (max-width: 900px) {
-  .chat-side-actions {
-    right: var(--spacing-xs);
-    top: calc(var(--spacing-lg) + 28px);
-  }
-}
-
 @media (max-width: 720px) {
   .chat-side-actions {
     display: none;

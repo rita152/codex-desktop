@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 
 import { closeActiveAssistantMessages, closeActiveThoughtMessages } from '../utils/messageUtils';
@@ -68,17 +68,84 @@ export function useCodexEvents({
   onModelOptionsResolved,
   registerApprovalRequest,
 }: UseCodexEventsParams) {
+  const resolveChatSessionIdRef = useRef(resolveChatSessionId);
+  const setSessionMessagesRef = useRef(setSessionMessages);
+  const setIsGeneratingBySessionRef = useRef(setIsGeneratingBySession);
+  const setSessionTokenUsageRef = useRef(setSessionTokenUsage);
+  const setSessionSlashCommandsRef = useRef(setSessionSlashCommands);
+  const setSessionModeOptionsRef = useRef(setSessionModeOptions);
+  const setSessionModelOptionsRef = useRef(setSessionModelOptions);
+  const setSessionModeRef = useRef(setSessionMode);
+  const setSessionModelRef = useRef(setSessionModel);
+  const onModeOptionsResolvedRef = useRef(onModeOptionsResolved);
+  const onModelOptionsResolvedRef = useRef(onModelOptionsResolved);
+  const registerApprovalRequestRef = useRef(registerApprovalRequest);
+
   useEffect(() => {
+    resolveChatSessionIdRef.current = resolveChatSessionId;
+  }, [resolveChatSessionId]);
+
+  useEffect(() => {
+    setSessionMessagesRef.current = setSessionMessages;
+  }, [setSessionMessages]);
+
+  useEffect(() => {
+    setIsGeneratingBySessionRef.current = setIsGeneratingBySession;
+  }, [setIsGeneratingBySession]);
+
+  useEffect(() => {
+    setSessionTokenUsageRef.current = setSessionTokenUsage;
+  }, [setSessionTokenUsage]);
+
+  useEffect(() => {
+    setSessionSlashCommandsRef.current = setSessionSlashCommands;
+  }, [setSessionSlashCommands]);
+
+  useEffect(() => {
+    setSessionModeOptionsRef.current = setSessionModeOptions;
+  }, [setSessionModeOptions]);
+
+  useEffect(() => {
+    setSessionModelOptionsRef.current = setSessionModelOptions;
+  }, [setSessionModelOptions]);
+
+  useEffect(() => {
+    setSessionModeRef.current = setSessionMode;
+  }, [setSessionMode]);
+
+  useEffect(() => {
+    setSessionModelRef.current = setSessionModel;
+  }, [setSessionModel]);
+
+  useEffect(() => {
+    onModeOptionsResolvedRef.current = onModeOptionsResolved;
+  }, [onModeOptionsResolved]);
+
+  useEffect(() => {
+    onModelOptionsResolvedRef.current = onModelOptionsResolved;
+  }, [onModelOptionsResolved]);
+
+  useEffect(() => {
+    registerApprovalRequestRef.current = registerApprovalRequest;
+  }, [registerApprovalRequest]);
+
+  useEffect(() => {
+    let isActive = true;
     const appendThoughtChunk = (sessionId: string, text: string) => {
-      devDebug('[appendThoughtChunk]', {
-        sessionId,
-        textLen: text.length,
-        text: text.slice(0, 50),
-      });
-      setSessionMessages((prev) => {
+      setSessionMessagesRef.current((prev) => {
         const list = prev[sessionId] ?? [];
         const lastMessage = list[list.length - 1];
         const now = Date.now();
+        const lastContent = lastMessage?.thinking?.content ?? lastMessage?.content ?? '';
+
+        devDebug('[appendThoughtChunk]', {
+          sessionId,
+          textLen: text.length,
+          textPreview: text.slice(0, 50),
+          lastLen: lastContent.length,
+          isStreaming: lastMessage?.isStreaming ?? false,
+          isAppendDuplicate: text.startsWith(lastContent),
+        });
 
         if (!lastMessage || lastMessage.role !== 'thought' || !lastMessage.isStreaming) {
           const nextMessage: Message = {
@@ -118,11 +185,21 @@ export function useCodexEvents({
     };
 
     const appendAssistantChunk = (sessionId: string, text: string) => {
-      devDebug('[appendAssistantChunk]', { sessionId, textLen: text.length });
-      setSessionMessages((prev) => {
+      setSessionMessagesRef.current((prev) => {
         const baseList = prev[sessionId] ?? [];
         const list = closeActiveThoughtMessages(baseList, Date.now());
         const lastMessage = list[list.length - 1];
+        const lastContent = lastMessage?.content ?? '';
+
+        devDebug('[appendAssistantChunk]', {
+          sessionId,
+          textLen: text.length,
+          textPreview: text.slice(0, 50),
+          lastLen: lastContent.length,
+          isStreaming: lastMessage?.isStreaming ?? false,
+          isAppendDuplicate: text.startsWith(lastContent),
+        });
+
         if (lastMessage?.role === 'assistant' && lastMessage.isStreaming) {
           const nextList = [...list];
           nextList[nextList.length - 1] = {
@@ -146,7 +223,7 @@ export function useCodexEvents({
     const upsertToolCallMessage = (sessionId: string, toolCall: ToolCallProps) => {
       const isStreaming = toolCall.status === 'in-progress' || toolCall.status === 'pending';
 
-      setSessionMessages((prev) => {
+      setSessionMessagesRef.current((prev) => {
         const list = prev[sessionId] ?? [];
         let updated = false;
         const nextList = list.map((msg) => {
@@ -187,7 +264,7 @@ export function useCodexEvents({
       const toolCallId = getToolCallId(update);
       if (!toolCallId) return;
 
-      setSessionMessages((prev) => {
+      setSessionMessagesRef.current((prev) => {
         const list = prev[sessionId] ?? [];
         let updated = false;
         const nextList = list.map((msg) => {
@@ -230,25 +307,28 @@ export function useCodexEvents({
 
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         appendAssistantChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
+        if (!isActive) return;
         devDebug('[codex:thought] Received', {
           sessionId: event.payload.sessionId,
           textLen: event.payload.text.length,
         });
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         appendThoughtChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const nowMs = Date.now();
         const now = new Date(nowMs);
-        setSessionMessages((prev) => {
+        setSessionMessagesRef.current((prev) => {
           const list = prev[sessionId] ?? [];
           const next = list.map((m) => {
             if (m.role === 'user' || !m.isStreaming) return m;
@@ -294,12 +374,13 @@ export function useCodexEvents({
           return { ...prev, [sessionId]: next };
         });
 
-        setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
+        setIsGeneratingBySessionRef.current((prev) => ({ ...prev, [sessionId]: false }));
       }),
       listen<TokenUsageEvent>('codex:token-usage', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
-        setSessionTokenUsage((prev) => ({
+        setSessionTokenUsageRef.current((prev) => ({
           ...prev,
           [sessionId]: {
             totalTokens: event.payload.totalTokens,
@@ -310,6 +391,7 @@ export function useCodexEvents({
         }));
       }),
       listen<{ error: string }>('codex:error', (event) => {
+        if (!isActive) return;
         const sessionId = activeSessionIdRef.current;
         const errMsg: Message = {
           id: newMessageId(),
@@ -319,57 +401,65 @@ export function useCodexEvents({
           timestamp: new Date(),
         };
 
-        setSessionMessages((prev) => ({
+        setSessionMessagesRef.current((prev) => ({
           ...prev,
           [sessionId]: [...(prev[sessionId] ?? []), errMsg],
         }));
 
-        setIsGeneratingBySession((prev) => ({ ...prev, [sessionId]: false }));
+        setIsGeneratingBySessionRef.current((prev) => ({ ...prev, [sessionId]: false }));
       }),
       listen<ApprovalRequest>('codex:approval-request', (event) => {
-        registerApprovalRequest(event.payload);
+        if (!isActive) return;
+        registerApprovalRequestRef.current(event.payload);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const commands = extractSlashCommands(event.payload.update);
         if (commands.length === 0) return;
-        setSessionSlashCommands((prev) => ({ ...prev, [sessionId]: commands }));
+        setSessionSlashCommandsRef.current((prev) => ({ ...prev, [sessionId]: commands }));
       }),
       listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
         const modeId = getString(update.currentModeId ?? update.current_mode_id);
         if (!modeId) return;
-        setSessionMode(sessionId, modeId);
+        setSessionModeRef.current(sessionId, modeId);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
         const configOptions = update.configOptions ?? update.config_options ?? update.configOption;
         const modeState = resolveModeOptions(undefined, configOptions);
         if (modeState?.options.length) {
-          setSessionModeOptions((prev) => ({ ...prev, [sessionId]: modeState.options }));
-          onModeOptionsResolved?.(modeState);
+          setSessionModeOptionsRef.current((prev) => ({ ...prev, [sessionId]: modeState.options }));
+          onModeOptionsResolvedRef.current?.(modeState);
         }
         if (modeState?.currentModeId) {
-          setSessionMode(sessionId, modeState.currentModeId);
+          setSessionModeRef.current(sessionId, modeState.currentModeId);
         }
         const modelState = resolveModelOptions(undefined, configOptions);
         if (modelState?.options.length) {
-          setSessionModelOptions((prev) => ({ ...prev, [sessionId]: modelState.options }));
-          onModelOptionsResolved?.(modelState);
+          setSessionModelOptionsRef.current((prev) => ({
+            ...prev,
+            [sessionId]: modelState.options,
+          }));
+          onModelOptionsResolvedRef.current?.(modelState);
         }
         if (modelState?.currentModelId) {
-          setSessionModel(sessionId, modelState.currentModelId);
+          setSessionModelRef.current(sessionId, modelState.currentModelId);
         }
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const toolCall = asRecord(event.payload.toolCall);
         if (!toolCall) return;
@@ -377,7 +467,8 @@ export function useCodexEvents({
         upsertToolCallMessage(sessionId, parsed);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
-        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!isActive) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
@@ -386,23 +477,10 @@ export function useCodexEvents({
     ];
 
     return () => {
+      isActive = false;
       Promise.all(unlistenPromises)
         .then((unlisteners) => unlisteners.forEach((u) => u()))
         .catch(() => {});
     };
-  }, [
-    activeSessionIdRef,
-    registerApprovalRequest,
-    resolveChatSessionId,
-    setIsGeneratingBySession,
-    setSessionMessages,
-    setSessionModel,
-    setSessionModelOptions,
-    setSessionMode,
-    setSessionModeOptions,
-    setSessionSlashCommands,
-    setSessionTokenUsage,
-    onModeOptionsResolved,
-    onModelOptionsResolved,
-  ]);
+  }, [activeSessionIdRef]);
 }
