@@ -102,6 +102,9 @@ const buildChatGroups = (
       groups.push(currentWorking);
     }
     currentWorking.items.push(item);
+    if (!currentWorking.isActive && isWorkingItemActive(item)) {
+      currentWorking.isActive = true;
+    }
   };
 
   const closeWorkingGroup = () => {
@@ -149,32 +152,36 @@ const buildChatGroups = (
     });
   }
 
-  groups.forEach((group) => {
-    if (group.type === 'working') {
-      group.isActive = group.items.some(isWorkingItemActive);
-    }
-  });
+  let lastUserGroupIndex = -1;
+  let lastWorkingGroup: WorkingGroup | null = null;
+  let currentWorkingGroup: WorkingGroup | null = null;
+  const hasUserMessage = lastUserMessageId !== null;
 
-  const lastUserGroupIndex = (() => {
-    for (let i = groups.length - 1; i >= 0; i -= 1) {
-      const group = groups[i];
-      if (group.type === 'message' && group.message.role === 'user') {
-        return i;
+  for (let i = groups.length - 1; i >= 0; i -= 1) {
+    const group = groups[i];
+    if (lastUserGroupIndex === -1 && group.type === 'message' && group.message.role === 'user') {
+      lastUserGroupIndex = i;
+    }
+    if (group.type === 'working') {
+      if (!lastWorkingGroup) {
+        lastWorkingGroup = group;
+      }
+      if (
+        hasUserMessage &&
+        !currentWorkingGroup &&
+        group.id.startsWith(`working-user-${lastUserMessageId}`)
+      ) {
+        currentWorkingGroup = group;
       }
     }
-    return -1;
-  })();
-  const lastWorkingGroup =
-    [...groups].reverse().find((group): group is WorkingGroup => group.type === 'working') ?? null;
-  const currentWorkingGroup =
-    lastUserMessageId !== null
-      ? ([...groups]
-          .reverse()
-          .find(
-            (group): group is WorkingGroup =>
-              group.type === 'working' && group.id.startsWith(`working-user-${lastUserMessageId}`)
-          ) ?? null)
-      : null;
+    if (
+      lastWorkingGroup &&
+      (lastUserGroupIndex !== -1 || !hasUserMessage) &&
+      (!hasUserMessage || currentWorkingGroup)
+    ) {
+      break;
+    }
+  }
 
   if (isGenerating) {
     let activeWorking: WorkingGroup | null = null;
@@ -271,8 +278,9 @@ export const ChatMessageList = memo(function ChatMessageList({
       isUserScrollingRef.current = !isAtBottom;
     };
 
-    container.addEventListener('scroll', handleScroll);
-    return () => container.removeEventListener('scroll', handleScroll);
+    const scrollListenerOptions: AddEventListenerOptions = { passive: true };
+    container.addEventListener('scroll', handleScroll, scrollListenerOptions);
+    return () => container.removeEventListener('scroll', handleScroll, scrollListenerOptions);
   }, []);
 
   // 自动滚动到底部

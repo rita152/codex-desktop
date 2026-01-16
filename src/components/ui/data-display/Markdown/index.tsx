@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import type { HTMLAttributes, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
@@ -9,6 +10,36 @@ import { cn } from '../../../../utils/cn';
 import type { MarkdownProps } from './types';
 
 import './Markdown.css';
+
+const REMARK_PLUGINS = [remarkGfm, remarkMath];
+const REHYPE_PLUGINS = [rehypeKatex];
+const MARKDOWN_COMPONENTS = {
+  pre({ children }: { children: ReactNode }) {
+    return <pre className="markdown__pre">{children}</pre>;
+  },
+  code({
+    className,
+    children,
+    ...props
+  }: HTMLAttributes<HTMLElement> & { children: ReactNode }) {
+    const match = /language-(\w+)/.exec(className || '');
+    const isInline = !match && !className;
+
+    if (isInline) {
+      return (
+        <code className="markdown__code--inline" {...props}>
+          {children}
+        </code>
+      );
+    }
+
+    return (
+      <code className={cn('markdown__code', className)} {...props}>
+        {children}
+      </code>
+    );
+  },
+};
 
 const normalizeMathDelimiters = (raw: string): string => {
   if (!raw) return raw;
@@ -44,31 +75,9 @@ export const Markdown = memo(function Markdown({
   return (
     <div className={cn('markdown', className)}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex]}
-        components={{
-          pre({ children }) {
-            return <pre className="markdown__pre">{children}</pre>;
-          },
-          code({ className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || '');
-            const isInline = !match && !className;
-
-            if (isInline) {
-              return (
-                <code className="markdown__code--inline" {...props}>
-                  {children}
-                </code>
-              );
-            }
-
-            return (
-              <code className={cn('markdown__code', className)} {...props}>
-                {children}
-              </code>
-            );
-          },
-        }}
+        remarkPlugins={REMARK_PLUGINS}
+        rehypePlugins={REHYPE_PLUGINS}
+        components={MARKDOWN_COMPONENTS}
       >
         {normalizedContent}
       </ReactMarkdown>

@@ -149,18 +149,26 @@ export function Working({
 
   const itemCount = items.length;
   const itemLabel = t('working.itemCount', { count: itemCount });
-  const effectiveStart = useMemo(() => {
-    if (typeof startTime === 'number') return startTime;
-    const timestamps = items
-      .map(extractStartTime)
-      .filter((value): value is number => typeof value === 'number');
-    return timestamps.length > 0 ? Math.min(...timestamps) : null;
-  }, [items, startTime]);
+  const { effectiveStart, effectiveEnd } = useMemo(() => {
+    const hasExplicitStart = typeof startTime === 'number';
+    let minStart: number | null = hasExplicitStart ? startTime : null;
+    let maxEnd: number | null = null;
 
-  const effectiveEnd = useMemo(() => {
-    const endTimes = items.map(extractEndTime).filter((value): value is number => value !== null);
-    return endTimes.length > 0 ? Math.max(...endTimes) : null;
-  }, [items]);
+    for (const item of items) {
+      if (!hasExplicitStart) {
+        const itemStart = extractStartTime(item);
+        if (typeof itemStart === 'number') {
+          minStart = minStart === null ? itemStart : Math.min(minStart, itemStart);
+        }
+      }
+      const itemEnd = extractEndTime(item);
+      if (typeof itemEnd === 'number') {
+        maxEnd = maxEnd === null ? itemEnd : Math.max(maxEnd, itemEnd);
+      }
+    }
+
+    return { effectiveStart: minStart, effectiveEnd: maxEnd };
+  }, [items, startTime]);
 
   const resolvedEnd = hasIncompleteItem ? now : (effectiveEnd ?? finishedAtRef.current);
   const totalSeconds =
