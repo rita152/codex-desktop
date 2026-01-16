@@ -34,6 +34,8 @@ type SessionTokenUsage = Record<
   }
 >;
 
+const ASSISTANT_APPEND_GRACE_MS = 1500;
+
 export interface UseCodexEventsParams {
   resolveChatSessionId: (codexSessionId?: string) => string | null;
   activeSessionIdRef: RefObject<string>;
@@ -187,10 +189,19 @@ export function useCodexEvents({
     const appendAssistantChunk = (sessionId: string, text: string) => {
       setSessionMessagesRef.current((prev) => {
         const baseList = prev[sessionId] ?? [];
-        const list = closeActiveThoughtMessages(baseList, Date.now());
+        const now = Date.now();
+        const list = closeActiveThoughtMessages(baseList, now);
         const lastMessage = list[list.length - 1];
         const lastContent = lastMessage?.content ?? '';
-
+        const lastTimestampMs =
+          lastMessage?.timestamp instanceof Date ? lastMessage.timestamp.getTime() : undefined;
+        const timeSinceCloseMs =
+          lastTimestampMs !== undefined ? now - lastTimestampMs : undefined;
+        const canAppendToClosedAssistant =
+          lastMessage?.role === 'assistant' &&
+          lastMessage.isStreaming === false &&
+          timeSinceCloseMs !== undefined &&
+          timeSinceCloseMs <= ASSISTANT_APPEND_GRACE_MS;
         devDebug('[appendAssistantChunk]', {
           sessionId,
           textLen: text.length,
@@ -198,14 +209,20 @@ export function useCodexEvents({
           lastLen: lastContent.length,
           isStreaming: lastMessage?.isStreaming ?? false,
           isAppendDuplicate: text.startsWith(lastContent),
+          timeSinceCloseMs,
+          canAppendToClosedAssistant,
         });
 
-        if (lastMessage?.role === 'assistant' && lastMessage.isStreaming) {
+        if (
+          lastMessage?.role === 'assistant' &&
+          (lastMessage.isStreaming === true || canAppendToClosedAssistant)
+        ) {
           const nextList = [...list];
+          const nextIsStreaming = lastMessage?.isStreaming ?? true;
           nextList[nextList.length - 1] = {
             ...lastMessage,
             content: lastMessage.content + text,
-            isStreaming: true,
+            isStreaming: nextIsStreaming,
           };
           return { ...prev, [sessionId]: nextList };
         }
