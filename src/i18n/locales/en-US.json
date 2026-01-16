@@ -36,6 +36,7 @@
   "terminalPanel": {
     "title": "Terminal",
     "close": "Close",
+    "resizeAria": "Resize terminal",
     "starting": "Starting terminal..."
   },
   "models": {
