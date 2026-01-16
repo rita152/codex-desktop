@@ -1,9 +1,5 @@
 .terminal-panel {
-  position: absolute;
-  top: var(--spacing-lg);
-  right: var(--spacing-lg);
-  bottom: var(--spacing-lg);
-  width: var(--terminal-panel-width, 360px);
+  flex: 0 0 var(--terminal-panel-width, 360px);
   display: flex;
   flex-direction: column;
   background: var(--color-bg-elevated);
@@ -11,16 +7,17 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
-  z-index: 30;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .terminal-panel--hidden {
   opacity: 0;
   pointer-events: none;
-  transform: translateX(8px);
+  flex: 0 0 0;
+  width: 0;
+  border-width: 0;
+  box-shadow: none;
 }
 
 .terminal-panel__header {
@@ -100,7 +97,7 @@
 
 @media (max-width: 900px) {
   .terminal-panel {
-    left: var(--spacing-lg);
-    width: auto;
+    flex: 0 0 240px;
+    width: 100%;
   }
 }

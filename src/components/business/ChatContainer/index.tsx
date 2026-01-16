@@ -64,7 +64,6 @@ export function ChatContainer({
     onInputChange('');
   };
 
-  const hasTerminalPanel = terminalVisible;
   const classNames = cn('chat-container', className);
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
@@ -108,78 +107,81 @@ export function ChatContainer({
         />
       </div>
 
-      <div
-        className={cn(
-          'chat-container__main',
-          hasTerminalPanel && 'chat-container__main--terminal-open'
-        )}
-      >
+      <div className="chat-container__main">
         <ChatSideActions onAction={onSideAction} />
-        {(terminalVisible || terminalId) && (
-          <TerminalPanel
-            terminalId={terminalId}
-            visible={terminalVisible}
-            onClose={onTerminalClose}
-          />
-        )}
-        <div className="chat-container__session-header">
-          <div className="chat-container__session-meta">
-            <button
-              type="button"
-              className="chat-container__cwd-button"
-              onClick={onSelectCwd}
-              disabled={!onSelectCwd || cwdLocked}
-              title={cwdLocked ? t('chat.cwdLocked') : displayCwd}
-            >
-              <FolderIcon size={14} />
-              <span className="chat-container__meta-value">{displayCwd}</span>
-            </button>
-          </div>
-          {sessionNotice && (
-            <div
-              className={cn(
-                'chat-container__session-notice',
-                `chat-container__session-notice--${sessionNotice.kind}`
-              )}
-            >
-              {sessionNotice.message}
-            </div>
+        <div
+          className={cn(
+            'chat-container__body',
+            terminalVisible && 'chat-container__body--terminal-open'
           )}
-        </div>
-        {showWelcome ? (
-          <div className="chat-container__welcome">{welcomeContent}</div>
-        ) : (
-          <div className="chat-container__messages">
-            <ChatMessageList
-              messages={messages}
-              approvals={approvals}
-              isGenerating={isGenerating}
-            />
+        >
+          <div className="chat-container__conversation">
+            <div className="chat-container__session-header">
+              <div className="chat-container__session-meta">
+                <button
+                  type="button"
+                  className="chat-container__cwd-button"
+                  onClick={onSelectCwd}
+                  disabled={!onSelectCwd || cwdLocked}
+                  title={cwdLocked ? t('chat.cwdLocked') : displayCwd}
+                >
+                  <FolderIcon size={14} />
+                  <span className="chat-container__meta-value">{displayCwd}</span>
+                </button>
+              </div>
+              {sessionNotice && (
+                <div
+                  className={cn(
+                    'chat-container__session-notice',
+                    `chat-container__session-notice--${sessionNotice.kind}`
+                  )}
+                >
+                  {sessionNotice.message}
+                </div>
+              )}
+            </div>
+            {showWelcome ? (
+              <div className="chat-container__welcome">{welcomeContent}</div>
+            ) : (
+              <div className="chat-container__messages">
+                <ChatMessageList
+                  messages={messages}
+                  approvals={approvals}
+                  isGenerating={isGenerating}
+                />
+              </div>
+            )}
+            <div className="chat-container__input-wrapper">
+              <ChatInput
+                value={inputValue}
+                onChange={onInputChange}
+                onSend={handleSend}
+                disabled={isGenerating}
+                placeholder={inputPlaceholder}
+                onAddClick={onAddClick}
+                selectedAgent={selectedAgent}
+                agentOptions={agentOptions}
+                onAgentChange={onAgentChange}
+                selectedModel={selectedModel}
+                modelOptions={modelOptions}
+                onModelChange={onModelChange}
+                slashCommands={slashCommands}
+                remainingPercent={remainingPercent}
+                remainingTokens={remainingTokens}
+                totalTokens={totalTokens}
+                onRemainingClick={onRemainingClick}
+                remainingDisabled={remainingDisabled}
+                className="chat-container__input"
+              />
+            </div>
           </div>
-        )}
-
-        <div className="chat-container__input-wrapper">
-          <ChatInput
-            value={inputValue}
-            onChange={onInputChange}
-            onSend={handleSend}
-            disabled={isGenerating}
-            placeholder={inputPlaceholder}
-            onAddClick={onAddClick}
-            selectedAgent={selectedAgent}
-            agentOptions={agentOptions}
-            onAgentChange={onAgentChange}
-            selectedModel={selectedModel}
-            modelOptions={modelOptions}
-            onModelChange={onModelChange}
-            slashCommands={slashCommands}
-            remainingPercent={remainingPercent}
-            remainingTokens={remainingTokens}
-            totalTokens={totalTokens}
-            onRemainingClick={onRemainingClick}
-            remainingDisabled={remainingDisabled}
-            className="chat-container__input"
-          />
+          {(terminalVisible || terminalId) && (
+            <TerminalPanel
+              terminalId={terminalId}
+              visible={terminalVisible}
+              onClose={onTerminalClose}
+            />
+          )}
         </div>
       </div>
     </div>
