@@ -107,8 +107,13 @@ export function ChatContainer({
         />
       </div>
 
-      <div className="chat-container__main">
-        <ChatSideActions onAction={onSideAction} />
+      <div
+        className={cn(
+          'chat-container__main',
+          terminalVisible && 'chat-container__main--terminal-open'
+        )}
+      >
+        {!terminalVisible && <ChatSideActions onAction={onSideAction} />}
         <div
           className={cn(
             'chat-container__body',

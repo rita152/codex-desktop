@@ -46,6 +46,12 @@
   --terminal-panel-width: 360px;
 }
 
+.chat-container__main--terminal-open {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .chat-container__header {
   position: absolute;
   top: 11px;
@@ -63,6 +69,12 @@
 
 .chat-container__body--terminal-open {
   gap: var(--spacing-lg);
+  padding-right: 0;
+}
+
+.chat-container__main--terminal-open .terminal-panel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .chat-container__conversation {
