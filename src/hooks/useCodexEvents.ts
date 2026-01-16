@@ -36,6 +36,49 @@ type SessionTokenUsage = Record<
 
 const ASSISTANT_APPEND_GRACE_MS = 1500;
 
+type UnlistenFn = () => void;
+
+type ListenerState = {
+  token: number;
+  unlistenPromise: Promise<UnlistenFn[]> | null;
+};
+
+const getListenerState = (): ListenerState => {
+  const globalScope = globalThis as typeof globalThis & {
+    __codexEventListenerState?: ListenerState;
+  };
+  if (!globalScope.__codexEventListenerState) {
+    globalScope.__codexEventListenerState = { token: 0, unlistenPromise: null };
+  }
+  return globalScope.__codexEventListenerState;
+};
+
+const beginListeners = () => {
+  const state = getListenerState();
+  if (state.unlistenPromise) {
+    state.unlistenPromise
+      .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
+      .catch(() => {});
+  }
+  state.token += 1;
+  return state.token;
+};
+
+const commitListeners = (token: number, listenPromises: Promise<UnlistenFn>[]) => {
+  const state = getListenerState();
+  if (state.token !== token) return;
+  state.unlistenPromise = Promise.all(listenPromises);
+};
+
+const removeListeners = (token: number) => {
+  const state = getListenerState();
+  if (token !== state.token || !state.unlistenPromise) return;
+  state.unlistenPromise
+    .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
+    .catch(() => {});
+  state.unlistenPromise = null;
+};
+
 export interface UseCodexEventsParams {
   resolveChatSessionId: (codexSessionId?: string) => string | null;
   activeSessionIdRef: RefObject<string>;
@@ -322,15 +365,18 @@ export function useCodexEvents({
       });
     };
 
+    const listenerToken = beginListeners();
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         appendAssistantChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         devDebug('[codex:thought] Received', {
           sessionId: event.payload.sessionId,
           textLen: event.payload.text.length,
@@ -341,6 +387,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const nowMs = Date.now();
@@ -395,6 +442,7 @@ export function useCodexEvents({
       }),
       listen<TokenUsageEvent>('codex:token-usage', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         setSessionTokenUsageRef.current((prev) => ({
@@ -409,6 +457,7 @@ export function useCodexEvents({
       }),
       listen<{ error: string }>('codex:error', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = activeSessionIdRef.current;
         const errMsg: Message = {
           id: newMessageId(),
@@ -427,10 +476,12 @@ export function useCodexEvents({
       }),
       listen<ApprovalRequest>('codex:approval-request', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         registerApprovalRequestRef.current(event.payload);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const commands = extractSlashCommands(event.payload.update);
@@ -439,6 +490,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
@@ -449,6 +501,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
@@ -476,6 +529,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const toolCall = asRecord(event.payload.toolCall);
@@ -485,6 +539,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
         if (!isActive) return;
+        if (listenerToken !== getListenerState().token) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
@@ -492,12 +547,11 @@ export function useCodexEvents({
         applyToolCallUpdateMessage(sessionId, update);
       }),
     ];
+    commitListeners(listenerToken, unlistenPromises);
 
     return () => {
       isActive = false;
-      Promise.all(unlistenPromises)
-        .then((unlisteners) => unlisteners.forEach((u) => u()))
-        .catch(() => {});
+      removeListeners(listenerToken);
     };
   }, [activeSessionIdRef]);
 }
