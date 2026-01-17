@@ -6,7 +6,6 @@ import type { ApprovalRequest } from '../types/codex';
 export function useApprovalState() {
   const [pendingApprovals, setPendingApprovals] = useState<ApprovalRequest[]>([]);
   const [approvalStatuses, setApprovalStatuses] = useState<Record<string, ApprovalStatus>>({});
-  const [approvalFeedback, setApprovalFeedback] = useState<Record<string, string>>({});
   const [approvalLoading, setApprovalLoading] = useState<Record<string, boolean>>({});
 
   const registerApprovalRequest = useCallback((request: ApprovalRequest) => {
@@ -16,7 +15,6 @@ export function useApprovalState() {
       return [...next, request];
     });
     setApprovalStatuses((prev) => ({ ...prev, [key]: 'pending' }));
-    setApprovalFeedback((prev) => ({ ...prev, [key]: prev[key] ?? '' }));
     setApprovalLoading((prev) => ({ ...prev, [key]: false }));
   }, []);
 
@@ -24,11 +22,6 @@ export function useApprovalState() {
     setPendingApprovals((prev) =>
       prev.filter((item) => `${item.sessionId}:${item.requestId}` !== key)
     );
-    setApprovalFeedback((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
     setApprovalLoading((prev) => {
       const next = { ...prev };
       delete next[key];
@@ -44,11 +37,9 @@ export function useApprovalState() {
   return {
     pendingApprovals,
     approvalStatuses,
-    approvalFeedback,
     approvalLoading,
     setPendingApprovals,
     setApprovalStatuses,
-    setApprovalFeedback,
     setApprovalLoading,
     registerApprovalRequest,
     clearApproval,

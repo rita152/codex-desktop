@@ -111,10 +111,8 @@ export function App() {
   const {
     pendingApprovals,
     approvalStatuses,
-    approvalFeedback,
     approvalLoading,
     setApprovalStatuses,
-    setApprovalFeedback,
     setApprovalLoading,
     registerApprovalRequest,
     clearApproval,
@@ -918,13 +916,6 @@ export function App() {
       const nextStatus = approvalStatusFromKind(optionKind);
       setApprovalStatuses((prev) => ({ ...prev, [key]: nextStatus }));
       try {
-        const feedback = approvalFeedback[key]?.trim();
-        if (feedback) {
-          devDebug('[approval feedback]', {
-            requestId: request.requestId,
-            length: feedback.length,
-          });
-        }
         await approveRequest(request.sessionId, request.requestId, undefined, optionId);
         setApprovalLoading((prev) => ({ ...prev, [key]: false }));
         window.setTimeout(() => {
@@ -947,7 +938,6 @@ export function App() {
       }
     },
     [
-      approvalFeedback,
       clearApproval,
       resolveChatSessionId,
       setApprovalLoading,
@@ -981,21 +971,17 @@ export function App() {
             command,
             diffs: diffs.length > 0 ? diffs : undefined,
             options: options.length > 0 ? options : undefined,
-            feedback: approvalFeedback[key] ?? '',
-            onFeedbackChange: (next) => setApprovalFeedback((prev) => ({ ...prev, [key]: next })),
             loading: approvalLoading[key] ?? false,
             onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
           };
         }),
     [
-      approvalFeedback,
       approvalLoading,
       approvalStatuses,
       handleApprovalSelect,
       pendingApprovals,
       resolveChatSessionId,
       selectedSessionId,
-      setApprovalFeedback,
       t,
     ]
   );

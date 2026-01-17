@@ -76,10 +76,8 @@
     "section": {
       "description": "Description",
       "command": "Command",
-      "changes": "Changes",
-      "feedback": "Rejection feedback"
-    },
-    "feedbackPlaceholder": "Optional reason for rejection"
+      "changes": "Changes"
+    }
   },
   "toolCall": {
     "status": {

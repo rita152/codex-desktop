@@ -85,7 +85,6 @@ export const ToolCall = memo(function ToolCall({
   toolCallId,
   title,
   variant = 'card',
-  kind,
   status,
   locations,
   rawOutput,
@@ -144,7 +143,6 @@ export const ToolCall = memo(function ToolCall({
     variant === 'embedded' && 'tool-call--embedded',
     isOpen && 'tool-call--open',
     `tool-call--${status}`,
-    kind && `tool-call--kind-${kind}`,
     className
   );
 

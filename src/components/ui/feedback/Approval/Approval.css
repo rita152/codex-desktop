@@ -258,7 +258,3 @@
   flex-direction: column;
   gap: var(--spacing-sm);
 }
-
-.approval__feedback {
-  width: 100%;
-}

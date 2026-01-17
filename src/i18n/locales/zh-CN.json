@@ -76,10 +76,8 @@
     "section": {
       "description": "说明",
       "command": "命令",
-      "changes": "变更",
-      "feedback": "拒绝反馈"
-    },
-    "feedbackPlaceholder": "请输入拒绝原因 (可选)"
+      "changes": "变更"
+    }
   },
   "toolCall": {
     "status": {

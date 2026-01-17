@@ -54,7 +54,6 @@ const sampleItems: WorkingItem[] = [
       title: 'Approve command execution',
       status: 'pending',
       command: 'npm install',
-      showFeedback: false,
       options: [
         { id: 'approved-for-session', label: 'Always', kind: 'allow-always' },
         { id: 'approved', label: 'Yes', kind: 'allow-once' },

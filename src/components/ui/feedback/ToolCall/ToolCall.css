@@ -63,10 +63,6 @@
   flex-shrink: 0;
 }
 
-.tool-call__icon--kind {
-  color: var(--color-text-secondary);
-}
-
 .tool-call__icon--status {
   margin-left: auto;
 }

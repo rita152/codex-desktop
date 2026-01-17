@@ -92,8 +92,6 @@ export const RejectedWithFeedback: Story = {
     title: 'Execute: rm -rf /',
     status: 'pending',
     command: 'rm -rf /',
-    feedback: '该命令风险过高，请提供安全替代方案。',
     onSelect: (callId, optionId) => devDebug('Selected:', callId, optionId),
-    onFeedbackChange: (value) => devDebug('Feedback:', value),
   },
 };

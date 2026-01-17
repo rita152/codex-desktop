@@ -47,14 +47,6 @@ export interface ApprovalProps {
   command?: string;
   /** Diff 预览 */
   diffs?: ApprovalDiff[];
-  /** 拒绝反馈文本 */
-  feedback?: string;
-  /** 拒绝反馈变更回调 */
-  onFeedbackChange?: (next: string) => void;
-  /** 是否显示反馈输入框 */
-  showFeedback?: boolean;
-  /** 反馈输入框占位 */
-  feedbackPlaceholder?: string;
   /** 选择回调 */
   onSelect?: (callId: string, optionId: string) => void;
   /** 自定义类名 */
