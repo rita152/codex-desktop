@@ -206,8 +206,8 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
 
     let mut cfg = CodexProcessConfig::default();
 
-    if let Some((k, v)) = state.api_key_env.clone() {
-        cfg.set_env(k, v);
+    if let Some((key, value)) = state.api_key_env.as_ref() {
+        cfg.set_env(key.as_str(), value.as_str());
     }
 
     let conn = AcpConnection::spawn(
@@ -312,12 +312,13 @@ async fn prompt_inner(
     session_id: String,
     content: String,
 ) -> Result<PromptResult> {
+    let session_id = Arc::<str>::from(session_id);
     let session_id_typed = SessionId::from(session_id.clone());
 
-    let timing = debug.mark_prompt(&session_id);
+    let timing = debug.mark_prompt(session_id.as_ref());
     debug.emit(
         &app,
-        Some(&session_id),
+        Some(session_id.as_ref()),
         "prompt_start",
         timing,
         serde_json::json!({ "contentLen": content.len() }),
@@ -337,18 +338,18 @@ async fn prompt_inner(
     let _ = app.emit(
         crate::codex::events::EVENT_TURN_COMPLETE,
         serde_json::json!({
-            "sessionId": session_id,
-            "stopReason": stop_reason_value.clone()
+            "sessionId": session_id.as_ref(),
+            "stopReason": &stop_reason_value
         }),
     );
 
-    let timing = debug.mark_event(&session_id);
+    let timing = debug.mark_event(session_id.as_ref());
     debug.emit(
         &app,
-        Some(&session_id),
+        Some(session_id.as_ref()),
         "prompt_done",
         timing,
-        serde_json::json!({ "stopReason": stop_reason_value.clone() }),
+        serde_json::json!({ "stopReason": &stop_reason_value }),
     );
 
     Ok(PromptResult {

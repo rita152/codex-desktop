@@ -39,7 +39,7 @@ struct TerminalExit {
 
 impl TerminalManager {
     fn next_id(&self) -> String {
-        let id = self.counter.fetch_add(1, Ordering::SeqCst);
+        let id = self.counter.fetch_add(1, Ordering::Relaxed);
         format!("term-{}", id)
     }
 }
@@ -154,15 +154,17 @@ pub fn terminal_write(
     terminal_id: String,
     data: String,
 ) -> Result<(), String> {
-    let terminals = state
-        .terminals
-        .lock()
-        .map_err(|_| "terminal manager poisoned".to_string())?;
-    let terminal = terminals
-        .get(&terminal_id)
-        .ok_or_else(|| "terminal not found".to_string())?;
-    let mut writer = terminal
-        .writer
+    let writer = {
+        let terminals = state
+            .terminals
+            .lock()
+            .map_err(|_| "terminal manager poisoned".to_string())?;
+        let terminal = terminals
+            .get(&terminal_id)
+            .ok_or_else(|| "terminal not found".to_string())?;
+        Arc::clone(&terminal.writer)
+    };
+    let mut writer = writer
         .lock()
         .map_err(|_| "terminal writer poisoned".to_string())?;
     writer.write_all(data.as_bytes()).map_err(|err| err.to_string())?;
