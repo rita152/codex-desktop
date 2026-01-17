@@ -122,6 +122,7 @@ export function App() {
   const codexSessionByChatRef = useRef<Record<string, string>>({});
   const chatSessionByCodexRef = useRef<Record<string, string>>({});
   const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
+  const activeTerminalIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     const cachedOptions = modelCache.options;
@@ -220,6 +221,10 @@ export function App() {
   // 当对话已有消息时，锁定工作目录（无法切换）
   const cwdLocked = messages.length > 0;
   const activeTerminalId = selectedSessionId ? terminalBySession[selectedSessionId] : undefined;
+
+  useEffect(() => {
+    activeTerminalIdRef.current = activeTerminalId;
+  }, [activeTerminalId]);
 
   useEffect(() => {
     if (!modelOptions || modelOptions.length === 0) return;
@@ -353,7 +358,7 @@ export function App() {
           return next;
         });
         void terminalKill(terminalId);
-        if (activeTerminalId === terminalId) {
+        if (activeTerminalIdRef.current === terminalId) {
           setTerminalVisible(false);
         }
       });
@@ -365,7 +370,7 @@ export function App() {
         unlisten();
       }
     };
-  }, [activeTerminalId, setTerminalBySession, setTerminalVisible]);
+  }, [setTerminalBySession, setTerminalVisible]);
 
   useCodexEvents({
     resolveChatSessionId,
@@ -489,28 +494,6 @@ export function App() {
           (modeState?.currentModeId ? desiredMode !== modeState.currentModeId : true) &&
           (availableModeIds.size === 0 || availableModeIds.has(desiredMode));
 
-        if (shouldSyncMode && desiredMode) {
-          try {
-            await setSessionMode(result.sessionId, desiredMode);
-            clearSessionNotice(chatSessionId);
-          } catch (err) {
-            const fallbackMode =
-              modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
-            setSessionNotices((prev) => ({
-              ...prev,
-              [chatSessionId]: {
-                kind: 'error',
-                message: t('errors.modeSetFailed', { error: formatError(err) }),
-              },
-            }));
-            setSessions((prev) =>
-              prev.map((session) =>
-                session.id === chatSessionId ? { ...session, mode: fallbackMode } : session
-              )
-            );
-          }
-        }
-
         const availableIds = new Set(modelState?.options.map((option) => option.value) ?? []);
         let desiredModel = sessionMeta?.model;
         if (desiredModel && availableIds.size > 0 && !availableIds.has(desiredModel)) {
@@ -534,26 +517,57 @@ export function App() {
           (modelState?.currentModelId ? desiredModel !== modelState.currentModelId : true) &&
           (availableIds.size === 0 || availableIds.has(desiredModel));
 
+        const syncTasks: Promise<void>[] = [];
+        if (shouldSyncMode && desiredMode) {
+          syncTasks.push(
+            setSessionMode(result.sessionId, desiredMode)
+              .then(() => {
+                clearSessionNotice(chatSessionId);
+              })
+              .catch((err) => {
+                const fallbackMode =
+                  modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
+                setSessionNotices((prev) => ({
+                  ...prev,
+                  [chatSessionId]: {
+                    kind: 'error',
+                    message: t('errors.modeSetFailed', { error: formatError(err) }),
+                  },
+                }));
+                setSessions((prev) =>
+                  prev.map((session) =>
+                    session.id === chatSessionId ? { ...session, mode: fallbackMode } : session
+                  )
+                );
+              })
+          );
+        }
         if (shouldSyncModel && desiredModel) {
-          try {
-            await setSessionModel(result.sessionId, desiredModel);
-            clearSessionNotice(chatSessionId);
-          } catch (err) {
-            const fallbackModel =
-              modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
-            setSessionNotices((prev) => ({
-              ...prev,
-              [chatSessionId]: {
-                kind: 'error',
-                message: t('errors.modelSetFailed', { error: formatError(err) }),
-              },
-            }));
-            setSessions((prev) =>
-              prev.map((session) =>
-                session.id === chatSessionId ? { ...session, model: fallbackModel } : session
-              )
-            );
-          }
+          syncTasks.push(
+            setSessionModel(result.sessionId, desiredModel)
+              .then(() => {
+                clearSessionNotice(chatSessionId);
+              })
+              .catch((err) => {
+                const fallbackModel =
+                  modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
+                setSessionNotices((prev) => ({
+                  ...prev,
+                  [chatSessionId]: {
+                    kind: 'error',
+                    message: t('errors.modelSetFailed', { error: formatError(err) }),
+                  },
+                }));
+                setSessions((prev) =>
+                  prev.map((session) =>
+                    session.id === chatSessionId ? { ...session, model: fallbackModel } : session
+                  )
+                );
+              })
+          );
+        }
+        if (syncTasks.length > 0) {
+          await Promise.all(syncTasks);
         }
         return result.sessionId;
       })();

@@ -250,6 +250,17 @@ export const ChatMessageList = memo(function ChatMessageList({
     () => buildChatGroups(messages, approvals, isGenerating),
     [messages, approvals, isGenerating]
   );
+  const hasStreaming = useMemo(
+    () =>
+      messages.some(
+        (message) =>
+          message.isStreaming === true ||
+          message.thinking?.isStreaming === true ||
+          message.thinking?.phase === 'thinking' ||
+          message.thinking?.phase === 'working'
+      ),
+    [messages]
+  );
   // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer follows hooks rules but is not recognized by this eslint rule.
   const virtualizer = useVirtualizer({
     count: groups.length,
@@ -296,13 +307,6 @@ export const ChatMessageList = memo(function ChatMessageList({
   useEffect(() => {
     if (!autoScroll) return;
 
-    const hasStreaming = messages.some(
-      (message) =>
-        message.isStreaming === true ||
-        message.thinking?.isStreaming === true ||
-        message.thinking?.phase === 'thinking' ||
-        message.thinking?.phase === 'working'
-    );
     if (!hasStreaming && !isGenerating) return;
 
     const container = containerRef.current;
@@ -329,7 +333,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       observer.disconnect();
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
-  }, [autoScroll, isGenerating, messages]);
+  }, [autoScroll, hasStreaming, isGenerating]);
 
   const classNames = cn('chat-message-list', className);
 
