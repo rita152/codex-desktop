@@ -14,6 +14,7 @@ use agent_client_protocol::{
     RequestPermissionResponse, SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
 use anyhow::{anyhow, Context, Result};
+use serde::Serialize;
 use serde_json::json;
 use std::{collections::HashMap, sync::Arc};
 use tauri::{AppHandle, Emitter};
@@ -112,6 +113,55 @@ struct AcpClient {
     debug: Arc<DebugState>,
 }
 
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct TextChunkPayload<'a> {
+    session_id: &'a str,
+    text: &'a str,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ToolCallPayload<'a> {
+    session_id: &'a str,
+    tool_call: &'a agent_client_protocol::ToolCall,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ToolCallUpdatePayload<'a> {
+    session_id: &'a str,
+    update: &'a agent_client_protocol::ToolCallUpdate,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct PlanPayload<'a> {
+    session_id: &'a str,
+    plan: &'a agent_client_protocol::Plan,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AvailableCommandsPayload<'a> {
+    session_id: &'a str,
+    update: &'a agent_client_protocol::AvailableCommandsUpdate,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CurrentModePayload<'a> {
+    session_id: &'a str,
+    update: &'a agent_client_protocol::CurrentModeUpdate,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ConfigOptionPayload<'a> {
+    session_id: &'a str,
+    update: &'a agent_client_protocol::ConfigOptionUpdate,
+}
+
 #[async_trait::async_trait(?Send)]
 impl Client for AcpClient {
     async fn request_permission(
@@ -163,132 +213,7 @@ impl Client for AcpClient {
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
         let session_id = args.session_id.0.clone();
-
-        match &args.update {
-            SessionUpdate::AgentMessageChunk(chunk) => {
-                if let Some(text) = content_block_text(&chunk.content) {
-                    let timing = self.debug.mark_event(session_id.as_ref());
-                    self.debug.emit(
-                        &self.app,
-                        Some(session_id.as_ref()),
-                        "agent_message_chunk",
-                        timing,
-                        json!({ "textLen": text.len() }),
-                    );
-                    let _ = self.app.emit(
-                        EVENT_MESSAGE_CHUNK,
-                        json!({ "sessionId": session_id.as_ref(), "text": text }),
-                    );
-                }
-            }
-            SessionUpdate::AgentThoughtChunk(chunk) => {
-                if emit_thought_chunks() {
-                    if let Some(text) = content_block_text(&chunk.content) {
-                        let timing = self.debug.mark_event(session_id.as_ref());
-                        self.debug.emit(
-                            &self.app,
-                            Some(session_id.as_ref()),
-                            "agent_thought_chunk",
-                            timing,
-                            json!({ "textLen": text.len() }),
-                        );
-                        let _ = self.app.emit(
-                            EVENT_THOUGHT_CHUNK,
-                            json!({ "sessionId": session_id.as_ref(), "text": text }),
-                        );
-                    }
-                }
-            }
-            SessionUpdate::ToolCall(tool_call) => {
-                let tool_call_id = tool_call.tool_call_id.0.as_ref();
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "tool_call",
-                    timing,
-                    json!({
-                        "toolCallId": tool_call_id,
-                        "title": tool_call.title.as_str(),
-                    }),
-                );
-                let _ = self.app.emit(
-                    EVENT_TOOL_CALL,
-                    json!({ "sessionId": session_id.as_ref(), "toolCall": tool_call }),
-                );
-            }
-            SessionUpdate::ToolCallUpdate(update) => {
-                let tool_call_id = update.tool_call_id.0.as_ref();
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "tool_call_update",
-                    timing,
-                    json!({ "toolCallId": tool_call_id }),
-                );
-                let _ = self.app.emit(
-                    EVENT_TOOL_CALL_UPDATE,
-                    json!({ "sessionId": session_id.as_ref(), "update": update }),
-                );
-            }
-            SessionUpdate::Plan(plan) => {
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "plan",
-                    timing,
-                    json!({ "entries": plan.entries.len() }),
-                );
-                let _ = self
-                    .app
-                    .emit(EVENT_PLAN, json!({ "sessionId": session_id.as_ref(), "plan": plan }));
-            }
-            SessionUpdate::AvailableCommandsUpdate(update) => {
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "available_commands_update",
-                    timing,
-                    json!({ "count": update.available_commands.len() }),
-                );
-                let _ = self.app.emit(
-                    EVENT_AVAILABLE_COMMANDS,
-                    json!({ "sessionId": session_id.as_ref(), "update": update }),
-                );
-            }
-            SessionUpdate::CurrentModeUpdate(update) => {
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "current_mode_update",
-                    timing,
-                    json!({ "mode": update.current_mode_id.0.as_ref() }),
-                );
-                let _ = self.app.emit(
-                    EVENT_CURRENT_MODE,
-                    json!({ "sessionId": session_id.as_ref(), "update": update }),
-                );
-            }
-            SessionUpdate::ConfigOptionUpdate(update) => {
-                let timing = self.debug.mark_event(session_id.as_ref());
-                self.debug.emit(
-                    &self.app,
-                    Some(session_id.as_ref()),
-                    "config_option_update",
-                    timing,
-                    json!({ "count": update.config_options.len() }),
-                );
-                let _ = self.app.emit(
-                    EVENT_CONFIG_OPTION_UPDATE,
-                    json!({ "sessionId": session_id.as_ref(), "update": update }),
-                );
-            }
-            _ => {}
-        }
+        emit_session_update(&self.app, &self.debug, session_id.as_ref(), &args.update);
         Ok(())
     }
 
@@ -299,6 +224,164 @@ impl Client for AcpClient {
             }
         }
         Ok(())
+    }
+}
+
+pub fn emit_session_update<R: tauri::Runtime>(
+    app: &AppHandle<R>,
+    debug: &DebugState,
+    session_id: &str,
+    update: &SessionUpdate,
+) {
+    match update {
+        SessionUpdate::AgentMessageChunk(chunk) => {
+            if let Some(text) = content_block_text(&chunk.content) {
+                let timing = debug.mark_event(session_id);
+                debug.emit(
+                    app,
+                    Some(session_id),
+                    "agent_message_chunk",
+                    timing,
+                    json!({ "textLen": text.len() }),
+                );
+                let _ = app.emit(
+                    EVENT_MESSAGE_CHUNK,
+                    TextChunkPayload {
+                        session_id,
+                        text,
+                    },
+                );
+            }
+        }
+        SessionUpdate::AgentThoughtChunk(chunk) => {
+            if emit_thought_chunks() {
+                if let Some(text) = content_block_text(&chunk.content) {
+                    let timing = debug.mark_event(session_id);
+                    debug.emit(
+                        app,
+                        Some(session_id),
+                        "agent_thought_chunk",
+                        timing,
+                        json!({ "textLen": text.len() }),
+                    );
+                    let _ = app.emit(
+                        EVENT_THOUGHT_CHUNK,
+                        TextChunkPayload {
+                            session_id,
+                            text,
+                        },
+                    );
+                }
+            }
+        }
+        SessionUpdate::ToolCall(tool_call) => {
+            let tool_call_id = tool_call.tool_call_id.0.as_ref();
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "tool_call",
+                timing,
+                json!({
+                    "toolCallId": tool_call_id,
+                    "title": tool_call.title.as_str(),
+                }),
+            );
+            let _ = app.emit(
+                EVENT_TOOL_CALL,
+                ToolCallPayload {
+                    session_id,
+                    tool_call,
+                },
+            );
+        }
+        SessionUpdate::ToolCallUpdate(update) => {
+            let tool_call_id = update.tool_call_id.0.as_ref();
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "tool_call_update",
+                timing,
+                json!({ "toolCallId": tool_call_id }),
+            );
+            let _ = app.emit(
+                EVENT_TOOL_CALL_UPDATE,
+                ToolCallUpdatePayload {
+                    session_id,
+                    update,
+                },
+            );
+        }
+        SessionUpdate::Plan(plan) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "plan",
+                timing,
+                json!({ "entries": plan.entries.len() }),
+            );
+            let _ = app.emit(
+                EVENT_PLAN,
+                PlanPayload {
+                    session_id,
+                    plan,
+                },
+            );
+        }
+        SessionUpdate::AvailableCommandsUpdate(update) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "available_commands_update",
+                timing,
+                json!({ "count": update.available_commands.len() }),
+            );
+            let _ = app.emit(
+                EVENT_AVAILABLE_COMMANDS,
+                AvailableCommandsPayload {
+                    session_id,
+                    update,
+                },
+            );
+        }
+        SessionUpdate::CurrentModeUpdate(update) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "current_mode_update",
+                timing,
+                json!({ "mode": update.current_mode_id.0.as_ref() }),
+            );
+            let _ = app.emit(
+                EVENT_CURRENT_MODE,
+                CurrentModePayload {
+                    session_id,
+                    update,
+                },
+            );
+        }
+        SessionUpdate::ConfigOptionUpdate(update) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(
+                app,
+                Some(session_id),
+                "config_option_update",
+                timing,
+                json!({ "count": update.config_options.len() }),
+            );
+            let _ = app.emit(
+                EVENT_CONFIG_OPTION_UPDATE,
+                ConfigOptionPayload {
+                    session_id,
+                    update,
+                },
+            );
+        }
+        _ => {}
     }
 }
 

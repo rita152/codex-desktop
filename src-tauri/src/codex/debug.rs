@@ -1,5 +1,6 @@
 //! Debug timing helpers for Codex event tracing.
 
+use serde::Serialize;
 use serde_json::{json, Value};
 use std::{
     collections::HashMap,
@@ -21,6 +22,18 @@ pub struct DebugTiming {
     pub since_prompt_ms: Option<u64>,
     /// Time since last event for the session (ms).
     pub since_last_event_ms: Option<u64>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct DebugPayload<'a> {
+    label: &'a str,
+    session_id: Option<&'a str>,
+    ts_ms: u64,
+    dt_ms: u64,
+    since_prompt_ms: Option<u64>,
+    since_last_event_ms: Option<u64>,
+    extra: &'a Value,
 }
 
 #[derive(Debug)]
@@ -110,27 +123,36 @@ impl DebugState {
     }
 
     /// Emit a debug timing payload to the frontend and optional stderr.
-    pub fn emit(
+    pub fn emit<R: tauri::Runtime>(
         &self,
-        app: &AppHandle,
+        app: &AppHandle<R>,
         session_id: Option<&str>,
         label: &str,
         timing: DebugTiming,
         extra: Value,
     ) {
-        let payload = json!({
-            "label": label,
-            "sessionId": session_id,
-            "tsMs": timing.ts_ms,
-            "dtMs": timing.dt_ms,
-            "sincePromptMs": timing.since_prompt_ms,
-            "sinceLastEventMs": timing.since_last_event_ms,
-            "extra": extra,
-        });
-
         if self.emit_to_stderr {
+            let payload = json!({
+                "label": label,
+                "sessionId": session_id,
+                "tsMs": timing.ts_ms,
+                "dtMs": timing.dt_ms,
+                "sincePromptMs": timing.since_prompt_ms,
+                "sinceLastEventMs": timing.since_last_event_ms,
+                "extra": extra,
+            });
             tracing::info!(payload = %payload, "debug_timing");
         }
+
+        let payload = DebugPayload {
+            label,
+            session_id,
+            ts_ms: timing.ts_ms,
+            dt_ms: timing.dt_ms,
+            since_prompt_ms: timing.since_prompt_ms,
+            since_last_event_ms: timing.since_last_event_ms,
+            extra: &extra,
+        };
         let _ = app.emit(EVENT_DEBUG, payload);
     }
 
