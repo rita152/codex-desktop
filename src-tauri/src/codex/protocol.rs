@@ -9,9 +9,9 @@ use crate::codex::{
     util::content_block_text,
 };
 use agent_client_protocol::{
-    Client, ClientSideConnection, ExtNotification, PermissionOption, PermissionOptionId,
-    PermissionOptionKind, RequestPermissionOutcome, RequestPermissionRequest,
-    RequestPermissionResponse, SelectedPermissionOutcome, SessionNotification, SessionUpdate,
+    Client, ClientSideConnection, ExtNotification, PermissionOptionId, PermissionOptionKind,
+    RequestPermissionOutcome, RequestPermissionRequest, RequestPermissionResponse,
+    SelectedPermissionOutcome, SessionNotification, SessionUpdate,
 };
 use anyhow::{anyhow, Context, Result};
 use serde::Serialize;
@@ -41,8 +41,14 @@ impl ApprovalKey {
 }
 
 struct PendingApproval {
-    options: Vec<PermissionOption>,
+    options: Vec<PermissionOptionChoice>,
     tx: oneshot::Sender<PermissionOptionId>,
+}
+
+#[derive(Clone)]
+struct PermissionOptionChoice {
+    option_id: PermissionOptionId,
+    kind: PermissionOptionKind,
 }
 
 #[derive(Default)]
@@ -53,10 +59,10 @@ pub struct ApprovalState {
 
 impl ApprovalState {
     /// Register a pending approval request.
-    pub fn insert(
+    fn insert(
         &self,
         key: ApprovalKey,
-        options: Vec<PermissionOption>,
+        options: Vec<PermissionOptionChoice>,
         tx: oneshot::Sender<PermissionOptionId>,
     ) {
         let mut guard = self.lock_pending();
@@ -182,7 +188,15 @@ impl Client for AcpClient {
         );
 
         let (tx, rx) = oneshot::channel();
-        self.approvals.insert(key, args.options.clone(), tx);
+        let option_choices = args
+            .options
+            .iter()
+            .map(|option| PermissionOptionChoice {
+                option_id: option.option_id.clone(),
+                kind: option.kind.clone(),
+            })
+            .collect();
+        self.approvals.insert(key, option_choices, tx);
 
         let _ = self.app.emit(
             EVENT_APPROVAL_REQUEST,
