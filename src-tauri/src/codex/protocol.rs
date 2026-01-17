@@ -24,23 +24,18 @@ use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 /// Composite key for an approval request.
 pub struct ApprovalKey {
     /// ACP session id.
-    pub session_id: String,
+    pub session_id: Arc<str>,
     /// Tool call id.
-    pub tool_call_id: String,
+    pub tool_call_id: Arc<str>,
 }
 
 impl ApprovalKey {
     /// Create a new approval key from session and tool call ids.
-    pub fn new(session_id: impl Into<String>, tool_call_id: impl Into<String>) -> Self {
+    pub fn new(session_id: impl Into<Arc<str>>, tool_call_id: impl Into<Arc<str>>) -> Self {
         Self {
             session_id: session_id.into(),
             tool_call_id: tool_call_id.into(),
         }
-    }
-
-    /// Convert the key to a stable map-friendly string.
-    pub fn as_map_key(&self) -> String {
-        format!("{}:{}", self.session_id, self.tool_call_id)
     }
 }
 
@@ -52,7 +47,7 @@ struct PendingApproval {
 #[derive(Default)]
 /// Shared state for pending approval requests.
 pub struct ApprovalState {
-    pending: std::sync::Mutex<HashMap<String, PendingApproval>>,
+    pending: std::sync::Mutex<HashMap<ApprovalKey, PendingApproval>>,
 }
 
 impl ApprovalState {
@@ -64,7 +59,7 @@ impl ApprovalState {
         tx: oneshot::Sender<PermissionOptionId>,
     ) {
         let mut guard = self.lock_pending();
-        guard.insert(key.as_map_key(), PendingApproval { options, tx });
+        guard.insert(key, PendingApproval { options, tx });
     }
 
     /// Resolve a pending approval request with a decision or explicit option id.
@@ -76,7 +71,7 @@ impl ApprovalState {
     ) -> Result<()> {
         let mut guard = self.lock_pending();
         let pending = guard
-            .remove(&key.as_map_key())
+            .remove(&key)
             .ok_or_else(|| anyhow!("no pending approval for session/tool_call"))?;
 
         let selected = if let Some(option_id) = option_id {
@@ -103,7 +98,7 @@ impl ApprovalState {
         Ok(())
     }
 
-    fn lock_pending(&self) -> std::sync::MutexGuard<'_, HashMap<String, PendingApproval>> {
+    fn lock_pending(&self) -> std::sync::MutexGuard<'_, HashMap<ApprovalKey, PendingApproval>> {
         self.pending
             .lock()
             .unwrap_or_else(|poisoned| poisoned.into_inner())
@@ -123,17 +118,17 @@ impl Client for AcpClient {
         &self,
         args: RequestPermissionRequest,
     ) -> agent_client_protocol::Result<RequestPermissionResponse> {
-        let tool_call_id = args.tool_call.tool_call_id.0.as_ref().to_string();
-        let session_id = args.session_id.0.as_ref().to_string();
+        let tool_call_id = args.tool_call.tool_call_id.0.clone();
+        let session_id = args.session_id.0.clone();
         let key = ApprovalKey::new(session_id.clone(), tool_call_id.clone());
 
-        let timing = self.debug.mark_event(&session_id);
+        let timing = self.debug.mark_event(session_id.as_ref());
         self.debug.emit(
             &self.app,
-            Some(&session_id),
+            Some(session_id.as_ref()),
             "request_permission",
             timing,
-            json!({ "toolCallId": tool_call_id }),
+            json!({ "toolCallId": tool_call_id.as_ref() }),
         );
 
         let (tx, rx) = oneshot::channel();
@@ -142,8 +137,8 @@ impl Client for AcpClient {
         let _ = self.app.emit(
             EVENT_APPROVAL_REQUEST,
             json!({
-                "sessionId": session_id,
-                "requestId": tool_call_id,
+                "sessionId": session_id.as_ref(),
+                "requestId": tool_call_id.as_ref(),
                 "toolCall": args.tool_call,
                 "options": args.options,
             }),
@@ -167,49 +162,49 @@ impl Client for AcpClient {
         &self,
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
-        let session_id = args.session_id.0.as_ref().to_string();
+        let session_id = args.session_id.0.clone();
 
         match &args.update {
             SessionUpdate::AgentMessageChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
-                    let timing = self.debug.mark_event(&session_id);
+                    let timing = self.debug.mark_event(session_id.as_ref());
                     self.debug.emit(
                         &self.app,
-                        Some(&session_id),
+                        Some(session_id.as_ref()),
                         "agent_message_chunk",
                         timing,
                         json!({ "textLen": text.len() }),
                     );
                     let _ = self.app.emit(
                         EVENT_MESSAGE_CHUNK,
-                        json!({ "sessionId": session_id, "text": text }),
+                        json!({ "sessionId": session_id.as_ref(), "text": text }),
                     );
                 }
             }
             SessionUpdate::AgentThoughtChunk(chunk) => {
                 if emit_thought_chunks() {
                     if let Some(text) = content_block_text(&chunk.content) {
-                        let timing = self.debug.mark_event(&session_id);
+                        let timing = self.debug.mark_event(session_id.as_ref());
                         self.debug.emit(
                             &self.app,
-                            Some(&session_id),
+                            Some(session_id.as_ref()),
                             "agent_thought_chunk",
                             timing,
                             json!({ "textLen": text.len() }),
                         );
                         let _ = self.app.emit(
                             EVENT_THOUGHT_CHUNK,
-                            json!({ "sessionId": session_id, "text": text }),
+                            json!({ "sessionId": session_id.as_ref(), "text": text }),
                         );
                     }
                 }
             }
             SessionUpdate::ToolCall(tool_call) => {
                 let tool_call_id = tool_call.tool_call_id.0.as_ref();
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "tool_call",
                     timing,
                     json!({
@@ -219,77 +214,77 @@ impl Client for AcpClient {
                 );
                 let _ = self.app.emit(
                     EVENT_TOOL_CALL,
-                    json!({ "sessionId": session_id, "toolCall": tool_call }),
+                    json!({ "sessionId": session_id.as_ref(), "toolCall": tool_call }),
                 );
             }
             SessionUpdate::ToolCallUpdate(update) => {
                 let tool_call_id = update.tool_call_id.0.as_ref();
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "tool_call_update",
                     timing,
                     json!({ "toolCallId": tool_call_id }),
                 );
                 let _ = self.app.emit(
                     EVENT_TOOL_CALL_UPDATE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::Plan(plan) => {
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "plan",
                     timing,
                     json!({ "entries": plan.entries.len() }),
                 );
                 let _ = self
                     .app
-                    .emit(EVENT_PLAN, json!({ "sessionId": session_id, "plan": plan }));
+                    .emit(EVENT_PLAN, json!({ "sessionId": session_id.as_ref(), "plan": plan }));
             }
             SessionUpdate::AvailableCommandsUpdate(update) => {
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "available_commands_update",
                     timing,
                     json!({ "count": update.available_commands.len() }),
                 );
                 let _ = self.app.emit(
                     EVENT_AVAILABLE_COMMANDS,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::CurrentModeUpdate(update) => {
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "current_mode_update",
                     timing,
                     json!({ "mode": update.current_mode_id.0.as_ref() }),
                 );
                 let _ = self.app.emit(
                     EVENT_CURRENT_MODE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::ConfigOptionUpdate(update) => {
-                let timing = self.debug.mark_event(&session_id);
+                let timing = self.debug.mark_event(session_id.as_ref());
                 self.debug.emit(
                     &self.app,
-                    Some(&session_id),
+                    Some(session_id.as_ref()),
                     "config_option_update",
                     timing,
                     json!({ "count": update.config_options.len() }),
                 );
                 let _ = self.app.emit(
                     EVENT_CONFIG_OPTION_UPDATE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             _ => {}

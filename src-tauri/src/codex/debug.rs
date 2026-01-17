@@ -62,7 +62,14 @@ impl DebugState {
     /// Record a prompt start for a session and return timing metrics.
     pub fn mark_prompt(&self, session_id: &str) -> DebugTiming {
         let now = Instant::now();
-        self.lock_last_prompt().insert(session_id.to_string(), now);
+        {
+            let mut guard = self.lock_last_prompt();
+            if let Some(last) = guard.get_mut(session_id) {
+                *last = now;
+            } else {
+                guard.insert(session_id.to_string(), now);
+            }
+        }
         let since_last = self.update_last_event(session_id, now);
 
         DebugTiming {
@@ -129,14 +136,21 @@ impl DebugState {
 
     fn update_last_event(&self, session_id: &str, now: Instant) -> Option<u64> {
         let mut guard = self.lock_last_event();
-        let since_last = guard.get(session_id).map(|t| {
-            now.duration_since(*t)
-                .as_millis()
-                .try_into()
-                .unwrap_or(u64::MAX)
-        });
-        guard.insert(session_id.to_string(), now);
-        since_last
+        match guard.get_mut(session_id) {
+            Some(last) => {
+                let since_last = now
+                    .duration_since(*last)
+                    .as_millis()
+                    .try_into()
+                    .unwrap_or(u64::MAX);
+                *last = now;
+                Some(since_last)
+            }
+            None => {
+                guard.insert(session_id.to_string(), now);
+                None
+            }
+        }
     }
 
     fn now_ms(&self) -> u64 {

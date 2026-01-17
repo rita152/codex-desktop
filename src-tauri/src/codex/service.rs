@@ -325,7 +325,7 @@ async fn prompt_inner(
     );
 
     let request = PromptRequest::new(
-        session_id_typed.clone(),
+        session_id_typed,
         vec![agent_client_protocol::ContentBlock::Text(TextContent::new(
             content,
         ))],
@@ -435,13 +435,12 @@ async fn worker_loop(
                 reply,
             } => {
                 let timing = state.debug.mark_global();
-                let method_id_label = method_id.clone();
                 state.debug.emit(
                     &state.app,
                     None,
                     "authenticate_start",
                     timing,
-                    serde_json::json!({ "methodId": method_id_label }),
+                    serde_json::json!({ "methodId": &method_id }),
                 );
 
                 let start = Instant::now();
@@ -542,14 +541,12 @@ async fn worker_loop(
                 reply,
             } => {
                 let timing = state.debug.mark_event(&session_id);
-                let config_id_label = config_id.clone();
-                let value_id_label = value_id.clone();
                 state.debug.emit(
                     &state.app,
                     Some(&session_id),
                     "set_config_option_start",
                     timing,
-                    serde_json::json!({ "configId": config_id_label, "valueId": value_id_label }),
+                    serde_json::json!({ "configId": &config_id, "valueId": &value_id }),
                 );
 
                 let start = Instant::now();
