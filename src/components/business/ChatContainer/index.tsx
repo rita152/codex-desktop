@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { lazy, Suspense, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,7 +6,6 @@ import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
-import { TerminalPanel } from '../TerminalPanel';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
@@ -19,6 +18,39 @@ const DEFAULT_SIDEBAR_WIDTH = 200;
 const DEFAULT_TERMINAL_WIDTH = 360;
 const MIN_TERMINAL_WIDTH = 240;
 const MIN_CONVERSATION_WIDTH = 240;
+
+const TerminalPanel = lazy(() =>
+  import('../TerminalPanel').then((module) => ({ default: module.TerminalPanel }))
+);
+
+const TerminalPanelFallback = ({ visible = false }: { visible?: boolean }) => {
+  const panelStyle: CSSProperties = visible
+    ? {
+        flex: '0 0 var(--terminal-panel-width, 360px)',
+        minHeight: 0,
+        alignSelf: 'stretch',
+      }
+    : { flex: '0 0 0', width: 0, minHeight: 0 };
+
+  return (
+    <aside className="terminal-panel" aria-hidden={!visible} style={panelStyle}>
+      {visible && (
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'var(--color-text-secondary)',
+            fontSize: '0.85rem',
+          }}
+        >
+          Loading...
+        </div>
+      )}
+    </aside>
+  );
+};
 
 export function ChatContainer({
   sessions,
@@ -224,12 +256,14 @@ export function ChatContainer({
             </div>
           </div>
           {(terminalVisible || terminalId) && (
-            <TerminalPanel
-              terminalId={terminalId}
-              visible={terminalVisible}
-              onClose={onTerminalClose}
-              onResizeStart={handleTerminalResize}
-            />
+            <Suspense fallback={<TerminalPanelFallback visible={terminalVisible} />}>
+              <TerminalPanel
+                terminalId={terminalId}
+                visible={terminalVisible}
+                onClose={onTerminalClose}
+                onResizeStart={handleTerminalResize}
+              />
+            </Suspense>
           )}
         </div>
       </div>

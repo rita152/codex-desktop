@@ -43,6 +43,7 @@ const MARKDOWN_COMPONENTS = {
 
 const normalizeMathDelimiters = (raw: string): string => {
   if (!raw) return raw;
+  if (!raw.includes('\\[') && !raw.includes('\\(')) return raw;
   const segments = raw.split(/(```[\s\S]*?```|`[^`]*`)/g);
   return segments
     .map((segment) => {

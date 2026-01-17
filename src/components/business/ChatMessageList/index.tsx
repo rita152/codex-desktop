@@ -187,15 +187,10 @@ const buildChatGroups = (
     isGenerating && (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup));
 
   if (shouldInsertPlaceholder) {
-    const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
-    const startTime =
-      lastUserMessage?.timestamp instanceof Date ? lastUserMessage.timestamp.getTime() : Date.now();
-    if (lastUserMessage?.id !== undefined) {
-      lastUserMessageId = lastUserMessage.id;
-    }
+    const startTime = lastUserMessageTime ?? Date.now();
     const placeholderGroup: WorkingGroup = {
       type: 'working',
-      id: getWorkingGroupId(String(lastUserMessage?.id ?? startTime)),
+      id: getWorkingGroupId(String(lastUserMessageId ?? startTime)),
       isActive: true,
       startTime,
       items: [
