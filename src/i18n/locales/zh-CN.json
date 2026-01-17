@@ -92,7 +92,7 @@
   },
   "thinking": {
     "label": {
-      "working": "处理中",
+      "working": "Working",
       "thinking": "思考中",
       "thinkingWithDuration": "思考中 {{duration}}",
       "doneWithDuration": "思考了 {{duration}}",
@@ -100,8 +100,8 @@
     }
   },
   "working": {
-    "title": "处理中",
-    "inProgress": "进行中",
+    "title": "Working",
+    "inProgress": "Working",
     "itemCount_one": "{{count}} 项",
     "itemCount_other": "{{count}} 项",
     "totalDuration": "总耗时 {{duration}}"
