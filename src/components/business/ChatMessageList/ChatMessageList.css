@@ -33,6 +33,10 @@
   padding-bottom: var(--spacing-lg);
 }
 
+.chat-message-list__virtual-item--working {
+  padding-bottom: 0;
+}
+
 .chat-message-list__virtual-item--last {
   padding-bottom: 0;
 }

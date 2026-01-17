@@ -8,8 +8,8 @@
   overflow: hidden;
   background-color: var(--color-bg-secondary);
   --working-item-padding-x: var(--spacing-md);
-  --working-item-padding-y: var(--spacing-sm);
-  --working-items-padding-y: var(--spacing-sm);
+  --working-item-padding-y: var(--spacing-xs);
+  --working-items-padding-y: var(--spacing-xs);
   --working-item-indent: var(--spacing-md);
 }
 

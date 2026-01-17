@@ -389,12 +389,14 @@ export const ChatMessageList = memo(function ChatMessageList({
           }
 
           const isLast = virtualRow.index === groups.length - 1;
+          const isWorkingGroup = group.type === 'working';
 
           return (
             <div
               key={virtualRow.key}
               className={cn(
                 'chat-message-list__virtual-item',
+                isWorkingGroup && 'chat-message-list__virtual-item--working',
                 isLast && 'chat-message-list__virtual-item--last'
               )}
               data-index={virtualRow.index}
