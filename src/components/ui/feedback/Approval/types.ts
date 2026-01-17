@@ -31,6 +31,8 @@ export interface ApprovalProps {
   type: ApprovalType;
   /** 审批标题 */
   title: string;
+  /** 展示样式 */
+  variant?: 'card' | 'embedded';
   /** 当前状态 */
   status: ApprovalStatus;
   /** 权限选项（默认根据 type 自动生成） */

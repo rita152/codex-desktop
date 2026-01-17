@@ -5,6 +5,22 @@
   background-color: var(--color-bg-secondary);
 }
 
+.thinking--embedded {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.thinking--embedded .thinking__trigger {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md));
+}
+
+.thinking--embedded .thinking__text {
+  padding: 0 var(--working-item-padding-x, var(--spacing-md))
+    var(--working-item-padding-y, var(--spacing-sm));
+}
+
 .thinking__trigger {
   display: flex;
   align-items: center;

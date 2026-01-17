@@ -5,6 +5,8 @@ export interface ThinkingProps {
   content: string;
   /** 展示在触发器上的标题（可选） */
   title?: string;
+  /** 展示样式 */
+  variant?: 'card' | 'embedded';
   /** 触发器标题样式 */
   headerVariant?: 'default' | 'title';
   /** 是否正在流式传输 */

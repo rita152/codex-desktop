@@ -5,6 +5,22 @@
   background-color: var(--color-bg-secondary);
 }
 
+.tool-call--embedded {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.tool-call--embedded .tool-call__trigger {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md));
+}
+
+.tool-call--embedded .tool-call__section {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md));
+}
+
 /* 触发器 */
 .tool-call__trigger {
   display: flex;

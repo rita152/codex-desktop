@@ -66,6 +66,8 @@ export interface ToolCallProps {
   toolCallId: string;
   /** 工具调用标题（显示名称） */
   title: string;
+  /** 展示样式 */
+  variant?: 'card' | 'embedded';
   /** 工具类型 */
   kind?: ToolKind;
   /** 工具调用状态 */

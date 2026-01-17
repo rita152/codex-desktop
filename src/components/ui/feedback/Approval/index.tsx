@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../../../utils/cn';
 import { Markdown } from '../../data-display/Markdown';
 import { GitDiff } from '../../data-display/GitDiff';
-import { TextArea } from '../../data-entry/TextArea';
 
 import type {
   ApprovalProps,
@@ -153,6 +152,7 @@ export function Approval({
   callId,
   type,
   title,
+  variant = 'card',
   status,
   options,
   disabled = false,
@@ -160,10 +160,6 @@ export function Approval({
   description,
   command,
   diffs,
-  feedback = '',
-  onFeedbackChange,
-  showFeedback,
-  feedbackPlaceholder,
   onSelect,
   className = '',
 }: ApprovalProps) {
@@ -171,14 +167,12 @@ export function Approval({
   const isPending = status === 'pending';
   const resolvedOptions = options ?? getDefaultOptions(t, type);
   const showActions = isPending && onSelect && resolvedOptions.length > 0;
-  const canReject = resolvedOptions.some((option) => option.kind.startsWith('reject'));
-  const shouldShowFeedback = showFeedback ?? canReject;
-  const resolvedFeedbackPlaceholder = feedbackPlaceholder ?? t('approval.feedbackPlaceholder');
 
   const displayCommand = command ? command.replace(/\s*\n\s*/g, ' ').trim() : '';
 
   const classNames = cn(
     'approval',
+    variant === 'embedded' && 'approval--embedded',
     `approval--${status}`,
     `approval--${type}`,
     disabled && 'approval--disabled',
@@ -191,13 +185,7 @@ export function Approval({
     }
   };
 
-  const handleFeedbackChange = (value: string) => {
-    onFeedbackChange?.(value);
-  };
-
-  const hasDetails = Boolean(
-    description || command || (diffs && diffs.length > 0) || shouldShowFeedback
-  );
+  const hasDetails = Boolean(description || command || (diffs && diffs.length > 0));
 
   return (
     <div className={classNames} data-call-id={callId}>
@@ -256,20 +244,6 @@ export function Approval({
                   />
                 ))}
               </div>
-            </div>
-          )}
-          {shouldShowFeedback && (
-            <div className="approval__section">
-              <span className="approval__section-label">{t('approval.section.feedback')}</span>
-              <TextArea
-                value={feedback}
-                onChange={handleFeedbackChange}
-                placeholder={resolvedFeedbackPlaceholder}
-                minRows={2}
-                maxRows={4}
-                className="approval__feedback"
-                disabled={disabled || loading}
-              />
             </div>
           )}
         </div>

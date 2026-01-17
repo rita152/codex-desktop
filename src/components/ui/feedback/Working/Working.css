@@ -7,6 +7,9 @@
   border-radius: var(--radius-lg);
   overflow: hidden;
   background-color: var(--color-bg-secondary);
+  --working-item-padding-x: var(--spacing-md);
+  --working-item-padding-y: var(--spacing-sm);
+  --working-items-padding-y: var(--spacing-sm);
 }
 
 .working__trigger {
@@ -115,7 +118,6 @@
 
 .working--open .working__content {
   max-height: none;
-  border-top: 1px solid transparent;
   overflow-y: visible;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
@@ -128,6 +130,6 @@
 .working__items {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+  gap: 0;
+  padding: var(--working-items-padding-y) 0;
 }

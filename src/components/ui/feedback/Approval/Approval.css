@@ -5,6 +5,23 @@
   background-color: var(--color-bg-secondary);
 }
 
+.approval--embedded {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+}
+
+.approval--embedded .approval__header {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md));
+}
+
+.approval--embedded .approval__body {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md))
+    var(--working-item-padding-y, var(--spacing-sm));
+}
+
 /* 单行头部 */
 .approval__header {
   display: flex;

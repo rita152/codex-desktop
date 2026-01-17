@@ -38,12 +38,12 @@ const getItemKey = (item: WorkingItem, index: number): string => {
 
 const renderItem = (item: WorkingItem, index: number) => {
   if (item.type === 'thinking') {
-    return <Thinking key={getItemKey(item, index)} {...item.data} />;
+    return <Thinking key={getItemKey(item, index)} {...item.data} variant="embedded" />;
   }
   if (item.type === 'toolcall') {
-    return <ToolCall key={getItemKey(item, index)} {...item.data} />;
+    return <ToolCall key={getItemKey(item, index)} {...item.data} variant="embedded" />;
   }
-  return <Approval key={getItemKey(item, index)} {...item.data} />;
+  return <Approval key={getItemKey(item, index)} {...item.data} variant="embedded" />;
 };
 
 const hasIncompleteWorkingItem = (item: WorkingItem): boolean => {

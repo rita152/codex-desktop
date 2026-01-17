@@ -54,6 +54,7 @@ function ChevronDownIcon({ size = 16 }: { size?: number }) {
 export function Thinking({
   content,
   title,
+  variant = 'card',
   headerVariant = 'default',
   isStreaming = false,
   phase = 'done',
@@ -145,6 +146,7 @@ export function Thinking({
 
   const classNames = cn(
     'thinking',
+    variant === 'embedded' && 'thinking--embedded',
     isOpen && 'thinking--open',
     isActive && 'thinking--streaming',
     phase === 'working' && 'thinking--working',

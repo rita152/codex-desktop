@@ -6,46 +6,18 @@ import { formatDurationShort } from '../../../../i18n/format';
 
 import {
   AlertCircleIcon,
-  BrowserIcon,
   CheckCircleIcon,
   ChevronDownIcon,
-  EditIcon,
-  ExecuteIcon,
-  FetchIcon,
   FileIcon,
   LoaderIcon,
-  McpIcon,
-  ReadIcon,
-  SearchIcon,
   ToolIcon,
 } from './icons';
 
-import type { ToolCallProps, ToolCallStatus, ToolKind, ToolCallLocation } from './types';
+import type { ToolCallProps, ToolCallStatus, ToolCallLocation } from './types';
 
 import './ToolCall.css';
 
 // ============ Helpers ============
-
-function getKindIcon(kind: ToolKind | undefined, size = 16) {
-  switch (kind) {
-    case 'read':
-      return <ReadIcon size={size} />;
-    case 'edit':
-      return <EditIcon size={size} />;
-    case 'execute':
-      return <ExecuteIcon size={size} />;
-    case 'search':
-      return <SearchIcon size={size} />;
-    case 'fetch':
-      return <FetchIcon size={size} />;
-    case 'browser':
-      return <BrowserIcon size={size} />;
-    case 'mcp':
-      return <McpIcon size={size} />;
-    default:
-      return <ToolIcon size={size} />;
-  }
-}
 
 function getStatusIcon(status: ToolCallStatus, size = 16) {
   switch (status) {
@@ -112,6 +84,7 @@ function formatLocationKey(location: ToolCallLocation): string {
 export const ToolCall = memo(function ToolCall({
   toolCallId,
   title,
+  variant = 'card',
   kind,
   status,
   locations,
@@ -161,7 +134,6 @@ export const ToolCall = memo(function ToolCall({
     return null;
   })();
 
-  const kindIcon = useMemo(() => getKindIcon(kind, 16), [kind]);
   const statusIcon = useMemo(() => getStatusIcon(status, 14), [status]);
   const statusLabel = getStatusLabel(status, t);
 
@@ -169,6 +141,7 @@ export const ToolCall = memo(function ToolCall({
 
   const classNames = cn(
     'tool-call',
+    variant === 'embedded' && 'tool-call--embedded',
     isOpen && 'tool-call--open',
     `tool-call--${status}`,
     kind && `tool-call--kind-${kind}`,
@@ -184,7 +157,6 @@ export const ToolCall = memo(function ToolCall({
         aria-expanded={isOpen}
         disabled={!canToggle}
       >
-        <span className="tool-call__icon tool-call__icon--kind">{kindIcon}</span>
         <span className="tool-call__title">
           <span className="tool-call__title-text" title={title}>
             {title}
