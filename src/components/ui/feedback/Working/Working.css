@@ -10,6 +10,7 @@
   --working-item-padding-x: var(--spacing-md);
   --working-item-padding-y: var(--spacing-sm);
   --working-items-padding-y: var(--spacing-sm);
+  --working-item-indent: var(--spacing-md);
 }
 
 .working__trigger {
@@ -132,4 +133,5 @@
   flex-direction: column;
   gap: 0;
   padding: var(--working-items-padding-y) 0;
+  padding-left: var(--working-item-indent);
 }
