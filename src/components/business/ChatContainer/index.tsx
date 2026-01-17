@@ -223,21 +223,12 @@ export function ChatContainer({
               />
             </div>
           </div>
-          {terminalVisible && (
-            <div
-              className="chat-container__terminal-resizer"
-              role="separator"
-              aria-label={t('terminalPanel.resizeAria')}
-              aria-orientation="vertical"
-              onPointerDown={handleTerminalResize}
-              tabIndex={0}
-            />
-          )}
           {(terminalVisible || terminalId) && (
             <TerminalPanel
               terminalId={terminalId}
               visible={terminalVisible}
               onClose={onTerminalClose}
+              onResizeStart={handleTerminalResize}
             />
           )}
         </div>

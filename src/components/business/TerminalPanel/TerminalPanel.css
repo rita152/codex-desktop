@@ -13,6 +13,35 @@
   align-self: stretch;
 }
 
+.terminal-panel__resize-handle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+}
+
+.terminal-panel__resize-handle::before {
+  content: '';
+  position: absolute;
+  top: var(--spacing-lg);
+  bottom: var(--spacing-lg);
+  left: 2px;
+  width: 2px;
+  background: var(--color-border);
+  border-radius: 999px;
+  opacity: 0;
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.terminal-panel__resize-handle:hover::before,
+.terminal-panel__resize-handle:focus-visible::before {
+  background: var(--color-border-hover);
+  opacity: 0.9;
+}
+
 .terminal-panel--hidden {
   opacity: 0;
   pointer-events: none;

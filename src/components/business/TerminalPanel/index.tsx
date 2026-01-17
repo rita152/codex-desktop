@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
 import { Terminal } from '@xterm/xterm';
@@ -15,6 +16,7 @@ type TerminalPanelProps = {
   terminalId?: string | null;
   visible?: boolean;
   onClose?: () => void;
+  onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
 type TerminalOutputEvent = {
@@ -22,7 +24,12 @@ type TerminalOutputEvent = {
   data: string;
 };
 
-export function TerminalPanel({ terminalId, visible = false, onClose }: TerminalPanelProps) {
+export function TerminalPanel({
+  terminalId,
+  visible = false,
+  onClose,
+  onResizeStart,
+}: TerminalPanelProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -108,6 +115,16 @@ export function TerminalPanel({ terminalId, visible = false, onClose }: Terminal
       className={cn('terminal-panel', !visible && 'terminal-panel--hidden')}
       aria-hidden={!visible}
     >
+      {visible && (
+        <div
+          className="terminal-panel__resize-handle"
+          role="separator"
+          aria-label={t('terminalPanel.resizeAria')}
+          aria-orientation="vertical"
+          onPointerDown={onResizeStart}
+          tabIndex={0}
+        />
+      )}
       <header className="terminal-panel__header" data-tauri-drag-region>
         <div className="terminal-panel__title">
           <TerminalIcon size={16} />
