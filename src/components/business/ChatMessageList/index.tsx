@@ -183,20 +183,10 @@ const buildChatGroups = (
     }
   }
 
-  if (isGenerating) {
-    let activeWorking: WorkingGroup | null = null;
-    if (currentWorkingGroup) {
-      activeWorking = currentWorkingGroup;
-    } else {
-      activeWorking = lastWorkingGroup;
-    }
+  const shouldInsertPlaceholder =
+    isGenerating && (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup));
 
-    if (activeWorking) {
-      activeWorking.isActive = true;
-    }
-  }
-
-  if (isGenerating && (!currentWorkingGroup || (lastUserMessageId === null && !lastWorkingGroup))) {
+  if (shouldInsertPlaceholder) {
     const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
     const startTime =
       lastUserMessage?.timestamp instanceof Date ? lastUserMessage.timestamp.getTime() : Date.now();
@@ -225,6 +215,20 @@ const buildChatGroups = (
       groups.splice(lastUserGroupIndex + 1, 0, placeholderGroup);
     } else {
       groups.push(placeholderGroup);
+    }
+    currentWorkingGroup = placeholderGroup;
+  }
+
+  if (isGenerating) {
+    let activeWorking: WorkingGroup | null = null;
+    if (currentWorkingGroup) {
+      activeWorking = currentWorkingGroup;
+    } else if (!hasUserMessage) {
+      activeWorking = lastWorkingGroup;
+    }
+
+    if (activeWorking) {
+      activeWorking.isActive = true;
     }
   }
 
