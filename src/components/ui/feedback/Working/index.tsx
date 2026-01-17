@@ -12,23 +12,6 @@ import type { WorkingItem, WorkingProps } from './types';
 
 import './Working.css';
 
-function ActivityIcon({ size = 16 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-    </svg>
-  );
-}
-
 function ChevronDownIcon({ size = 16 }: { size?: number }) {
   return (
     <svg
@@ -206,9 +189,6 @@ export function Working({
         aria-expanded={open}
         disabled={!canToggle}
       >
-        <span className="working__icon">
-          <ActivityIcon size={16} />
-        </span>
         <span className="working__label">{t('working.title')}</span>
         <span className="working__meta">
           <span className="working__count">{itemLabel}</span>
