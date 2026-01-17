@@ -121,10 +121,10 @@ impl DebugState {
             "extra": extra,
         });
 
-        let _ = app.emit(EVENT_DEBUG, payload.clone());
         if self.emit_to_stderr {
             tracing::info!(payload = %payload, "debug_timing");
         }
+        let _ = app.emit(EVENT_DEBUG, payload);
     }
 
     fn update_last_event(&self, session_id: &str, now: Instant) -> Option<u64> {

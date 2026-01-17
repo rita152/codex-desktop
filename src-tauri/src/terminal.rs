@@ -26,15 +26,15 @@ struct TerminalInstance {
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct TerminalOutput {
-    terminal_id: String,
-    data: String,
+struct TerminalOutput<'a> {
+    terminal_id: &'a str,
+    data: &'a str,
 }
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct TerminalExit {
-    terminal_id: String,
+struct TerminalExit<'a> {
+    terminal_id: &'a str,
 }
 
 impl TerminalManager {
@@ -124,14 +124,27 @@ pub fn terminal_spawn(
             match reader.read(&mut buffer) {
                 Ok(0) => break,
                 Ok(bytes) => {
-                    let data = String::from_utf8_lossy(&buffer[..bytes]).to_string();
-                    let _ = app_handle.emit(
-                        TERMINAL_OUTPUT_EVENT,
-                        TerminalOutput {
-                            terminal_id: terminal_id.clone(),
-                            data,
-                        },
-                    );
+                    match std::str::from_utf8(&buffer[..bytes]) {
+                        Ok(text) => {
+                            let _ = app_handle.emit(
+                                TERMINAL_OUTPUT_EVENT,
+                                TerminalOutput {
+                                    terminal_id: terminal_id.as_str(),
+                                    data: text,
+                                },
+                            );
+                        }
+                        Err(_) => {
+                            let text = String::from_utf8_lossy(&buffer[..bytes]).into_owned();
+                            let _ = app_handle.emit(
+                                TERMINAL_OUTPUT_EVENT,
+                                TerminalOutput {
+                                    terminal_id: terminal_id.as_str(),
+                                    data: text.as_str(),
+                                },
+                            );
+                        }
+                    }
                 }
                 Err(_) => break,
             }
@@ -140,7 +153,7 @@ pub fn terminal_spawn(
         let _ = app_handle.emit(
             TERMINAL_EXIT_EVENT,
             TerminalExit {
-                terminal_id: terminal_id.clone(),
+                terminal_id: terminal_id.as_str(),
             },
         );
     });
