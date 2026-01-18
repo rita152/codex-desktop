@@ -24,3 +24,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+#root {
+  border-radius: var(--radius-window);
+  background-color: var(--color-bg-secondary);
+}

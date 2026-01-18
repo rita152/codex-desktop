@@ -10,6 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "codex-desktop",
@@ -19,6 +20,13 @@
         "minHeight": 400,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
+        "transparent": true,
+        "windowEffects": {
+          "effects": [
+            "windowBackground"
+          ],
+          "radius": 28
+        },
         "trafficLightPosition": {
           "x": 18,
           "y": 22
