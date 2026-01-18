@@ -121,6 +121,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  margin-top: calc(-1 * var(--spacing-xs) - 12px);
 }
 
 .chat-container__cwd-button {
@@ -146,13 +147,16 @@
   -webkit-app-region: no-drag;
 }
 
+.chat-container__cwd-button .icon {
+  color: currentColor;
+}
+
 .chat-container__header .icon-button,
 .chat-container__session-header button {
   -webkit-app-region: no-drag;
 }
 
 .chat-container__cwd-button:hover:not(:disabled) {
-  color: var(--color-text);
   background-color: var(--color-bg-subtle);
 }
 
