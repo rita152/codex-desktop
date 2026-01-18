@@ -92,6 +92,8 @@ export function App() {
   const sidebarVisibilityRef = useRef(true);
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const [terminalVisible, setTerminalVisible] = useState(false);
+  const [remoteServerPanelVisible, setRemoteServerPanelVisible] = useState(false);
+  const [remoteServerPanelWidth, setRemoteServerPanelWidth] = useState(360);
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const {
     sessionTokenUsage,
@@ -852,12 +854,51 @@ export function App() {
 
   const handleSideAction = useCallback(
     (actionId: string) => {
-      if (actionId !== 'terminal') return;
-      if (!selectedSessionId) return;
-      setTerminalVisible((prev) => !prev);
+      if (actionId === 'terminal') {
+        if (!selectedSessionId) return;
+        setTerminalVisible((prev) => !prev);
+      } else if (actionId === 'remote') {
+        setRemoteServerPanelVisible((prev) => !prev);
+      }
     },
     [selectedSessionId, setTerminalVisible]
   );
+
+
+  const handleRemoteServerPanelClose = useCallback(() => {
+    setRemoteServerPanelVisible(false);
+  }, [setRemoteServerPanelVisible]);
+
+  const clampRemoteServerPanelWidth = (nextWidth: number) => {
+    const bodyWidth = document.querySelector('.chat-container__body')?.getBoundingClientRect().width ?? 0;
+    const MIN_PANEL_WIDTH = 240;
+    const MIN_CONVERSATION_WIDTH = 240;
+    const maxWidth = bodyWidth ? Math.max(MIN_PANEL_WIDTH, bodyWidth - MIN_CONVERSATION_WIDTH) : nextWidth;
+    return Math.min(Math.max(nextWidth, MIN_PANEL_WIDTH), maxWidth);
+  };
+
+  const handleRemoteServerPanelResize = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!remoteServerPanelVisible) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startWidth = remoteServerPanelWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+
+    const handlePointerMove = (moveEvent: PointerEvent) => {
+      const delta = startX - moveEvent.clientX;
+      setRemoteServerPanelWidth(clampRemoteServerPanelWidth(startWidth + delta));
+    };
+    const handlePointerUp = () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+  };
 
   const handleTerminalClose = useCallback(() => {
     setTerminalVisible(false);
@@ -1035,6 +1076,10 @@ export function App() {
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
       onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
+      remoteServerPanelVisible={remoteServerPanelVisible}
+      remoteServerPanelWidth={remoteServerPanelWidth}
+      onRemoteServerPanelClose={handleRemoteServerPanelClose}
+      onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
     />
   );
 }
