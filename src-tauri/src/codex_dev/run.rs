@@ -31,7 +31,7 @@ impl Client for DevClient {
         &self,
         args: RequestPermissionRequest,
     ) -> agent_client_protocol::Result<RequestPermissionResponse> {
-        let request_id = args.tool_call.tool_call_id.0.clone();
+        let request_id = args.tool_call.tool_call_id.0.as_ref();
         let _ = self.window.emit(
             EVENT_APPROVAL_REQUEST,
             json!({
@@ -71,13 +71,18 @@ impl Client for DevClient {
         &self,
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
-        let session_id = args.session_id.0.clone();
-        match args.update {
+        let SessionNotification {
+            session_id,
+            update,
+            ..
+        } = args;
+        let session_id = session_id.0;
+        match update {
             SessionUpdate::AgentMessageChunk(chunk) => {
                 if let Some(text) = content_block_text(&chunk.content) {
                     let _ = self.window.emit(
                         EVENT_MESSAGE_CHUNK,
-                        json!({ "sessionId": session_id, "text": text }),
+                        json!({ "sessionId": session_id.as_ref(), "text": text }),
                     );
                 }
             }
@@ -86,7 +91,7 @@ impl Client for DevClient {
                     if let Some(text) = content_block_text(&chunk.content) {
                         let _ = self.window.emit(
                             EVENT_THOUGHT_CHUNK,
-                            json!({ "sessionId": session_id, "text": text }),
+                            json!({ "sessionId": session_id.as_ref(), "text": text }),
                         );
                     }
                 }
@@ -94,36 +99,36 @@ impl Client for DevClient {
             SessionUpdate::ToolCall(tool_call) => {
                 let _ = self.window.emit(
                     EVENT_TOOL_CALL,
-                    json!({ "sessionId": session_id, "toolCall": tool_call }),
+                    json!({ "sessionId": session_id.as_ref(), "toolCall": tool_call }),
                 );
             }
             SessionUpdate::ToolCallUpdate(update) => {
                 let _ = self.window.emit(
                     EVENT_TOOL_CALL_UPDATE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::Plan(plan) => {
                 let _ = self
                     .window
-                    .emit(EVENT_PLAN, json!({ "sessionId": session_id, "plan": plan }));
+                    .emit(EVENT_PLAN, json!({ "sessionId": session_id.as_ref(), "plan": plan }));
             }
             SessionUpdate::AvailableCommandsUpdate(update) => {
                 let _ = self.window.emit(
                     EVENT_AVAILABLE_COMMANDS,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::CurrentModeUpdate(update) => {
                 let _ = self.window.emit(
                     EVENT_CURRENT_MODE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             SessionUpdate::ConfigOptionUpdate(update) => {
                 let _ = self.window.emit(
                     EVENT_CONFIG_OPTION_UPDATE,
-                    json!({ "sessionId": session_id, "update": update }),
+                    json!({ "sessionId": session_id.as_ref(), "update": update }),
                 );
             }
             _ => {}

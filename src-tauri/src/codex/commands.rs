@@ -3,27 +3,24 @@
 use crate::codex::service::CodexService;
 use crate::codex::types::{ApprovalDecision, InitializeResult, NewSessionResult, PromptResult};
 use std::path::PathBuf;
+use std::sync::OnceLock;
 use tauri::{AppHandle, State};
 
 #[derive(Default)]
 /// Tauri state wrapper for the Codex service.
 pub struct CodexManager {
-    service: tokio::sync::Mutex<Option<CodexService>>,
+    service: OnceLock<CodexService>,
 }
 
 impl CodexManager {
-    async fn get_or_create(&self, app: AppHandle) -> CodexService {
-        let mut guard = self.service.lock().await;
-        if let Some(svc) = guard.as_ref() {
-            return svc.clone();
-        }
-        let svc = CodexService::new(app);
-        *guard = Some(svc.clone());
-        svc
+    fn get_or_create(&self, app: AppHandle) -> CodexService {
+        self.service
+            .get_or_init(|| CodexService::new(app))
+            .clone()
     }
 
-    async fn get(&self) -> Option<CodexService> {
-        self.service.lock().await.clone()
+    fn get(&self) -> Option<CodexService> {
+        self.service.get().cloned()
     }
 }
 
@@ -33,7 +30,7 @@ pub async fn codex_init(
     app: AppHandle,
     state: State<'_, CodexManager>,
 ) -> Result<InitializeResult, String> {
-    let svc = state.get_or_create(app).await;
+    let svc = state.get_or_create(app);
     svc.initialize().await.map_err(|e| e.to_string())
 }
 
@@ -46,7 +43,6 @@ pub async fn codex_auth(
 ) -> Result<(), String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.authenticate(method, api_key)
         .await
@@ -61,7 +57,6 @@ pub async fn codex_new_session(
 ) -> Result<NewSessionResult, String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.create_session(PathBuf::from(cwd))
         .await
@@ -77,7 +72,6 @@ pub async fn codex_prompt(
 ) -> Result<PromptResult, String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.send_prompt(session_id, content)
         .await
@@ -92,7 +86,6 @@ pub async fn codex_cancel(
 ) -> Result<(), String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.cancel(session_id).await.map_err(|e| e.to_string())
 }
@@ -108,7 +101,6 @@ pub async fn codex_approve(
 ) -> Result<(), String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.respond_permission(session_id, request_id, decision, option_id)
         .map_err(|e| e.to_string())
@@ -124,7 +116,6 @@ pub async fn codex_set_config_option(
 ) -> Result<(), String> {
     let svc = state
         .get()
-        .await
         .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
     svc.set_config_option(session_id, config_id, value_id)
         .await

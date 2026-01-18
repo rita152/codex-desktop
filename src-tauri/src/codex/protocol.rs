@@ -229,8 +229,12 @@ impl Client for AcpClient {
         &self,
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
-        let session_id = args.session_id.0.clone();
-        emit_session_update(&self.app, &self.debug, session_id.as_ref(), &args.update);
+        let SessionNotification {
+            session_id,
+            update,
+            ..
+        } = args;
+        emit_session_update(&self.app, &self.debug, session_id.0.as_ref(), &update);
         Ok(())
     }
 
