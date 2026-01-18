@@ -1,0 +1,20 @@
+// Types for remote server connection functionality
+
+export interface RemoteServerConfig {
+    id: string;
+    name: string;
+    host: string;
+    port: number;
+    username: string;
+    auth: SshAuth;
+}
+
+export type SshAuth =
+    | { type: 'key_file'; privateKeyPath: string; passphrase?: string }
+    | { type: 'agent' }
+    | { type: 'password'; password: string };
+
+export interface RemoteSessionConfig {
+    serverId: string;
+    remoteCwd: string;
+}

@@ -1,0 +1,81 @@
+// Hook for managing remote servers
+
+import { useState, useCallback, useEffect } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { RemoteServerConfig } from '../types/remote';
+
+export function useRemoteServers() {
+    const [servers, setServers] = useState<RemoteServerConfig[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const loadServers = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const serverList = await invoke<RemoteServerConfig[]>('remote_list_servers');
+            setServers(serverList);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const addServer = useCallback(async (config: RemoteServerConfig) => {
+        try {
+            setLoading(true);
+            setError(null);
+            await invoke('remote_add_server', { config });
+            await loadServers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [loadServers]);
+
+    const removeServer = useCallback(async (serverId: string) => {
+        try {
+            setLoading(true);
+            setError(null);
+            await invoke('remote_remove_server', { serverId });
+            await loadServers();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err));
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [loadServers]);
+
+    const testConnection = useCallback(async (serverId: string): Promise<string> => {
+        try {
+            setLoading(true);
+            setError(null);
+            const result = await invoke<string>('remote_test_connection', { serverId });
+            return result;
+        } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            setError(message);
+            throw new Error(message);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        loadServers();
+    }, [loadServers]);
+
+    return {
+        servers,
+        loading,
+        error,
+        loadServers,
+        addServer,
+        removeServer,
+        testConnection,
+    };
+}
