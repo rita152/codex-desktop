@@ -6,6 +6,7 @@ use crate::codex::{
     process::{CodexProcess, CodexProcessConfig},
     thoughts::emit_thought_chunks,
     types::ApprovalDecision,
+    unified_process::UnifiedProcess,
     util::content_block_text,
 };
 use agent_client_protocol::{
@@ -403,7 +404,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
 pub struct AcpConnection {
     /// Shared connection handle for issuing ACP requests.
     pub conn: Arc<ClientSideConnection>,
-    process: tokio::sync::Mutex<CodexProcess>,
+    process: tokio::sync::Mutex<UnifiedProcess>,
 }
 
 impl AcpConnection {
@@ -419,6 +420,54 @@ impl AcpConnection {
         let mut process = CodexProcess::spawn(Some(&app), cfg)
             .await
             .context("failed to spawn codex-acp process")?;
+        let (stdin, stdout) = process.take_stdio()?;
+
+        let unified_process = UnifiedProcess::Local(process);
+
+        let client = AcpClient {
+            app: app.clone(),
+            approvals,
+            debug: debug.clone(),
+        };
+
+        let (conn, io_task) = ClientSideConnection::new(
+            Arc::new(client),
+            stdin.compat_write(),
+            stdout.compat(),
+            |fut| {
+                tokio::task::spawn_local(fut);
+            },
+        );
+
+        let io_app = app.clone();
+        let io_debug = debug.clone();
+        tokio::task::spawn_local(async move {
+            if let Err(err) = io_task.await {
+                let timing = io_debug.mark_global();
+                io_debug.emit(
+                    &io_app,
+                    None,
+                    "io_error",
+                    timing,
+                    json!({ "error": err.to_string() }),
+                );
+                let _ = io_app.emit(EVENT_ERROR, json!({ "error": err.to_string() }));
+            }
+        });
+
+        Ok(Self {
+            conn: Arc::new(conn),
+            process: tokio::sync::Mutex::new(unified_process),
+        })
+    }
+
+    /// Spawn an ACP connection from a UnifiedProcess (local or remote)
+    pub async fn spawn_from_unified(
+        app: AppHandle,
+        approvals: Arc<ApprovalState>,
+        debug: Arc<DebugState>,
+        mut process: UnifiedProcess,
+    ) -> Result<Self> {
         let (stdin, stdout) = process.take_stdio()?;
 
         let client = AcpClient {

@@ -30,6 +30,9 @@ impl CodexService {
         let debug = Arc::new(DebugState::new());
         let (tx, rx) = mpsc::unbounded_channel();
 
+        // Load remote server configurations
+        let remote_servers = Self::load_remote_servers(&app);
+
         std::thread::spawn({
             let approvals = approvals.clone();
             let debug = debug.clone();
@@ -47,13 +50,27 @@ impl CodexService {
 
                 rt.block_on(async move {
                     tokio::task::LocalSet::new()
-                        .run_until(worker_loop(app, approvals, debug, rx))
+                        .run_until(worker_loop(app, approvals, debug, remote_servers, rx))
                         .await
                 });
             }
         });
 
         Self { tx, approvals }
+    }
+
+    /// Load remote server configurations from the manager
+    fn load_remote_servers(app: &AppHandle) -> std::collections::HashMap<String, crate::remote::RemoteServerConfig> {
+        use tauri::Manager;
+        
+        if let Some(manager) = app.try_state::<crate::remote::RemoteServerManager>() {
+            manager.list()
+                .into_iter()
+                .map(|config| (config.id.clone(), config))
+                .collect()
+        } else {
+            std::collections::HashMap::new()
+        }
     }
 
     /// Initialize the ACP connection and return agent metadata.
@@ -197,6 +214,9 @@ struct WorkerState {
     initialized: bool,
     last_init: Option<InitializeResult>,
     api_key_env: Option<(String, String)>,
+    // Remote session support
+    remote_config: Option<crate::remote::RemoteSessionConfig>,
+    remote_servers: std::collections::HashMap<String, crate::remote::RemoteServerConfig>,
 }
 
 async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
@@ -204,19 +224,45 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
         return Ok(());
     }
 
-    let mut cfg = CodexProcessConfig::default();
-
-    if let Some((key, value)) = state.api_key_env.as_ref() {
-        cfg.set_env(key.as_str(), value.as_str());
-    }
-
-    let conn = AcpConnection::spawn(
-        state.app.clone(),
-        state.approvals.clone(),
-        state.debug.clone(),
-        cfg,
-    )
-    .await?;
+    let conn = if let Some(remote) = &state.remote_config {
+        // Remote mode: spawn codex-acp on remote server via SSH
+        let server = state.remote_servers.get(&remote.server_id)
+            .context("Remote server configuration not found")?;
+        
+        let api_key = state.api_key_env.as_ref()
+            .map(|(_, v)| v.as_str())
+            .unwrap_or("");
+        
+        let process = crate::remote::RemoteSshProcess::spawn(
+            server,
+            &remote.remote_cwd,
+            api_key,
+        ).await?;
+        
+        let unified_process = crate::codex::unified_process::UnifiedProcess::Remote(process);
+        
+        AcpConnection::spawn_from_unified(
+            state.app.clone(),
+            state.approvals.clone(),
+            state.debug.clone(),
+            unified_process,
+        ).await?
+    } else {
+        // Local mode: spawn local codex-acp process
+        let mut cfg = CodexProcessConfig::default();
+        
+        if let Some((key, value)) = state.api_key_env.as_ref() {
+            cfg.set_env(key.as_str(), value.as_str());
+        }
+        
+        AcpConnection::spawn(
+            state.app.clone(),
+            state.approvals.clone(),
+            state.debug.clone(),
+            cfg,
+        ).await?
+    };
+    
     state.conn = Some(Arc::new(conn));
     Ok(())
 }
@@ -287,13 +333,53 @@ async fn authenticate_inner(
 }
 
 async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewSessionResult> {
+    use crate::codex::remote_session::parse_remote_path;
+    
+    // Parse the cwd to check if it's a remote path
+    let cwd_str = cwd.to_string_lossy().to_string();
+    let (is_remote, server_id, actual_path) = parse_remote_path(&cwd_str)?;
+    
+    if is_remote {
+        // Remote session: set up remote configuration
+        let server_id = server_id.ok_or_else(|| anyhow::anyhow!("Remote path missing server ID"))?;
+        let remote_cwd = actual_path.to_string_lossy().to_string();
+        
+        // Set remote configuration
+        state.remote_config = Some(crate::remote::RemoteSessionConfig {
+            server_id: server_id.clone(),
+            remote_cwd: remote_cwd.clone(),
+        });
+        
+        // Clear any existing connection to force remote connection
+        if let Some(existing) = state.conn.take() {
+            existing.kill().await?;
+        }
+        state.initialized = false;
+        state.last_init = None;
+    } else {
+        // Local session: clear remote configuration
+        if state.remote_config.take().is_some() {
+            // Was remote, now local - clear connection
+            if let Some(existing) = state.conn.take() {
+                existing.kill().await?;
+            }
+            state.initialized = false;
+            state.last_init = None;
+        }
+    }
+    
     let _ = initialize_inner(state).await?;
     let conn = state.conn.as_ref().context("connection missing")?;
 
-    let cwd = resolve_cwd(&cwd)?;
+    let resolved_cwd = if is_remote {
+        actual_path
+    } else {
+        resolve_cwd(&actual_path)?
+    };
+    
     let session = conn
         .conn
-        .new_session(NewSessionRequest::new(cwd))
+        .new_session(NewSessionRequest::new(resolved_cwd))
         .await
         .context("new_session failed")?;
 
@@ -390,6 +476,7 @@ async fn worker_loop(
     app: AppHandle,
     approvals: Arc<ApprovalState>,
     debug: Arc<DebugState>,
+    remote_servers: std::collections::HashMap<String, crate::remote::RemoteServerConfig>,
     mut rx: mpsc::UnboundedReceiver<ServiceCommand>,
 ) {
     let mut state = WorkerState {
@@ -400,6 +487,8 @@ async fn worker_loop(
         initialized: false,
         last_init: None,
         api_key_env: None,
+        remote_config: None,
+        remote_servers,
     };
 
     while let Some(cmd) = rx.recv().await {
