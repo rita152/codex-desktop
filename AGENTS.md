@@ -33,3 +33,6 @@
 ## Configuration & Environment Notes
 - Required versions: Node.js 18+ and Rust 1.70+ (MSRV is 1.70).
 - Platform-specific prerequisites follow the Tauri docs: https://tauri.app/start/prerequisites/.
+
+## Communication
+- Use English for internal reasoning; respond in Chinese.
