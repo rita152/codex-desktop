@@ -203,7 +203,7 @@ export function ChatContainer({
                   disabled={!onSelectCwd || cwdLocked}
                   title={cwdLocked ? t('chat.cwdLocked') : displayCwd}
                 >
-                  <FolderIcon size={14} />
+                  <FolderIcon size={12} />
                   <span className="chat-container__meta-value">{displayCwd}</span>
                 </button>
               </div>
