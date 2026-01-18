@@ -23,13 +23,17 @@ const TerminalPanel = lazy(() =>
   import('../TerminalPanel').then((module) => ({ default: module.TerminalPanel }))
 );
 
+const RemoteServerPanel = lazy(() =>
+  import('../RemoteServerPanel').then((module) => ({ default: module.RemoteServerPanel }))
+);
+
 const TerminalPanelFallback = ({ visible = false }: { visible?: boolean }) => {
   const panelStyle: CSSProperties = visible
     ? {
-        flex: '0 0 var(--terminal-panel-width, 360px)',
-        minHeight: 0,
-        alignSelf: 'stretch',
-      }
+      flex: '0 0 var(--terminal-panel-width, 360px)',
+      minHeight: 0,
+      alignSelf: 'stretch',
+    }
     : { flex: '0 0 0', width: 0, minHeight: 0 };
 
   return (
@@ -75,6 +79,10 @@ export function ChatContainer({
   terminalVisible = false,
   terminalId,
   onTerminalClose,
+  remoteServerPanelVisible = false,
+  remoteServerPanelWidth = 360,
+  onRemoteServerPanelClose,
+  onRemoteServerPanelResizeStart,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -262,6 +270,15 @@ export function ChatContainer({
                 visible={terminalVisible}
                 onClose={onTerminalClose}
                 onResizeStart={handleTerminalResize}
+              />
+            </Suspense>
+          )}
+          {remoteServerPanelVisible && (
+            <Suspense fallback={<TerminalPanelFallback visible={remoteServerPanelVisible} />}>
+              <RemoteServerPanel
+                visible={remoteServerPanelVisible}
+                onClose={onRemoteServerPanelClose}
+                onResizeStart={onRemoteServerPanelResizeStart}
               />
             </Suspense>
           )}

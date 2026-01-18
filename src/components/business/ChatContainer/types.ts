@@ -51,6 +51,14 @@ export interface ChatContainerProps {
   terminalId?: string | null;
   /** 关闭终端面板 */
   onTerminalClose?: () => void;
+  /** 是否显示远程服务器面板 */
+  remoteServerPanelVisible?: boolean;
+  /** 远程服务器面板宽度 */
+  remoteServerPanelWidth?: number;
+  /** 关闭远程服务器面板 */
+  onRemoteServerPanelClose?: () => void;
+  /** 远程服务器面板调整大小 */
+  onRemoteServerPanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */
