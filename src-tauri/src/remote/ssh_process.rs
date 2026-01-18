@@ -212,7 +212,7 @@ async fn sync_codex_home(config: &RemoteServerConfig, local_codex_home: &Path) -
     }
 
     let candidates = ["auth.json", "config.toml"];
-    let mut missing_local = Vec::new();
+    let mut missing_local = Vec::with_capacity(candidates.len());
     for filename in candidates {
         let should_copy = match filename {
             "auth.json" => !auth_exists,

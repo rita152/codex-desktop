@@ -60,14 +60,18 @@ impl CodexService {
     }
 
     /// Load remote server configurations from the manager
-    fn load_remote_servers(app: &AppHandle) -> std::collections::HashMap<String, crate::remote::RemoteServerConfig> {
+    fn load_remote_servers(
+        app: &AppHandle,
+    ) -> std::collections::HashMap<String, crate::remote::RemoteServerConfig> {
         use tauri::Manager;
-        
+
         if let Some(manager) = app.try_state::<crate::remote::RemoteServerManager>() {
-            manager.list()
-                .into_iter()
-                .map(|config| (config.id.clone(), config))
-                .collect()
+            let configs = manager.list();
+            let mut servers = std::collections::HashMap::with_capacity(configs.len());
+            for config in configs {
+                servers.insert(config.id.clone(), config);
+            }
+            servers
         } else {
             std::collections::HashMap::new()
         }

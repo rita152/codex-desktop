@@ -137,9 +137,9 @@ pub async fn remote_test_connection(
     let output = cmd.output().await.map_err(|e| e.to_string())?;
 
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+        Ok(decode_output(output.stdout))
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).into_owned())
+        Err(decode_output(output.stderr))
     }
 }
 
@@ -194,7 +194,7 @@ pub async fn remote_list_directory(
     let output = cmd.output().await.map_err(|e| e.to_string())?;
 
     if !output.status.success() {
-        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+        return Err(decode_output(output.stderr));
     }
 
     let stdout = output.stdout;
@@ -239,7 +239,7 @@ pub async fn remote_list_directory(
         });
     }
 
-    entries.sort_by(|a, b| a.name.cmp(&b.name));
+    entries.sort_unstable_by(|a, b| a.name.cmp(&b.name));
 
     Ok(RemoteDirectoryListing {
         path: resolved_path,
@@ -268,4 +268,14 @@ fn shell_escape(s: &str) -> String {
     }
     out.push('\'');
     out
+}
+
+fn decode_output(bytes: Vec<u8>) -> String {
+    match String::from_utf8(bytes) {
+        Ok(value) => value,
+        Err(err) => {
+            let bytes = err.into_bytes();
+            String::from_utf8_lossy(&bytes).into_owned()
+        }
+    }
 }

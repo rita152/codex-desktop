@@ -3,28 +3,28 @@
 use anyhow::{anyhow, Result};
 use std::path::PathBuf;
 
+const REMOTE_PREFIX: &str = "remote://";
+
 /// Parse a path that may be a remote path in format: remote://<server-id><remote-path>
 /// Returns (is_remote, server_id, path)
 pub fn parse_remote_path(path_str: &str) -> Result<(bool, Option<String>, PathBuf)> {
-    const REMOTE_PREFIX: &str = "remote://";
-    
     if !path_str.starts_with(REMOTE_PREFIX) {
         // Local path
         return Ok((false, None, PathBuf::from(path_str)));
     }
-    
+
     // Remote path: remote://<server-id><absolute-path>
     let remainder = &path_str[REMOTE_PREFIX.len()..];
-    
+
     // Find where the path starts (first '/')
     if let Some(path_start) = remainder.find('/') {
         let server_id = remainder[..path_start].to_string();
         let remote_path = PathBuf::from(&remainder[path_start..]);
-        
+
         if server_id.is_empty() {
             return Err(anyhow!("Remote path missing server ID"));
         }
-        
+
         Ok((true, Some(server_id), remote_path))
     } else {
         Err(anyhow!("Invalid remote path format, expected: remote://<server-id><path>"))
@@ -33,7 +33,11 @@ pub fn parse_remote_path(path_str: &str) -> Result<(bool, Option<String>, PathBu
 
 /// Build a remote path string from server ID and path
 pub fn build_remote_path(server_id: &str, remote_path: &str) -> String {
-    format!("remote://{}{}", server_id, remote_path)
+    let mut out = String::with_capacity(REMOTE_PREFIX.len() + server_id.len() + remote_path.len());
+    out.push_str(REMOTE_PREFIX);
+    out.push_str(server_id);
+    out.push_str(remote_path);
+    out
 }
 
 #[cfg(test)]
