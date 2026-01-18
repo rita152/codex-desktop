@@ -38,7 +38,14 @@ const getItemKey = (item: WorkingItem, index: number): string => {
 
 const renderItem = (item: WorkingItem, index: number) => {
   if (item.type === 'thinking') {
-    return <Thinking key={getItemKey(item, index)} {...item.data} variant="embedded" />;
+    return (
+      <Thinking
+        key={getItemKey(item, index)}
+        {...item.data}
+        variant="embedded"
+        hideWorkingLabel
+      />
+    );
   }
   if (item.type === 'toolcall') {
     return <ToolCall key={getItemKey(item, index)} {...item.data} variant="embedded" />;

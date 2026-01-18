@@ -61,6 +61,7 @@ export function Thinking({
   startTime,
   duration,
   defaultOpen,
+  hideWorkingLabel = false,
   className = '',
 }: ThinkingProps) {
   const { t } = useTranslation();
@@ -138,47 +139,55 @@ export function Thinking({
     headerVariant === 'title' ? (title ?? extractedTitle ?? t('thinking.label.title')) : getLabel();
   const displayContent = headerVariant === 'title' ? extractedBody : content;
   const hasBodyContent = displayContent.trim().length > 0;
+  const shouldHideHeader = hideWorkingLabel && phase === 'working' && headerVariant !== 'title';
+  const isExpanded = shouldHideHeader ? true : isOpen;
 
   const classNames = cn(
     'thinking',
     variant === 'embedded' && 'thinking--embedded',
-    isOpen && 'thinking--open',
+    isExpanded && 'thinking--open',
     isActive && 'thinking--streaming',
     phase === 'working' && 'thinking--working',
     phase === 'thinking' && 'thinking--thinking',
     className
   );
 
+  if (shouldHideHeader && !hasBodyContent) {
+    return null;
+  }
+
   return (
     <div className={classNames}>
-      <button
-        type="button"
-        className="thinking__trigger"
-        onClick={() => hasBodyContent && setIsOpen((v) => !v)}
-        aria-expanded={isOpen}
-        disabled={!hasBodyContent}
-      >
-        {headerVariant !== 'title' && (
-          <span className="thinking__icon">
-            <BrainIcon size={16} />
-          </span>
-        )}
-        <div className="thinking__label">
-          {headerVariant === 'title' ? (
-            <Markdown content={labelMarkdown} compact className="thinking__label-markdown" />
-          ) : (
-            labelMarkdown
-          )}
-        </div>
-        {hasBodyContent && (
-          <>
-            <span className="thinking__chevron">
-              <ChevronDownIcon size={14} />
+      {!shouldHideHeader && (
+        <button
+          type="button"
+          className="thinking__trigger"
+          onClick={() => hasBodyContent && setIsOpen((v) => !v)}
+          aria-expanded={isExpanded}
+          disabled={!hasBodyContent}
+        >
+          {headerVariant !== 'title' && (
+            <span className="thinking__icon">
+              <BrainIcon size={16} />
             </span>
-            <span className="thinking__spacer" />
-          </>
-        )}
-      </button>
+          )}
+          <div className="thinking__label">
+            {headerVariant === 'title' ? (
+              <Markdown content={labelMarkdown} compact className="thinking__label-markdown" />
+            ) : (
+              labelMarkdown
+            )}
+          </div>
+          {hasBodyContent && (
+            <>
+              <span className="thinking__chevron">
+                <ChevronDownIcon size={14} />
+              </span>
+              <span className="thinking__spacer" />
+            </>
+          )}
+        </button>
+      )}
       {hasBodyContent && (
         <div className="thinking__content">
           <div className="thinking__content-inner">

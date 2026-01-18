@@ -19,6 +19,8 @@ export interface ThinkingProps {
   duration?: number;
   /** 默认是否展开 */
   defaultOpen?: boolean;
+  /** working 阶段是否隐藏标题区域 */
+  hideWorkingLabel?: boolean;
   /** 自定义类名 */
   className?: string;
 }
