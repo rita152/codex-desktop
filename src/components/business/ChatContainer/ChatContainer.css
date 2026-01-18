@@ -259,9 +259,11 @@
     left: var(--spacing-lg);
     right: var(--spacing-lg);
   }
+
   .chat-container__body {
     flex-direction: column;
   }
+
   .chat-container__terminal-resizer {
     display: none;
   }
@@ -293,4 +295,21 @@
 .chat-container__welcome-subtitle {
   font-size: 1rem;
   color: var(--color-text-secondary);
+}
+
+/* Remote Server Panel Integration */
+.chat-container__main--remote-open {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.chat-container__body--remote-open {
+  gap: 0;
+  padding-right: 0;
+}
+
+.chat-container__main--remote-open .remote-server-panel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }

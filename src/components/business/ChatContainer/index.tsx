@@ -27,17 +27,25 @@ const RemoteServerPanel = lazy(() =>
   import('../RemoteServerPanel').then((module) => ({ default: module.RemoteServerPanel }))
 );
 
-const TerminalPanelFallback = ({ visible = false }: { visible?: boolean }) => {
+const SidePanelFallback = ({
+  visible = false,
+  className,
+  widthVar,
+}: {
+  visible?: boolean;
+  className: string;
+  widthVar: string;
+}) => {
   const panelStyle: CSSProperties = visible
     ? {
-      flex: '0 0 var(--terminal-panel-width, 360px)',
+      flex: `0 0 var(${widthVar}, 360px)`,
       minHeight: 0,
       alignSelf: 'stretch',
     }
     : { flex: '0 0 0', width: 0, minHeight: 0 };
 
   return (
-    <aside className="terminal-panel" aria-hidden={!visible} style={panelStyle}>
+    <aside className={className} aria-hidden={!visible} style={panelStyle}>
       {visible && (
         <div
           style={{
@@ -187,19 +195,20 @@ export function ChatContainer({
       <div
         className={cn(
           'chat-container__main',
-          terminalVisible && 'chat-container__main--terminal-open'
+          terminalVisible && 'chat-container__main--terminal-open',
+          remoteServerPanelVisible && 'chat-container__main--remote-open'
         )}
-        style={
-          terminalVisible
-            ? ({ '--terminal-panel-width': `${terminalWidth}px` } as CSSProperties)
-            : undefined
-        }
+        style={{
+          ...(terminalVisible && { '--terminal-panel-width': `${terminalWidth}px` }),
+          ...(remoteServerPanelVisible && { '--remote-server-panel-width': `${remoteServerPanelWidth}px` }),
+        } as CSSProperties}
       >
-        {!terminalVisible && <ChatSideActions onAction={onSideAction} />}
+        {!terminalVisible && !remoteServerPanelVisible && <ChatSideActions onAction={onSideAction} />}
         <div
           className={cn(
             'chat-container__body',
-            terminalVisible && 'chat-container__body--terminal-open'
+            terminalVisible && 'chat-container__body--terminal-open',
+            remoteServerPanelVisible && 'chat-container__body--remote-open'
           )}
           ref={bodyRef}
         >
@@ -264,7 +273,15 @@ export function ChatContainer({
             </div>
           </div>
           {(terminalVisible || terminalId) && (
-            <Suspense fallback={<TerminalPanelFallback visible={terminalVisible} />}>
+            <Suspense
+              fallback={
+                <SidePanelFallback
+                  visible={terminalVisible}
+                  className="terminal-panel"
+                  widthVar="--terminal-panel-width"
+                />
+              }
+            >
               <TerminalPanel
                 terminalId={terminalId}
                 visible={terminalVisible}
@@ -274,7 +291,15 @@ export function ChatContainer({
             </Suspense>
           )}
           {remoteServerPanelVisible && (
-            <Suspense fallback={<TerminalPanelFallback visible={remoteServerPanelVisible} />}>
+            <Suspense
+              fallback={
+                <SidePanelFallback
+                  visible={remoteServerPanelVisible}
+                  className="remote-server-panel"
+                  widthVar="--remote-server-panel-width"
+                />
+              }
+            >
               <RemoteServerPanel
                 visible={remoteServerPanelVisible}
                 onClose={onRemoteServerPanelClose}
