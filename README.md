@@ -71,6 +71,14 @@ npm run tauri build
 npm run test
 ```
 
+### 远程服务器与工作目录
+
+Codex Desktop 支持通过 SSH 在远端启动 `codex-acp`，并选择远程目录作为会话工作目录。
+
+1. 在侧边栏的 “Remote Servers/远程服务器” 面板中添加服务器（仅支持 SSH Agent 或密钥文件认证）。
+2. 点击顶部工作目录按钮，切换到 “远程” 标签页，选择服务器并浏览远程目录后确认。
+3. 远端需要可用的 Node.js + npx。应用会在远端缺少配置时自动同步本地 `~/.codex/auth.json` 与 `~/.codex/config.toml`（不会覆盖已存在的远端文件）。
+
 ## 项目结构
 
 ```
