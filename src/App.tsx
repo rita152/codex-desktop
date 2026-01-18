@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
+import { WorkingDirectorySelector } from './components/business/WorkingDirectorySelector';
 import { approveRequest, initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
   loadModeOptionsCache,
@@ -256,22 +257,6 @@ export function App() {
     );
   }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
 
-  const pickWorkingDirectory = useCallback(async (defaultPath?: string): Promise<string | null> => {
-    try {
-      const selection = await open({
-        directory: true,
-        multiple: false,
-        defaultPath,
-      });
-      if (typeof selection === 'string') return selection;
-      if (Array.isArray(selection) && typeof selection[0] === 'string') return selection[0];
-      return null;
-    } catch (err) {
-      devDebug('[codex] Failed to open directory picker', err);
-      return null;
-    }
-  }, []);
-
   const pickFiles = useCallback(async (): Promise<string[]> => {
     try {
       const selection = await open({
@@ -301,6 +286,23 @@ export function App() {
       devDebug('[codex] init failed', err);
     });
   }, []);
+
+  const [cwdSelectorOpen, setCwdSelectorOpen] = useState(false);
+  const handleCwdSelectorClose = useCallback(() => {
+    setCwdSelectorOpen(false);
+  }, []);
+
+  const handleCwdSelect = useCallback(
+    (cwd: string) => {
+      const sessionId = selectedSessionId;
+      if (!sessionId) return;
+      setSessions((prev) =>
+        prev.map((session) => (session.id === sessionId ? { ...session, cwd } : session))
+      );
+      clearSessionNotice(sessionId);
+    },
+    [clearSessionNotice, selectedSessionId, setSessions]
+  );
 
   const handleNewChat = useCallback(() => {
     // 直接在当前工作目录下新建对话，不打开文件选择器
@@ -517,16 +519,9 @@ export function App() {
     ]
   );
 
-  const handleSelectCwd = useCallback(async () => {
-    const sessionId = selectedSessionId;
-    const cwd = await pickWorkingDirectory(selectedCwd);
-    if (!cwd) return;
-
-    setSessions((prev) =>
-      prev.map((session) => (session.id === sessionId ? { ...session, cwd } : session))
-    );
-    clearSessionNotice(sessionId);
-  }, [clearSessionNotice, pickWorkingDirectory, selectedCwd, selectedSessionId, setSessions]);
+  const handleSelectCwd = useCallback(() => {
+    setCwdSelectorOpen(true);
+  }, []);
 
   const handleAddFile = useCallback(async () => {
     const sessionId = selectedSessionId;
@@ -698,45 +693,53 @@ export function App() {
   );
 
   return (
-    <ChatContainer
-      sessions={sessions}
-      selectedSessionId={selectedSessionId}
-      sessionCwd={selectedCwd}
-      sessionNotice={sessionNotice}
-      messages={messages}
-      approvals={approvalCards}
-      sidebarVisible={sidebarVisible}
-      isGenerating={isGenerating}
-      remainingPercent={remainingPercent}
-      remainingTokens={remainingTokens}
-      totalTokens={totalTokens}
-      inputValue={draftMessage}
-      onInputChange={handleDraftChange}
-      agentOptions={agentOptions}
-      selectedAgent={selectedMode}
-      onAgentChange={handleModeChange}
-      modelOptions={modelOptions}
-      selectedModel={selectedModel}
-      onModelChange={handleModelChange}
-      slashCommands={slashCommands}
-      onSessionSelect={handleSessionSelect}
-      onNewChat={handleNewChat}
-      onSendMessage={handleSendMessage}
-      onAddClick={handleAddFile}
-      onSideAction={handleSideAction}
-      terminalVisible={terminalVisible}
-      terminalId={activeTerminalId ?? null}
-      onTerminalClose={handleTerminalClose}
-      onSelectCwd={handleSelectCwd}
-      cwdLocked={cwdLocked}
-      onSessionDelete={handleSessionDelete}
-      onSessionRename={handleSessionRename}
-      onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
-      bodyRef={bodyRef}
-      remoteServerPanelVisible={remoteServerPanelVisible}
-      remoteServerPanelWidth={remoteServerPanelWidth}
-      onRemoteServerPanelClose={handleRemoteServerPanelClose}
-      onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
-    />
+    <>
+      <ChatContainer
+        sessions={sessions}
+        selectedSessionId={selectedSessionId}
+        sessionCwd={selectedCwd}
+        sessionNotice={sessionNotice}
+        messages={messages}
+        approvals={approvalCards}
+        sidebarVisible={sidebarVisible}
+        isGenerating={isGenerating}
+        remainingPercent={remainingPercent}
+        remainingTokens={remainingTokens}
+        totalTokens={totalTokens}
+        inputValue={draftMessage}
+        onInputChange={handleDraftChange}
+        agentOptions={agentOptions}
+        selectedAgent={selectedMode}
+        onAgentChange={handleModeChange}
+        modelOptions={modelOptions}
+        selectedModel={selectedModel}
+        onModelChange={handleModelChange}
+        slashCommands={slashCommands}
+        onSessionSelect={handleSessionSelect}
+        onNewChat={handleNewChat}
+        onSendMessage={handleSendMessage}
+        onAddClick={handleAddFile}
+        onSideAction={handleSideAction}
+        terminalVisible={terminalVisible}
+        terminalId={activeTerminalId ?? null}
+        onTerminalClose={handleTerminalClose}
+        onSelectCwd={handleSelectCwd}
+        cwdLocked={cwdLocked}
+        onSessionDelete={handleSessionDelete}
+        onSessionRename={handleSessionRename}
+        onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
+        bodyRef={bodyRef}
+        remoteServerPanelVisible={remoteServerPanelVisible}
+        remoteServerPanelWidth={remoteServerPanelWidth}
+        onRemoteServerPanelClose={handleRemoteServerPanelClose}
+        onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
+      />
+      <WorkingDirectorySelector
+        isOpen={cwdSelectorOpen}
+        currentCwd={selectedCwd}
+        onClose={handleCwdSelectorClose}
+        onSelect={handleCwdSelect}
+      />
+    </>
   );
 }

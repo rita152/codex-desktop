@@ -49,3 +49,21 @@ pub struct RemoteSessionConfig {
     /// Remote working directory
     pub remote_cwd: String,
 }
+
+/// Remote directory entry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteDirectoryEntry {
+    /// Directory name
+    pub name: String,
+    /// Full path
+    pub path: String,
+}
+
+/// Remote directory listing result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RemoteDirectoryListing {
+    /// Resolved absolute path for the listing
+    pub path: String,
+    /// Directory entries under the path
+    pub entries: Vec<RemoteDirectoryEntry>,
+}

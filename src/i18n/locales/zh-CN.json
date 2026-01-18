@@ -122,5 +122,41 @@
   },
   "select": {
     "placeholder": "请选择"
+  },
+  "cwdSelector": {
+    "title": "工作目录",
+    "tabsLabel": "工作目录类型",
+    "localTab": "本地",
+    "remoteTab": "远程",
+    "localPathLabel": "本地路径",
+    "localPathPlaceholder": "选择本地文件夹",
+    "localBrowse": "浏览",
+    "localHint": "为当前会话选择本地工作目录。",
+    "remoteServerLabel": "远程服务器",
+    "remotePathLabel": "远程路径",
+    "remotePathPlaceholder": "/home/user/project",
+    "remoteHint": "请输入远程服务器上的绝对路径，例如 /home/user/project。",
+    "remoteGo": "进入",
+    "remoteBrowserLabel": "目录",
+    "remoteBrowserEmptyPath": "请选择目录",
+    "remoteHome": "主目录",
+    "remoteUp": "上一级",
+    "remoteRefresh": "刷新",
+    "remoteLoading": "正在加载目录...",
+    "remoteSelectServer": "请选择远程服务器以浏览目录。",
+    "remoteEmpty": "当前目录没有子文件夹。",
+    "loadingServers": "正在加载服务器...",
+    "emptyRemoteServers": "尚未配置远程服务器。",
+    "preview": "预览",
+    "cancel": "取消",
+    "close": "关闭",
+    "applyLocal": "使用本地目录",
+    "applyRemote": "使用远程目录",
+    "errors": {
+      "localRequired": "请选择本地文件夹。",
+      "remoteServerRequired": "请选择远程服务器。",
+      "remotePathRequired": "请输入远程路径。",
+      "remotePathAbsolute": "远程路径必须以 / 开头。"
+    }
   }
 }

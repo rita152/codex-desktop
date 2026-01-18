@@ -122,5 +122,41 @@
   },
   "select": {
     "placeholder": "Select"
+  },
+  "cwdSelector": {
+    "title": "Working directory",
+    "tabsLabel": "Working directory type",
+    "localTab": "Local",
+    "remoteTab": "Remote",
+    "localPathLabel": "Local path",
+    "localPathPlaceholder": "Select a local folder",
+    "localBrowse": "Browse",
+    "localHint": "Choose a local folder for this session.",
+    "remoteServerLabel": "Remote server",
+    "remotePathLabel": "Remote path",
+    "remotePathPlaceholder": "/home/user/project",
+    "remoteHint": "Use an absolute path on the remote server (e.g. /home/user/project).",
+    "remoteGo": "Go",
+    "remoteBrowserLabel": "Directory",
+    "remoteBrowserEmptyPath": "Select a directory",
+    "remoteHome": "Home",
+    "remoteUp": "Up",
+    "remoteRefresh": "Refresh",
+    "remoteLoading": "Loading folders...",
+    "remoteSelectServer": "Select a remote server to browse.",
+    "remoteEmpty": "No subfolders found.",
+    "loadingServers": "Loading servers...",
+    "emptyRemoteServers": "No remote servers configured.",
+    "preview": "Preview",
+    "cancel": "Cancel",
+    "close": "Close",
+    "applyLocal": "Use local folder",
+    "applyRemote": "Use remote folder",
+    "errors": {
+      "localRequired": "Select a local folder.",
+      "remoteServerRequired": "Select a remote server.",
+      "remotePathRequired": "Enter a remote path.",
+      "remotePathAbsolute": "Remote path must start with '/'."
+    }
   }
 }

@@ -142,3 +142,117 @@ pub async fn remote_test_connection(
         Err(String::from_utf8_lossy(&output.stderr).into_owned())
     }
 }
+
+#[tauri::command]
+pub async fn remote_list_directory(
+    server_id: String,
+    path: String,
+    manager: State<'_, RemoteServerManager>,
+) -> Result<RemoteDirectoryListing, String> {
+    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let trimmed = path.trim();
+
+    // Use $HOME when empty or "~" is provided.
+    let (cd_target, use_home) = if trimmed.is_empty() || trimmed == "~" {
+        ("$HOME".to_string(), true)
+    } else {
+        (shell_escape(trimmed), false)
+    };
+
+    let remote_command = if use_home {
+        "cd $HOME && pwd -P && find . -maxdepth 1 -mindepth 1 -type d -print0".to_string()
+    } else {
+        format!(
+            "cd {} && pwd -P && find . -maxdepth 1 -mindepth 1 -type d -print0",
+            cd_target
+        )
+    };
+
+    let mut cmd = tokio::process::Command::new("ssh");
+    cmd.arg("-o")
+        .arg("StrictHostKeyChecking=accept-new")
+        .arg("-o")
+        .arg("BatchMode=yes")
+        .arg("-o")
+        .arg("ConnectTimeout=10")
+        .arg("-p")
+        .arg(config.port.to_string());
+
+    match &config.auth {
+        SshAuth::KeyFile { private_key_path, .. } => {
+            cmd.arg("-i").arg(private_key_path);
+        }
+        SshAuth::Agent => {}
+        SshAuth::Password { .. } => {
+            return Err("Password authentication is not supported for remote browsing".to_string());
+        }
+    }
+
+    cmd.arg(format!("{}@{}", config.username, config.host))
+        .arg(remote_command);
+
+    let output = cmd.output().await.map_err(|e| e.to_string())?;
+
+    if !output.status.success() {
+        return Err(String::from_utf8_lossy(&output.stderr).into_owned());
+    }
+
+    let stdout = output.stdout;
+    let newline = stdout.iter().position(|byte| *byte == b'\n');
+    let empty_entries: &[u8] = &[];
+    let (path_bytes, entries_bytes) = match newline {
+        Some(index) => (&stdout[..index], &stdout[index + 1..]),
+        None => (stdout.as_slice(), empty_entries),
+    };
+    let resolved_path = String::from_utf8_lossy(path_bytes).trim().to_string();
+    if resolved_path.is_empty() {
+        return Err("Failed to resolve remote path".to_string());
+    }
+
+    let mut entries: Vec<RemoteDirectoryEntry> = entries_bytes
+        .split(|byte| *byte == 0)
+        .filter(|item| !item.is_empty())
+        .map(|item| {
+            let raw = String::from_utf8_lossy(item);
+            let name = raw.strip_prefix("./").unwrap_or(&raw).to_string();
+            let full_path = if resolved_path == "/" {
+                format!("/{}", name)
+            } else {
+                format!("{}/{}", resolved_path, name)
+            };
+            RemoteDirectoryEntry {
+                name,
+                path: full_path,
+            }
+        })
+        .collect();
+
+    entries.sort_by(|a, b| a.name.cmp(&b.name));
+
+    Ok(RemoteDirectoryListing {
+        path: resolved_path,
+        entries,
+    })
+}
+
+fn shell_escape(s: &str) -> String {
+    if !s.contains('\'') {
+        let mut out = String::with_capacity(s.len() + 2);
+        out.push('\'');
+        out.push_str(s);
+        out.push('\'');
+        return out;
+    }
+
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('\'');
+    for ch in s.chars() {
+        if ch == '\'' {
+            out.push_str("'\\''");
+        } else {
+            out.push(ch);
+        }
+    }
+    out.push('\'');
+    out
+}

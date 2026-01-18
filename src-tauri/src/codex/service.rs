@@ -229,13 +229,17 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
         let server = state.remote_servers.get(&remote.server_id)
             .context("Remote server configuration not found")?;
         
-        let api_key = state.api_key_env.as_ref()
-            .map(|(_, v)| v.as_str())
-            .unwrap_or("");
+        let api_key = state
+            .api_key_env
+            .as_ref()
+            .map(|(key, value)| (key.as_str(), value.as_str()));
+        let local_codex_home =
+            crate::codex::binary::CodexAcpBinary::default_codex_home(Some(&state.app))?;
         
         let process = crate::remote::RemoteSshProcess::spawn(
             server,
             &remote.remote_cwd,
+            local_codex_home.as_path(),
             api_key,
         ).await?;
         

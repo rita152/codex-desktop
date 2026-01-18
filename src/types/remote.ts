@@ -18,3 +18,13 @@ export interface RemoteSessionConfig {
     serverId: string;
     remoteCwd: string;
 }
+
+export interface RemoteDirectoryEntry {
+    name: string;
+    path: string;
+}
+
+export interface RemoteDirectoryListing {
+    path: string;
+    entries: RemoteDirectoryEntry[];
+}

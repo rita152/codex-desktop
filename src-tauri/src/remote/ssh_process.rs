@@ -2,6 +2,7 @@
 
 use super::types::{RemoteServerConfig, SshAuth};
 use anyhow::{anyhow, Context, Result};
+use std::path::Path;
 use std::process::Stdio;
 use tokio::process::{Child, ChildStdin, ChildStdout, Command};
 
@@ -17,40 +18,17 @@ impl RemoteSshProcess {
     pub async fn spawn(
         config: &RemoteServerConfig,
         remote_cwd: &str,
-        api_key: &str,
+        local_codex_home: &Path,
+        api_key: Option<(&str, &str)>,
     ) -> Result<Self> {
+        sync_codex_home(config, local_codex_home).await?;
+
         let mut cmd = Command::new("ssh");
 
         // SSH connection parameters
-        cmd.arg("-o")
-            .arg("StrictHostKeyChecking=accept-new")
-            .arg("-o")
-            .arg("BatchMode=yes")
-            .arg("-o")
-            .arg("ServerAliveInterval=15")
-            .arg("-o")
-            .arg("ServerAliveCountMax=3")
-            .arg("-p")
-            .arg(config.port.to_string());
-
-        // Authentication method
-        match &config.auth {
-            SshAuth::KeyFile {
-                private_key_path, ..
-            } => {
-                cmd.arg("-i").arg(private_key_path);
-            }
-            SshAuth::Agent => {
-                // Use system SSH Agent, no additional arguments needed
-            }
-            SshAuth::Password { .. } => {
-                // Password authentication requires sshpass or similar
-                // Not supported for now, recommend using key authentication
-                return Err(anyhow!(
-                    "Password authentication is not supported, please use SSH keys"
-                ));
-            }
-        }
+        apply_ssh_options(&mut cmd, config, "-p")?;
+        cmd.arg("-o").arg("ServerAliveInterval=15");
+        cmd.arg("-o").arg("ServerAliveCountMax=3");
 
         // user@host
         cmd.arg(format!("{}@{}", config.username, config.host));
@@ -92,13 +70,22 @@ impl RemoteSshProcess {
     }
 
     /// Build the remote command to execute
-    fn build_remote_command(remote_cwd: &str, api_key: &str) -> String {
+    fn build_remote_command(remote_cwd: &str, api_key: Option<(&str, &str)>) -> String {
         // Set environment variables and start codex-acp
         // NO_BROWSER=1 disables ChatGPT browser login (not available remotely)
+        let mut env_prefix = String::from("CODEX_HOME=\"$HOME/.codex\" ");
+        if let Some((key, value)) = api_key {
+            if !value.is_empty() {
+                env_prefix.push_str(&format!("{}={} ", key, shell_escape(value)));
+            }
+        }
+        let spec = std::env::var("CODEX_DESKTOP_ACP_NPX_SPEC")
+            .unwrap_or_else(|_| "@zed-industries/codex-acp@0.8.2".to_string());
         format!(
-            "cd {} && OPENAI_API_KEY='{}' NO_BROWSER=1 npx @zed-industries/codex-acp 2>/dev/null",
+            "cd {} && {}NO_BROWSER=1 npx --yes {}",
             shell_escape(remote_cwd),
-            api_key
+            env_prefix,
+            shell_escape(&spec)
         )
     }
 
@@ -156,6 +143,119 @@ fn shell_escape(s: &str) -> String {
     }
     out.push('\'');
     out
+}
+
+fn apply_ssh_options(cmd: &mut Command, config: &RemoteServerConfig, port_flag: &str) -> Result<()> {
+    cmd.arg("-o")
+        .arg("StrictHostKeyChecking=accept-new")
+        .arg("-o")
+        .arg("BatchMode=yes")
+        .arg("-o")
+        .arg("ConnectTimeout=10")
+        .arg(port_flag)
+        .arg(config.port.to_string());
+
+    match &config.auth {
+        SshAuth::KeyFile {
+            private_key_path, ..
+        } => {
+            cmd.arg("-i").arg(private_key_path);
+        }
+        SshAuth::Agent => {}
+        SshAuth::Password { .. } => {
+            return Err(anyhow!(
+                "Password authentication is not supported, please use SSH keys"
+            ));
+        }
+    }
+    Ok(())
+}
+
+async fn sync_codex_home(config: &RemoteServerConfig, local_codex_home: &Path) -> Result<()> {
+    if !local_codex_home.exists() {
+        return Err(anyhow!(
+            "Local CODEX_HOME not found at {}",
+            local_codex_home.display()
+        ));
+    }
+
+    let remote_host = format!("{}@{}", config.username, config.host);
+    let remote_path = "$HOME/.codex";
+
+    let mut mkdir_cmd = Command::new("ssh");
+    apply_ssh_options(&mut mkdir_cmd, config, "-p")?;
+    mkdir_cmd
+        .arg(&remote_host)
+        .arg(format!("mkdir -p \"{}\"", remote_path));
+    let status = mkdir_cmd
+        .status()
+        .await
+        .context("Failed to create remote CODEX_HOME")?;
+    if !status.success() {
+        return Err(anyhow!(
+            "Failed to create remote CODEX_HOME at {}",
+            remote_path
+        ));
+    }
+
+    let auth_exists = remote_file_exists(config, &remote_host, "$HOME/.codex/auth.json").await?;
+    let config_exists =
+        remote_file_exists(config, &remote_host, "$HOME/.codex/config.toml").await?;
+    if auth_exists && config_exists {
+        return Ok(());
+    }
+
+    let candidates = ["auth.json", "config.toml"];
+    let mut missing_local = Vec::new();
+    for filename in candidates {
+        let should_copy = match filename {
+            "auth.json" => !auth_exists,
+            "config.toml" => !config_exists,
+            _ => false,
+        };
+        if !should_copy {
+            continue;
+        }
+        let source = local_codex_home.join(filename);
+        if !source.exists() {
+            missing_local.push(filename);
+            continue;
+        }
+        let destination = format!("{}:~/.codex/{}", remote_host, filename);
+        let mut scp_cmd = Command::new("scp");
+        apply_ssh_options(&mut scp_cmd, config, "-P")?;
+        scp_cmd.arg(source).arg(destination);
+        let status = scp_cmd
+            .status()
+            .await
+            .with_context(|| format!("Failed to copy {} to remote", filename))?;
+        if !status.success() {
+            return Err(anyhow!("Failed to copy {} to remote", filename));
+        }
+    }
+
+    if !missing_local.is_empty() {
+        return Err(anyhow!(
+            "Missing local Codex config files: {} (from {})",
+            missing_local.join(", "),
+            local_codex_home.display()
+        ));
+    }
+
+    Ok(())
+}
+
+async fn remote_file_exists(
+    config: &RemoteServerConfig,
+    remote_host: &str,
+    remote_path: &str,
+) -> Result<bool> {
+    let mut cmd = Command::new("ssh");
+    apply_ssh_options(&mut cmd, config, "-p")?;
+    cmd.arg(remote_host)
+        .arg(format!("test -f \"{}\"", remote_path));
+    let status = cmd.status().await.context("Failed to check remote file")?;
+    Ok(status.success())
 }
 
 #[cfg(test)]
