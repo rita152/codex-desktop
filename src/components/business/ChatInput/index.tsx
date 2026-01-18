@@ -219,16 +219,37 @@ export function ChatInput({
     }
   };
 
-  const handleSend = () => {
-    trySend();
-  };
-
   const hasContent = trimmedValue.length > 0 && trimmedValue !== '/';
 
   const containerStyle: React.CSSProperties = width
     ? { width: typeof width === 'number' ? `${width}px` : width }
     : {};
   const containerClasses = cn('chat-input', className);
+  const textAreaValue = leadingSlashToken ? stripCommandSeparator(leadingSlashToken.tail) : value;
+  const textAreaClassName = cn(
+    'chat-input__textarea',
+    leadingSlashToken && 'chat-input__textarea--with-pill'
+  );
+  const handleTextAreaChange = (nextValue: string) => {
+    if (leadingSlashToken) {
+      onChange(buildSlashCommandValue(leadingSlashToken.command, nextValue));
+      return;
+    }
+    onChange(nextValue);
+  };
+  const textArea = (
+    <TextArea
+      value={textAreaValue}
+      onChange={handleTextAreaChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      onKeyDown={handleKeyDown}
+      minRows={1}
+      maxRows={6}
+      className={textAreaClassName}
+      ref={textareaRef}
+    />
+  );
 
   return (
     <div className={containerClasses} style={containerStyle}>
@@ -244,32 +265,10 @@ export function ChatInput({
           >
             <span className="chat-input__slash-pill-text">/{leadingSlashToken.command}</span>
           </Card>
-          <TextArea
-            value={stripCommandSeparator(leadingSlashToken.tail)}
-            onChange={(nextTail) => {
-              onChange(buildSlashCommandValue(leadingSlashToken.command, nextTail));
-            }}
-            placeholder={placeholder}
-            disabled={disabled}
-            onKeyDown={handleKeyDown}
-            minRows={1}
-            maxRows={6}
-            className="chat-input__textarea chat-input__textarea--with-pill"
-            ref={textareaRef}
-          />
+          {textArea}
         </div>
       ) : (
-        <TextArea
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          disabled={disabled}
-          onKeyDown={handleKeyDown}
-          minRows={1}
-          maxRows={6}
-          className="chat-input__textarea"
-          ref={textareaRef}
-        />
+        textArea
       )}
       {slashState.isActive && (
         <div
@@ -346,7 +345,7 @@ export function ChatInput({
           />
           <IconButton
             icon={<SendIcon size={20} />}
-            onClick={handleSend}
+            onClick={trySend}
             aria-label={t('common.send')}
             size="sm"
             variant="ghost"

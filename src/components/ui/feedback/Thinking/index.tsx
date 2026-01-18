@@ -139,11 +139,6 @@ export function Thinking({
   const displayContent = headerVariant === 'title' ? extractedBody : content;
   const hasBodyContent = displayContent.trim().length > 0;
 
-  // 只有有内容时才显示展开箭头
-  const showChevron = hasBodyContent;
-  // 只有有内容时才可点击
-  const canToggle = hasBodyContent;
-
   const classNames = cn(
     'thinking',
     variant === 'embedded' && 'thinking--embedded',
@@ -159,9 +154,9 @@ export function Thinking({
       <button
         type="button"
         className="thinking__trigger"
-        onClick={() => canToggle && setIsOpen((v) => !v)}
+        onClick={() => hasBodyContent && setIsOpen((v) => !v)}
         aria-expanded={isOpen}
-        disabled={!canToggle}
+        disabled={!hasBodyContent}
       >
         {headerVariant !== 'title' && (
           <span className="thinking__icon">
@@ -175,7 +170,7 @@ export function Thinking({
             labelMarkdown
           )}
         </div>
-        {showChevron && (
+        {hasBodyContent && (
           <>
             <span className="thinking__chevron">
               <ChevronDownIcon size={14} />

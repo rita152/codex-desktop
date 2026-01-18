@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useId } from 'react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
@@ -55,43 +55,22 @@ export function Select({
     }
   };
 
-  // 计算下拉框位置（上拉）
-  const updateDropdownPosition = useCallback(() => {
-    if (triggerRef.current) {
-      const rect = triggerRef.current.getBoundingClientRect();
-      setDropdownPosition({
-        bottom: window.innerHeight - rect.top + 4, // 4px gap，从按钮顶部向上
-        left: rect.left,
-        width: rect.width,
-      });
-    }
-  }, []);
-
   // 打开时计算位置
   useEffect(() => {
-    if (isOpen) {
-      updateDropdownPosition();
-    }
-  }, [isOpen, updateDropdownPosition]);
+    if (!isOpen || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setDropdownPosition({
+      bottom: window.innerHeight - rect.top + 4, // 4px gap，从按钮顶部向上
+      left: rect.left,
+      width: rect.width,
+    });
+  }, [isOpen]);
 
   const handleSelect = (optionValue: string) => {
     onChange?.(optionValue);
     setIsOpen(false);
     triggerRef.current?.focus();
   };
-
-  const handleClickOutside = useCallback((event: MouseEvent) => {
-    const target = event.target as Node;
-    if (
-      containerRef.current &&
-      !containerRef.current.contains(target) &&
-      dropdownRef.current &&
-      !dropdownRef.current.contains(target)
-    ) {
-      setIsOpen(false);
-      setHighlightedIndex(-1);
-    }
-  }, []);
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (isDisabled) return;
@@ -153,9 +132,21 @@ export function Select({
 
   useEffect(() => {
     if (!isOpen) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(target)
+      ) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [handleClickOutside, isOpen]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
