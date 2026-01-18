@@ -1,17 +1,9 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { listen } from '@tauri-apps/api/event';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import {
-  approveRequest,
-  createSession,
-  initCodex,
-  sendPrompt,
-  setSessionMode,
-  setSessionModel,
-} from './api/codex';
+import { approveRequest, initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
   loadModeOptionsCache,
   loadModelOptionsCache,
@@ -19,11 +11,12 @@ import {
   saveModelOptionsCache,
 } from './api/storage';
 import { useApprovalState } from './hooks/useApprovalState';
-import { useCodexEvents } from './hooks/useCodexEvents';
-import { usePanelResize } from './hooks/usePanelResize';
+import { useCodexSessionSync } from './hooks/useCodexSessionSync';
+import { useRemotePanel } from './hooks/useRemotePanel';
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
+import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import {
   approvalStatusFromKind,
@@ -36,11 +29,10 @@ import {
   mapApprovalOptions,
   newMessageId,
   normalizeToolKind,
-  resolveModelOptions,
-  resolveModeOptions,
 } from './utils/codexParsing';
+import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
-import { terminalKill, terminalSpawn } from './api/terminal';
+import { terminalKill } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
@@ -50,12 +42,6 @@ import type { ApprovalRequest } from './types/codex';
 import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
-const REMOTE_PANEL_MIN_WIDTH = 240;
-const REMOTE_PANEL_MIN_CONVERSATION_WIDTH = 240;
-
-type TerminalExitEvent = {
-  terminalId: string;
-};
 
 export function App() {
   const { t } = useTranslation();
@@ -111,8 +97,6 @@ export function App() {
   const sidebarVisibilityRef = useRef(true);
   const [isNarrowLayout, setIsNarrowLayout] = useState(false);
   const [terminalVisible, setTerminalVisible] = useState(false);
-  const [remoteServerPanelVisible, setRemoteServerPanelVisible] = useState(false);
-  const [remoteServerPanelWidth, setRemoteServerPanelWidth] = useState(360);
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const {
@@ -126,10 +110,34 @@ export function App() {
   } = useApprovalState();
 
   const activeSessionIdRef = useRef<string>(selectedSessionId);
-  const codexSessionByChatRef = useRef<Record<string, string>>({});
-  const chatSessionByCodexRef = useRef<Record<string, string>>({});
-  const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
-  const activeTerminalIdRef = useRef<string | undefined>(undefined);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const {
+    remoteServerPanelVisible,
+    remoteServerPanelWidth,
+    handleRemoteServerPanelClose,
+    handleRemoteServerPanelResize,
+    toggleRemoteServerPanel,
+  } = useRemotePanel({ bodyRef });
+  const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
+    useCodexSessionSync({
+    sessions,
+    activeSessionIdRef,
+    setSessions,
+    setSessionMessages,
+    setIsGeneratingBySession,
+    setSessionTokenUsage,
+    setSessionSlashCommands,
+    setSessionModeOptions,
+    setSessionModelOptions,
+    setSessionNotices,
+    clearSessionNotice,
+    applyModeOptions,
+    applyModelOptions,
+    registerApprovalRequest,
+    defaultModeId: DEFAULT_MODE_ID,
+    defaultModelId: DEFAULT_MODEL_ID,
+    t,
+  });
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -199,22 +207,27 @@ export function App() {
   const cwdLocked = messages.length > 0;
   const activeTerminalId = selectedSessionId ? terminalBySession[selectedSessionId] : undefined;
 
-  useEffect(() => {
-    activeTerminalIdRef.current = activeTerminalId;
-  }, [activeTerminalId]);
+  useTerminalLifecycle({
+    terminalVisible,
+    selectedSessionId,
+    activeTerminalId,
+    selectedCwd,
+    setTerminalBySession,
+    setTerminalVisible,
+    setSessionNotices,
+    t,
+  });
 
   useEffect(() => {
     if (!modelOptions || modelOptions.length === 0) return;
     const available = new Set(modelOptions.map((option) => option.value));
     if (available.has(selectedModel)) return;
 
-    const preferred =
-      (available.has(DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : undefined) ??
-      (modelCache.currentId && available.has(modelCache.currentId)
-        ? modelCache.currentId
-        : undefined) ??
-      modelOptions[0]?.value ??
-      DEFAULT_MODEL_ID;
+    const preferred = resolveOptionId({
+      availableOptions: modelOptions,
+      fallbackIds: [DEFAULT_MODEL_ID, modelCache.currentId],
+      defaultId: DEFAULT_MODEL_ID,
+    });
 
     if (!preferred || preferred === selectedModel) return;
     setSessions((prev) =>
@@ -229,10 +242,11 @@ export function App() {
     const available = new Set(agentOptions.map((option) => option.value));
     if (available.has(selectedMode)) return;
 
-    const preferred =
-      (available.has(DEFAULT_MODE_ID) ? DEFAULT_MODE_ID : undefined) ??
-      agentOptions[0]?.value ??
-      DEFAULT_MODE_ID;
+    const preferred = resolveOptionId({
+      availableOptions: agentOptions,
+      fallbackIds: [DEFAULT_MODE_ID],
+      defaultId: DEFAULT_MODE_ID,
+    });
 
     if (!preferred || preferred === selectedMode) return;
     setSessions((prev) =>
@@ -241,37 +255,6 @@ export function App() {
       )
     );
   }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
-
-  const resolveChatSessionId = useCallback((codexSessionId?: string): string | null => {
-    if (!codexSessionId) return null;
-    return chatSessionByCodexRef.current[codexSessionId] ?? null;
-  }, []);
-
-  const updateSessionMode = useCallback(
-    (sessionId: string, modeId: string) => {
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId && session.mode !== modeId
-            ? { ...session, mode: modeId }
-            : session
-        )
-      );
-    },
-    [setSessions]
-  );
-
-  const updateSessionModel = useCallback(
-    (sessionId: string, modelId: string) => {
-      setSessions((prev) =>
-        prev.map((session) =>
-          session.id === sessionId && session.model !== modelId
-            ? { ...session, model: modelId }
-            : session
-        )
-      );
-    },
-    [setSessions]
-  );
 
   const pickWorkingDirectory = useCallback(async (defaultPath?: string): Promise<string | null> => {
     try {
@@ -318,247 +301,6 @@ export function App() {
       devDebug('[codex] init failed', err);
     });
   }, []);
-
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-    const setupListener = async () => {
-      unlisten = await listen<TerminalExitEvent>('terminal-exit', (event) => {
-        const terminalId = event.payload.terminalId;
-        setTerminalBySession((prev) => {
-          const entries = Object.entries(prev);
-          const next = entries.reduce<Record<string, string>>((acc, [sessionId, id]) => {
-            if (id !== terminalId) {
-              acc[sessionId] = id;
-            }
-            return acc;
-          }, {});
-          return next;
-        });
-        void terminalKill(terminalId);
-        if (activeTerminalIdRef.current === terminalId) {
-          setTerminalVisible(false);
-        }
-      });
-    };
-
-    void setupListener();
-    return () => {
-      if (unlisten) {
-        unlisten();
-      }
-    };
-  }, [setTerminalBySession, setTerminalVisible]);
-
-  useCodexEvents({
-    resolveChatSessionId,
-    activeSessionIdRef,
-    setSessionMessages,
-    setIsGeneratingBySession,
-    setSessionTokenUsage,
-    setSessionSlashCommands,
-    setSessionModeOptions,
-    setSessionModelOptions,
-    setSessionMode: updateSessionMode,
-    setSessionModel: updateSessionModel,
-    onModeOptionsResolved: (modeState) => {
-      applyModeOptions({
-        options: modeState.options,
-        currentId: modeState.currentModeId,
-        fallbackCurrentId: DEFAULT_MODE_ID,
-      });
-    },
-    onModelOptionsResolved: (modelState) => {
-      applyModelOptions({
-        options: modelState.options,
-        currentId: modelState.currentModelId,
-        fallbackCurrentId: DEFAULT_MODEL_ID,
-      });
-    },
-    registerApprovalRequest,
-  });
-
-  const registerCodexSession = useCallback((chatSessionId: string, codexSessionId: string) => {
-    codexSessionByChatRef.current[chatSessionId] = codexSessionId;
-    chatSessionByCodexRef.current[codexSessionId] = chatSessionId;
-  }, []);
-
-  const clearCodexSession = useCallback((chatSessionId: string) => {
-    const existing = codexSessionByChatRef.current[chatSessionId];
-    if (existing) {
-      delete chatSessionByCodexRef.current[existing];
-    }
-    delete codexSessionByChatRef.current[chatSessionId];
-  }, []);
-
-  const ensureCodexSession = useCallback(
-    async (chatSessionId: string) => {
-      const existing = codexSessionByChatRef.current[chatSessionId];
-      if (existing) return existing;
-
-      const pending = pendingSessionInitRef.current[chatSessionId];
-      if (pending) return pending;
-
-      const task = (async () => {
-        const sessionMeta = sessions.find((session) => session.id === chatSessionId);
-        const cwd =
-          typeof sessionMeta?.cwd === 'string' && sessionMeta.cwd.trim() !== ''
-            ? sessionMeta.cwd
-            : '.';
-        const result = await createSession(cwd);
-        registerCodexSession(chatSessionId, result.sessionId);
-        const modeState = resolveModeOptions(result.modes, result.configOptions);
-        if (modeState?.options && modeState.options.length > 0) {
-          setSessionModeOptions((prev) => {
-            const next = { ...prev };
-            for (const session of sessions) {
-              next[session.id] = modeState.options;
-            }
-            next[chatSessionId] = modeState.options;
-            return next;
-          });
-          applyModeOptions({
-            options: modeState.options,
-            currentId: modeState.currentModeId,
-            fallbackCurrentId: DEFAULT_MODE_ID,
-          });
-        }
-        const modelState = resolveModelOptions(result.models, result.configOptions);
-        if (modelState?.options && modelState.options.length > 0) {
-          setSessionModelOptions((prev) => {
-            const next = { ...prev };
-            for (const session of sessions) {
-              next[session.id] = modelState.options;
-            }
-            next[chatSessionId] = modelState.options;
-            return next;
-          });
-          applyModelOptions({
-            options: modelState.options,
-            currentId: modelState.currentModelId,
-          });
-        }
-
-        const availableModeIds = new Set(modeState?.options.map((option) => option.value) ?? []);
-        let desiredMode = sessionMeta?.mode;
-        if (desiredMode && availableModeIds.size > 0 && !availableModeIds.has(desiredMode)) {
-          desiredMode = undefined;
-        }
-        if (!desiredMode) {
-          desiredMode =
-            modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
-        }
-
-        if (desiredMode && desiredMode !== sessionMeta?.mode) {
-          setSessions((prev) =>
-            prev.map((session) =>
-              session.id === chatSessionId ? { ...session, mode: desiredMode } : session
-            )
-          );
-        }
-
-        const shouldSyncMode =
-          desiredMode &&
-          (modeState?.currentModeId ? desiredMode !== modeState.currentModeId : true) &&
-          (availableModeIds.size === 0 || availableModeIds.has(desiredMode));
-
-        const availableIds = new Set(modelState?.options.map((option) => option.value) ?? []);
-        let desiredModel = sessionMeta?.model;
-        if (desiredModel && availableIds.size > 0 && !availableIds.has(desiredModel)) {
-          desiredModel = undefined;
-        }
-        if (!desiredModel) {
-          desiredModel =
-            modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
-        }
-
-        if (desiredModel && desiredModel !== sessionMeta?.model) {
-          setSessions((prev) =>
-            prev.map((session) =>
-              session.id === chatSessionId ? { ...session, model: desiredModel } : session
-            )
-          );
-        }
-
-        const shouldSyncModel =
-          desiredModel &&
-          (modelState?.currentModelId ? desiredModel !== modelState.currentModelId : true) &&
-          (availableIds.size === 0 || availableIds.has(desiredModel));
-
-        const syncTasks: Promise<void>[] = [];
-        if (shouldSyncMode && desiredMode) {
-          syncTasks.push(
-            setSessionMode(result.sessionId, desiredMode)
-              .then(() => {
-                clearSessionNotice(chatSessionId);
-              })
-              .catch((err) => {
-                const fallbackMode =
-                  modeState?.currentModeId ?? modeState?.options?.[0]?.value ?? DEFAULT_MODE_ID;
-                setSessionNotices((prev) => ({
-                  ...prev,
-                  [chatSessionId]: {
-                    kind: 'error',
-                    message: t('errors.modeSetFailed', { error: formatError(err) }),
-                  },
-                }));
-                setSessions((prev) =>
-                  prev.map((session) =>
-                    session.id === chatSessionId ? { ...session, mode: fallbackMode } : session
-                  )
-                );
-              })
-          );
-        }
-        if (shouldSyncModel && desiredModel) {
-          syncTasks.push(
-            setSessionModel(result.sessionId, desiredModel)
-              .then(() => {
-                clearSessionNotice(chatSessionId);
-              })
-              .catch((err) => {
-                const fallbackModel =
-                  modelState?.currentModelId ?? modelState?.options?.[0]?.value ?? DEFAULT_MODEL_ID;
-                setSessionNotices((prev) => ({
-                  ...prev,
-                  [chatSessionId]: {
-                    kind: 'error',
-                    message: t('errors.modelSetFailed', { error: formatError(err) }),
-                  },
-                }));
-                setSessions((prev) =>
-                  prev.map((session) =>
-                    session.id === chatSessionId ? { ...session, model: fallbackModel } : session
-                  )
-                );
-              })
-          );
-        }
-        if (syncTasks.length > 0) {
-          await Promise.all(syncTasks);
-        }
-        return result.sessionId;
-      })();
-
-      pendingSessionInitRef.current[chatSessionId] = task;
-      try {
-        return await task;
-      } finally {
-        delete pendingSessionInitRef.current[chatSessionId];
-      }
-    },
-    [
-      applyModeOptions,
-      applyModelOptions,
-      clearSessionNotice,
-      registerCodexSession,
-      sessions,
-      setSessionModeOptions,
-      setSessionModelOptions,
-      setSessionNotices,
-      setSessions,
-      t,
-    ]
-  );
 
   const handleNewChat = useCallback(() => {
     // 直接在当前工作目录下新建对话，不打开文件选择器
@@ -702,7 +444,7 @@ export function App() {
       );
       clearSessionNotice(sessionId);
 
-      const codexSessionId = codexSessionByChatRef.current[sessionId];
+      const codexSessionId = getCodexSessionId(sessionId);
       if (!codexSessionId) return;
 
       try {
@@ -722,7 +464,15 @@ export function App() {
         }));
       }
     },
-    [activeSession?.model, clearSessionNotice, selectedSessionId, setSessionNotices, setSessions, t]
+    [
+      activeSession?.model,
+      clearSessionNotice,
+      getCodexSessionId,
+      selectedSessionId,
+      setSessionNotices,
+      setSessions,
+      t,
+    ]
   );
 
   const handleModeChange = useCallback(
@@ -736,7 +486,7 @@ export function App() {
       );
       clearSessionNotice(sessionId);
 
-      const codexSessionId = codexSessionByChatRef.current[sessionId];
+      const codexSessionId = getCodexSessionId(sessionId);
       if (!codexSessionId) return;
 
       try {
@@ -756,7 +506,15 @@ export function App() {
         }));
       }
     },
-    [activeSession?.mode, clearSessionNotice, selectedSessionId, setSessionNotices, setSessions, t]
+    [
+      activeSession?.mode,
+      clearSessionNotice,
+      getCodexSessionId,
+      selectedSessionId,
+      setSessionNotices,
+      setSessions,
+      t,
+    ]
   );
 
   const handleSelectCwd = useCallback(async () => {
@@ -786,64 +544,17 @@ export function App() {
     });
   }, [pickFiles, selectedSessionId, setSessionDrafts, t]);
 
-  useEffect(() => {
-    if (!terminalVisible) return;
-    if (!selectedSessionId) return;
-    if (activeTerminalId) return;
-
-    const spawnTerminalSession = async () => {
-      try {
-        const terminalId = await terminalSpawn({ cwd: selectedCwd });
-        setTerminalBySession((prev) => ({ ...prev, [selectedSessionId]: terminalId }));
-      } catch (err) {
-        devDebug('[terminal] spawn failed', err);
-        setSessionNotices((prev) => ({
-          ...prev,
-          [selectedSessionId]: {
-            kind: 'error',
-            message: t('errors.genericError', { error: formatError(err) }),
-          },
-        }));
-      }
-    };
-
-    void spawnTerminalSession();
-  }, [
-    activeTerminalId,
-    selectedCwd,
-    selectedSessionId,
-    setSessionNotices,
-    setTerminalBySession,
-    terminalVisible,
-    t,
-  ]);
-
   const handleSideAction = useCallback(
     (actionId: string) => {
       if (actionId === 'terminal') {
         if (!selectedSessionId) return;
         setTerminalVisible((prev) => !prev);
       } else if (actionId === 'remote') {
-        setRemoteServerPanelVisible((prev) => !prev);
+        toggleRemoteServerPanel();
       }
     },
-    [selectedSessionId, setTerminalVisible]
+    [selectedSessionId, setTerminalVisible, toggleRemoteServerPanel]
   );
-
-
-  const handleRemoteServerPanelClose = useCallback(() => {
-    setRemoteServerPanelVisible(false);
-  }, [setRemoteServerPanelVisible]);
-
-  const handleRemoteServerPanelResize = usePanelResize({
-    isOpen: remoteServerPanelVisible,
-    width: remoteServerPanelWidth,
-    setWidth: setRemoteServerPanelWidth,
-    minWidth: REMOTE_PANEL_MIN_WIDTH,
-    minContentWidth: REMOTE_PANEL_MIN_CONVERSATION_WIDTH,
-    getContainerWidth: () =>
-      document.querySelector('.chat-container__body')?.getBoundingClientRect().width ?? 0,
-  });
 
   const handleTerminalClose = useCallback(() => {
     setTerminalVisible(false);
@@ -1021,6 +732,7 @@ export function App() {
       onSessionDelete={handleSessionDelete}
       onSessionRename={handleSessionRename}
       onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
+      bodyRef={bodyRef}
       remoteServerPanelVisible={remoteServerPanelVisible}
       remoteServerPanelWidth={remoteServerPanelWidth}
       onRemoteServerPanelClose={handleRemoteServerPanelClose}

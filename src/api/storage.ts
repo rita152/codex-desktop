@@ -13,11 +13,11 @@ interface PersistedModelOption {
   label: string;
 }
 
-type PersistedOptionsCache = {
+type PersistedOptionsCache<K extends string> = {
   version: number;
   updatedAt: number;
   options: PersistedModelOption[];
-} & Record<string, unknown>;
+} & Partial<Record<K, string>>;
 
 function normalizeModelOptions(raw: unknown): SelectOption[] {
   if (!Array.isArray(raw)) return [];
@@ -52,20 +52,25 @@ type CacheLoadResult = {
   updatedAt: number;
 };
 
-type CacheConfig = {
+type CacheConfig<K extends string> = {
   key: string;
   version: number;
   maxAgeMs: number;
-  currentIdKey: 'currentModelId' | 'currentModeId';
+  currentIdKey: K;
 };
 
-function loadOptionsCache({ key, version, maxAgeMs, currentIdKey }: CacheConfig): CacheLoadResult | null {
+function loadOptionsCache<K extends string>({
+  key,
+  version,
+  maxAgeMs,
+  currentIdKey,
+}: CacheConfig<K>): CacheLoadResult | null {
   if (typeof localStorage === 'undefined') return null;
   const raw = localStorage.getItem(key);
   if (!raw) return null;
 
   try {
-    const parsed = JSON.parse(raw) as PersistedOptionsCache;
+    const parsed = JSON.parse(raw) as PersistedOptionsCache<K>;
     if (!parsed || parsed.version !== version) return null;
     if (typeof parsed.updatedAt !== 'number' || !Number.isFinite(parsed.updatedAt)) return null;
     if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
@@ -79,15 +84,21 @@ function loadOptionsCache({ key, version, maxAgeMs, currentIdKey }: CacheConfig)
   }
 }
 
-type CacheSaveArgs = {
+type CacheSaveArgs<K extends string> = {
   key: string;
   version: number;
   options: SelectOption[];
-  currentIdKey: 'currentModelId' | 'currentModeId';
+  currentIdKey: K;
   currentId?: string;
 };
 
-function saveOptionsCache({ key, version, options, currentIdKey, currentId }: CacheSaveArgs): void {
+function saveOptionsCache<K extends string>({
+  key,
+  version,
+  options,
+  currentIdKey,
+  currentId,
+}: CacheSaveArgs<K>): void {
   if (typeof localStorage === 'undefined') return;
 
   const serializedOptions = serializeOptions(options);

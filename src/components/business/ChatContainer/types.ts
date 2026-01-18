@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, RefObject } from 'react';
 
 import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
@@ -89,6 +89,8 @@ export interface ChatContainerProps {
   remainingDisabled?: boolean;
   /** 欢迎内容（无消息时显示） */
   welcomeContent?: ReactNode;
+  /** 主体容器引用 */
+  bodyRef?: RefObject<HTMLDivElement>;
   /** 自定义类名 */
   className?: string;
 }

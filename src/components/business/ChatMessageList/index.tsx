@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -126,73 +126,79 @@ export const ChatMessageList = memo(function ChatMessageList({
     );
   }
 
+  const virtualItems = virtualizer.getVirtualItems();
+  const renderRow = useCallback(
+    (virtualRow: (typeof virtualItems)[number]) => {
+      const group = groups[virtualRow.index];
+      if (!group) return null;
+
+      let content: JSX.Element | null = null;
+      if (group.type === 'message') {
+        const message = group.message;
+        content = (
+          <ChatMessage
+            key={`message-${group.id}`}
+            role={message.role}
+            content={message.content}
+            thinking={message.thinking}
+            toolCalls={message.toolCalls}
+            isStreaming={message.role !== 'user' ? message.isStreaming : false}
+            timestamp={message.timestamp}
+          />
+        );
+      } else {
+        const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
+        const handleToggle = () => {
+          const fallbackOpen = group.id === lastWorkingId;
+          setWorkingOpenMap((prev) => ({
+            ...prev,
+            [group.id]: !(prev[group.id] ?? fallbackOpen),
+          }));
+        };
+
+        content = (
+          <Working
+            key={group.id}
+            items={group.items}
+            startTime={group.startTime}
+            isOpen={isOpen}
+            isActive={group.isActive}
+            onToggle={handleToggle}
+          />
+        );
+      }
+
+      const isLast = virtualRow.index === groups.length - 1;
+      const isWorkingGroup = group.type === 'working';
+
+      return (
+        <div
+          key={virtualRow.key}
+          className={cn(
+            'chat-message-list__virtual-item',
+            isWorkingGroup && 'chat-message-list__virtual-item--working',
+            isLast && 'chat-message-list__virtual-item--last'
+          )}
+          data-index={virtualRow.index}
+          ref={virtualizer.measureElement}
+          style={{
+            transform: `translateY(${virtualRow.start}px)`,
+          }}
+        >
+          {content}
+        </div>
+      );
+    },
+    [groups, lastWorkingId, virtualizer, workingOpenMap]
+  );
+
   return (
     <div className={classNames} ref={containerRef}>
       <div
         className="chat-message-list__virtualizer"
         style={{ height: virtualizer.getTotalSize() }}
       >
-        {virtualizer.getVirtualItems().map((virtualRow) => {
-          const group = groups[virtualRow.index];
-          if (!group) return null;
-
-          let content: JSX.Element | null = null;
-          if (group.type === 'message') {
-            const message = group.message;
-            content = (
-              <ChatMessage
-                key={`message-${group.id}`}
-                role={message.role}
-                content={message.content}
-                thinking={message.thinking}
-                toolCalls={message.toolCalls}
-                isStreaming={message.role !== 'user' ? message.isStreaming : false}
-                timestamp={message.timestamp}
-              />
-            );
-          } else {
-            const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
-            const handleToggle = () => {
-              const fallbackOpen = group.id === lastWorkingId;
-              setWorkingOpenMap((prev) => ({
-                ...prev,
-                [group.id]: !(prev[group.id] ?? fallbackOpen),
-              }));
-            };
-
-            content = (
-              <Working
-                key={group.id}
-                items={group.items}
-                startTime={group.startTime}
-                isOpen={isOpen}
-                isActive={group.isActive}
-                onToggle={handleToggle}
-              />
-            );
-          }
-
-          const isLast = virtualRow.index === groups.length - 1;
-          const isWorkingGroup = group.type === 'working';
-
-          return (
-            <div
-              key={virtualRow.key}
-              className={cn(
-                'chat-message-list__virtual-item',
-                isWorkingGroup && 'chat-message-list__virtual-item--working',
-                isLast && 'chat-message-list__virtual-item--last'
-              )}
-              data-index={virtualRow.index}
-              ref={virtualizer.measureElement}
-              style={{
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              {content}
-            </div>
-          );
-        })}
+        {virtualItems.map(renderRow)}
       </div>
     </div>
   );

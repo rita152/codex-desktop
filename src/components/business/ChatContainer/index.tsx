@@ -107,12 +107,14 @@ export function ChatContainer({
   onRemainingClick,
   remainingDisabled = false,
   welcomeContent,
+  bodyRef: bodyRefProp,
   className = '',
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
   const [terminalWidth, setTerminalWidth] = useState(DEFAULT_TERMINAL_WIDTH);
-  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const internalBodyRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = bodyRefProp ?? internalBodyRef;
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);

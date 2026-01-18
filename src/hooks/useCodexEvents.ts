@@ -20,7 +20,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
-import type { ApprovalRequest, TokenUsageEvent } from '../types/codex';
+import type { ApprovalRequest, TokenUsageEvent, ToolCall } from '../types/codex';
 
 type SessionMessages = Record<string, Message[]>;
 
@@ -320,7 +320,7 @@ export function useCodexEvents({
       });
     };
 
-    const applyToolCallUpdateMessage = (sessionId: string, update: Record<string, unknown>) => {
+    const applyToolCallUpdateMessage = (sessionId: string, update: ToolCall) => {
       const toolCallId = getToolCallId(update);
       if (!toolCallId) return;
 
