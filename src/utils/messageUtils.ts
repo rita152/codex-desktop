@@ -7,60 +7,57 @@ function findLastIndex<T>(list: T[], predicate: (item: T) => boolean): number {
   return -1;
 }
 
-export function closeActiveThoughtMessages(list: Message[], now: number): Message[] {
-  const lastThoughtIdx = findLastIndex(
-    list,
-    (message) => message.role === 'thought' && message.isStreaming === true
-  );
-  if (lastThoughtIdx === -1) return list;
+type StreamCloseRole = 'assistant' | 'thought';
 
-  const message = list[lastThoughtIdx];
+function closeActiveMessages(list: Message[], now: number, role: StreamCloseRole): Message[] {
+  const lastIndex = findLastIndex(
+    list,
+    (message) => message.role === role && message.isStreaming === true
+  );
+  if (lastIndex === -1) return list;
+
+  const message = list[lastIndex];
   const startTime = message.thinking?.startTime;
   const duration = startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
-  const content = message.thinking?.content ?? message.content;
-  const nextMessage: Message = {
+  const baseMessage: Message = {
     ...message,
     isStreaming: false,
-    thinking: {
-      content,
-      phase: 'done' as const,
-      isStreaming: false,
-      startTime,
-      duration,
-    },
     timestamp: message.timestamp ?? new Date(now),
   };
 
+  const nextMessage: Message =
+    role === 'thought'
+      ? {
+          ...baseMessage,
+          thinking: {
+            content: message.thinking?.content ?? message.content,
+            phase: 'done' as const,
+            isStreaming: false,
+            startTime,
+            duration,
+          },
+        }
+      : {
+          ...baseMessage,
+          thinking: message.thinking
+            ? {
+                ...message.thinking,
+                phase: 'done',
+                isStreaming: false,
+                duration,
+              }
+            : undefined,
+        };
+
   const nextList = [...list];
-  nextList[lastThoughtIdx] = nextMessage;
+  nextList[lastIndex] = nextMessage;
   return nextList;
 }
 
+export function closeActiveThoughtMessages(list: Message[], now: number): Message[] {
+  return closeActiveMessages(list, now, 'thought');
+}
+
 export function closeActiveAssistantMessages(list: Message[], now: number): Message[] {
-  const lastAssistantIdx = findLastIndex(
-    list,
-    (message) => message.role === 'assistant' && message.isStreaming === true
-  );
-  if (lastAssistantIdx === -1) return list;
-
-  const message = list[lastAssistantIdx];
-  const startTime = message.thinking?.startTime;
-  const duration = startTime !== undefined ? (now - startTime) / 1000 : message.thinking?.duration;
-  const nextMessage: Message = {
-    ...message,
-    isStreaming: false,
-    thinking: message.thinking
-      ? {
-          ...message.thinking,
-          phase: 'done',
-          isStreaming: false,
-          duration,
-        }
-      : undefined,
-    timestamp: message.timestamp ?? new Date(now),
-  };
-
-  const nextList = [...list];
-  nextList[lastAssistantIdx] = nextMessage;
-  return nextList;
+  return closeActiveMessages(list, now, 'assistant');
 }

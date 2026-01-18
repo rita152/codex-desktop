@@ -41,8 +41,17 @@ function normalizeModelOptions(raw: unknown): SelectOption[] {
     .filter(Boolean) as SelectOption[];
 }
 
-function normalizeModeOptions(raw: unknown): SelectOption[] {
-  return normalizeModelOptions(raw);
+function normalizeCurrentId(raw: unknown): string | undefined {
+  return typeof raw === 'string' && raw.trim() !== '' ? raw : undefined;
+}
+
+function serializeOptions(options: SelectOption[]): PersistedModelOption[] {
+  return options
+    .map((option) => ({
+      value: String(option.value),
+      label: String(option.label),
+    }))
+    .filter((option) => option.value.trim() !== '' && option.label.trim() !== '');
 }
 
 export function loadModelOptionsCache(maxAgeMs: number = MODEL_CACHE_MAX_AGE_MS): {
@@ -61,10 +70,7 @@ export function loadModelOptionsCache(maxAgeMs: number = MODEL_CACHE_MAX_AGE_MS)
     if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
     const options = normalizeModelOptions(parsed.options);
     if (options.length === 0) return null;
-    const currentModelId =
-      typeof parsed.currentModelId === 'string' && parsed.currentModelId.trim() !== ''
-        ? parsed.currentModelId
-        : undefined;
+    const currentModelId = normalizeCurrentId(parsed.currentModelId);
     return { options, currentModelId, updatedAt: parsed.updatedAt };
   } catch (err) {
     devDebug('[storage] Failed to load model options cache', err);
@@ -86,12 +92,9 @@ export function loadModeOptionsCache(maxAgeMs: number = MODE_CACHE_MAX_AGE_MS): 
     if (!parsed || parsed.version !== MODE_CACHE_VERSION) return null;
     if (typeof parsed.updatedAt !== 'number' || !Number.isFinite(parsed.updatedAt)) return null;
     if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
-    const options = normalizeModeOptions(parsed.options);
+    const options = normalizeModelOptions(parsed.options);
     if (options.length === 0) return null;
-    const currentModeId =
-      typeof parsed.currentModeId === 'string' && parsed.currentModeId.trim() !== ''
-        ? parsed.currentModeId
-        : undefined;
+    const currentModeId = normalizeCurrentId(parsed.currentModeId);
     return { options, currentModeId, updatedAt: parsed.updatedAt };
   } catch (err) {
     devDebug('[storage] Failed to load mode options cache', err);
@@ -105,12 +108,7 @@ export function saveModelOptionsCache(payload: {
 }): void {
   if (typeof localStorage === 'undefined') return;
 
-  const options: PersistedModelOption[] = payload.options
-    .map((option) => ({
-      value: String(option.value),
-      label: String(option.label),
-    }))
-    .filter((option) => option.value.trim() !== '' && option.label.trim() !== '');
+  const options = serializeOptions(payload.options);
 
   if (options.length === 0) return;
 
@@ -118,10 +116,7 @@ export function saveModelOptionsCache(payload: {
     version: MODEL_CACHE_VERSION,
     updatedAt: Date.now(),
     options,
-    currentModelId:
-      typeof payload.currentModelId === 'string' && payload.currentModelId.trim() !== ''
-        ? payload.currentModelId
-        : undefined,
+    currentModelId: normalizeCurrentId(payload.currentModelId),
   };
 
   try {
@@ -137,12 +132,7 @@ export function saveModeOptionsCache(payload: {
 }): void {
   if (typeof localStorage === 'undefined') return;
 
-  const options: PersistedModelOption[] = payload.options
-    .map((option) => ({
-      value: String(option.value),
-      label: String(option.label),
-    }))
-    .filter((option) => option.value.trim() !== '' && option.label.trim() !== '');
+  const options = serializeOptions(payload.options);
 
   if (options.length === 0) return;
 
@@ -150,10 +140,7 @@ export function saveModeOptionsCache(payload: {
     version: MODE_CACHE_VERSION,
     updatedAt: Date.now(),
     options,
-    currentModeId:
-      typeof payload.currentModeId === 'string' && payload.currentModeId.trim() !== ''
-        ? payload.currentModeId
-        : undefined,
+    currentModeId: normalizeCurrentId(payload.currentModeId),
   };
 
   try {

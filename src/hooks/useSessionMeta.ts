@@ -16,6 +16,21 @@ export type SessionTokenUsage = Record<
   }
 >;
 
+function omitSessionKeys<T extends Record<string, unknown>>(
+  prev: T,
+  sessionId: string,
+  resetSessionId?: string
+): T {
+  const hasSession = sessionId in prev;
+  const hasReset = resetSessionId ? resetSessionId in prev : false;
+  if (!hasSession && !hasReset) return prev;
+
+  const next = { ...prev };
+  delete next[sessionId];
+  if (resetSessionId) delete next[resetSessionId];
+  return next;
+}
+
 export function useSessionMeta() {
   const [sessionTokenUsage, setSessionTokenUsage] = useState<SessionTokenUsage>({});
   const [sessionNotices, setSessionNotices] = useState<Record<string, SessionNotice>>({});
@@ -26,45 +41,15 @@ export function useSessionMeta() {
   const [sessionModeOptions, setSessionModeOptions] = useState<Record<string, SelectOption[]>>({});
 
   const clearSessionNotice = useCallback((sessionId: string) => {
-    setSessionNotices((prev) => {
-      if (!prev[sessionId]) return prev;
-      const next = { ...prev };
-      delete next[sessionId];
-      return next;
-    });
+    setSessionNotices((prev) => omitSessionKeys(prev, sessionId));
   }, []);
 
   const removeSessionMeta = useCallback((sessionId: string, resetSessionId?: string) => {
-    setSessionNotices((prev) => {
-      const next = { ...prev };
-      delete next[sessionId];
-      if (resetSessionId) delete next[resetSessionId];
-      return next;
-    });
-    setSessionSlashCommands((prev) => {
-      const next = { ...prev };
-      delete next[sessionId];
-      if (resetSessionId) delete next[resetSessionId];
-      return next;
-    });
-    setSessionModelOptions((prev) => {
-      const next = { ...prev };
-      delete next[sessionId];
-      if (resetSessionId) delete next[resetSessionId];
-      return next;
-    });
-    setSessionModeOptions((prev) => {
-      const next = { ...prev };
-      delete next[sessionId];
-      if (resetSessionId) delete next[resetSessionId];
-      return next;
-    });
-    setSessionTokenUsage((prev) => {
-      const next = { ...prev };
-      delete next[sessionId];
-      if (resetSessionId) delete next[resetSessionId];
-      return next;
-    });
+    setSessionNotices((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
+    setSessionSlashCommands((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
+    setSessionModelOptions((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
+    setSessionModeOptions((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
+    setSessionTokenUsage((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
   }, []);
 
   return {

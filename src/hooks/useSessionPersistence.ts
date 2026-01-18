@@ -12,6 +12,34 @@ export type SessionDrafts = Record<string, string>;
 
 const DEFAULT_SESSION_ID = '1';
 
+function syncSessionRecord<T>(
+  prev: Record<string, T>,
+  sessions: ChatSession[],
+  fallback: () => T,
+  isValid: (value: T | undefined) => boolean
+): Record<string, T> {
+  let changed = false;
+  const next = { ...prev };
+  const sessionIds = new Set(sessions.map((session) => session.id));
+
+  for (const sessionId of sessionIds) {
+    const value = next[sessionId];
+    if (!isValid(value)) {
+      next[sessionId] = fallback();
+      changed = true;
+    }
+  }
+
+  for (const id of Object.keys(next)) {
+    if (!sessionIds.has(id)) {
+      delete next[id];
+      changed = true;
+    }
+  }
+
+  return changed ? next : prev;
+}
+
 export interface SessionPersistenceResult {
   sessions: ChatSession[];
   setSessions: Dispatch<SetStateAction<ChatSession[]>>;
@@ -47,49 +75,15 @@ export function useSessionPersistence(): SessionPersistenceResult {
   const [sessionDrafts, setSessionDrafts] = useState<SessionDrafts>(initial.sessionDrafts);
 
   useEffect(() => {
-    setSessionMessages((prev) => {
-      let changed = false;
-      const next = { ...prev };
-
-      for (const session of sessions) {
-        if (!next[session.id]) {
-          next[session.id] = [];
-          changed = true;
-        }
-      }
-
-      for (const id of Object.keys(next)) {
-        if (!sessions.some((session) => session.id === id)) {
-          delete next[id];
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
+    setSessionMessages((prev) =>
+      syncSessionRecord(prev, sessions, () => [], (value) => Array.isArray(value))
+    );
   }, [sessions]);
 
   useEffect(() => {
-    setSessionDrafts((prev) => {
-      let changed = false;
-      const next = { ...prev };
-
-      for (const session of sessions) {
-        if (typeof next[session.id] !== 'string') {
-          next[session.id] = '';
-          changed = true;
-        }
-      }
-
-      for (const id of Object.keys(next)) {
-        if (!sessions.some((session) => session.id === id)) {
-          delete next[id];
-          changed = true;
-        }
-      }
-
-      return changed ? next : prev;
-    });
+    setSessionDrafts((prev) =>
+      syncSessionRecord(prev, sessions, () => '', (value) => typeof value === 'string')
+    );
   }, [sessions]);
 
   useEffect(() => {
