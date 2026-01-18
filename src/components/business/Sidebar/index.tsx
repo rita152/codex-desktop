@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useId } from 'react';
+import { useState, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { List } from '../../ui/data-display/List';
@@ -13,6 +13,7 @@ import {
   TrashIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
+import { useSidebarResize } from '../../../hooks/useSidebarResize';
 
 import type { SidebarProps } from './types';
 import type { ListItemAction } from '../../ui/data-display/ListItem/types';
@@ -37,72 +38,21 @@ export function Sidebar({
   className = '',
 }: SidebarProps) {
   const { t } = useTranslation();
-  const [internalWidth, setInternalWidth] = useState(DEFAULT_WIDTH);
-  const [isDragging, setIsDragging] = useState(false);
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
-  const sidebarRef = useRef<HTMLElement>(null);
 
   const generatedId = useId();
   const safeId = generatedId.replace(/:/g, '');
   const sidebarId = `sidebar-${safeId}`;
 
-  const width = controlledWidth ?? internalWidth;
-
-  const setWidth = useCallback(
-    (nextWidth: number) => {
-      const clampedWidth = Math.min(Math.max(nextWidth, MIN_WIDTH), MAX_WIDTH);
-      if (onWidthChange) {
-        onWidthChange(clampedWidth);
-      } else {
-        setInternalWidth(clampedWidth);
-      }
-    },
-    [onWidthChange]
-  );
-
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleMouseMove = useCallback(
-    (e: MouseEvent) => {
-      if (!isDragging || !sidebarRef.current) return;
-
-      const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const newWidth = e.clientX - sidebarRect.left;
-      setWidth(newWidth);
-    },
-    [isDragging, setWidth]
-  );
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleResizeKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-    const step = e.shiftKey ? 40 : 10;
-
-    switch (e.key) {
-      case 'ArrowLeft':
-        e.preventDefault();
-        setWidth(width - step);
-        break;
-      case 'ArrowRight':
-        e.preventDefault();
-        setWidth(width + step);
-        break;
-      case 'Home':
-        e.preventDefault();
-        setWidth(MIN_WIDTH);
-        break;
-      case 'End':
-        e.preventDefault();
-        setWidth(MAX_WIDTH);
-        break;
-    }
-  };
+  const { width, isDragging, sidebarRef, handleMouseDown, handleResizeKeyDown } =
+    useSidebarResize({
+      width: controlledWidth,
+      onWidthChange,
+      minWidth: MIN_WIDTH,
+      maxWidth: MAX_WIDTH,
+      defaultWidth: DEFAULT_WIDTH,
+    });
 
   const handleStartRename = useCallback((sessionId: string, currentTitle: string) => {
     setEditingSessionId(sessionId);
@@ -146,22 +96,6 @@ export function Sidebar({
     },
     [onSessionDelete, onSessionRename, handleStartRename, t]
   );
-
-  useEffect(() => {
-    if (isDragging) {
-      document.addEventListener('mousemove', handleMouseMove);
-      document.addEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = 'col-resize';
-      document.body.style.userSelect = 'none';
-    }
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   return (
     <aside

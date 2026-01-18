@@ -20,6 +20,8 @@ import {
 } from './api/storage';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexEvents } from './hooks/useCodexEvents';
+import { usePanelResize } from './hooks/usePanelResize';
+import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
@@ -42,13 +44,14 @@ import { terminalKill, terminalSpawn } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
-import type { SelectOption } from './components/ui/data-entry/Select/types';
 import type { ApprovalProps } from './components/ui/feedback/Approval';
 import type { ApprovalRequest } from './types/codex';
 
 import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
+const REMOTE_PANEL_MIN_WIDTH = 240;
+const REMOTE_PANEL_MIN_CONVERSATION_WIDTH = 240;
 
 type TerminalExitEvent = {
   terminalId: string;
@@ -67,34 +70,6 @@ export function App() {
     setSessionDrafts,
   } = useSessionPersistence();
 
-  const [modelCache, setModelCache] = useState<{
-    options: SelectOption[] | null;
-    currentModelId?: string;
-  }>(() => {
-    const cached = loadModelOptionsCache();
-    return {
-      options: cached?.options ?? null,
-      currentModelId: cached?.currentModelId ?? DEFAULT_MODEL_ID,
-    };
-  });
-  const [modeCache, setModeCache] = useState<{
-    options: SelectOption[] | null;
-    currentModeId?: string;
-  }>(() => {
-    const cached = loadModeOptionsCache();
-    return {
-      options: cached?.options ?? null,
-      currentModeId: cached?.currentModeId ?? DEFAULT_MODE_ID,
-    };
-  });
-
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-  const sidebarVisibilityRef = useRef(true);
-  const [isNarrowLayout, setIsNarrowLayout] = useState(false);
-  const [terminalVisible, setTerminalVisible] = useState(false);
-  const [remoteServerPanelVisible, setRemoteServerPanelVisible] = useState(false);
-  const [remoteServerPanelWidth, setRemoteServerPanelWidth] = useState(360);
-  const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const {
     sessionTokenUsage,
     sessionNotices,
@@ -109,6 +84,36 @@ export function App() {
     clearSessionNotice,
     removeSessionMeta,
   } = useSessionMeta();
+  const { cache: modelCache, applyOptions: applyModelOptions } = useSelectOptionsCache({
+    sessions,
+    defaultId: DEFAULT_MODEL_ID,
+    loadCache: () => {
+      const cached = loadModelOptionsCache();
+      return cached ? { options: cached.options, currentId: cached.currentModelId } : null;
+    },
+    saveCache: ({ options, currentId }) =>
+      saveModelOptionsCache({ options, currentModelId: currentId }),
+    setSessionOptions: setSessionModelOptions,
+  });
+  const { applyOptions: applyModeOptions } = useSelectOptionsCache({
+    sessions,
+    defaultId: DEFAULT_MODE_ID,
+    loadCache: () => {
+      const cached = loadModeOptionsCache();
+      return cached ? { options: cached.options, currentId: cached.currentModeId } : null;
+    },
+    saveCache: ({ options, currentId }) =>
+      saveModeOptionsCache({ options, currentModeId: currentId }),
+    setSessionOptions: setSessionModeOptions,
+  });
+
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+  const sidebarVisibilityRef = useRef(true);
+  const [isNarrowLayout, setIsNarrowLayout] = useState(false);
+  const [terminalVisible, setTerminalVisible] = useState(false);
+  const [remoteServerPanelVisible, setRemoteServerPanelVisible] = useState(false);
+  const [remoteServerPanelWidth, setRemoteServerPanelWidth] = useState(360);
+  const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
   const {
     pendingApprovals,
@@ -125,36 +130,6 @@ export function App() {
   const chatSessionByCodexRef = useRef<Record<string, string>>({});
   const pendingSessionInitRef = useRef<Record<string, Promise<string>>>({});
   const activeTerminalIdRef = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    const cachedOptions = modelCache.options;
-    if (!cachedOptions || cachedOptions.length === 0) return;
-    setSessionModelOptions((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const session of sessions) {
-        if (next[session.id]?.length) continue;
-        next[session.id] = cachedOptions;
-        changed = true;
-      }
-      return changed ? next : prev;
-    });
-  }, [modelCache.options, sessions, setSessionModelOptions]);
-
-  useEffect(() => {
-    const cachedOptions = modeCache.options;
-    if (!cachedOptions || cachedOptions.length === 0) return;
-    setSessionModeOptions((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const session of sessions) {
-        if (next[session.id]?.length) continue;
-        next[session.id] = cachedOptions;
-        changed = true;
-      }
-      return changed ? next : prev;
-    });
-  }, [modeCache.options, sessions, setSessionModeOptions]);
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -235,8 +210,8 @@ export function App() {
 
     const preferred =
       (available.has(DEFAULT_MODEL_ID) ? DEFAULT_MODEL_ID : undefined) ??
-      (modelCache.currentModelId && available.has(modelCache.currentModelId)
-        ? modelCache.currentModelId
+      (modelCache.currentId && available.has(modelCache.currentId)
+        ? modelCache.currentId
         : undefined) ??
       modelOptions[0]?.value ??
       DEFAULT_MODEL_ID;
@@ -247,7 +222,7 @@ export function App() {
         session.id === selectedSessionId ? { ...session, model: preferred } : session
       )
     );
-  }, [modelCache.currentModelId, modelOptions, selectedModel, selectedSessionId, setSessions]);
+  }, [modelCache.currentId, modelOptions, selectedModel, selectedSessionId, setSessions]);
 
   useEffect(() => {
     if (!agentOptions || agentOptions.length === 0) return;
@@ -386,23 +361,17 @@ export function App() {
     setSessionMode: updateSessionMode,
     setSessionModel: updateSessionModel,
     onModeOptionsResolved: (modeState) => {
-      setModeCache({
+      applyModeOptions({
         options: modeState.options,
-        currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
-      });
-      saveModeOptionsCache({
-        options: modeState.options,
-        currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+        currentId: modeState.currentModeId,
+        fallbackCurrentId: DEFAULT_MODE_ID,
       });
     },
     onModelOptionsResolved: (modelState) => {
-      setModelCache({
+      applyModelOptions({
         options: modelState.options,
-        currentModelId: modelState.currentModelId ?? DEFAULT_MODEL_ID,
-      });
-      saveModelOptionsCache({
-        options: modelState.options,
-        currentModelId: modelState.currentModelId ?? DEFAULT_MODEL_ID,
+        currentId: modelState.currentModelId,
+        fallbackCurrentId: DEFAULT_MODEL_ID,
       });
     },
     registerApprovalRequest,
@@ -447,13 +416,10 @@ export function App() {
             next[chatSessionId] = modeState.options;
             return next;
           });
-          setModeCache({
+          applyModeOptions({
             options: modeState.options,
-            currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
-          });
-          saveModeOptionsCache({
-            options: modeState.options,
-            currentModeId: modeState.currentModeId ?? DEFAULT_MODE_ID,
+            currentId: modeState.currentModeId,
+            fallbackCurrentId: DEFAULT_MODE_ID,
           });
         }
         const modelState = resolveModelOptions(result.models, result.configOptions);
@@ -466,10 +432,9 @@ export function App() {
             next[chatSessionId] = modelState.options;
             return next;
           });
-          setModelCache({ options: modelState.options, currentModelId: modelState.currentModelId });
-          saveModelOptionsCache({
+          applyModelOptions({
             options: modelState.options,
-            currentModelId: modelState.currentModelId,
+            currentId: modelState.currentModelId,
           });
         }
 
@@ -582,10 +547,11 @@ export function App() {
       }
     },
     [
+      applyModeOptions,
+      applyModelOptions,
       clearSessionNotice,
       registerCodexSession,
       sessions,
-      setModeCache,
       setSessionModeOptions,
       setSessionModelOptions,
       setSessionNotices,
@@ -869,36 +835,15 @@ export function App() {
     setRemoteServerPanelVisible(false);
   }, [setRemoteServerPanelVisible]);
 
-  const clampRemoteServerPanelWidth = (nextWidth: number) => {
-    const bodyWidth = document.querySelector('.chat-container__body')?.getBoundingClientRect().width ?? 0;
-    const MIN_PANEL_WIDTH = 240;
-    const MIN_CONVERSATION_WIDTH = 240;
-    const maxWidth = bodyWidth ? Math.max(MIN_PANEL_WIDTH, bodyWidth - MIN_CONVERSATION_WIDTH) : nextWidth;
-    return Math.min(Math.max(nextWidth, MIN_PANEL_WIDTH), maxWidth);
-  };
-
-  const handleRemoteServerPanelResize = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!remoteServerPanelVisible) return;
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = remoteServerPanelWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      const delta = startX - moveEvent.clientX;
-      setRemoteServerPanelWidth(clampRemoteServerPanelWidth(startWidth + delta));
-    };
-    const handlePointerUp = () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-  };
+  const handleRemoteServerPanelResize = usePanelResize({
+    isOpen: remoteServerPanelVisible,
+    width: remoteServerPanelWidth,
+    setWidth: setRemoteServerPanelWidth,
+    minWidth: REMOTE_PANEL_MIN_WIDTH,
+    minContentWidth: REMOTE_PANEL_MIN_CONVERSATION_WIDTH,
+    getContainerWidth: () =>
+      document.querySelector('.chat-container__body')?.getBoundingClientRect().width ?? 0,
+  });
 
   const handleTerminalClose = useCallback(() => {
     setTerminalVisible(false);

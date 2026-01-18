@@ -13,19 +13,11 @@ interface PersistedModelOption {
   label: string;
 }
 
-interface PersistedModelOptionsCache {
+type PersistedOptionsCache = {
   version: number;
   updatedAt: number;
   options: PersistedModelOption[];
-  currentModelId?: string;
-}
-
-interface PersistedModeOptionsCache {
-  version: number;
-  updatedAt: number;
-  options: PersistedModelOption[];
-  currentModeId?: string;
-}
+} & Record<string, unknown>;
 
 function normalizeModelOptions(raw: unknown): SelectOption[] {
   if (!Array.isArray(raw)) return [];
@@ -54,28 +46,80 @@ function serializeOptions(options: SelectOption[]): PersistedModelOption[] {
     .filter((option) => option.value.trim() !== '' && option.label.trim() !== '');
 }
 
+type CacheLoadResult = {
+  options: SelectOption[];
+  currentId?: string;
+  updatedAt: number;
+};
+
+type CacheConfig = {
+  key: string;
+  version: number;
+  maxAgeMs: number;
+  currentIdKey: 'currentModelId' | 'currentModeId';
+};
+
+function loadOptionsCache({ key, version, maxAgeMs, currentIdKey }: CacheConfig): CacheLoadResult | null {
+  if (typeof localStorage === 'undefined') return null;
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as PersistedOptionsCache;
+    if (!parsed || parsed.version !== version) return null;
+    if (typeof parsed.updatedAt !== 'number' || !Number.isFinite(parsed.updatedAt)) return null;
+    if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
+    const options = normalizeModelOptions(parsed.options);
+    if (options.length === 0) return null;
+    const currentId = normalizeCurrentId(parsed[currentIdKey]);
+    return { options, currentId, updatedAt: parsed.updatedAt };
+  } catch (err) {
+    devDebug(`[storage] Failed to load ${currentIdKey} cache`, err);
+    return null;
+  }
+}
+
+type CacheSaveArgs = {
+  key: string;
+  version: number;
+  options: SelectOption[];
+  currentIdKey: 'currentModelId' | 'currentModeId';
+  currentId?: string;
+};
+
+function saveOptionsCache({ key, version, options, currentIdKey, currentId }: CacheSaveArgs): void {
+  if (typeof localStorage === 'undefined') return;
+
+  const serializedOptions = serializeOptions(options);
+  if (serializedOptions.length === 0) return;
+
+  const persisted: PersistedOptionsCache = {
+    version,
+    updatedAt: Date.now(),
+    options: serializedOptions,
+    [currentIdKey]: normalizeCurrentId(currentId),
+  };
+
+  try {
+    localStorage.setItem(key, JSON.stringify(persisted));
+  } catch (err) {
+    devDebug(`[storage] Failed to save ${currentIdKey} cache`, err);
+  }
+}
+
 export function loadModelOptionsCache(maxAgeMs: number = MODEL_CACHE_MAX_AGE_MS): {
   options: SelectOption[];
   currentModelId?: string;
   updatedAt: number;
 } | null {
-  if (typeof localStorage === 'undefined') return null;
-  const raw = localStorage.getItem(MODEL_CACHE_KEY);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as PersistedModelOptionsCache;
-    if (!parsed || parsed.version !== MODEL_CACHE_VERSION) return null;
-    if (typeof parsed.updatedAt !== 'number' || !Number.isFinite(parsed.updatedAt)) return null;
-    if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
-    const options = normalizeModelOptions(parsed.options);
-    if (options.length === 0) return null;
-    const currentModelId = normalizeCurrentId(parsed.currentModelId);
-    return { options, currentModelId, updatedAt: parsed.updatedAt };
-  } catch (err) {
-    devDebug('[storage] Failed to load model options cache', err);
-    return null;
-  }
+  const result = loadOptionsCache({
+    key: MODEL_CACHE_KEY,
+    version: MODEL_CACHE_VERSION,
+    maxAgeMs,
+    currentIdKey: 'currentModelId',
+  });
+  if (!result) return null;
+  return { options: result.options, currentModelId: result.currentId, updatedAt: result.updatedAt };
 }
 
 export function loadModeOptionsCache(maxAgeMs: number = MODE_CACHE_MAX_AGE_MS): {
@@ -83,69 +127,38 @@ export function loadModeOptionsCache(maxAgeMs: number = MODE_CACHE_MAX_AGE_MS): 
   currentModeId?: string;
   updatedAt: number;
 } | null {
-  if (typeof localStorage === 'undefined') return null;
-  const raw = localStorage.getItem(MODE_CACHE_KEY);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw) as PersistedModeOptionsCache;
-    if (!parsed || parsed.version !== MODE_CACHE_VERSION) return null;
-    if (typeof parsed.updatedAt !== 'number' || !Number.isFinite(parsed.updatedAt)) return null;
-    if (Date.now() - parsed.updatedAt > maxAgeMs) return null;
-    const options = normalizeModelOptions(parsed.options);
-    if (options.length === 0) return null;
-    const currentModeId = normalizeCurrentId(parsed.currentModeId);
-    return { options, currentModeId, updatedAt: parsed.updatedAt };
-  } catch (err) {
-    devDebug('[storage] Failed to load mode options cache', err);
-    return null;
-  }
+  const result = loadOptionsCache({
+    key: MODE_CACHE_KEY,
+    version: MODE_CACHE_VERSION,
+    maxAgeMs,
+    currentIdKey: 'currentModeId',
+  });
+  if (!result) return null;
+  return { options: result.options, currentModeId: result.currentId, updatedAt: result.updatedAt };
 }
 
 export function saveModelOptionsCache(payload: {
   options: SelectOption[];
   currentModelId?: string;
 }): void {
-  if (typeof localStorage === 'undefined') return;
-
-  const options = serializeOptions(payload.options);
-
-  if (options.length === 0) return;
-
-  const persisted: PersistedModelOptionsCache = {
+  saveOptionsCache({
+    key: MODEL_CACHE_KEY,
     version: MODEL_CACHE_VERSION,
-    updatedAt: Date.now(),
-    options,
-    currentModelId: normalizeCurrentId(payload.currentModelId),
-  };
-
-  try {
-    localStorage.setItem(MODEL_CACHE_KEY, JSON.stringify(persisted));
-  } catch (err) {
-    devDebug('[storage] Failed to save model options cache', err);
-  }
+    options: payload.options,
+    currentIdKey: 'currentModelId',
+    currentId: payload.currentModelId,
+  });
 }
 
 export function saveModeOptionsCache(payload: {
   options: SelectOption[];
   currentModeId?: string;
 }): void {
-  if (typeof localStorage === 'undefined') return;
-
-  const options = serializeOptions(payload.options);
-
-  if (options.length === 0) return;
-
-  const persisted: PersistedModeOptionsCache = {
+  saveOptionsCache({
+    key: MODE_CACHE_KEY,
     version: MODE_CACHE_VERSION,
-    updatedAt: Date.now(),
-    options,
-    currentModeId: normalizeCurrentId(payload.currentModeId),
-  };
-
-  try {
-    localStorage.setItem(MODE_CACHE_KEY, JSON.stringify(persisted));
-  } catch (err) {
-    devDebug('[storage] Failed to save mode options cache', err);
-  }
+    options: payload.options,
+    currentIdKey: 'currentModeId',
+    currentId: payload.currentModeId,
+  });
 }

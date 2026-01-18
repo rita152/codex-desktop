@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +16,7 @@ import {
   NotebookIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
+import { useSlashCommands } from '../../../hooks/useSlashCommands';
 
 import type { ChatInputProps } from './types';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -84,7 +85,6 @@ export function ChatInput({
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-  const [activeSlashIndex, setActiveSlashIndex] = useState(0);
   const trimmedValue = value.trim();
   const defaultAgentOptions = useMemo(() => buildAgentOptions(t), [t]);
   const resolvedAgentOptions = useMemo(() => {
@@ -101,67 +101,20 @@ export function ChatInput({
   // Model options are fetched from remote, no local fallback
   const resolvedModelOptions = modelOptions ?? [];
 
-  const stripCommandSeparator = (tail: string) => (tail.startsWith(' ') ? tail.slice(1) : tail);
-
-  const buildSlashCommandValue = (command: string, tail: string) => {
-    if (tail.length === 0) return `/${command}`;
-    const separator = /^\s/.test(tail) ? '' : ' ';
-    return `/${command}${separator}${tail}`;
-  };
-
-  const normalizedSlashCommands = useMemo(() => {
-    const cleaned = slashCommands.map((cmd) => cmd.trim().replace(/^\//, '')).filter(Boolean);
-    return Array.from(new Set(cleaned)).sort();
-  }, [slashCommands]);
-
-  const slashState = useMemo(() => {
-    if (normalizedSlashCommands.length === 0) {
-      return { isActive: false, suggestions: [], leading: '', query: '' };
-    }
-    const leadingMatch = value.match(/^\s*/);
-    const leading = leadingMatch ? leadingMatch[0] : '';
-    const trimmed = value.slice(leading.length);
-    if (!trimmed.startsWith('/')) {
-      return { isActive: false, suggestions: [], leading, query: '' };
-    }
-    const afterSlash = trimmed.slice(1);
-    if (/\s/.test(afterSlash)) {
-      return { isActive: false, suggestions: [], leading, query: '' };
-    }
-    const query = afterSlash;
-    const suggestions = normalizedSlashCommands.filter((cmd) => cmd.startsWith(query)).slice(0, 6);
-    return {
-      isActive: suggestions.length > 0,
-      suggestions,
-      leading,
-      query,
-    };
-  }, [normalizedSlashCommands, value]);
-
-  const leadingSlashToken = useMemo(() => {
-    const match = value.match(/^\s*\/([^\s]+)([\s\S]*)$/);
-    if (!match) return null;
-    const command = match[1] ?? '';
-    if (!command) return null;
-    if (!normalizedSlashCommands.includes(command)) return null;
-    const tail = match[2] ?? '';
-    return { command, tail };
-  }, [normalizedSlashCommands, value]);
-
-  useEffect(() => {
-    setActiveSlashIndex(0);
-  }, [slashState.query, slashState.suggestions.length]);
-
-  const applySlashCommand = (command: string) => {
-    const nextValue = `${slashState.leading}/${command} `;
-    onChange(nextValue);
-    requestAnimationFrame(() => {
-      const node = textareaRef.current;
-      if (!node) return;
-      node.focus();
-      node.setSelectionRange(nextValue.length, nextValue.length);
-    });
-  };
+  const {
+    activeIndex,
+    setActiveIndex,
+    slashState,
+    leadingSlashToken,
+    applySlashCommand,
+    stripCommandSeparator,
+    buildSlashCommandValue,
+  } = useSlashCommands({
+    value,
+    slashCommands,
+    onChange,
+    textareaRef,
+  });
 
   const trySend = () => {
     if (disabled) return;
@@ -179,23 +132,23 @@ export function ChatInput({
     if (slashState.isActive && slashState.suggestions.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveSlashIndex((prev) => Math.min(prev + 1, slashState.suggestions.length - 1));
+        setActiveIndex((prev) => Math.min(prev + 1, slashState.suggestions.length - 1));
         return;
       }
       if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveSlashIndex((prev) => Math.max(prev - 1, 0));
+        setActiveIndex((prev) => Math.max(prev - 1, 0));
         return;
       }
       if (e.key === 'Tab') {
         e.preventDefault();
-        const command = slashState.suggestions[activeSlashIndex] ?? slashState.suggestions[0];
+        const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
         if (command) applySlashCommand(command);
         return;
       }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const command = slashState.suggestions[activeSlashIndex] ?? slashState.suggestions[0];
+        const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
         if (command) applySlashCommand(command);
         return;
       }
@@ -281,7 +234,7 @@ export function ChatInput({
             <span className="chat-input__slash-hint">{t('chatInput.slashHint')}</span>
           </div>
           {slashState.suggestions.map((command, index) => {
-            const isActive = index === activeSlashIndex;
+            const isActive = index === activeIndex;
             return (
               <button
                 key={command}

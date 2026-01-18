@@ -1,5 +1,5 @@
 import { lazy, Suspense, useRef, useState } from 'react';
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Sidebar } from '../Sidebar';
@@ -9,6 +9,7 @@ import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
+import { usePanelResize } from '../../../hooks/usePanelResize';
 
 import type { ChatContainerProps } from './types';
 
@@ -123,36 +124,14 @@ export function ChatContainer({
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
   const displayCwd = sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : t('chat.defaultCwd');
 
-  const clampTerminalWidth = (nextWidth: number) => {
-    const bodyWidth = bodyRef.current?.getBoundingClientRect().width ?? 0;
-    const maxWidth = bodyWidth
-      ? Math.max(MIN_TERMINAL_WIDTH, bodyWidth - MIN_CONVERSATION_WIDTH)
-      : nextWidth;
-    return Math.min(Math.max(nextWidth, MIN_TERMINAL_WIDTH), maxWidth);
-  };
-
-  const handleTerminalResize = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!terminalVisible) return;
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = terminalWidth;
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-
-    const handlePointerMove = (moveEvent: PointerEvent) => {
-      const delta = startX - moveEvent.clientX;
-      setTerminalWidth(clampTerminalWidth(startWidth + delta));
-    };
-    const handlePointerUp = () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-  };
+  const handleTerminalResize = usePanelResize({
+    isOpen: terminalVisible,
+    width: terminalWidth,
+    setWidth: setTerminalWidth,
+    minWidth: MIN_TERMINAL_WIDTH,
+    minContentWidth: MIN_CONVERSATION_WIDTH,
+    getContainerWidth: () => bodyRef.current?.getBoundingClientRect().width ?? 0,
+  });
 
   return (
     <div className={classNames}>
