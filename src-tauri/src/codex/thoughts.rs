@@ -6,11 +6,26 @@ pub const EMIT_THOUGHT_CHUNKS_ENV: &str = "CODEX_DESKTOP_EMIT_THOUGHT_CHUNKS";
 /// Return true if thought chunks should be forwarded to the frontend.
 pub fn emit_thought_chunks() -> bool {
     match std::env::var(EMIT_THOUGHT_CHUNKS_ENV) {
-        Ok(value) => match value.trim().to_ascii_lowercase().as_str() {
-            "0" | "false" | "no" | "n" | "off" => false,
-            "1" | "true" | "yes" | "y" | "on" => true,
-            _ => true,
-        },
+        Ok(value) => {
+            let trimmed = value.trim();
+            if trimmed.eq_ignore_ascii_case("0")
+                || trimmed.eq_ignore_ascii_case("false")
+                || trimmed.eq_ignore_ascii_case("no")
+                || trimmed.eq_ignore_ascii_case("n")
+                || trimmed.eq_ignore_ascii_case("off")
+            {
+                false
+            } else if trimmed.eq_ignore_ascii_case("1")
+                || trimmed.eq_ignore_ascii_case("true")
+                || trimmed.eq_ignore_ascii_case("yes")
+                || trimmed.eq_ignore_ascii_case("y")
+                || trimmed.eq_ignore_ascii_case("on")
+            {
+                true
+            } else {
+                true
+            }
+        }
         Err(_) => true,
     }
 }

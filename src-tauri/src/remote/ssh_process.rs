@@ -76,7 +76,12 @@ impl RemoteSshProcess {
         let mut env_prefix = String::from("CODEX_HOME=\"$HOME/.codex\" ");
         if let Some((key, value)) = api_key {
             if !value.is_empty() {
-                env_prefix.push_str(&format!("{}={} ", key, shell_escape(value)));
+                let escaped = shell_escape(value);
+                env_prefix.reserve(key.len() + escaped.len() + 2);
+                env_prefix.push_str(key);
+                env_prefix.push('=');
+                env_prefix.push_str(&escaped);
+                env_prefix.push(' ');
             }
         }
         let spec = std::env::var("CODEX_DESKTOP_ACP_NPX_SPEC")
@@ -124,7 +129,8 @@ impl RemoteSshProcess {
 /// Simple shell escaping
 fn shell_escape(s: &str) -> String {
     // Wrap with single quotes and escape internal single quotes.
-    if !s.contains('\'') {
+    let quote_count = s.as_bytes().iter().filter(|b| **b == b'\'').count();
+    if quote_count == 0 {
         let mut out = String::with_capacity(s.len() + 2);
         out.push('\'');
         out.push_str(s);
@@ -132,7 +138,7 @@ fn shell_escape(s: &str) -> String {
         return out;
     }
 
-    let mut out = String::with_capacity(s.len() + 2);
+    let mut out = String::with_capacity(s.len() + 2 + (quote_count * 3));
     out.push('\'');
     for ch in s.chars() {
         if ch == '\'' {

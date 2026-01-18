@@ -21,16 +21,14 @@ pub enum CodexAcpLaunchMode {
 impl CodexAcpLaunchMode {
     /// Resolve the launch mode from `CODEX_DESKTOP_ACP_MODE`, if set.
     pub fn from_env() -> Option<Self> {
-        match std::env::var("CODEX_DESKTOP_ACP_MODE")
-            .ok()
-            .as_deref()
-            .map(str::trim)
-            .map(str::to_ascii_lowercase)
-            .as_deref()
-        {
-            Some("npx") => Some(Self::Npx),
-            Some("sidecar") => Some(Self::Sidecar),
-            Some(_) | None => None,
+        let value = std::env::var("CODEX_DESKTOP_ACP_MODE").ok()?;
+        let trimmed = value.trim();
+        if trimmed.eq_ignore_ascii_case("npx") {
+            Some(Self::Npx)
+        } else if trimmed.eq_ignore_ascii_case("sidecar") {
+            Some(Self::Sidecar)
+        } else {
+            None
         }
     }
 

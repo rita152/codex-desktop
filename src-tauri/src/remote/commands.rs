@@ -209,23 +209,35 @@ pub async fn remote_list_directory(
         return Err("Failed to resolve remote path".to_string());
     }
 
-    let mut entries: Vec<RemoteDirectoryEntry> = entries_bytes
+    let prefix = if resolved_path == "/" {
+        "/".to_string()
+    } else {
+        let mut out = String::with_capacity(resolved_path.len() + 1);
+        out.push_str(&resolved_path);
+        out.push('/');
+        out
+    };
+
+    let estimated_entries = if entries_bytes.is_empty() {
+        0
+    } else {
+        entries_bytes.iter().filter(|byte| **byte == 0).count() + 1
+    };
+    let mut entries = Vec::with_capacity(estimated_entries);
+    for item in entries_bytes
         .split(|byte| *byte == 0)
         .filter(|item| !item.is_empty())
-        .map(|item| {
-            let raw = String::from_utf8_lossy(item);
-            let name = raw.strip_prefix("./").unwrap_or(&raw).to_string();
-            let full_path = if resolved_path == "/" {
-                format!("/{}", name)
-            } else {
-                format!("{}/{}", resolved_path, name)
-            };
-            RemoteDirectoryEntry {
-                name,
-                path: full_path,
-            }
-        })
-        .collect();
+    {
+        let raw = String::from_utf8_lossy(item);
+        let name = raw.strip_prefix("./").unwrap_or(&raw);
+        let mut full_path = String::with_capacity(prefix.len() + name.len());
+        full_path.push_str(&prefix);
+        full_path.push_str(name);
+        entries.push(RemoteDirectoryEntry {
+            name: name.to_string(),
+            path: full_path,
+        });
+    }
 
     entries.sort_by(|a, b| a.name.cmp(&b.name));
 
@@ -236,7 +248,8 @@ pub async fn remote_list_directory(
 }
 
 fn shell_escape(s: &str) -> String {
-    if !s.contains('\'') {
+    let quote_count = s.as_bytes().iter().filter(|b| **b == b'\'').count();
+    if quote_count == 0 {
         let mut out = String::with_capacity(s.len() + 2);
         out.push('\'');
         out.push_str(s);
@@ -244,7 +257,7 @@ fn shell_escape(s: &str) -> String {
         return out;
     }
 
-    let mut out = String::with_capacity(s.len() + 2);
+    let mut out = String::with_capacity(s.len() + 2 + (quote_count * 3));
     out.push('\'');
     for ch in s.chars() {
         if ch == '\'' {
