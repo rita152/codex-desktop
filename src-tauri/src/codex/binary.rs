@@ -74,21 +74,24 @@ impl CodexAcpBinary {
 
     /// Format a human-readable diagnostics line for logging.
     pub fn diagnostics_line(&self) -> String {
-        let mut s = format!(
+        use std::fmt::Write as _;
+
+        let mut s = String::new();
+        let _ = write!(
+            s,
             "codex-acp spawn: mode={:?} program={}",
             self.mode,
             self.program.to_string_lossy()
         );
         if !self.args.is_empty() {
             s.push_str(" args=");
-            s.push_str(
-                &self
-                    .args
-                    .iter()
-                    .map(|a| a.to_string_lossy().into_owned())
-                    .collect::<Vec<_>>()
-                    .join(" "),
-            );
+            for (idx, arg) in self.args.iter().enumerate() {
+                if idx > 0 {
+                    s.push(' ');
+                }
+                let arg_str = arg.to_string_lossy();
+                s.push_str(&arg_str);
+            }
         }
         s
     }

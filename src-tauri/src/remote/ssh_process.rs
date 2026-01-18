@@ -136,8 +136,26 @@ impl RemoteSshProcess {
 
 /// Simple shell escaping
 fn shell_escape(s: &str) -> String {
-    // Wrap with single quotes and escape internal single quotes
-    format!("'{}'", s.replace('\'', "'\\''"))
+    // Wrap with single quotes and escape internal single quotes.
+    if !s.contains('\'') {
+        let mut out = String::with_capacity(s.len() + 2);
+        out.push('\'');
+        out.push_str(s);
+        out.push('\'');
+        return out;
+    }
+
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('\'');
+    for ch in s.chars() {
+        if ch == '\'' {
+            out.push_str("'\\''");
+        } else {
+            out.push(ch);
+        }
+    }
+    out.push('\'');
+    out
 }
 
 #[cfg(test)]

@@ -2,6 +2,8 @@
 
 use super::types::*;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::{BufReader, BufWriter, Write};
 use std::sync::RwLock;
 use tauri::State;
 
@@ -49,8 +51,9 @@ impl RemoteServerManager {
         if !self.config_path.exists() {
             return Ok(());
         }
-        let content = std::fs::read_to_string(&self.config_path)?;
-        let list: Vec<RemoteServerConfig> = serde_json::from_str(&content)?;
+        let file = File::open(&self.config_path)?;
+        let reader = BufReader::new(file);
+        let list: Vec<RemoteServerConfig> = serde_json::from_reader(reader)?;
         let mut servers = self.servers.write().unwrap();
         servers.clear();
         servers.reserve(list.len());
@@ -65,11 +68,13 @@ impl RemoteServerManager {
             let servers = self.servers.read().unwrap();
             servers.values().cloned().collect()
         };
-        let content = serde_json::to_string_pretty(&list)?;
         if let Some(parent) = self.config_path.parent() {
             std::fs::create_dir_all(parent)?;
         }
-        std::fs::write(&self.config_path, content)?;
+        let file = File::create(&self.config_path)?;
+        let mut writer = BufWriter::new(file);
+        serde_json::to_writer_pretty(&mut writer, &list)?;
+        writer.flush()?;
         Ok(())
     }
 }
@@ -132,8 +137,8 @@ pub async fn remote_test_connection(
     let output = cmd.output().await.map_err(|e| e.to_string())?;
 
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        Ok(String::from_utf8_lossy(&output.stdout).into_owned())
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        Err(String::from_utf8_lossy(&output.stderr).into_owned())
     }
 }
