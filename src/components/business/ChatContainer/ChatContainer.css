@@ -96,7 +96,7 @@
 }
 
 .chat-container__session-header {
-  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-sm);
+  padding: calc(var(--spacing-lg) + 8px) var(--spacing-lg) var(--spacing-sm);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
@@ -121,7 +121,7 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  margin-top: calc(-1 * var(--spacing-xs) - 12px);
+  margin-top: calc(-1 * var(--spacing-xs) - 16px);
 }
 
 .chat-container__cwd-button {
