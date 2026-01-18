@@ -336,18 +336,18 @@ async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewS
     use crate::codex::remote_session::parse_remote_path;
     
     // Parse the cwd to check if it's a remote path
-    let cwd_str = cwd.to_string_lossy().to_string();
+    let cwd_str = cwd.to_string_lossy();
     let (is_remote, server_id, actual_path) = parse_remote_path(&cwd_str)?;
     
     if is_remote {
         // Remote session: set up remote configuration
         let server_id = server_id.ok_or_else(|| anyhow::anyhow!("Remote path missing server ID"))?;
-        let remote_cwd = actual_path.to_string_lossy().to_string();
+        let remote_cwd = actual_path.to_string_lossy().into_owned();
         
         // Set remote configuration
         state.remote_config = Some(crate::remote::RemoteSessionConfig {
-            server_id: server_id.clone(),
-            remote_cwd: remote_cwd.clone(),
+            server_id,
+            remote_cwd,
         });
         
         // Clear any existing connection to force remote connection

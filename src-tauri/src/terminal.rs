@@ -124,27 +124,14 @@ pub fn terminal_spawn(
             match reader.read(&mut buffer) {
                 Ok(0) => break,
                 Ok(bytes) => {
-                    match std::str::from_utf8(&buffer[..bytes]) {
-                        Ok(text) => {
-                            let _ = app_handle.emit(
-                                TERMINAL_OUTPUT_EVENT,
-                                TerminalOutput {
-                                    terminal_id: terminal_id.as_str(),
-                                    data: text,
-                                },
-                            );
-                        }
-                        Err(_) => {
-                            let text = String::from_utf8_lossy(&buffer[..bytes]).into_owned();
-                            let _ = app_handle.emit(
-                                TERMINAL_OUTPUT_EVENT,
-                                TerminalOutput {
-                                    terminal_id: terminal_id.as_str(),
-                                    data: text.as_str(),
-                                },
-                            );
-                        }
-                    }
+                    let text = String::from_utf8_lossy(&buffer[..bytes]);
+                    let _ = app_handle.emit(
+                        TERMINAL_OUTPUT_EVENT,
+                        TerminalOutput {
+                            terminal_id: terminal_id.as_str(),
+                            data: text.as_ref(),
+                        },
+                    );
                 }
                 Err(_) => break,
             }

@@ -52,6 +52,8 @@ impl RemoteServerManager {
         let content = std::fs::read_to_string(&self.config_path)?;
         let list: Vec<RemoteServerConfig> = serde_json::from_str(&content)?;
         let mut servers = self.servers.write().unwrap();
+        servers.clear();
+        servers.reserve(list.len());
         for config in list {
             servers.insert(config.id.clone(), config);
         }
@@ -59,8 +61,10 @@ impl RemoteServerManager {
     }
 
     fn save(&self) -> anyhow::Result<()> {
-        let servers = self.servers.read().unwrap();
-        let list: Vec<_> = servers.values().cloned().collect();
+        let list: Vec<_> = {
+            let servers = self.servers.read().unwrap();
+            servers.values().cloned().collect()
+        };
         let content = serde_json::to_string_pretty(&list)?;
         if let Some(parent) = self.config_path.parent() {
             std::fs::create_dir_all(parent)?;

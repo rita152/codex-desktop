@@ -19,13 +19,13 @@ pub fn parse_remote_path(path_str: &str) -> Result<(bool, Option<String>, PathBu
     // Find where the path starts (first '/')
     if let Some(path_start) = remainder.find('/') {
         let server_id = remainder[..path_start].to_string();
-        let remote_path = remainder[path_start..].to_string();
+        let remote_path = PathBuf::from(&remainder[path_start..]);
         
         if server_id.is_empty() {
             return Err(anyhow!("Remote path missing server ID"));
         }
         
-        Ok((true, Some(server_id), PathBuf::from(remote_path)))
+        Ok((true, Some(server_id), remote_path))
     } else {
         Err(anyhow!("Invalid remote path format, expected: remote://<server-id><path>"))
     }
