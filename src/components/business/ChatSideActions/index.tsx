@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { IconButton } from '../../ui/data-entry/IconButton';
-import { CodeIcon, GlobeIcon, SlidersIcon, TerminalIcon } from '../../ui/data-display/Icon';
+import { CodeIcon, ServerIcon, SlidersIcon, TerminalIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 
 import './ChatSideActions.css';
@@ -26,7 +26,7 @@ export function ChatSideActions({ className = '', onAction }: ChatSideActionsPro
       { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={18} /> },
       { id: 'tools', label: t('chatSideActions.tools'), icon: <SlidersIcon size={18} /> },
       { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={18} /> },
-      { id: 'web', label: t('chatSideActions.web'), icon: <GlobeIcon size={18} /> },
+      { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={18} /> },
     ],
     [t]
   );

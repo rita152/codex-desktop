@@ -31,7 +31,7 @@
     "files": "文件",
     "tools": "工具",
     "terminal": "终端",
-    "web": "网页"
+    "remote": "远程服务器"
   },
   "terminalPanel": {
     "title": "终端",

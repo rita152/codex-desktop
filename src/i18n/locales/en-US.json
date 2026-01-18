@@ -31,7 +31,7 @@
     "files": "Files",
     "tools": "Tools",
     "terminal": "Terminal",
-    "web": "Web"
+    "remote": "Remote Servers"
   },
   "terminalPanel": {
     "title": "Terminal",
