@@ -77,10 +77,12 @@ impl ApprovalState {
         decision: Option<ApprovalDecision>,
         option_id: Option<String>,
     ) -> Result<()> {
-        let mut guard = self.lock_pending();
-        let pending = guard
-            .remove(&key)
-            .ok_or_else(|| anyhow!("no pending approval for session/tool_call"))?;
+        let pending = {
+            let mut guard = self.lock_pending();
+            guard
+                .remove(&key)
+                .ok_or_else(|| anyhow!("no pending approval for session/tool_call"))?
+        };
 
         let selected = if let Some(option_id) = option_id {
             PermissionOptionId::from(option_id)
@@ -443,15 +445,16 @@ impl AcpConnection {
         let io_debug = debug.clone();
         tokio::task::spawn_local(async move {
             if let Err(err) = io_task.await {
+                let err_message = err.to_string();
                 let timing = io_debug.mark_global();
                 io_debug.emit(
                     &io_app,
                     None,
                     "io_error",
                     timing,
-                    json!({ "error": err.to_string() }),
+                    json!({ "error": &err_message }),
                 );
-                let _ = io_app.emit(EVENT_ERROR, json!({ "error": err.to_string() }));
+                let _ = io_app.emit(EVENT_ERROR, json!({ "error": err_message }));
             }
         });
 
@@ -489,15 +492,16 @@ impl AcpConnection {
         let io_debug = debug.clone();
         tokio::task::spawn_local(async move {
             if let Err(err) = io_task.await {
+                let err_message = err.to_string();
                 let timing = io_debug.mark_global();
                 io_debug.emit(
                     &io_app,
                     None,
                     "io_error",
                     timing,
-                    json!({ "error": err.to_string() }),
+                    json!({ "error": &err_message }),
                 );
-                let _ = io_app.emit(EVENT_ERROR, json!({ "error": err.to_string() }));
+                let _ = io_app.emit(EVENT_ERROR, json!({ "error": err_message }));
             }
         });
 

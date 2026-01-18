@@ -154,6 +154,9 @@ pub fn terminal_write(
     terminal_id: String,
     data: String,
 ) -> Result<(), String> {
+    if data.is_empty() {
+        return Ok(());
+    }
     let writer = {
         let terminals = state
             .terminals
