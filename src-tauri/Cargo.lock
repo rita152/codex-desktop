@@ -479,6 +479,7 @@ dependencies = [
  "agent-client-protocol",
  "anyhow",
  "async-trait",
+ "dirs",
  "portable-pty",
  "serde",
  "serde_json",

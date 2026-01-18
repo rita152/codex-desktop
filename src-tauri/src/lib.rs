@@ -28,6 +28,8 @@ pub mod codex;
 pub mod codex_dev;
 /// Local terminal PTY integration.
 pub mod terminal;
+/// Remote server connection module.
+pub mod remote;
 
 #[tauri::command]
 async fn codex_dev_prompt_once(
@@ -46,11 +48,18 @@ async fn codex_dev_prompt_once(
 pub fn run() {
     init_tracing();
 
+    // Remote server configuration storage path
+    let remote_config_path = dirs::config_dir()
+        .unwrap_or_default()
+        .join("codex-desktop")
+        .join("remote-servers.json");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .manage(codex::commands::CodexManager::default())
         .manage(terminal::TerminalManager::default())
+        .manage(remote::RemoteServerManager::new(remote_config_path))
         .invoke_handler(tauri::generate_handler![
             greet,
             codex_dev_prompt_once,
@@ -66,7 +75,11 @@ pub fn run() {
             terminal::terminal_spawn,
             terminal::terminal_write,
             terminal::terminal_resize,
-            terminal::terminal_kill
+            terminal::terminal_kill,
+            remote::commands::remote_add_server,
+            remote::commands::remote_remove_server,
+            remote::commands::remote_list_servers,
+            remote::commands::remote_test_connection
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|err| {
