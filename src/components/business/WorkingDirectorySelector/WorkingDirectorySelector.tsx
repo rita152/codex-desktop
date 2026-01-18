@@ -28,7 +28,7 @@ export function WorkingDirectorySelector({
   onSelect,
 }: WorkingDirectorySelectorProps) {
   const { t } = useTranslation();
-  const { servers, loading, error } = useRemoteServers();
+  const { servers, loading, error, loadServers } = useRemoteServers();
   const [mode, setMode] = useState<'local' | 'remote'>('local');
   const [localPath, setLocalPath] = useState('');
   const [remoteServerId, setRemoteServerId] = useState('');
@@ -80,6 +80,11 @@ export function WorkingDirectorySelector({
     }
     setValidationError(null);
   }, [currentCwd, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    void loadServers();
+  }, [isOpen, loadServers]);
 
   const handleBrowseLocal = async () => {
     try {
