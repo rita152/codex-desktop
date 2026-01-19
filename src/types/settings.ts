@@ -2,6 +2,8 @@
  * Settings type definitions
  */
 
+import { DEFAULT_MODEL_ID } from '../constants/chat';
+
 // Settings section types
 export type SettingsSection =
     | 'general'
@@ -91,7 +93,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
         startupBehavior: 'last-session',
     },
     model: {
-        defaultModel: 'gpt-5.2-codex',
+        defaultModel: DEFAULT_MODEL_ID,
         apiProvider: 'openai',
         apiBaseUrl: '',
         apiKey: '',

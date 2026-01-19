@@ -321,6 +321,21 @@
   margin-top: var(--spacing-xs);
 }
 
+.settings-item__placeholder {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-muted);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.settings-item__placeholder-icon {
+  font-size: 14px;
+}
+
 /* Form Controls */
 .settings-input {
   width: 100%;

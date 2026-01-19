@@ -250,6 +250,8 @@
     "model": {
       "defaultModel": "Default model",
       "defaultModelDescription": "Select the default AI model to use",
+      "selectModel": "Select a model",
+      "noModelsAvailable": "Start a session first to see available models",
       "apiProvider": "API Provider",
       "apiProviderDescription": "Choose the API service provider",
       "customProvider": "Custom",

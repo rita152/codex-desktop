@@ -18,6 +18,7 @@ import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { cn } from '../../../utils/cn';
 import type { SettingsSection } from '../../../types/settings';
+import type { SelectOption } from '../../ui/data-entry/Select/types';
 import './SettingsModal.css';
 
 
@@ -25,6 +26,8 @@ interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     initialSection?: SettingsSection;
+    /** 动态获取的可用模型列表 */
+    availableModels?: SelectOption[];
 }
 
 // Navigation items configuration
@@ -41,7 +44,7 @@ const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 400;
 const DEFAULT_SIDEBAR_WIDTH = 200;
 
-export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModalProps) {
+export function SettingsModal({ isOpen, onClose, initialSection, availableModels }: SettingsModalProps) {
     const { t } = useTranslation();
     const generatedId = useId();
     const safeId = generatedId.replace(/:/g, '');
@@ -145,6 +148,7 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                     <ModelSettings
                         settings={settings.model}
                         onUpdate={(values) => updateSettings('model', values)}
+                        availableModels={availableModels}
                     />
                 );
             case 'approval':

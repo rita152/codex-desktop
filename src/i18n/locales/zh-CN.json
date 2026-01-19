@@ -250,6 +250,8 @@
     "model": {
       "defaultModel": "默认模型",
       "defaultModelDescription": "选择默认使用的 AI 模型",
+      "selectModel": "请选择模型",
+      "noModelsAvailable": "需要先启动一个会话才能显示可用模型",
       "apiProvider": "API 提供商",
       "apiProviderDescription": "选择 API 服务提供商",
       "customProvider": "自定义",

@@ -647,6 +647,7 @@ export function App() {
       <SettingsModal
         isOpen={settingsOpen}
         onClose={handleSettingsClose}
+        availableModels={modelOptions}
       />
     </>
   );

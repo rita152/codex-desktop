@@ -5,15 +5,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType, ApiProvider } from '../../../../types/settings';
+import type { SelectOption } from '../../../ui/data-entry/Select/types';
 
 interface ModelSettingsProps {
     settings: ModelSettingsType;
     onUpdate: (values: Partial<ModelSettingsType>) => void;
+    /** 动态获取的可用模型列表 */
+    availableModels?: SelectOption[];
 }
 
-export function ModelSettings({ settings, onUpdate }: ModelSettingsProps) {
+export function ModelSettings({ settings, onUpdate, availableModels = [] }: ModelSettingsProps) {
     const { t } = useTranslation();
     const [showApiKey, setShowApiKey] = useState(false);
+
+    // 检查当前选中的模型是否在可用列表中
+    const isCurrentModelAvailable = availableModels.length === 0 ||
+        availableModels.some(model => model.value === settings.defaultModel);
 
     return (
         <div className="settings-section-content">
@@ -25,16 +32,29 @@ export function ModelSettings({ settings, onUpdate }: ModelSettingsProps) {
                     <label className="settings-item__label">{t('settings.model.defaultModel')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.model.defaultModelDescription')}</p>
-                <select
-                    className="settings-select"
-                    value={settings.defaultModel}
-                    onChange={(e) => onUpdate({ defaultModel: e.target.value })}
-                >
-                    <option value="gpt-5.2-codex">GPT-5.2 Codex</option>
-                    <option value="gpt-4.1">GPT-4.1</option>
-                    <option value="gpt-4o">GPT-4o</option>
-                    <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                </select>
+                {availableModels.length > 0 ? (
+                    <select
+                        className="settings-select"
+                        value={isCurrentModelAvailable ? settings.defaultModel : ''}
+                        onChange={(e) => onUpdate({ defaultModel: e.target.value })}
+                    >
+                        {!isCurrentModelAvailable && (
+                            <option value="" disabled>
+                                {t('settings.model.selectModel')}
+                            </option>
+                        )}
+                        {availableModels.map((model) => (
+                            <option key={model.value} value={model.value}>
+                                {model.label}
+                            </option>
+                        ))}
+                    </select>
+                ) : (
+                    <div className="settings-item__placeholder">
+                        <span className="settings-item__placeholder-icon">ℹ️</span>
+                        <span>{t('settings.model.noModelsAvailable')}</span>
+                    </div>
+                )}
             </div>
 
             {/* API Provider */}
