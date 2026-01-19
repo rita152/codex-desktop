@@ -49,6 +49,7 @@
     "toggle": "Toggle sidebar",
     "newChat": "New chat",
     "menu": "Menu",
+    "settings": "Settings",
     "resizeAria": "Resize sidebar"
   },
   "errors": {
@@ -157,6 +158,106 @@
       "remoteServerRequired": "Select a remote server.",
       "remotePathRequired": "Enter a remote path.",
       "remotePathAbsolute": "Remote path must start with '/'."
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "close": "Close",
+    "navLabel": "Settings categories",
+    "loading": "Loading...",
+    "status": {
+      "saving": "Saving...",
+      "saved": "Saved",
+      "error": "Save failed"
+    },
+    "sections": {
+      "general": "General",
+      "model": "Model",
+      "approval": "Approval",
+      "remote": "Remote Servers",
+      "shortcuts": "Shortcuts",
+      "advanced": "Advanced"
+    },
+    "general": {
+      "language": "Language",
+      "languageDescription": "Choose the interface language",
+      "theme": "Theme",
+      "themeDescription": "Customize the appearance of the application",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System",
+      "startupBehavior": "Startup behavior",
+      "startupBehaviorDescription": "Set the default behavior when the app starts",
+      "startupLastSession": "Open last session",
+      "startupNewSession": "New session",
+      "startupWelcome": "Show welcome page"
+    },
+    "model": {
+      "defaultModel": "Default model",
+      "defaultModelDescription": "Select the default AI model to use",
+      "apiProvider": "API Provider",
+      "apiProviderDescription": "Choose the API service provider",
+      "customProvider": "Custom",
+      "apiBaseUrl": "API Base URL",
+      "apiBaseUrlDescription": "Custom API endpoint URL",
+      "apiKey": "API Key",
+      "apiKeyDescription": "API key for authentication",
+      "maxTokens": "Max Tokens",
+      "maxTokensDescription": "Maximum tokens per request",
+      "temperature": "Temperature",
+      "temperatureDescription": "Controls output randomness. Higher values mean more random output"
+    },
+    "approval": {
+      "defaultMode": "Default approval mode",
+      "defaultModeDescription": "Set the default approval policy for AI operations",
+      "modeAll": "Approve all",
+      "modeDangerous": "Dangerous only",
+      "modeAuto": "Auto approve",
+      "operationSettings": "Operation settings",
+      "requireFileWrite": "Require approval for file writes",
+      "requireFileWriteDescription": "Request your confirmation before AI writes to files",
+      "requireCommand": "Require approval for commands",
+      "requireCommandDescription": "Request your confirmation before AI executes shell commands",
+      "requireDelete": "Require approval for deletions",
+      "requireDeleteDescription": "Request your confirmation before AI deletes files or directories",
+      "requireNetwork": "Require approval for network requests",
+      "requireNetworkDescription": "Request your confirmation before AI makes network requests",
+      "trustedCommands": "Trusted commands",
+      "trustedCommandsDescription": "These commands will be automatically approved",
+      "addCommand": "Add",
+      "addCommandPlaceholder": "Enter command...",
+      "removeCommand": "Remove command"
+    },
+    "shortcuts": {
+      "description": "Click a shortcut button, then press a new key combination to change it",
+      "pressKeys": "Press keys...",
+      "newSession": "New session",
+      "sendMessage": "Send message",
+      "stopGeneration": "Stop generation",
+      "openSettings": "Open settings",
+      "toggleSidebar": "Toggle sidebar",
+      "toggleTerminal": "Toggle terminal"
+    },
+    "advanced": {
+      "developerMode": "Developer mode",
+      "developerModeDescription": "Enable additional debugging information and developer tools",
+      "logLevel": "Log level",
+      "logLevelDescription": "Set the application log verbosity",
+      "maxSessionHistory": "Session history limit",
+      "maxSessionHistoryDescription": "Maximum number of sessions to keep",
+      "actions": "Actions",
+      "clearCache": "Clear cache",
+      "clearCacheDescription": "Clear local cache data including settings and session history",
+      "clearCacheButton": "Clear cache",
+      "cacheClearedSuccess": "Cache cleared successfully",
+      "cacheClearedError": "Failed to clear cache",
+      "resetSettings": "Reset settings",
+      "resetSettingsDescription": "Reset all settings to their default values",
+      "resetSettingsButton": "Reset all settings",
+      "resetConfirmMessage": "Are you sure you want to reset all settings?",
+      "confirmReset": "Confirm reset",
+      "cancelReset": "Cancel",
+      "resetting": "Resetting..."
     }
   }
 }

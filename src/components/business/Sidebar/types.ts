@@ -15,6 +15,7 @@ export interface SidebarProps {
   onSplitViewClick?: () => void;
   onSessionDelete?: (sessionId: string) => void;
   onSessionRename?: (sessionId: string, newTitle: string) => void;
+  onSettingsClick?: () => void;
   width?: number;
   onWidthChange?: (width: number) => void;
   className?: string;

@@ -101,6 +101,7 @@ export function ChatContainer({
   onSessionRename,
   sidebarVisible = true,
   onSidebarToggle,
+  onSettingsClick,
   remainingPercent = 0,
   remainingTokens,
   totalTokens,
@@ -168,6 +169,7 @@ export function ChatContainer({
           onSplitViewClick={onSidebarToggle}
           onSessionDelete={onSessionDelete}
           onSessionRename={onSessionRename}
+          onSettingsClick={onSettingsClick}
           width={sidebarWidth}
           onWidthChange={setSidebarWidth}
         />

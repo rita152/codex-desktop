@@ -4,6 +4,7 @@ import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
 import { WorkingDirectorySelector } from './components/business/WorkingDirectorySelector';
+import { SettingsModal } from './components/business/SettingsModal';
 import { approveRequest, initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
   loadModeOptionsCache,
@@ -121,24 +122,24 @@ export function App() {
   } = useRemotePanel({ bodyRef });
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
     useCodexSessionSync({
-    sessions,
-    activeSessionIdRef,
-    setSessions,
-    setSessionMessages,
-    setIsGeneratingBySession,
-    setSessionTokenUsage,
-    setSessionSlashCommands,
-    setSessionModeOptions,
-    setSessionModelOptions,
-    setSessionNotices,
-    clearSessionNotice,
-    applyModeOptions,
-    applyModelOptions,
-    registerApprovalRequest,
-    defaultModeId: DEFAULT_MODE_ID,
-    defaultModelId: DEFAULT_MODEL_ID,
-    t,
-  });
+      sessions,
+      activeSessionIdRef,
+      setSessions,
+      setSessionMessages,
+      setIsGeneratingBySession,
+      setSessionTokenUsage,
+      setSessionSlashCommands,
+      setSessionModeOptions,
+      setSessionModelOptions,
+      setSessionNotices,
+      clearSessionNotice,
+      applyModeOptions,
+      applyModelOptions,
+      registerApprovalRequest,
+      defaultModeId: DEFAULT_MODE_ID,
+      defaultModelId: DEFAULT_MODEL_ID,
+      t,
+    });
 
   useEffect(() => {
     activeSessionIdRef.current = selectedSessionId;
@@ -288,6 +289,7 @@ export function App() {
   }, []);
 
   const [cwdSelectorOpen, setCwdSelectorOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const handleCwdSelectorClose = useCallback(() => {
     setCwdSelectorOpen(false);
   }, []);
@@ -433,6 +435,14 @@ export function App() {
 
   const handleSidebarToggle = useCallback(() => {
     setSidebarVisible((prev) => !prev);
+  }, []);
+
+  const handleSettingsClick = useCallback(() => {
+    setSettingsOpen(true);
+  }, []);
+
+  const handleSettingsClose = useCallback(() => {
+    setSettingsOpen(false);
   }, []);
 
   const handleModelChange = useCallback(
@@ -728,6 +738,7 @@ export function App() {
         onSessionDelete={handleSessionDelete}
         onSessionRename={handleSessionRename}
         onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
+        onSettingsClick={handleSettingsClick}
         bodyRef={bodyRef}
         remoteServerPanelVisible={remoteServerPanelVisible}
         remoteServerPanelWidth={remoteServerPanelWidth}
@@ -739,6 +750,10 @@ export function App() {
         currentCwd={selectedCwd}
         onClose={handleCwdSelectorClose}
         onSelect={handleCwdSelect}
+      />
+      <SettingsModal
+        isOpen={settingsOpen}
+        onClose={handleSettingsClose}
       />
     </>
   );

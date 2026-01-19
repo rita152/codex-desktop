@@ -49,6 +49,7 @@
     "toggle": "切换分栏",
     "newChat": "新建对话",
     "menu": "菜单",
+    "settings": "设置",
     "resizeAria": "调整侧边栏宽度"
   },
   "errors": {
@@ -157,6 +158,106 @@
       "remoteServerRequired": "请选择远程服务器。",
       "remotePathRequired": "请输入远程路径。",
       "remotePathAbsolute": "远程路径必须以 / 开头。"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "close": "关闭",
+    "navLabel": "设置分类",
+    "loading": "加载中...",
+    "status": {
+      "saving": "保存中...",
+      "saved": "已保存",
+      "error": "保存失败"
+    },
+    "sections": {
+      "general": "通用",
+      "model": "模型",
+      "approval": "审批策略",
+      "remote": "远程服务器",
+      "shortcuts": "快捷键",
+      "advanced": "高级"
+    },
+    "general": {
+      "language": "语言",
+      "languageDescription": "选择界面显示语言",
+      "theme": "主题",
+      "themeDescription": "根据您的偏好自定义应用外观",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统",
+      "startupBehavior": "启动时行为",
+      "startupBehaviorDescription": "设置应用启动时的默认行为",
+      "startupLastSession": "打开上次会话",
+      "startupNewSession": "新建会话",
+      "startupWelcome": "显示欢迎页"
+    },
+    "model": {
+      "defaultModel": "默认模型",
+      "defaultModelDescription": "选择默认使用的 AI 模型",
+      "apiProvider": "API 提供商",
+      "apiProviderDescription": "选择 API 服务提供商",
+      "customProvider": "自定义",
+      "apiBaseUrl": "API 地址",
+      "apiBaseUrlDescription": "自定义 API 端点地址",
+      "apiKey": "API 密钥",
+      "apiKeyDescription": "用于身份验证的 API 密钥",
+      "maxTokens": "最大 Token 数",
+      "maxTokensDescription": "单次请求的最大 token 限制",
+      "temperature": "温度",
+      "temperatureDescription": "控制输出的随机性，值越高越随机"
+    },
+    "approval": {
+      "defaultMode": "默认审批模式",
+      "defaultModeDescription": "设置 AI 操作的默认审批策略",
+      "modeAll": "全部审批",
+      "modeDangerous": "仅危险操作",
+      "modeAuto": "自动同意",
+      "operationSettings": "操作设置",
+      "requireFileWrite": "文件写入需要审批",
+      "requireFileWriteDescription": "AI 写入文件前需要您的确认",
+      "requireCommand": "命令执行需要审批",
+      "requireCommandDescription": "AI 执行 shell 命令前需要您的确认",
+      "requireDelete": "删除操作需要审批",
+      "requireDeleteDescription": "AI 删除文件或目录前需要您的确认",
+      "requireNetwork": "网络请求需要审批",
+      "requireNetworkDescription": "AI 发起网络请求前需要您的确认",
+      "trustedCommands": "信任的命令列表",
+      "trustedCommandsDescription": "这些命令将自动获得批准执行",
+      "addCommand": "添加",
+      "addCommandPlaceholder": "输入命令...",
+      "removeCommand": "移除命令"
+    },
+    "shortcuts": {
+      "description": "点击快捷键按钮后，按下新的组合键来修改快捷键",
+      "pressKeys": "按下按键...",
+      "newSession": "新建会话",
+      "sendMessage": "发送消息",
+      "stopGeneration": "停止生成",
+      "openSettings": "打开设置",
+      "toggleSidebar": "切换侧边栏",
+      "toggleTerminal": "切换终端"
+    },
+    "advanced": {
+      "developerMode": "开发者模式",
+      "developerModeDescription": "启用额外的调试信息和开发工具",
+      "logLevel": "日志级别",
+      "logLevelDescription": "设置应用程序的日志详细程度",
+      "maxSessionHistory": "会话历史限制",
+      "maxSessionHistoryDescription": "保留的最大会话数量",
+      "actions": "操作",
+      "clearCache": "清除缓存",
+      "clearCacheDescription": "清除本地缓存数据，包括设置和会话历史",
+      "clearCacheButton": "清除缓存",
+      "cacheClearedSuccess": "缓存已清除",
+      "cacheClearedError": "清除缓存失败",
+      "resetSettings": "重置设置",
+      "resetSettingsDescription": "将所有设置恢复为默认值",
+      "resetSettingsButton": "重置所有设置",
+      "resetConfirmMessage": "确定要重置所有设置吗？",
+      "confirmReset": "确认重置",
+      "cancelReset": "取消",
+      "resetting": "重置中..."
     }
   }
 }

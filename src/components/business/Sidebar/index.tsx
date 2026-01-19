@@ -11,6 +11,7 @@ import {
   PencilIcon,
   MenuIcon,
   TrashIcon,
+  SettingsIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
@@ -33,6 +34,7 @@ export function Sidebar({
   onSplitViewClick,
   onSessionDelete,
   onSessionRename,
+  onSettingsClick,
   width: controlledWidth,
   onWidthChange,
   className = '',
@@ -145,6 +147,14 @@ export function Sidebar({
       </div>
 
       <div className="sidebar__footer">
+        <button
+          type="button"
+          className="sidebar__menu-button"
+          onClick={onSettingsClick}
+          aria-label={t('sidebar.settings')}
+        >
+          <SettingsIcon size={20} />
+        </button>
         <button
           type="button"
           className="sidebar__menu-button"

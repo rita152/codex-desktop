@@ -77,6 +77,8 @@ export interface ChatContainerProps {
   sidebarVisible?: boolean;
   /** 侧边栏显示切换回调 */
   onSidebarToggle?: () => void;
+  /** 打开设置面板回调 */
+  onSettingsClick?: () => void;
   /** 剩余上下文百分比 */
   remainingPercent?: number;
   /** 剩余 token 数 */
