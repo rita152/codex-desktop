@@ -24,6 +24,27 @@ export function ChatIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+export function AccountIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="8" r="3.25" />
+      <path d="M4 20C5.6 16.6 8.8 15 12 15C15.2 15 18.4 16.6 20 20" />
+    </svg>
+  );
+}
+
 export function CommentIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg

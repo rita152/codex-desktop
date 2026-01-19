@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
 import {
+  AccountIcon,
   ChatIcon,
   CheckIcon,
   ChevronDownIcon,
@@ -42,6 +43,7 @@ export const Default: Story = {
   },
   render: (args) => (
     <div className="icon-story__grid">
+      <AccountIcon {...args} />
       <ChatIcon {...args} />
       <CheckIcon {...args} />
       <ChevronDownIcon {...args} />
