@@ -58,6 +58,7 @@ export function SettingsModal({ isOpen, onClose, initialSection, availableModels
         resetSettings,
         saveStatus,
     } = useSettings();
+
     const {
         width: sidebarWidth,
         isDragging: isSidebarDragging,

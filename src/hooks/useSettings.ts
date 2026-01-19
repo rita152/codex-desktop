@@ -4,7 +4,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import type { AppSettings, SettingsSection } from '../types/settings';
+import type { AppSettings, SettingsSection, ThemeOption } from '../types/settings';
 import { DEFAULT_SETTINGS } from '../types/settings';
 
 interface UseSettingsReturn {
@@ -23,6 +23,38 @@ interface UseSettingsReturn {
 
 // Local storage key for settings (fallback)
 const SETTINGS_STORAGE_KEY = 'codex-desktop-settings';
+const THEME_ATTRIBUTE = 'data-theme';
+
+function getSystemTheme(): 'light' | 'dark' {
+    if (typeof window === 'undefined') return 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(themeOption: ThemeOption) {
+    const resolvedTheme = themeOption === 'system' ? getSystemTheme() : themeOption;
+    document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedTheme);
+}
+
+// Apply theme on initial load before React hydration
+function initializeTheme() {
+    try {
+        const localSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (localSettings) {
+            const parsed = JSON.parse(localSettings) as AppSettings;
+            if (parsed.general?.theme) {
+                applyTheme(parsed.general.theme);
+                return;
+            }
+        }
+    } catch {
+        // Fall through to default
+    }
+    // Default to system theme
+    applyTheme('system');
+}
+
+// Initialize theme immediately when module loads
+initializeTheme();
 
 export function useSettings(): UseSettingsReturn {
     const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
@@ -35,6 +67,28 @@ export function useSettings(): UseSettingsReturn {
     useEffect(() => {
         loadSettings();
     }, []);
+
+    // Apply theme when settings change
+    useEffect(() => {
+        if (!loading) {
+            applyTheme(settings.general.theme);
+        }
+    }, [settings.general.theme, loading]);
+
+    // Listen for system theme changes when using 'system' option
+    useEffect(() => {
+        if (settings.general.theme !== 'system') return;
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = () => {
+            applyTheme('system');
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => {
+            mediaQuery.removeEventListener('change', handleChange);
+        };
+    }, [settings.general.theme]);
 
     const loadSettings = async () => {
         setLoading(true);
