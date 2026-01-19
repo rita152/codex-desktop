@@ -53,12 +53,10 @@ export function useRemoteServers() {
     const testConnection = useCallback(async (serverId: string): Promise<string> => {
         try {
             setLoading(true);
-            setError(null);
             const result = await invoke<string>('remote_test_connection', { serverId });
             return result;
         } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
-            setError(message);
             throw new Error(message);
         } finally {
             setLoading(false);
