@@ -101,7 +101,7 @@
   flex: 1;
   display: flex;
   padding: 0;
-  background: #ffffff;
+  background: var(--color-bg);
   min-height: 0;
 }
 
@@ -109,19 +109,19 @@
   flex: 1;
   width: 100%;
   height: 100%;
-  background: #ffffff;
+  background: var(--color-bg);
   min-height: 0;
 }
 
 .terminal-panel__terminal .xterm {
   height: 100%;
-  background: #ffffff;
+  background: var(--color-bg);
 }
 
 .terminal-panel__terminal .xterm-screen,
 .terminal-panel__terminal .xterm-viewport {
   height: 100%;
-  background: #ffffff;
+  background: var(--color-bg);
 }
 
 .terminal-panel__placeholder {

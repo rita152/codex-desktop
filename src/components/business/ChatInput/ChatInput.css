@@ -14,7 +14,7 @@
 
 .chat-input:focus-within {
   border-color: var(--color-border);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent-blue), transparent 75%);
 }
 
 .chat-input__textarea {

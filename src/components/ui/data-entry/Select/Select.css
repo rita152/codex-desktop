@@ -28,7 +28,7 @@
 
 .select__trigger:focus-visible {
   border-color: var(--color-border-hover);
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 0 0 2px var(--color-shadow);
 }
 
 @supports (color: color-mix(in srgb, black 50%, white)) {
@@ -109,11 +109,13 @@
   color: var(--color-text);
   transition: transform 0.2s ease;
   flex-shrink: 0;
-  transform: rotate(180deg); /* 默认朝上，表示上拉 */
+  transform: rotate(180deg);
+  /* 默认朝上，表示上拉 */
 }
 
 .select__trigger--open .select__icon {
-  transform: rotate(0deg); /* 打开时朝下 */
+  transform: rotate(0deg);
+  /* 打开时朝下 */
 }
 
 /* 下拉面板 - 使用 Portal 渲染到 body */
@@ -147,7 +149,7 @@
 }
 
 .select__dropdown--glass .select__dropdown-title {
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--color-text-secondary);
 }
 
 /* 下拉面板尺寸 */
@@ -206,25 +208,25 @@
 
 /* Glass 变体选项样式 */
 .select__dropdown--glass .select__option {
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text);
   padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-sm);
   margin: 0 var(--spacing-xs);
 }
 
 .select__dropdown--glass .select__option:hover {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: var(--color-bg-subtle);
 }
 
 .select__dropdown--glass .select__option--selected {
   background-color: transparent;
-  color: rgba(0, 0, 0, 0.85);
+  color: var(--color-text);
 }
 
 .select__dropdown--glass .select__option--highlighted {
-  background-color: rgba(0, 0, 0, 0.08);
+  background-color: var(--color-bg-subtle);
 }
 
 .select__dropdown--glass .select__option-check {
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--color-text-secondary);
 }
