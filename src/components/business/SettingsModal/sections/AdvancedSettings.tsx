@@ -2,14 +2,17 @@
  * Advanced Settings Section
  */
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { AdvancedSettings as AdvancedSettingsType, LogLevel } from '../../../../types/settings';
+import type { AdvancedSettings as AdvancedSettingsType, LogLevel, AppSettings } from '../../../../types/settings';
+import { DEFAULT_SETTINGS } from '../../../../types/settings';
 
 interface AdvancedSettingsProps {
     settings: AdvancedSettingsType;
     onUpdate: (values: Partial<AdvancedSettingsType>) => void;
     onReset: () => Promise<void>;
+    onImportSettings?: (settings: AppSettings) => void;
+    onExportSettings?: () => AppSettings | null;
 }
 
 interface ToggleProps {
@@ -33,10 +36,13 @@ function Toggle({ checked, onChange, disabled }: ToggleProps) {
     );
 }
 
-export function AdvancedSettings({ settings, onUpdate, onReset }: AdvancedSettingsProps) {
+export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings, onExportSettings }: AdvancedSettingsProps) {
     const { t } = useTranslation();
     const [isResetting, setIsResetting] = useState(false);
     const [showResetConfirm, setShowResetConfirm] = useState(false);
+    const [importError, setImportError] = useState<string | null>(null);
+    const [exportSuccess, setExportSuccess] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleReset = async () => {
         setIsResetting(true);
@@ -57,6 +63,106 @@ export function AdvancedSettings({ settings, onUpdate, onReset }: AdvancedSettin
         } catch (error) {
             console.error('Failed to clear cache:', error);
             alert(t('settings.advanced.cacheClearedError'));
+        }
+    };
+
+    const handleExportSettings = () => {
+        try {
+            // Get current settings
+            const settingsToExport = onExportSettings ? onExportSettings() : null;
+            const exportData = settingsToExport || JSON.parse(
+                localStorage.getItem('codex-desktop-settings') || JSON.stringify(DEFAULT_SETTINGS)
+            );
+
+            // Add export metadata
+            const exportPayload = {
+                ...exportData,
+                exportedAt: new Date().toISOString(),
+                exportVersion: '1.0',
+            };
+
+            // Create and download file
+            const blob = new Blob([JSON.stringify(exportPayload, null, 2)], {
+                type: 'application/json',
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `codex-desktop-settings-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            setExportSuccess(true);
+            setTimeout(() => setExportSuccess(false), 3000);
+        } catch (error) {
+            console.error('Failed to export settings:', error);
+            alert(t('settings.advanced.exportError'));
+        }
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        setImportError(null);
+
+        try {
+            const text = await file.text();
+            const importedData = JSON.parse(text);
+
+            // Validate imported data structure
+            if (!importedData || typeof importedData !== 'object') {
+                throw new Error('Invalid settings file format');
+            }
+
+            // Check for required sections
+            const requiredSections = ['general', 'model', 'approval', 'shortcuts', 'advanced'];
+            const missingSections = requiredSections.filter(
+                section => !(section in importedData)
+            );
+
+            if (missingSections.length > 0) {
+                throw new Error(`Missing sections: ${missingSections.join(', ')}`);
+            }
+
+            // Merge with defaults to ensure all fields exist
+            const mergedSettings: AppSettings = {
+                general: { ...DEFAULT_SETTINGS.general, ...importedData.general },
+                model: { ...DEFAULT_SETTINGS.model, ...importedData.model },
+                approval: { ...DEFAULT_SETTINGS.approval, ...importedData.approval },
+                shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...importedData.shortcuts },
+                advanced: { ...DEFAULT_SETTINGS.advanced, ...importedData.advanced },
+                version: importedData.version || DEFAULT_SETTINGS.version,
+            };
+
+            // Apply imported settings
+            if (onImportSettings) {
+                onImportSettings(mergedSettings);
+            } else {
+                localStorage.setItem('codex-desktop-settings', JSON.stringify(mergedSettings));
+                // Reload to apply settings
+                window.location.reload();
+            }
+
+            alert(t('settings.advanced.importSuccess'));
+        } catch (error) {
+            console.error('Failed to import settings:', error);
+            setImportError(
+                error instanceof Error
+                    ? error.message
+                    : t('settings.advanced.importError')
+            );
+        }
+
+        // Reset file input
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
@@ -111,6 +217,58 @@ export function AdvancedSettings({ settings, onUpdate, onReset }: AdvancedSettin
                     max={1000}
                     step={10}
                 />
+            </div>
+
+            {/* Data Management */}
+            <div className="settings-section">
+                <h3 className="settings-section__title">{t('settings.advanced.dataManagement')}</h3>
+
+                {/* Export Settings */}
+                <div className="settings-item">
+                    <div className="settings-item__header">
+                        <label className="settings-item__label">{t('settings.advanced.exportSettings')}</label>
+                    </div>
+                    <p className="settings-item__description">{t('settings.advanced.exportSettingsDescription')}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
+                        <button
+                            type="button"
+                            className="settings-button"
+                            onClick={handleExportSettings}
+                        >
+                            📤 {t('settings.advanced.exportSettingsButton')}
+                        </button>
+                        {exportSuccess && (
+                            <span style={{ color: 'var(--color-success)', fontSize: '13px' }}>
+                                ✓ {t('settings.advanced.exportSuccess')}
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Import Settings */}
+                <div className="settings-item">
+                    <div className="settings-item__header">
+                        <label className="settings-item__label">{t('settings.advanced.importSettings')}</label>
+                    </div>
+                    <p className="settings-item__description">{t('settings.advanced.importSettingsDescription')}</p>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        style={{ display: 'none' }}
+                        onChange={handleFileChange}
+                    />
+                    <button
+                        type="button"
+                        className="settings-button"
+                        onClick={handleImportClick}
+                    >
+                        📥 {t('settings.advanced.importSettingsButton')}
+                    </button>
+                    {importError && (
+                        <p className="settings-item__error">{importError}</p>
+                    )}
+                </div>
             </div>
 
             {/* Actions */}
@@ -173,3 +331,4 @@ export function AdvancedSettings({ settings, onUpdate, onReset }: AdvancedSettin
         </div>
     );
 }
+
