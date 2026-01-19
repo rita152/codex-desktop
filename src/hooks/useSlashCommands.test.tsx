@@ -68,7 +68,7 @@ describe('useSlashCommands', () => {
       const textareaRef = useRef<HTMLTextAreaElement | null>({
         focus,
         setSelectionRange,
-      } as HTMLTextAreaElement);
+      } as unknown as HTMLTextAreaElement);
       const hook = useSlashCommands({
         value: '/he',
         slashCommands: ['help', 'hello'],

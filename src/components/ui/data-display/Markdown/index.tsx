@@ -1,6 +1,6 @@
 import { memo, useMemo } from 'react';
-import type { HTMLAttributes, ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
+import type { Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -13,15 +13,15 @@ import './Markdown.css';
 
 const REMARK_PLUGINS = [remarkGfm, remarkMath];
 const REHYPE_PLUGINS = [rehypeKatex];
-const MARKDOWN_COMPONENTS = {
-  pre({ children }: { children: ReactNode }) {
-    return <pre className="markdown__pre">{children}</pre>;
+const MARKDOWN_COMPONENTS: Components = {
+  pre({ children, node: _node, ...props }) {
+    return (
+      <pre className="markdown__pre" {...props}>
+        {children}
+      </pre>
+    );
   },
-  code({
-    className,
-    children,
-    ...props
-  }: HTMLAttributes<HTMLElement> & { children: ReactNode }) {
+  code({ className, children, node: _node, ...props }) {
     const match = /language-(\w+)/.exec(className || '');
     const isInline = !match && !className;
 

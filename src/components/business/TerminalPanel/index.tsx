@@ -52,7 +52,7 @@ export function TerminalPanel({
         background: '#ffffff',
         foreground: '#111111',
         cursor: '#111111',
-        selection: 'rgba(0, 0, 0, 0.2)',
+        selectionBackground: 'rgba(0, 0, 0, 0.2)',
       },
     });
     const fitAddon = new FitAddon();

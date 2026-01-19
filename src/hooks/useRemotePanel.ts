@@ -8,7 +8,7 @@ const REMOTE_PANEL_MIN_WIDTH = 240;
 const REMOTE_PANEL_MIN_CONVERSATION_WIDTH = 240;
 
 type UseRemotePanelArgs = {
-  bodyRef: RefObject<HTMLDivElement>;
+  bodyRef: RefObject<HTMLDivElement | null>;
   initialWidth?: number;
 };
 

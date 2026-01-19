@@ -21,7 +21,7 @@ describe('usePanelResize', () => {
       removeEventListener: vi.fn((event) => {
         delete listeners[event];
       }),
-    } as unknown as Window;
+    } as unknown as Window & typeof globalThis;
     globalThis.document = {
       body: {
         style: {
@@ -59,20 +59,20 @@ describe('usePanelResize', () => {
 
     const preventDefault = vi.fn();
     act(() => {
-      handler?.({ clientX: 500, preventDefault } as ReactPointerEvent<HTMLDivElement>);
+      handler?.({ clientX: 500, preventDefault } as unknown as ReactPointerEvent<HTMLDivElement>);
     });
 
     expect(preventDefault).toHaveBeenCalled();
     expect(globalThis.document?.body.style.cursor).toBe('col-resize');
 
     act(() => {
-      listeners.pointermove?.({ clientX: 450 } as PointerEvent);
+      listeners.pointermove?.({ clientX: 450 } as unknown as PointerEvent);
     });
 
     expect(setWidth).toHaveBeenCalledWith(350);
 
     act(() => {
-      listeners.pointerup?.({} as PointerEvent);
+      listeners.pointerup?.({} as unknown as PointerEvent);
     });
 
     expect(globalThis.document?.body.style.cursor).toBe('');

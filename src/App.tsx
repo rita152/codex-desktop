@@ -1,36 +1,31 @@
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
 import { WorkingDirectorySelector } from './components/business/WorkingDirectorySelector';
 import { SettingsModal } from './components/business/SettingsModal';
-import { approveRequest, initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
+import { initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
   loadModeOptionsCache,
   loadModelOptionsCache,
   saveModeOptionsCache,
   saveModelOptionsCache,
 } from './api/storage';
+import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { useRemotePanel } from './hooks/useRemotePanel';
+import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
+import { useSessionViewState } from './hooks/useSessionViewState';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import {
-  approvalStatusFromKind,
-  asRecord,
-  extractApprovalDescription,
-  extractApprovalDiffs,
-  extractCommand,
   formatError,
-  getString,
-  mapApprovalOptions,
   newMessageId,
-  normalizeToolKind,
 } from './utils/codexParsing';
 import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
@@ -38,8 +33,6 @@ import { terminalKill } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
-import type { ApprovalProps } from './components/ui/feedback/Approval';
-import type { ApprovalRequest } from './types/codex';
 
 import './App.css';
 
@@ -95,9 +88,9 @@ export function App() {
     setSessionOptions: setSessionModeOptions,
   });
 
-  const [sidebarVisible, setSidebarVisible] = useState(true);
-  const sidebarVisibilityRef = useRef(true);
-  const [isNarrowLayout, setIsNarrowLayout] = useState(false);
+  const { sidebarVisible, isNarrowLayout, toggleSidebar } = useResponsiveSidebar(
+    SIDEBAR_AUTO_HIDE_MAX_WIDTH
+  );
   const [terminalVisible, setTerminalVisible] = useState(false);
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
@@ -145,69 +138,40 @@ export function App() {
     activeSessionIdRef.current = selectedSessionId;
   }, [selectedSessionId]);
 
-  useEffect(() => {
-    const media = window.matchMedia(`(max-width: ${SIDEBAR_AUTO_HIDE_MAX_WIDTH}px)`);
-    const handleChange = () => setIsNarrowLayout(media.matches);
-    handleChange();
-    media.addEventListener('change', handleChange);
-    return () => media.removeEventListener('change', handleChange);
-  }, []);
-
-  useEffect(() => {
-    if (isNarrowLayout) {
-      setSidebarVisible(false);
-      return;
-    }
-    setSidebarVisible(sidebarVisibilityRef.current);
-  }, [isNarrowLayout]);
-
-  useEffect(() => {
-    if (isNarrowLayout) return;
-    sidebarVisibilityRef.current = sidebarVisible;
-  }, [isNarrowLayout, sidebarVisible]);
-
-  const activeSession = useMemo(
-    () => sessions.find((session) => session.id === selectedSessionId),
-    [sessions, selectedSessionId]
-  );
-  // 当前会话的消息
-  const messages = useMemo(
-    () => sessionMessages[selectedSessionId] ?? [],
-    [sessionMessages, selectedSessionId]
-  );
-  const draftMessage = sessionDrafts[selectedSessionId] ?? '';
-  const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
-  const selectedMode = activeSession?.mode ?? DEFAULT_MODE_ID;
-  const selectedCwd = activeSession?.cwd;
-  const sessionNotice = sessionNotices[selectedSessionId] ?? null;
-  const agentOptions = useMemo(() => {
-    const fromSession = sessionModeOptions[selectedSessionId];
-    return fromSession?.length ? fromSession : undefined;
-  }, [selectedSessionId, sessionModeOptions]);
-  const modelOptions = useMemo(() => {
-    const fromSession = sessionModelOptions[selectedSessionId];
-    if (fromSession?.length) return fromSession;
-    // Model list is fetched from remote, use cache as fallback
-    return modelCache.options ?? [];
-  }, [modelCache.options, selectedSessionId, sessionModelOptions]);
-  const activeTokenUsage = selectedSessionId ? sessionTokenUsage[selectedSessionId] : undefined;
-  const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
-  const totalTokens = activeTokenUsage?.totalTokens;
-  const remainingTokens =
-    activeTokenUsage?.contextWindow !== undefined &&
-      activeTokenUsage?.contextWindow !== null &&
-      typeof totalTokens === 'number'
-      ? Math.max(0, activeTokenUsage.contextWindow - totalTokens)
-      : undefined;
-  const slashCommands = useMemo(() => {
-    const fromSession = sessionSlashCommands[selectedSessionId] ?? [];
-    const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSession]);
-    return Array.from(merged).sort();
-  }, [selectedSessionId, sessionSlashCommands]);
-  const isGenerating = isGeneratingBySession[selectedSessionId] ?? false;
-  // 当对话已有消息时，锁定工作目录（无法切换）
-  const cwdLocked = messages.length > 0;
-  const activeTerminalId = selectedSessionId ? terminalBySession[selectedSessionId] : undefined;
+  const {
+    activeSession,
+    messages,
+    draftMessage,
+    selectedModel,
+    selectedMode,
+    selectedCwd,
+    sessionNotice,
+    agentOptions,
+    modelOptions,
+    remainingPercent,
+    remainingTokens,
+    totalTokens,
+    slashCommands,
+    isGenerating,
+    cwdLocked,
+    activeTerminalId,
+  } = useSessionViewState({
+    sessions,
+    selectedSessionId,
+    sessionMessages,
+    sessionDrafts,
+    sessionNotices,
+    sessionModeOptions,
+    sessionModelOptions,
+    sessionTokenUsage,
+    sessionSlashCommands,
+    modelCache,
+    isGeneratingBySession,
+    terminalBySession,
+    defaultModelId: DEFAULT_MODEL_ID,
+    defaultModeId: DEFAULT_MODE_ID,
+    defaultSlashCommands: DEFAULT_SLASH_COMMANDS,
+  });
 
   useTerminalLifecycle({
     terminalVisible,
@@ -433,10 +397,6 @@ export function App() {
     [setSessions]
   );
 
-  const handleSidebarToggle = useCallback(() => {
-    setSidebarVisible((prev) => !prev);
-  }, []);
-
   const handleSettingsClick = useCallback(() => {
     setSettingsOpen(true);
   }, []);
@@ -622,85 +582,18 @@ export function App() {
     [ensureCodexSession, messages, selectedSessionId, setSessions, setSessionMessages, t]
   );
 
-  const handleApprovalSelect = useCallback(
-    async (request: ApprovalRequest, optionId: string) => {
-      const key = `${request.sessionId}:${request.requestId}`;
-      setApprovalLoading((prev) => ({ ...prev, [key]: true }));
-      const optionKind =
-        mapApprovalOptions(request.options).find((option) => option.id === optionId)?.kind ??
-        'allow-once';
-      const nextStatus = approvalStatusFromKind(optionKind);
-      setApprovalStatuses((prev) => ({ ...prev, [key]: nextStatus }));
-      try {
-        await approveRequest(request.sessionId, request.requestId, undefined, optionId);
-        setApprovalLoading((prev) => ({ ...prev, [key]: false }));
-        window.setTimeout(() => {
-          clearApproval(key);
-        }, 900);
-      } catch (err) {
-        devDebug('[approval failed]', err);
-        setApprovalLoading((prev) => ({ ...prev, [key]: false }));
-        setApprovalStatuses((prev) => ({ ...prev, [key]: 'pending' }));
-        const chatSessionId = resolveChatSessionId(request.sessionId);
-        if (chatSessionId) {
-          setSessionNotices((prev) => ({
-            ...prev,
-            [chatSessionId]: {
-              kind: 'error',
-              message: t('errors.approvalFailed', { error: formatError(err) }),
-            },
-          }));
-        }
-      }
-    },
-    [
-      clearApproval,
-      resolveChatSessionId,
-      setApprovalLoading,
-      setApprovalStatuses,
-      setSessionNotices,
-      t,
-    ]
-  );
-
-  const approvalCards: ApprovalProps[] = useMemo(
-    () =>
-      pendingApprovals
-        .filter((request) => resolveChatSessionId(request.sessionId) === selectedSessionId)
-        .map((request) => {
-          const toolCall = asRecord(request.toolCall) ?? {};
-          const toolKind = normalizeToolKind(toolCall.kind);
-          const type = toolKind === 'edit' ? 'patch' : 'exec';
-          const title = getString(toolCall.title ?? toolCall.name) ?? t('approval.title');
-          const description = extractApprovalDescription(toolCall);
-          const command = extractCommand(toolCall.rawInput ?? toolCall.raw_input);
-          const diffs = extractApprovalDiffs(toolCall);
-          const options = mapApprovalOptions(request.options);
-          const key = `${request.sessionId}:${request.requestId}`;
-
-          return {
-            callId: request.requestId,
-            type,
-            title,
-            status: approvalStatuses[key] ?? 'pending',
-            description,
-            command,
-            diffs: diffs.length > 0 ? diffs : undefined,
-            options: options.length > 0 ? options : undefined,
-            loading: approvalLoading[key] ?? false,
-            onSelect: (_callId, optionId) => handleApprovalSelect(request, optionId),
-          };
-        }),
-    [
-      approvalLoading,
-      approvalStatuses,
-      handleApprovalSelect,
-      pendingApprovals,
-      resolveChatSessionId,
-      selectedSessionId,
-      t,
-    ]
-  );
+  const approvalCards = useApprovalCards({
+    pendingApprovals,
+    approvalStatuses,
+    approvalLoading,
+    setApprovalStatuses,
+    setApprovalLoading,
+    clearApproval,
+    resolveChatSessionId,
+    selectedSessionId,
+    setSessionNotices,
+    t,
+  });
 
   return (
     <>
@@ -737,7 +630,7 @@ export function App() {
         cwdLocked={cwdLocked}
         onSessionDelete={handleSessionDelete}
         onSessionRename={handleSessionRename}
-        onSidebarToggle={isNarrowLayout ? undefined : handleSidebarToggle}
+        onSidebarToggle={isNarrowLayout ? undefined : toggleSidebar}
         onSettingsClick={handleSettingsClick}
         bodyRef={bodyRef}
         remoteServerPanelVisible={remoteServerPanelVisible}

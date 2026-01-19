@@ -104,12 +104,15 @@ function saveOptionsCache<K extends string>({
   const serializedOptions = serializeOptions(options);
   if (serializedOptions.length === 0) return;
 
-  const persisted: PersistedOptionsCache = {
+  const persisted = {
     version,
     updatedAt: Date.now(),
     options: serializedOptions,
-    [currentIdKey]: normalizeCurrentId(currentId),
-  };
+  } as PersistedOptionsCache<K>;
+  const normalizedCurrentId = normalizeCurrentId(currentId);
+  if (normalizedCurrentId) {
+    (persisted as Record<K, string>)[currentIdKey] = normalizedCurrentId;
+  }
 
   try {
     localStorage.setItem(key, JSON.stringify(persisted));

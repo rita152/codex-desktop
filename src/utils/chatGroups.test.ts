@@ -32,23 +32,35 @@ describe('chatGroups', () => {
     const groups = buildChatGroups(messages);
 
     expect(groups).toHaveLength(3);
-    expect(groups[0]?.type).toBe('message');
-    expect(groups[0]?.message.role).toBe('user');
-    expect(groups[1]?.type).toBe('working');
-    expect(groups[1]?.items).toHaveLength(2);
-    expect(groups[2]?.type).toBe('message');
-    expect(groups[2]?.message.role).toBe('assistant');
-    expect(groups[2]?.message.thinking).toBeUndefined();
-    expect(groups[2]?.message.toolCalls).toBeUndefined();
+    const first = groups[0];
+    expect(first?.type).toBe('message');
+    if (first?.type === 'message') {
+      expect(first.message.role).toBe('user');
+    }
+    const second = groups[1];
+    expect(second?.type).toBe('working');
+    if (second?.type === 'working') {
+      expect(second.items).toHaveLength(2);
+    }
+    const third = groups[2];
+    expect(third?.type).toBe('message');
+    if (third?.type === 'message') {
+      expect(third.message.role).toBe('assistant');
+      expect(third.message.thinking).toBeUndefined();
+      expect(third.message.toolCalls).toBeUndefined();
+    }
   });
 
   it('inserts placeholder while generating with no messages', () => {
     const groups = buildChatGroups([], undefined, true);
 
     expect(groups).toHaveLength(1);
-    expect(groups[0]?.type).toBe('working');
-    expect(groups[0]?.isActive).toBe(true);
-    expect(groups[0]?.items[0]?.type).toBe('thinking');
+    const group = groups[0];
+    expect(group?.type).toBe('working');
+    if (group?.type === 'working') {
+      expect(group.isActive).toBe(true);
+      expect(group.items[0]?.type).toBe('thinking');
+    }
   });
 
   it('adds approvals as working items', () => {
@@ -65,7 +77,10 @@ describe('chatGroups', () => {
     const groups = buildChatGroups(messages, approvals, false);
 
     expect(groups).toHaveLength(2);
-    expect(groups[1]?.type).toBe('working');
-    expect(groups[1]?.items[0]?.type).toBe('approval');
+    const group = groups[1];
+    expect(group?.type).toBe('working');
+    if (group?.type === 'working') {
+      expect(group.items[0]?.type).toBe('approval');
+    }
   });
 });

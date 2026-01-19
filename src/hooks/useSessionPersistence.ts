@@ -76,7 +76,7 @@ export function useSessionPersistence(): SessionPersistenceResult {
 
   useEffect(() => {
     setSessionMessages((prev) =>
-      syncSessionRecord(prev, sessions, () => [], (value) => Array.isArray(value))
+      syncSessionRecord<Message[]>(prev, sessions, () => [], (value) => Array.isArray(value))
     );
   }, [sessions]);
 

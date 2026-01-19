@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
@@ -132,7 +133,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       const group = groups[virtualRow.index];
       if (!group) return null;
 
-      let content: JSX.Element | null = null;
+      let content: ReactNode = null;
       if (group.type === 'message') {
         const message = group.message;
         content = (

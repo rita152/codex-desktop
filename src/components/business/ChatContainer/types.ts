@@ -92,7 +92,7 @@ export interface ChatContainerProps {
   /** 欢迎内容（无消息时显示） */
   welcomeContent?: ReactNode;
   /** 主体容器引用 */
-  bodyRef?: RefObject<HTMLDivElement>;
+  bodyRef?: RefObject<HTMLDivElement | null>;
   /** 自定义类名 */
   className?: string;
 }
