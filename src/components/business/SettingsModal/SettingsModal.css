@@ -32,6 +32,7 @@
   width: 100%;
   height: 100%;
   --settings-panel-radius: var(--radius-xl);
+  --settings-nav-offset: calc(var(--spacing-lg) + var(--spacing-md));
   background-color: var(--color-bg-secondary);
   padding: var(--spacing-sm);
   gap: var(--spacing-sm);
@@ -209,6 +210,7 @@
 .settings-nav__list {
   flex: 1;
   min-height: 0;
+  margin-top: var(--settings-nav-offset);
 }
 
 .settings-nav__icon {
