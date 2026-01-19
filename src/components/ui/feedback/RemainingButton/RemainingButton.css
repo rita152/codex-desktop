@@ -5,7 +5,7 @@
   padding: 6px 10px;
   border-radius: 999px;
   border: none;
-  background-color: #ffffff;
+  background-color: var(--color-bg-secondary);
   color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 600;
