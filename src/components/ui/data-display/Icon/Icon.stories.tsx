@@ -14,6 +14,7 @@ import {
   PlusIcon,
   RobotIcon,
   SendIcon,
+  SettingsIcon,
   SidebarLeftIcon,
   SidebarRightIcon,
   TrashIcon,
@@ -54,6 +55,7 @@ export const Default: Story = {
       <PlusIcon {...args} />
       <RobotIcon {...args} />
       <SendIcon {...args} />
+      <SettingsIcon {...args} />
       <SidebarLeftIcon {...args} />
       <SidebarRightIcon {...args} />
       <TrashIcon {...args} />

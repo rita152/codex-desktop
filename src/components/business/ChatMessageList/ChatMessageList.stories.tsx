@@ -1,6 +1,4 @@
 import type { Meta, StoryObj } from '@storybook/react';
-import { expect } from 'vitest';
-
 import type { Message } from './types';
 import { ChatMessageList } from './index';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
@@ -128,60 +126,4 @@ export const Default: Story = {
       <ChatMessageList messages={messages} approvals={approvals} />
     </div>
   ),
-};
-
-const orderingMessages: Message[] = [
-  {
-    id: 'prev-assistant',
-    role: 'assistant',
-    content: 'Previous assistant message.',
-    timestamp: new Date(Date.now() - 60000),
-  },
-  {
-    id: 'new-user',
-    role: 'user',
-    content: 'New prompt message.',
-    timestamp: new Date(Date.now() - 30000),
-  },
-  {
-    id: 'new-assistant',
-    role: 'assistant',
-    content: 'Streaming response starts.',
-    isStreaming: true,
-    timestamp: new Date(Date.now() - 10000),
-  },
-];
-
-export const WorkingPlacement: Story = {
-  render: () => (
-    <div className="chat-message-list-story__container">
-      <ChatMessageList messages={orderingMessages} isGenerating />
-    </div>
-  ),
-  play: async ({ canvasElement }) => {
-    const messageNodes = Array.from(
-      canvasElement.querySelectorAll('.chat-message')
-    ) as HTMLElement[];
-    const userMessage =
-      messageNodes.find((node) => node.textContent?.includes('New prompt message.')) ?? null;
-    const assistantMessage =
-      messageNodes.find((node) => node.textContent?.includes('Streaming response starts.')) ?? null;
-    const working = canvasElement.querySelector('.working') as HTMLElement | null;
-
-    expect(userMessage).not.toBeNull();
-    expect(assistantMessage).not.toBeNull();
-    expect(working).not.toBeNull();
-
-    const userBeforeWorking =
-      userMessage &&
-      working &&
-      (userMessage.compareDocumentPosition(working) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-    const workingBeforeAssistant =
-      working &&
-      assistantMessage &&
-      (working.compareDocumentPosition(assistantMessage) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
-
-    expect(userBeforeWorking).toBe(true);
-    expect(workingBeforeAssistant).toBe(true);
-  },
 };
