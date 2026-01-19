@@ -2,7 +2,7 @@
  * Settings Modal - Main Component
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import {
@@ -13,6 +13,8 @@ import {
     AdvancedSettings,
     RemoteSettings,
 } from './sections';
+import { List } from '../../ui/data-display/List';
+import { ListItem } from '../../ui/data-display/ListItem';
 import type { SettingsSection } from '../../../types/settings';
 import './SettingsModal.css';
 
@@ -35,7 +37,6 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
 
 export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModalProps) {
     const { t } = useTranslation();
-    const [searchQuery, setSearchQuery] = useState('');
     const {
         settings,
         loading,
@@ -45,28 +46,6 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
         resetSettings,
         saveStatus,
     } = useSettings();
-
-    // Filter navigation items based on search query
-    const filteredNavItems = useMemo(() => {
-        if (!searchQuery.trim()) return NAV_ITEMS;
-        const query = searchQuery.toLowerCase();
-        return NAV_ITEMS.filter(item => {
-            const label = t(item.labelKey).toLowerCase();
-            const matchesLabel = label.includes(query);
-            const matchesKeywords = item.keywords.some(kw => kw.toLowerCase().includes(query));
-            return matchesLabel || matchesKeywords;
-        });
-    }, [searchQuery, t]);
-
-    // Auto-select first matching section when searching
-    useEffect(() => {
-        if (searchQuery.trim() && filteredNavItems.length > 0) {
-            const currentSectionInResults = filteredNavItems.some(item => item.id === activeSection);
-            if (!currentSectionInResults) {
-                setActiveSection(filteredNavItems[0].id);
-            }
-        }
-    }, [filteredNavItems, searchQuery, activeSection, setActiveSection]);
 
     // Set initial section
     useEffect(() => {
@@ -188,75 +167,46 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
             aria-labelledby="settings-modal-title"
         >
             <div className="settings-modal">
-                {/* Header */}
-                <header className="settings-modal__header">
-                    <h1 id="settings-modal-title" className="settings-modal__title">
-                        <span className="settings-modal__title-icon">⚙️</span>
-                        {t('settings.title')}
-                    </h1>
-                    <div className="settings-modal__header-actions">
-                        {renderSaveStatus()}
-                        <button
-                            className="settings-modal__close"
-                            onClick={onClose}
-                            aria-label={t('settings.close')}
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </header>
-
-                {/* Body */}
-                <div className="settings-modal__body">
-                    {/* Navigation */}
+                <aside className="settings-sidebar">
                     <nav className="settings-nav" role="navigation" aria-label={t('settings.navLabel')}>
-                        {/* Search Box */}
-                        <div className="settings-nav__search">
-                            <input
-                                type="text"
-                                className="settings-nav__search-input"
-                                placeholder={t('settings.search.placeholder')}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                aria-label={t('settings.search.ariaLabel')}
-                            />
-                            {searchQuery && (
-                                <button
-                                    type="button"
-                                    className="settings-nav__search-clear"
-                                    onClick={() => setSearchQuery('')}
-                                    aria-label={t('settings.search.clear')}
-                                >
-                                    ✕
-                                </button>
-                            )}
-                        </div>
-
-                        {/* Navigation Items */}
-                        {filteredNavItems.length > 0 ? (
-                            filteredNavItems.map((item) => (
-                                <button
+                        <List className="settings-nav__list" scrollable>
+                            {NAV_ITEMS.map((item) => (
+                                <ListItem
                                     key={item.id}
-                                    className={`settings-nav__item ${activeSection === item.id ? 'settings-nav__item--active' : ''}`}
+                                    icon={<span className="settings-nav__icon" aria-hidden="true">{item.icon}</span>}
+                                    selected={activeSection === item.id}
                                     onClick={() => setActiveSection(item.id)}
-                                    aria-current={activeSection === item.id ? 'page' : undefined}
+                                    className="settings-nav__item"
                                 >
-                                    <span className="settings-nav__icon">{item.icon}</span>
-                                    <span>{t(item.labelKey)}</span>
-                                </button>
-                            ))
-                        ) : (
-                            <div className="settings-nav__empty">
-                                {t('settings.search.noResults')}
-                            </div>
-                        )}
+                                    {t(item.labelKey)}
+                                </ListItem>
+                            ))}
+                        </List>
                     </nav>
+                </aside>
 
-                    {/* Content */}
+                <section className="settings-panel">
+                    <header className="settings-modal__header">
+                        <h1 id="settings-modal-title" className="settings-modal__title">
+                            <span className="settings-modal__title-icon">⚙️</span>
+                            {t('settings.title')}
+                        </h1>
+                        <div className="settings-modal__header-actions">
+                            {renderSaveStatus()}
+                            <button
+                                className="settings-modal__close"
+                                onClick={onClose}
+                                aria-label={t('settings.close')}
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    </header>
+
                     <main className="settings-content" role="main">
                         {renderContent()}
                     </main>
-                </div>
+                </section>
             </div>
         </div>
     );
