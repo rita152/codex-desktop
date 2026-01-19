@@ -2,7 +2,7 @@
  * Settings Modal - Main Component
  */
 
-import { useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import {
@@ -11,6 +11,7 @@ import {
     ApprovalSettings,
     ShortcutSettings,
     AdvancedSettings,
+    RemoteSettings,
 } from './sections';
 import type { SettingsSection } from '../../../types/settings';
 import './SettingsModal.css';
@@ -23,16 +24,18 @@ interface SettingsModalProps {
 }
 
 // Navigation items configuration
-const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string }[] = [
-    { id: 'general', icon: '📍', labelKey: 'settings.sections.general' },
-    { id: 'model', icon: '🤖', labelKey: 'settings.sections.model' },
-    { id: 'approval', icon: '🛡️', labelKey: 'settings.sections.approval' },
-    { id: 'shortcuts', icon: '⌨️', labelKey: 'settings.sections.shortcuts' },
-    { id: 'advanced', icon: '🔧', labelKey: 'settings.sections.advanced' },
+const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords: string[] }[] = [
+    { id: 'general', icon: '📍', labelKey: 'settings.sections.general', keywords: ['language', 'theme', 'startup', '语言', '主题', '启动'] },
+    { id: 'model', icon: '🤖', labelKey: 'settings.sections.model', keywords: ['api', 'token', 'temperature', 'openai', '模型', '温度'] },
+    { id: 'approval', icon: '🛡️', labelKey: 'settings.sections.approval', keywords: ['approve', 'command', 'trust', '审批', '命令', '信任'] },
+    { id: 'remote', icon: '🌐', labelKey: 'settings.sections.remote', keywords: ['server', 'ssh', 'remote', '服务器', '远程'] },
+    { id: 'shortcuts', icon: '⌨️', labelKey: 'settings.sections.shortcuts', keywords: ['keyboard', 'hotkey', 'shortcut', '快捷键', '键盘'] },
+    { id: 'advanced', icon: '🔧', labelKey: 'settings.sections.advanced', keywords: ['debug', 'cache', 'reset', 'log', '调试', '缓存', '重置', '日志'] },
 ];
 
 export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModalProps) {
     const { t } = useTranslation();
+    const [searchQuery, setSearchQuery] = useState('');
     const {
         settings,
         loading,
@@ -42,6 +45,28 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
         resetSettings,
         saveStatus,
     } = useSettings();
+
+    // Filter navigation items based on search query
+    const filteredNavItems = useMemo(() => {
+        if (!searchQuery.trim()) return NAV_ITEMS;
+        const query = searchQuery.toLowerCase();
+        return NAV_ITEMS.filter(item => {
+            const label = t(item.labelKey).toLowerCase();
+            const matchesLabel = label.includes(query);
+            const matchesKeywords = item.keywords.some(kw => kw.toLowerCase().includes(query));
+            return matchesLabel || matchesKeywords;
+        });
+    }, [searchQuery, t]);
+
+    // Auto-select first matching section when searching
+    useEffect(() => {
+        if (searchQuery.trim() && filteredNavItems.length > 0) {
+            const currentSectionInResults = filteredNavItems.some(item => item.id === activeSection);
+            if (!currentSectionInResults) {
+                setActiveSection(filteredNavItems[0].id);
+            }
+        }
+    }, [filteredNavItems, searchQuery, activeSection, setActiveSection]);
 
     // Set initial section
     useEffect(() => {
@@ -130,6 +155,8 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                         onUpdate={(values) => updateSettings('approval', values)}
                     />
                 );
+            case 'remote':
+                return <RemoteSettings />;
             case 'shortcuts':
                 return (
                     <ShortcutSettings
@@ -183,17 +210,46 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                 <div className="settings-modal__body">
                     {/* Navigation */}
                     <nav className="settings-nav" role="navigation" aria-label={t('settings.navLabel')}>
-                        {NAV_ITEMS.map((item) => (
-                            <button
-                                key={item.id}
-                                className={`settings-nav__item ${activeSection === item.id ? 'settings-nav__item--active' : ''}`}
-                                onClick={() => setActiveSection(item.id)}
-                                aria-current={activeSection === item.id ? 'page' : undefined}
-                            >
-                                <span className="settings-nav__icon">{item.icon}</span>
-                                <span>{t(item.labelKey)}</span>
-                            </button>
-                        ))}
+                        {/* Search Box */}
+                        <div className="settings-nav__search">
+                            <input
+                                type="text"
+                                className="settings-nav__search-input"
+                                placeholder={t('settings.search.placeholder')}
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                aria-label={t('settings.search.ariaLabel')}
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    className="settings-nav__search-clear"
+                                    onClick={() => setSearchQuery('')}
+                                    aria-label={t('settings.search.clear')}
+                                >
+                                    ✕
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Navigation Items */}
+                        {filteredNavItems.length > 0 ? (
+                            filteredNavItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    className={`settings-nav__item ${activeSection === item.id ? 'settings-nav__item--active' : ''}`}
+                                    onClick={() => setActiveSection(item.id)}
+                                    aria-current={activeSection === item.id ? 'page' : undefined}
+                                >
+                                    <span className="settings-nav__icon">{item.icon}</span>
+                                    <span>{t(item.labelKey)}</span>
+                                </button>
+                            ))
+                        ) : (
+                            <div className="settings-nav__empty">
+                                {t('settings.search.noResults')}
+                            </div>
+                        )}
                     </nav>
 
                     {/* Content */}

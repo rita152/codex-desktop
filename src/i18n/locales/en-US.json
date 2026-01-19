@@ -165,6 +165,12 @@
     "close": "Close",
     "navLabel": "Settings categories",
     "loading": "Loading...",
+    "search": {
+      "placeholder": "Search settings...",
+      "ariaLabel": "Search settings",
+      "clear": "Clear search",
+      "noResults": "No matching settings found"
+    },
     "status": {
       "saving": "Saving...",
       "saved": "Saved",
@@ -177,6 +183,9 @@
       "remote": "Remote Servers",
       "shortcuts": "Shortcuts",
       "advanced": "Advanced"
+    },
+    "remote": {
+      "description": "Configure remote server connections. Run Codex on remote hosts via SSH."
     },
     "general": {
       "language": "Language",
