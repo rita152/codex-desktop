@@ -195,10 +195,10 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                     value={settings.logLevel}
                     onChange={(e) => onUpdate({ logLevel: e.target.value as LogLevel })}
                 >
-                    <option value="error">Error</option>
-                    <option value="warn">Warning</option>
-                    <option value="info">Info</option>
-                    <option value="debug">Debug</option>
+                    <option value="error">{t('settings.logLevel.error')}</option>
+                    <option value="warn">{t('settings.logLevel.warn')}</option>
+                    <option value="info">{t('settings.logLevel.info')}</option>
+                    <option value="debug">{t('settings.logLevel.debug')}</option>
                 </select>
             </div>
 

@@ -29,7 +29,7 @@ export function RemoteServerPanel({
                 <div
                     className="remote-server-panel__resize-handle"
                     role="separator"
-                    aria-label="Resize remote server panel"
+                    aria-label={t('settings.remoteServer.resizePanel')}
                     aria-orientation="vertical"
                     onPointerDown={onResizeStart}
                     tabIndex={0}
@@ -44,9 +44,9 @@ export function RemoteServerPanel({
                     type="button"
                     className="remote-server-panel__close"
                     onClick={onClose}
-                    aria-label="Close"
+                    aria-label={t('settings.remoteServer.close')}
                 >
-                    Close
+                    {t('settings.remoteServer.close')}
                 </button>
             </header>
             <div className="remote-server-panel__body">

@@ -18,12 +18,12 @@
     "slashAriaLabel": "Slash 命令",
     "selectAgent": "选择智能体",
     "selectModel": "选择模型",
-    "switchMode": "Switch mode",
+    "switchMode": "切换模式",
     "agentOptions": {
-      "chat": "Chat",
-      "agent": "Agent",
-      "agentFull": "Agent (full access)",
-      "custom": "Custom (config.toml)"
+      "chat": "对话",
+      "agent": "智能体",
+      "agentFull": "智能体 (完全访问)",
+      "custom": "自定义 (config.toml)"
     }
   },
   "chatSideActions": {
@@ -91,7 +91,7 @@
   },
   "thinking": {
     "label": {
-      "working": "Working",
+      "working": "处理中",
       "thinking": "思考中",
       "thinkingWithDuration": "思考中 {{duration}}",
       "doneWithDuration": "思考了 {{duration}}",
@@ -99,8 +99,8 @@
     }
   },
   "working": {
-    "title": "Working",
-    "inProgress": "Working",
+    "title": "处理中",
+    "inProgress": "进行中",
     "itemCount_one": "{{count}} 项",
     "itemCount_other": "{{count}} 项",
     "totalDuration": "总耗时 {{duration}}"
@@ -186,6 +186,52 @@
     },
     "remote": {
       "description": "配置远程服务器连接，支持通过 SSH 在远程主机上运行 Codex"
+    },
+    "remoteServer": {
+      "title": "远程服务器",
+      "addTitle": "添加远程服务器",
+      "serverName": "服务器名称",
+      "serverNameRequired": "服务器名称 *",
+      "host": "主机",
+      "hostRequired": "主机 *",
+      "port": "端口",
+      "username": "用户名",
+      "usernameRequired": "用户名 *",
+      "authMethod": "认证方式",
+      "sshAgent": "SSH Agent (推荐)",
+      "sshKeyFile": "SSH 密钥文件",
+      "privateKeyPath": "私钥路径",
+      "passphrase": "密钥密码 (可选)",
+      "cancel": "取消",
+      "addServer": "添加服务器",
+      "addServerShort": "+ 添加服务器",
+      "adding": "添加中...",
+      "removeConfirm": "确定要删除此服务器吗？",
+      "loading": "正在加载服务器...",
+      "empty": "尚未配置远程服务器",
+      "emptyHint": "添加服务器以连接远程开发环境",
+      "authType": "认证方式",
+      "testing": "测试中...",
+      "testConnection": "测试连接",
+      "remove": "删除",
+      "connectionFailed": "连接失败",
+      "failedToAdd": "添加服务器失败",
+      "fillRequired": "请填写所有必填项",
+      "close": "关闭",
+      "resizePanel": "调整面板大小",
+      "placeholder": {
+        "serverName": "我的服务器",
+        "host": "example.com",
+        "username": "user",
+        "privateKey": "~/.ssh/id_rsa",
+        "passphrase": "如无需密码请留空"
+      }
+    },
+    "logLevel": {
+      "error": "错误",
+      "warn": "警告",
+      "info": "信息",
+      "debug": "调试"
     },
     "general": {
       "language": "语言",

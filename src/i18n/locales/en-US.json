@@ -187,6 +187,52 @@
     "remote": {
       "description": "Configure remote server connections. Run Codex on remote hosts via SSH."
     },
+    "remoteServer": {
+      "title": "Remote Servers",
+      "addTitle": "Add Remote Server",
+      "serverName": "Server Name",
+      "serverNameRequired": "Server Name *",
+      "host": "Host",
+      "hostRequired": "Host *",
+      "port": "Port",
+      "username": "Username",
+      "usernameRequired": "Username *",
+      "authMethod": "Authentication Method",
+      "sshAgent": "SSH Agent (Recommended)",
+      "sshKeyFile": "SSH Key File",
+      "privateKeyPath": "Private Key Path",
+      "passphrase": "Passphrase (Optional)",
+      "cancel": "Cancel",
+      "addServer": "Add Server",
+      "addServerShort": "+ Add Server",
+      "adding": "Adding...",
+      "removeConfirm": "Are you sure you want to remove this server?",
+      "loading": "Loading servers...",
+      "empty": "No remote servers configured",
+      "emptyHint": "Add a server to connect to remote development environments",
+      "authType": "Auth",
+      "testing": "Testing...",
+      "testConnection": "Test Connection",
+      "remove": "Remove",
+      "connectionFailed": "Connection failed",
+      "failedToAdd": "Failed to add server",
+      "fillRequired": "Please fill in all required fields",
+      "close": "Close",
+      "resizePanel": "Resize remote server panel",
+      "placeholder": {
+        "serverName": "My Server",
+        "host": "example.com",
+        "username": "user",
+        "privateKey": "~/.ssh/id_rsa",
+        "passphrase": "Leave empty if not required"
+      }
+    },
+    "logLevel": {
+      "error": "Error",
+      "warn": "Warning",
+      "info": "Info",
+      "debug": "Debug"
+    },
     "general": {
       "language": "Language",
       "languageDescription": "Choose the interface language",
