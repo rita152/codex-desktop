@@ -52,17 +52,58 @@
 }
 
 .settings-sidebar {
+  position: relative;
   display: flex;
   flex-direction: column;
-  width: 240px;
+  width: 200px;
   min-width: 200px;
-  max-width: 320px;
+  max-width: 400px;
   min-height: 0;
   background-color: var(--color-bg);
   border-radius: var(--settings-panel-radius);
   border: var(--border-width-thin) solid var(--color-border);
   box-shadow: var(--shadow-sm);
-  overflow: hidden;
+}
+
+.settings-sidebar--dragging {
+  user-select: none;
+}
+
+.settings-sidebar__resize-handle {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+}
+
+.settings-sidebar__resize-handle:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
+}
+
+.settings-sidebar__resize-handle:focus-visible::after {
+  background-color: var(--color-border-hover);
+}
+
+.settings-sidebar__resize-handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 24px;
+  background-color: transparent;
+  border-radius: var(--radius-full);
+  transition: background-color 0.15s;
+}
+
+.settings-sidebar__resize-handle:hover::after,
+.settings-sidebar--dragging .settings-sidebar__resize-handle::after {
+  background-color: var(--color-border);
 }
 
 .settings-panel {

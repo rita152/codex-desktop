@@ -2,9 +2,10 @@
  * Settings Modal - Main Component
  */
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
+import { useSidebarResize } from '../../../hooks/useSidebarResize';
 import {
     GeneralSettings,
     ModelSettings,
@@ -15,6 +16,7 @@ import {
 } from './sections';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
+import { cn } from '../../../utils/cn';
 import type { SettingsSection } from '../../../types/settings';
 import './SettingsModal.css';
 
@@ -35,8 +37,15 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     { id: 'advanced', icon: '🔧', labelKey: 'settings.sections.advanced', keywords: ['debug', 'cache', 'reset', 'log', '调试', '缓存', '重置', '日志'] },
 ];
 
+const MIN_SIDEBAR_WIDTH = 200;
+const MAX_SIDEBAR_WIDTH = 400;
+const DEFAULT_SIDEBAR_WIDTH = 200;
+
 export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModalProps) {
     const { t } = useTranslation();
+    const generatedId = useId();
+    const safeId = generatedId.replace(/:/g, '');
+    const sidebarId = `settings-sidebar-${safeId}`;
     const {
         settings,
         loading,
@@ -46,6 +55,17 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
         resetSettings,
         saveStatus,
     } = useSettings();
+    const {
+        width: sidebarWidth,
+        isDragging: isSidebarDragging,
+        sidebarRef,
+        handleMouseDown,
+        handleResizeKeyDown,
+    } = useSidebarResize({
+        minWidth: MIN_SIDEBAR_WIDTH,
+        maxWidth: MAX_SIDEBAR_WIDTH,
+        defaultWidth: DEFAULT_SIDEBAR_WIDTH,
+    });
 
     // Set initial section
     useEffect(() => {
@@ -167,7 +187,12 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
             aria-labelledby="settings-modal-title"
         >
             <div className="settings-modal">
-                <aside className="settings-sidebar">
+                <aside
+                    id={sidebarId}
+                    ref={sidebarRef}
+                    className={cn('settings-sidebar', isSidebarDragging && 'settings-sidebar--dragging')}
+                    style={{ width: sidebarWidth }}
+                >
                     <nav className="settings-nav" role="navigation" aria-label={t('settings.navLabel')}>
                         <List className="settings-nav__list" scrollable>
                             {NAV_ITEMS.map((item) => (
@@ -183,6 +208,19 @@ export function SettingsModal({ isOpen, onClose, initialSection }: SettingsModal
                             ))}
                         </List>
                     </nav>
+                    <div
+                        className="settings-sidebar__resize-handle"
+                        onMouseDown={handleMouseDown}
+                        onKeyDown={handleResizeKeyDown}
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={t('sidebar.resizeAria')}
+                        aria-valuemin={MIN_SIDEBAR_WIDTH}
+                        aria-valuemax={MAX_SIDEBAR_WIDTH}
+                        aria-valuenow={Math.round(sidebarWidth)}
+                        aria-controls={sidebarId}
+                        tabIndex={0}
+                    />
                 </aside>
 
                 <section className="settings-panel">
