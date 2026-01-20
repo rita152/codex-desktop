@@ -8,8 +8,17 @@ export function useRemoteServers() {
     const [servers, setServers] = useState<RemoteServerConfig[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const hasTauriInvoke =
+        typeof window !== 'undefined' &&
+        typeof (window as typeof window & { __TAURI__?: { core?: { invoke?: unknown } } })
+            .__TAURI__?.core?.invoke === 'function';
 
     const loadServers = useCallback(async () => {
+        if (!hasTauriInvoke) {
+            setServers([]);
+            setLoading(false);
+            return;
+        }
         try {
             setLoading(true);
             setError(null);
@@ -23,6 +32,11 @@ export function useRemoteServers() {
     }, []);
 
     const addServer = useCallback(async (config: RemoteServerConfig) => {
+        if (!hasTauriInvoke) {
+            const message = 'Tauri runtime not available';
+            setError(message);
+            throw new Error(message);
+        }
         try {
             setLoading(true);
             setError(null);
@@ -37,6 +51,11 @@ export function useRemoteServers() {
     }, [loadServers]);
 
     const removeServer = useCallback(async (serverId: string) => {
+        if (!hasTauriInvoke) {
+            const message = 'Tauri runtime not available';
+            setError(message);
+            throw new Error(message);
+        }
         try {
             setLoading(true);
             setError(null);
@@ -51,6 +70,11 @@ export function useRemoteServers() {
     }, [loadServers]);
 
     const testConnection = useCallback(async (serverId: string): Promise<string> => {
+        if (!hasTauriInvoke) {
+            const message = 'Tauri runtime not available';
+            setError(message);
+            throw new Error(message);
+        }
         try {
             setLoading(true);
             const result = await invoke<string>('remote_test_connection', { serverId });
