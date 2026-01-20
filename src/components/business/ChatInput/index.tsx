@@ -6,6 +6,7 @@ import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
 import { Card } from '../../ui/data-display/Card';
+import { Button } from '../../ui/data-entry/Button';
 import { RemainingButton } from '../../ui/feedback/RemainingButton';
 import {
   PlusIcon,
@@ -236,7 +237,7 @@ export function ChatInput({
           {slashState.suggestions.map((command, index) => {
             const isActive = index === activeIndex;
             return (
-              <button
+              <Button
                 key={command}
                 type="button"
                 role="option"
@@ -249,7 +250,7 @@ export function ChatInput({
                 onClick={() => applySlashCommand(command)}
               >
                 <span className="chat-input__slash-command">/{command}</span>
-              </button>
+              </Button>
             );
           })}
         </div>

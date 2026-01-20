@@ -5,31 +5,14 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ApprovalSettings as ApprovalSettingsType, ApprovalMode } from '../../../../types/settings';
+import { Button } from '../../../ui/data-entry/Button';
+import { Input } from '../../../ui/data-entry/Input';
+import { NativeSelect } from '../../../ui/data-entry/NativeSelect';
+import { Toggle } from '../../../ui/data-entry/Toggle';
 
 interface ApprovalSettingsProps {
     settings: ApprovalSettingsType;
     onUpdate: (values: Partial<ApprovalSettingsType>) => void;
-}
-
-interface ToggleProps {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    disabled?: boolean;
-}
-
-function Toggle({ checked, onChange, disabled }: ToggleProps) {
-    return (
-        <button
-            type="button"
-            className={`settings-toggle ${checked ? 'settings-toggle--active' : ''}`}
-            onClick={() => !disabled && onChange(!checked)}
-            disabled={disabled}
-            role="switch"
-            aria-checked={checked}
-        >
-            <span className="settings-toggle__knob" />
-        </button>
-    );
 }
 
 export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) {
@@ -68,7 +51,7 @@ export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) 
                     <label className="settings-item__label">{t('settings.approval.defaultMode')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.approval.defaultModeDescription')}</p>
-                <select
+                <NativeSelect
                     className="settings-select"
                     value={settings.defaultMode}
                     onChange={(e) => onUpdate({ defaultMode: e.target.value as ApprovalMode })}
@@ -76,7 +59,7 @@ export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) 
                     <option value="all">{t('settings.approval.modeAll')}</option>
                     <option value="dangerous">{t('settings.approval.modeDangerous')}</option>
                     <option value="auto">{t('settings.approval.modeAuto')}</option>
-                </select>
+                </NativeSelect>
             </div>
 
             {/* Individual Toggles */}
@@ -147,19 +130,19 @@ export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) 
                     {settings.trustedCommands.map((command) => (
                         <div key={command} className="settings-list__item">
                             <span className="settings-list__item-text">{command}</span>
-                            <button
+                            <Button
                                 type="button"
                                 className="settings-list__item-remove"
                                 onClick={() => handleRemoveCommand(command)}
                                 aria-label={t('settings.approval.removeCommand')}
                             >
                                 ✕
-                            </button>
+                            </Button>
                         </div>
                     ))}
 
                     <div className="settings-list__add">
-                        <input
+                        <Input
                             type="text"
                             className="settings-input settings-list__add-input"
                             value={newCommand}
@@ -167,14 +150,14 @@ export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) 
                             onKeyDown={handleKeyDown}
                             placeholder={t('settings.approval.addCommandPlaceholder')}
                         />
-                        <button
+                        <Button
                             type="button"
                             className="settings-button settings-button--primary"
                             onClick={handleAddCommand}
                             disabled={!newCommand.trim()}
                         >
                             {t('settings.approval.addCommand')}
-                        </button>
+                        </Button>
                     </div>
                 </div>
             </div>

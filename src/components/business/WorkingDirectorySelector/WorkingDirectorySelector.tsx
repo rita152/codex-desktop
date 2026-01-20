@@ -4,6 +4,8 @@ import { open } from '@tauri-apps/plugin-dialog';
 
 import { FolderIcon } from '../../ui/data-display/Icon';
 import { Select } from '../../ui/data-entry/Select';
+import { Button } from '../../ui/data-entry/Button';
+import { Input } from '../../ui/data-entry/Input';
 import { listRemoteDirectories } from '../../../api/remote';
 import { cn } from '../../../utils/cn';
 import { buildRemotePath, isRemotePath, parseRemotePath } from '../../../utils/remotePath';
@@ -243,7 +245,7 @@ export function WorkingDirectorySelector({
 
   return (
     <div className="cwd-selector" role="dialog" aria-modal="true" aria-labelledby="cwd-selector-title">
-      <button
+      <Button
         type="button"
         className="cwd-selector__backdrop"
         onClick={onClose}
@@ -252,18 +254,18 @@ export function WorkingDirectorySelector({
       <div className="cwd-selector__panel" role="document">
         <header className="cwd-selector__header">
           <h2 id="cwd-selector-title">{t('cwdSelector.title')}</h2>
-          <button
+          <Button
             type="button"
             className="cwd-selector__close"
             onClick={onClose}
             aria-label={t('cwdSelector.close')}
           >
             x
-          </button>
+          </Button>
         </header>
 
         <div className="cwd-selector__tabs" role="tablist" aria-label={t('cwdSelector.tabsLabel')}>
-          <button
+          <Button
             type="button"
             className={cn('cwd-selector__tab', mode === 'local' && 'cwd-selector__tab--active')}
             role="tab"
@@ -274,8 +276,8 @@ export function WorkingDirectorySelector({
             }}
           >
             {t('cwdSelector.localTab')}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             className={cn('cwd-selector__tab', mode === 'remote' && 'cwd-selector__tab--active')}
             role="tab"
@@ -286,7 +288,7 @@ export function WorkingDirectorySelector({
             }}
           >
             {t('cwdSelector.remoteTab')}
-          </button>
+          </Button>
         </div>
 
         <div className="cwd-selector__body">
@@ -299,7 +301,7 @@ export function WorkingDirectorySelector({
                 {t('cwdSelector.localPathLabel')}
               </label>
               <div className="cwd-selector__input-row">
-                <input
+                <Input
                   id="cwd-local-path"
                   type="text"
                   className="cwd-selector__input"
@@ -310,9 +312,9 @@ export function WorkingDirectorySelector({
                   }}
                   placeholder={t('cwdSelector.localPathPlaceholder')}
                 />
-                <button type="button" className="cwd-selector__button" onClick={handleBrowseLocal}>
+                <Button type="button" className="cwd-selector__button" onClick={handleBrowseLocal}>
                   {t('cwdSelector.localBrowse')}
-                </button>
+                </Button>
               </div>
               <p className="cwd-selector__hint">{t('cwdSelector.localHint')}</p>
             </div>
@@ -353,7 +355,7 @@ export function WorkingDirectorySelector({
                 {t('cwdSelector.remotePathLabel')}
               </label>
               <div className="cwd-selector__input-row">
-                <input
+                <Input
                   id="cwd-remote-path"
                   type="text"
                   className="cwd-selector__input"
@@ -370,14 +372,14 @@ export function WorkingDirectorySelector({
                   }}
                   placeholder={t('cwdSelector.remotePathPlaceholder')}
                 />
-                <button
+                <Button
                   type="button"
                   className="cwd-selector__button"
                   onClick={handleRemoteGo}
                   disabled={!remoteServerId || remoteListingLoading}
                 >
                   {t('cwdSelector.remoteGo')}
-                </button>
+                </Button>
               </div>
               <p className="cwd-selector__hint">{t('cwdSelector.remoteHint')}</p>
 
@@ -392,30 +394,30 @@ export function WorkingDirectorySelector({
                     </div>
                   </div>
                   <div className="cwd-selector__browser-actions">
-                    <button
+                    <Button
                       type="button"
                       className="cwd-selector__browser-action"
                       onClick={handleRemoteHome}
                       disabled={!remoteServerId || remoteListingLoading}
                     >
                       {t('cwdSelector.remoteHome')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       className="cwd-selector__browser-action"
                       onClick={handleRemoteUp}
                       disabled={!remoteParentPath || remoteListingLoading}
                     >
                       {t('cwdSelector.remoteUp')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       className="cwd-selector__browser-action"
                       onClick={handleRemoteRefresh}
                       disabled={!remoteServerId || remoteListingLoading}
                     >
                       {t('cwdSelector.remoteRefresh')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 <div className="cwd-selector__browser-list">
@@ -447,7 +449,7 @@ export function WorkingDirectorySelector({
                     !remoteListingError &&
                     remoteListing &&
                     remoteListing.entries.map((entry) => (
-                      <button
+                      <Button
                         key={entry.path}
                         type="button"
                         className="cwd-selector__entry"
@@ -455,7 +457,7 @@ export function WorkingDirectorySelector({
                       >
                         <FolderIcon size={14} className="cwd-selector__entry-icon" />
                         <span className="cwd-selector__entry-name">{entry.name}</span>
-                      </button>
+                      </Button>
                     ))}
                 </div>
               </div>
@@ -473,12 +475,16 @@ export function WorkingDirectorySelector({
         </div>
 
         <footer className="cwd-selector__footer">
-          <button type="button" className="cwd-selector__button" onClick={onClose}>
+          <Button type="button" className="cwd-selector__button" onClick={onClose}>
             {t('cwdSelector.cancel')}
-          </button>
-          <button type="button" className="cwd-selector__button cwd-selector__button--primary" onClick={handleApply}>
+          </Button>
+          <Button
+            type="button"
+            className="cwd-selector__button cwd-selector__button--primary"
+            onClick={handleApply}
+          >
             {mode === 'local' ? t('cwdSelector.applyLocal') : t('cwdSelector.applyRemote')}
-          </button>
+          </Button>
         </footer>
       </div>
     </div>

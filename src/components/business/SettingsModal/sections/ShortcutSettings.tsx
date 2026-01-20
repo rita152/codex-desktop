@@ -5,6 +5,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ShortcutSettings as ShortcutSettingsType } from '../../../../types/settings';
+import { Button } from '../../../ui/data-entry/Button';
 
 interface ShortcutSettingsProps {
     settings: ShortcutSettingsType;
@@ -84,7 +85,7 @@ function ShortcutItem({ label, description, value, onChange }: ShortcutItemProps
                 {description && <p className="settings-item__description">{description}</p>}
             </div>
             <div className="settings-item__control">
-                <button
+                <Button
                     type="button"
                     className={`settings-button ${isRecording ? 'settings-button--primary' : ''}`}
                     onClick={startRecording}
@@ -99,7 +100,7 @@ function ShortcutItem({ label, description, value, onChange }: ShortcutItemProps
                         ? (recordedKeys.length > 0 ? formatShortcut(recordedKeys.join('+')) : t('settings.shortcuts.pressKeys'))
                         : formatShortcut(value)
                     }
-                </button>
+                </Button>
             </div>
         </div>
     );

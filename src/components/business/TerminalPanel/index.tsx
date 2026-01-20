@@ -7,6 +7,7 @@ import { FitAddon } from '@xterm/addon-fit';
 
 import { terminalResize, terminalWrite } from '../../../api/terminal';
 import { TerminalIcon } from '../../ui/data-display/Icon';
+import { Button } from '../../ui/data-entry/Button';
 import { cn } from '../../../utils/cn';
 
 import '@xterm/xterm/css/xterm.css';
@@ -191,14 +192,14 @@ export function TerminalPanel({
           <TerminalIcon size={16} />
           <span>{t('terminalPanel.title')}</span>
         </div>
-        <button
+        <Button
           type="button"
           className="terminal-panel__close"
           onClick={onClose}
           aria-label={t('terminalPanel.close')}
         >
           {t('terminalPanel.close')}
-        </button>
+        </Button>
       </header>
       <div className="terminal-panel__body">
         {terminalId ? (

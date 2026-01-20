@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { RemoteServerManager } from '../RemoteServerManager';
 import { ServerIcon } from '../../ui/data-display/Icon';
+import { Button } from '../../ui/data-entry/Button';
 import { cn } from '../../../utils/cn';
 
 import './RemoteServerPanel.css';
@@ -40,14 +41,14 @@ export function RemoteServerPanel({
                     <ServerIcon size={16} />
                     <span>{t('chatSideActions.remote')}</span>
                 </div>
-                <button
+                <Button
                     type="button"
                     className="remote-server-panel__close"
                     onClick={onClose}
                     aria-label={t('settings.remoteServer.close')}
                 >
                     {t('settings.remoteServer.close')}
-                </button>
+                </Button>
             </header>
             <div className="remote-server-panel__body">
                 <RemoteServerManager />

@@ -7,6 +7,7 @@ import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
+import { Button } from '../../ui/data-entry/Button';
 import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { usePanelResize } from '../../../hooks/usePanelResize';
@@ -198,7 +199,7 @@ export function ChatContainer({
           <div className="chat-container__conversation">
             <div className="chat-container__session-header" data-tauri-drag-region>
               <div className="chat-container__session-meta">
-                <button
+                <Button
                   type="button"
                   className="chat-container__cwd-button"
                   onClick={onSelectCwd}
@@ -207,7 +208,7 @@ export function ChatContainer({
                 >
                   <FolderIcon size={12} />
                   <span className="chat-container__meta-value">{displayCwd}</span>
-                </button>
+                </Button>
               </div>
               {sessionNotice && (
                 <div

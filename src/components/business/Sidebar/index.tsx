@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { IconButton } from '../../ui/data-entry/IconButton';
+import { Button } from '../../ui/data-entry/Button';
 import {
   CommentIcon,
   SidebarLeftIcon,
@@ -147,22 +148,22 @@ export function Sidebar({
       </div>
 
       <div className="sidebar__footer">
-        <button
+        <Button
           type="button"
           className="sidebar__menu-button"
           onClick={onSettingsClick}
           aria-label={t('sidebar.settings')}
         >
           <SettingsIcon size={20} />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           className="sidebar__menu-button"
           onClick={onMenuClick}
           aria-label={t('sidebar.menu')}
         >
           <MenuIcon size={20} />
-        </button>
+        </Button>
       </div>
 
       <div

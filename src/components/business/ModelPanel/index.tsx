@@ -6,6 +6,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType, ApiProvider } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
+import { Button } from '../../ui/data-entry/Button';
+import { Input } from '../../ui/data-entry/Input';
+import { NativeSelect } from '../../ui/data-entry/NativeSelect';
 
 export interface ModelPanelProps {
     settings: ModelSettingsType;
@@ -33,7 +36,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                 </div>
                 <p className="settings-item__description">{t('settings.model.defaultModelDescription')}</p>
                 {availableModels.length > 0 ? (
-                    <select
+                    <NativeSelect
                         className="settings-select"
                         value={isCurrentModelAvailable ? settings.defaultModel : ''}
                         onChange={(e) => onUpdate({ defaultModel: e.target.value })}
@@ -48,7 +51,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                                 {model.label}
                             </option>
                         ))}
-                    </select>
+                    </NativeSelect>
                 ) : (
                     <div className="settings-item__placeholder">
                         <span className="settings-item__placeholder-icon">ℹ️</span>
@@ -63,7 +66,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                     <label className="settings-item__label">{t('settings.model.apiProvider')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.model.apiProviderDescription')}</p>
-                <select
+                <NativeSelect
                     className="settings-select"
                     value={settings.apiProvider}
                     onChange={(e) => onUpdate({ apiProvider: e.target.value as ApiProvider })}
@@ -71,7 +74,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                     <option value="openai">OpenAI</option>
                     <option value="azure">Azure OpenAI</option>
                     <option value="custom">{t('settings.model.customProvider')}</option>
-                </select>
+                </NativeSelect>
             </div>
 
             {/* Custom API Base URL */}
@@ -81,7 +84,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                         <label className="settings-item__label">{t('settings.model.apiBaseUrl')}</label>
                     </div>
                     <p className="settings-item__description">{t('settings.model.apiBaseUrlDescription')}</p>
-                    <input
+                    <Input
                         type="url"
                         className="settings-input"
                         value={settings.apiBaseUrl}
@@ -98,7 +101,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                 </div>
                 <p className="settings-item__description">{t('settings.model.apiKeyDescription')}</p>
                 <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-                    <input
+                    <Input
                         type={showApiKey ? 'text' : 'password'}
                         className="settings-input settings-input--password"
                         value={settings.apiKey}
@@ -106,13 +109,13 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                         placeholder="sk-..."
                         style={{ flex: 1 }}
                     />
-                    <button
+                    <Button
                         type="button"
                         className="settings-button"
                         onClick={() => setShowApiKey(!showApiKey)}
                     >
                         {showApiKey ? '🙈' : '👁️'}
-                    </button>
+                    </Button>
                 </div>
             </div>
 
@@ -122,7 +125,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                     <label className="settings-item__label">{t('settings.model.maxTokens')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.model.maxTokensDescription')}</p>
-                <input
+                <Input
                     type="number"
                     className="settings-input"
                     value={settings.maxTokens}
@@ -140,7 +143,7 @@ export function ModelPanel({ settings, onUpdate, availableModels = [] }: ModelPa
                 </div>
                 <p className="settings-item__description">{t('settings.model.temperatureDescription')}</p>
                 <div className="settings-slider-container">
-                    <input
+                    <Input
                         type="range"
                         className="settings-slider"
                         value={settings.temperature}

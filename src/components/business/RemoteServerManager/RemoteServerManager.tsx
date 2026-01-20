@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RemoteServerConfig, SshAuth } from '../../../types/remote';
 import { useRemoteServers } from '../../../hooks/useRemoteServers';
+import { Button } from '../../ui/data-entry/Button';
+import { Input } from '../../ui/data-entry/Input';
+import { NativeSelect } from '../../ui/data-entry/NativeSelect';
 import './RemoteServerManager.css';
 
 interface AddServerDialogProps {
@@ -67,9 +70,14 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
         <div className="add-server-dialog">
             <div className="add-server-header">
                 <h3>{t('settings.remoteServer.addTitle')}</h3>
-                <button className="dialog-close-button" onClick={onClose} aria-label={t('settings.remoteServer.close')}>
+                <Button
+                    type="button"
+                    className="dialog-close-button"
+                    onClick={onClose}
+                    aria-label={t('settings.remoteServer.close')}
+                >
                     ✕
-                </button>
+                </Button>
             </div>
 
             <form onSubmit={handleSubmit} className="server-form">
@@ -77,7 +85,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
 
                 <div className="form-group">
                     <label>{t('settings.remoteServer.serverNameRequired')}</label>
-                    <input
+                    <Input
                         type="text"
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -89,7 +97,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
                 <div className="form-row">
                     <div className="form-group">
                         <label>{t('settings.remoteServer.hostRequired')}</label>
-                        <input
+                        <Input
                             type="text"
                             value={formData.host}
                             onChange={(e) => setFormData({ ...formData, host: e.target.value })}
@@ -99,7 +107,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
                     </div>
                     <div className="form-group">
                         <label>{t('settings.remoteServer.port')}</label>
-                        <input
+                        <Input
                             type="number"
                             value={formData.port}
                             onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
@@ -111,7 +119,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
 
                 <div className="form-group">
                     <label>{t('settings.remoteServer.usernameRequired')}</label>
-                    <input
+                    <Input
                         type="text"
                         value={formData.username}
                         onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -122,7 +130,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
 
                 <div className="form-group">
                     <label>{t('settings.remoteServer.authMethod')}</label>
-                    <select
+                    <NativeSelect
                         value={formData.authType}
                         onChange={(e) =>
                             setFormData({ ...formData, authType: e.target.value as 'agent' | 'key_file' })
@@ -130,14 +138,14 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
                     >
                         <option value="agent">{t('settings.remoteServer.sshAgent')}</option>
                         <option value="key_file">{t('settings.remoteServer.sshKeyFile')}</option>
-                    </select>
+                    </NativeSelect>
                 </div>
 
                 {formData.authType === 'key_file' && (
                     <>
                         <div className="form-group">
                             <label>{t('settings.remoteServer.privateKeyPath')}</label>
-                            <input
+                            <Input
                                 type="text"
                                 value={formData.privateKeyPath}
                                 onChange={(e) => setFormData({ ...formData, privateKeyPath: e.target.value })}
@@ -146,7 +154,7 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
                         </div>
                         <div className="form-group">
                             <label>{t('settings.remoteServer.passphrase')}</label>
-                            <input
+                            <Input
                                 type="password"
                                 value={formData.passphrase}
                                 onChange={(e) => setFormData({ ...formData, passphrase: e.target.value })}
@@ -157,12 +165,12 @@ function AddServerDialog({ onClose, onAdd }: AddServerDialogProps) {
                 )}
 
                 <div className="form-actions">
-                    <button type="button" onClick={onClose} disabled={submitting}>
+                    <Button type="button" onClick={onClose} disabled={submitting}>
                         {t('settings.remoteServer.cancel')}
-                    </button>
-                    <button type="submit" className="primary" disabled={submitting}>
+                    </Button>
+                    <Button type="submit" className="primary" disabled={submitting}>
                         {submitting ? t('settings.remoteServer.adding') : t('settings.remoteServer.addServer')}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>
@@ -204,9 +212,9 @@ export function RemoteServerManager() {
         <div className="remote-server-manager">
             <div className="manager-header">
                 <h2>{t('settings.remoteServer.title')}</h2>
-                <button className="add-button" onClick={() => setShowAddDialog(true)}>
+                <Button type="button" className="add-button" onClick={() => setShowAddDialog(true)}>
                     {t('settings.remoteServer.addServerShort')}
-                </button>
+                </Button>
             </div>
 
             {error && <div className="error-message">{error}</div>}
@@ -233,16 +241,17 @@ export function RemoteServerManager() {
                             </div>
 
                             <div className="server-actions">
-                                <button
+                                <Button
+                                    type="button"
                                     onClick={() => handleTestConnection(server.id)}
                                     disabled={testingServer === server.id}
                                     className="test-button"
                                 >
                                     {testingServer === server.id ? t('settings.remoteServer.testing') : t('settings.remoteServer.testConnection')}
-                                </button>
-                                <button onClick={() => handleRemove(server.id)} className="remove-button">
+                                </Button>
+                                <Button type="button" onClick={() => handleRemove(server.id)} className="remove-button">
                                     {t('settings.remoteServer.remove')}
-                                </button>
+                                </Button>
                             </div>
 
                             {testResults[server.id] && (

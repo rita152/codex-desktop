@@ -16,6 +16,7 @@ import {
 } from './sections';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
+import { Button } from '../../ui/data-entry/Button';
 import { cn } from '../../../utils/cn';
 import type { SettingsSection } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -236,13 +237,13 @@ export function SettingsModal({ isOpen, onClose, initialSection, availableModels
                         </h1>
                         <div className="settings-modal__header-actions">
                             {renderSaveStatus()}
-                            <button
+                            <Button
                                 className="settings-modal__close"
                                 onClick={onClose}
                                 aria-label={t('settings.close')}
                             >
                                 ✕
-                            </button>
+                            </Button>
                         </div>
                     </header>
 

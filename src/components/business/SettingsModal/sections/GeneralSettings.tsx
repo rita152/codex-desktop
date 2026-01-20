@@ -4,6 +4,8 @@
 
 import { useTranslation } from 'react-i18next';
 import type { GeneralSettings as GeneralSettingsType, ThemeOption, LanguageOption, StartupBehavior } from '../../../../types/settings';
+import { Input } from '../../../ui/data-entry/Input';
+import { NativeSelect } from '../../../ui/data-entry/NativeSelect';
 
 interface GeneralSettingsProps {
     settings: GeneralSettingsType;
@@ -28,14 +30,14 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
                     <label className="settings-item__label">{t('settings.general.language')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.general.languageDescription')}</p>
-                <select
+                <NativeSelect
                     className="settings-select"
                     value={settings.language}
                     onChange={(e) => handleLanguageChange(e.target.value as LanguageOption)}
                 >
                     <option value="zh-CN">简体中文</option>
                     <option value="en-US">English</option>
-                </select>
+                </NativeSelect>
             </div>
 
             {/* Theme */}
@@ -47,7 +49,7 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
                 <div className="settings-radio-group">
                     {(['light', 'dark', 'system'] as ThemeOption[]).map((theme) => (
                         <label key={theme} className="settings-radio">
-                            <input
+                            <Input
                                 type="radio"
                                 className="settings-radio__input"
                                 name="theme"
@@ -69,7 +71,7 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
                     <label className="settings-item__label">{t('settings.general.startupBehavior')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.general.startupBehaviorDescription')}</p>
-                <select
+                <NativeSelect
                     className="settings-select"
                     value={settings.startupBehavior}
                     onChange={(e) => onUpdate({ startupBehavior: e.target.value as StartupBehavior })}
@@ -77,7 +79,7 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
                     <option value="last-session">{t('settings.general.startupLastSession')}</option>
                     <option value="new-session">{t('settings.general.startupNewSession')}</option>
                     <option value="welcome">{t('settings.general.startupWelcome')}</option>
-                </select>
+                </NativeSelect>
             </div>
         </div>
     );

@@ -6,6 +6,10 @@ import { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AdvancedSettings as AdvancedSettingsType, LogLevel, AppSettings } from '../../../../types/settings';
 import { DEFAULT_SETTINGS } from '../../../../types/settings';
+import { Button } from '../../../ui/data-entry/Button';
+import { Input } from '../../../ui/data-entry/Input';
+import { NativeSelect } from '../../../ui/data-entry/NativeSelect';
+import { Toggle } from '../../../ui/data-entry/Toggle';
 
 interface AdvancedSettingsProps {
     settings: AdvancedSettingsType;
@@ -13,27 +17,6 @@ interface AdvancedSettingsProps {
     onReset: () => Promise<void>;
     onImportSettings?: (settings: AppSettings) => void;
     onExportSettings?: () => AppSettings | null;
-}
-
-interface ToggleProps {
-    checked: boolean;
-    onChange: (checked: boolean) => void;
-    disabled?: boolean;
-}
-
-function Toggle({ checked, onChange, disabled }: ToggleProps) {
-    return (
-        <button
-            type="button"
-            className={`settings-toggle ${checked ? 'settings-toggle--active' : ''}`}
-            onClick={() => !disabled && onChange(!checked)}
-            disabled={disabled}
-            role="switch"
-            aria-checked={checked}
-        >
-            <span className="settings-toggle__knob" />
-        </button>
-    );
 }
 
 export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings, onExportSettings }: AdvancedSettingsProps) {
@@ -190,7 +173,7 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                     <label className="settings-item__label">{t('settings.advanced.logLevel')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.advanced.logLevelDescription')}</p>
-                <select
+                <NativeSelect
                     className="settings-select"
                     value={settings.logLevel}
                     onChange={(e) => onUpdate({ logLevel: e.target.value as LogLevel })}
@@ -199,7 +182,7 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                     <option value="warn">{t('settings.logLevel.warn')}</option>
                     <option value="info">{t('settings.logLevel.info')}</option>
                     <option value="debug">{t('settings.logLevel.debug')}</option>
-                </select>
+                </NativeSelect>
             </div>
 
             {/* Max Session History */}
@@ -208,7 +191,7 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                     <label className="settings-item__label">{t('settings.advanced.maxSessionHistory')}</label>
                 </div>
                 <p className="settings-item__description">{t('settings.advanced.maxSessionHistoryDescription')}</p>
-                <input
+                <Input
                     type="number"
                     className="settings-input"
                     value={settings.maxSessionHistory}
@@ -230,13 +213,13 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                     </div>
                     <p className="settings-item__description">{t('settings.advanced.exportSettingsDescription')}</p>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)' }}>
-                        <button
+                        <Button
                             type="button"
                             className="settings-button"
                             onClick={handleExportSettings}
                         >
                             📤 {t('settings.advanced.exportSettingsButton')}
-                        </button>
+                        </Button>
                         {exportSuccess && (
                             <span style={{ color: 'var(--color-success)', fontSize: '13px' }}>
                                 ✓ {t('settings.advanced.exportSuccess')}
@@ -251,20 +234,20 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                         <label className="settings-item__label">{t('settings.advanced.importSettings')}</label>
                     </div>
                     <p className="settings-item__description">{t('settings.advanced.importSettingsDescription')}</p>
-                    <input
+                    <Input
                         ref={fileInputRef}
                         type="file"
                         accept=".json"
                         style={{ display: 'none' }}
                         onChange={handleFileChange}
                     />
-                    <button
+                    <Button
                         type="button"
                         className="settings-button"
                         onClick={handleImportClick}
                     >
                         📥 {t('settings.advanced.importSettingsButton')}
-                    </button>
+                    </Button>
                     {importError && (
                         <p className="settings-item__error">{importError}</p>
                     )}
@@ -280,13 +263,13 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                         <label className="settings-item__label">{t('settings.advanced.clearCache')}</label>
                     </div>
                     <p className="settings-item__description">{t('settings.advanced.clearCacheDescription')}</p>
-                    <button
+                    <Button
                         type="button"
                         className="settings-button"
                         onClick={handleClearCache}
                     >
                         {t('settings.advanced.clearCacheButton')}
-                    </button>
+                    </Button>
                 </div>
 
                 <div className="settings-item">
@@ -300,35 +283,34 @@ export function AdvancedSettings({ settings, onUpdate, onReset, onImportSettings
                             <span style={{ fontSize: '13px', color: 'var(--color-warning)' }}>
                                 {t('settings.advanced.resetConfirmMessage')}
                             </span>
-                            <button
+                            <Button
                                 type="button"
                                 className="settings-button settings-button--danger"
                                 onClick={handleReset}
                                 disabled={isResetting}
                             >
                                 {isResetting ? t('settings.advanced.resetting') : t('settings.advanced.confirmReset')}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 type="button"
                                 className="settings-button"
                                 onClick={() => setShowResetConfirm(false)}
                                 disabled={isResetting}
                             >
                                 {t('settings.advanced.cancelReset')}
-                            </button>
+                            </Button>
                         </div>
                     ) : (
-                        <button
+                        <Button
                             type="button"
                             className="settings-button settings-button--danger"
                             onClick={() => setShowResetConfirm(true)}
                         >
                             {t('settings.advanced.resetSettingsButton')}
-                        </button>
+                        </Button>
                     )}
                 </div>
             </div>
         </div>
     );
 }
-
