@@ -18,7 +18,7 @@ const modelOptions: SelectOption[] = [
 ];
 
 const meta: Meta<typeof ModelPanel> = {
-  title: 'Business/ModelPanel',
+  title: 'Business/Settings/Model',
   component: ModelPanel,
   tags: ['autodocs'],
 };
