@@ -217,6 +217,23 @@
 .settings-nav__search {
   margin-top: var(--settings-nav-offset);
   flex-shrink: 0;
+  padding: 0 var(--spacing-sm);
+}
+
+.settings-nav__search .settings-input {
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-muted);
+  border-color: transparent;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.settings-nav__search .settings-input:focus {
+  background-color: var(--color-bg);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .settings-nav__no-results {
