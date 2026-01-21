@@ -8,15 +8,6 @@
   position: relative;
 }
 
-.chat-container__drag-region {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  z-index: 100;
-}
-
 .chat-container__sidebar {
   flex-shrink: 0;
   height: 100%;
@@ -57,7 +48,6 @@
   top: 11px;
   left: 80px;
   z-index: 1000;
-  -webkit-app-region: drag;
 }
 
 .chat-container__body {
@@ -100,10 +90,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-xs);
-  /* 确保 session-header 位于 drag-region (z-index: 100) 之上，以便子元素可点击 */
   position: relative;
   z-index: 101;
-  -webkit-app-region: drag;
 }
 
 .chat-container__session-title {
@@ -114,14 +102,21 @@
 
 .chat-container__session-meta {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
+  gap: 0;
   color: var(--color-text-secondary);
   font-size: 0.85rem;
   align-items: center;
   justify-content: center;
   width: 100%;
   margin-top: calc(-1 * var(--spacing-xs) - 16px);
+}
+
+.chat-container__drag-spacer {
+  flex: 1;
+  align-self: stretch;
+  min-height: 24px;
+  min-width: 20px;
 }
 
 .chat-container__cwd-button {
@@ -144,16 +139,10 @@
     color 0.15s ease,
     background-color 0.15s ease,
     transform 0.08s ease;
-  -webkit-app-region: no-drag;
 }
 
 .chat-container__cwd-button .icon {
   color: currentColor;
-}
-
-.chat-container__header .icon-button,
-.chat-container__session-header button {
-  -webkit-app-region: no-drag;
 }
 
 .chat-container__cwd-button:hover:not(:disabled) {

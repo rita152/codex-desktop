@@ -187,7 +187,7 @@ export function TerminalPanel({
           tabIndex={0}
         />
       )}
-      <header className="terminal-panel__header" data-tauri-drag-region>
+      <header className="terminal-panel__header">
         <div className="terminal-panel__title">
           <TerminalIcon size={16} />
           <span>{t('terminalPanel.title')}</span>

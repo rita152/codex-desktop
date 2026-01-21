@@ -36,7 +36,7 @@ export function RemoteServerPanel({
                     tabIndex={0}
                 />
             )}
-            <header className="remote-server-panel__header" data-tauri-drag-region>
+            <header className="remote-server-panel__header">
                 <div className="remote-server-panel__title">
                     <ServerIcon size={16} />
                     <span>{t('chatSideActions.remote')}</span>

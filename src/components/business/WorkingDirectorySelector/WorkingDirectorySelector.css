@@ -6,7 +6,6 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
-  -webkit-app-region: no-drag;
 }
 
 .cwd-selector__backdrop {

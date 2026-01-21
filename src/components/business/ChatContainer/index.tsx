@@ -40,10 +40,10 @@ const SidePanelFallback = ({
 }) => {
   const panelStyle: CSSProperties = visible
     ? {
-      flex: `0 0 var(${widthVar}, 360px)`,
-      minHeight: 0,
-      alignSelf: 'stretch',
-    }
+        flex: `0 0 var(${widthVar}, 360px)`,
+        minHeight: 0,
+        alignSelf: 'stretch',
+      }
     : { flex: '0 0 0', width: 0, minHeight: 0 };
 
   return (
@@ -139,9 +139,8 @@ export function ChatContainer({
 
   return (
     <div className={classNames}>
-      <div className="chat-container__drag-region" data-tauri-drag-region />
       {!sidebarVisible && onSidebarToggle && (
-        <div className="chat-container__header" data-tauri-drag-region>
+        <div className="chat-container__header">
           <IconButton
             icon={<SidebarRightIcon size={18} />}
             onClick={onSidebarToggle}
@@ -182,12 +181,18 @@ export function ChatContainer({
           terminalVisible && 'chat-container__main--terminal-open',
           remoteServerPanelVisible && 'chat-container__main--remote-open'
         )}
-        style={{
-          ...(terminalVisible && { '--terminal-panel-width': `${terminalWidth}px` }),
-          ...(remoteServerPanelVisible && { '--remote-server-panel-width': `${remoteServerPanelWidth}px` }),
-        } as CSSProperties}
+        style={
+          {
+            ...(terminalVisible && { '--terminal-panel-width': `${terminalWidth}px` }),
+            ...(remoteServerPanelVisible && {
+              '--remote-server-panel-width': `${remoteServerPanelWidth}px`,
+            }),
+          } as CSSProperties
+        }
       >
-        {!terminalVisible && !remoteServerPanelVisible && <ChatSideActions onAction={onSideAction} />}
+        {!terminalVisible && !remoteServerPanelVisible && (
+          <ChatSideActions onAction={onSideAction} />
+        )}
         <div
           className={cn(
             'chat-container__body',
@@ -197,8 +202,9 @@ export function ChatContainer({
           ref={bodyRef}
         >
           <div className="chat-container__conversation">
-            <div className="chat-container__session-header" data-tauri-drag-region>
+            <div className="chat-container__session-header">
               <div className="chat-container__session-meta">
+                <div className="chat-container__drag-spacer" data-tauri-drag-region />
                 <Button
                   type="button"
                   className="chat-container__cwd-button"
@@ -209,6 +215,7 @@ export function ChatContainer({
                   <FolderIcon size={12} />
                   <span className="chat-container__meta-value">{displayCwd}</span>
                 </Button>
+                <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
               {sessionNotice && (
                 <div

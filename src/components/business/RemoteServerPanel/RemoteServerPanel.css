@@ -62,7 +62,6 @@
     background: var(--color-bg-muted);
     color: var(--color-text);
     font-size: 0.85rem;
-    -webkit-app-region: drag;
 }
 
 .remote-server-panel__title {
@@ -85,7 +84,6 @@
     transition:
         color 0.2s ease,
         background-color 0.2s ease;
-    -webkit-app-region: no-drag;
 }
 
 .remote-server-panel__close:hover:not(:disabled),
