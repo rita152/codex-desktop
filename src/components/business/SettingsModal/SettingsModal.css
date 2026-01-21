@@ -180,7 +180,9 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--radius-md);
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .settings-modal__close:hover {
@@ -210,7 +212,18 @@
 .settings-nav__list {
   flex: 1;
   min-height: 0;
+}
+
+.settings-nav__search {
   margin-top: var(--settings-nav-offset);
+  flex-shrink: 0;
+}
+
+.settings-nav__no-results {
+  padding: var(--spacing-md);
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
 }
 
 .settings-nav__icon {
@@ -432,7 +445,9 @@
   border: 2px solid var(--color-border);
   border-radius: var(--radius-full);
   cursor: pointer;
-  transition: border-color 0.2s, background-color 0.2s;
+  transition:
+    border-color 0.2s,
+    background-color 0.2s;
 }
 
 .settings-radio__input:checked {
@@ -570,7 +585,9 @@
   color: var(--color-text-secondary);
   cursor: pointer;
   border-radius: var(--radius-sm);
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .settings-list__item-remove:hover {
