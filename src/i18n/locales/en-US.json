@@ -116,11 +116,6 @@
     "minutes_other": "{{count}} minutes",
     "minutes_seconds": "{{minutes}} min {{seconds}} sec"
   },
-  "remaining": {
-    "totalTokens": "Total tokens: {{count}}",
-    "remainingTokens": "Remaining tokens: {{count}}",
-    "ariaLabel": "Remaining {{count}}%"
-  },
   "select": {
     "placeholder": "Select"
   },

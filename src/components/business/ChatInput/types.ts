@@ -14,11 +14,6 @@ export interface ChatInputProps {
   selectedModel?: string;
   onModelChange?: (model: string) => void;
   slashCommands?: string[];
-  remainingPercent?: number;
-  remainingTokens?: number;
-  totalTokens?: number;
-  onRemainingClick?: () => void;
-  remainingDisabled?: boolean;
   width?: string | number;
   className?: string;
 }

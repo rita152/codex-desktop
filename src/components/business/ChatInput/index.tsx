@@ -7,7 +7,6 @@ import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
 import { Card } from '../../ui/data-display/Card';
 import { Button } from '../../ui/data-entry/Button';
-import { RemainingButton } from '../../ui/feedback/RemainingButton';
 import {
   PlusIcon,
   RobotIcon,
@@ -69,11 +68,6 @@ export function ChatInput({
   onAddClick,
   placeholder = '',
   disabled = false,
-  remainingPercent = 0,
-  remainingTokens,
-  totalTokens,
-  onRemainingClick,
-  remainingDisabled = false,
   agentOptions,
   selectedAgent = 'agent-full',
   onAgentChange,
@@ -91,9 +85,7 @@ export function ChatInput({
   const resolvedAgentOptions = useMemo(() => {
     const base = agentOptions ?? defaultAgentOptions;
     if (base.length === 0) return base;
-    const iconMap = new Map(
-      defaultAgentOptions.map((option) => [option.value, option.icon])
-    );
+    const iconMap = new Map(defaultAgentOptions.map((option) => [option.value, option.icon]));
     return base.map((option) => ({
       ...option,
       icon: resolveAgentIcon(option, iconMap),
@@ -276,14 +268,6 @@ export function ChatInput({
             variant="glass"
             dropdownTitle={t('chatInput.switchMode')}
             aria-label={t('chatInput.selectAgent')}
-          />
-          <RemainingButton
-            percent={remainingPercent}
-            remainingTokens={remainingTokens}
-            totalTokens={totalTokens}
-            onClick={onRemainingClick}
-            disabled={remainingDisabled || disabled}
-            className="chat-input__remaining-button"
           />
         </div>
         <div className="chat-input__toolbar-right">

@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import type { ChatSession } from '../components/business/Sidebar/types';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
-import type { SessionNotice, SessionTokenUsage } from './useSessionMeta';
+import type { SessionNotice } from './useSessionMeta';
 
 type OptionsCache = {
   options: SelectOption[] | null;
@@ -18,7 +18,6 @@ type UseSessionViewStateArgs = {
   sessionNotices: Record<string, SessionNotice>;
   sessionModeOptions: Record<string, SelectOption[]>;
   sessionModelOptions: Record<string, SelectOption[]>;
-  sessionTokenUsage: SessionTokenUsage;
   sessionSlashCommands: Record<string, string[]>;
   modelCache: OptionsCache;
   isGeneratingBySession: Record<string, boolean>;
@@ -36,7 +35,6 @@ export function useSessionViewState({
   sessionNotices,
   sessionModeOptions,
   sessionModelOptions,
-  sessionTokenUsage,
   sessionSlashCommands,
   modelCache,
   isGeneratingBySession,
@@ -67,15 +65,6 @@ export function useSessionViewState({
     if (fromSession?.length) return fromSession;
     return modelCache.options ?? [];
   }, [modelCache.options, selectedSessionId, sessionModelOptions]);
-  const activeTokenUsage = selectedSessionId ? sessionTokenUsage[selectedSessionId] : undefined;
-  const remainingPercent = activeTokenUsage?.percentRemaining ?? 0;
-  const totalTokens = activeTokenUsage?.totalTokens;
-  const remainingTokens =
-    activeTokenUsage?.contextWindow !== undefined &&
-    activeTokenUsage?.contextWindow !== null &&
-    typeof totalTokens === 'number'
-      ? Math.max(0, activeTokenUsage.contextWindow - totalTokens)
-      : undefined;
   const slashCommands = useMemo(() => {
     const fromSession = sessionSlashCommands[selectedSessionId] ?? [];
     const merged = new Set([...defaultSlashCommands, ...fromSession]);
@@ -95,9 +84,6 @@ export function useSessionViewState({
     sessionNotice,
     agentOptions,
     modelOptions,
-    remainingPercent,
-    remainingTokens,
-    totalTokens,
     slashCommands,
     isGenerating,
     cwdLocked,

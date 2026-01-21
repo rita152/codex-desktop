@@ -79,16 +79,6 @@ export interface ChatContainerProps {
   onSidebarToggle?: () => void;
   /** 打开设置面板回调 */
   onSettingsClick?: () => void;
-  /** 剩余上下文百分比 */
-  remainingPercent?: number;
-  /** 剩余 token 数 */
-  remainingTokens?: number;
-  /** 总 token 数 */
-  totalTokens?: number;
-  /** 剩余上下文按钮点击 */
-  onRemainingClick?: () => void;
-  /** 剩余上下文按钮禁用 */
-  remainingDisabled?: boolean;
   /** 欢迎内容（无消息时显示） */
   welcomeContent?: ReactNode;
   /** 主体容器引用 */

@@ -11,7 +11,7 @@ import type { ChatSession } from '../components/business/Sidebar/types';
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
 import type { ApprovalRequest } from '../types/codex';
 import type { Message } from '../components/business/ChatMessageList/types';
-import type { SessionNotice, SessionTokenUsage } from './useSessionMeta';
+import type { SessionNotice } from './useSessionMeta';
 
 type SessionMessages = Record<string, Message[]>;
 
@@ -27,7 +27,6 @@ type UseCodexSessionSyncArgs = {
   setSessions: Dispatch<SetStateAction<ChatSession[]>>;
   setSessionMessages: Dispatch<SetStateAction<SessionMessages>>;
   setIsGeneratingBySession: Dispatch<SetStateAction<Record<string, boolean>>>;
-  setSessionTokenUsage: Dispatch<SetStateAction<SessionTokenUsage>>;
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
   setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
   setSessionModelOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
@@ -47,7 +46,6 @@ export function useCodexSessionSync({
   setSessions,
   setSessionMessages,
   setIsGeneratingBySession,
-  setSessionTokenUsage,
   setSessionSlashCommands,
   setSessionModeOptions,
   setSessionModelOptions,
@@ -100,7 +98,6 @@ export function useCodexSessionSync({
     activeSessionIdRef,
     setSessionMessages,
     setIsGeneratingBySession,
-    setSessionTokenUsage,
     setSessionSlashCommands,
     setSessionModeOptions,
     setSessionModelOptions,

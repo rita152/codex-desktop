@@ -6,15 +6,6 @@ export interface SessionNotice {
   kind: 'error' | 'info';
   message: string;
 }
-export type SessionTokenUsage = Record<
-  string,
-  {
-    totalTokens: number;
-    lastTokens?: number;
-    contextWindow?: number | null;
-    percentRemaining?: number | null;
-  }
->;
 
 function omitSessionKeys<T extends Record<string, unknown>>(
   prev: T,
@@ -32,7 +23,6 @@ function omitSessionKeys<T extends Record<string, unknown>>(
 }
 
 export function useSessionMeta() {
-  const [sessionTokenUsage, setSessionTokenUsage] = useState<SessionTokenUsage>({});
   const [sessionNotices, setSessionNotices] = useState<Record<string, SessionNotice>>({});
   const [sessionSlashCommands, setSessionSlashCommands] = useState<Record<string, string[]>>({});
   const [sessionModelOptions, setSessionModelOptions] = useState<Record<string, SelectOption[]>>(
@@ -49,16 +39,13 @@ export function useSessionMeta() {
     setSessionSlashCommands((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
     setSessionModelOptions((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
     setSessionModeOptions((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
-    setSessionTokenUsage((prev) => omitSessionKeys(prev, sessionId, resetSessionId));
   }, []);
 
   return {
-    sessionTokenUsage,
     sessionNotices,
     sessionSlashCommands,
     sessionModelOptions,
     sessionModeOptions,
-    setSessionTokenUsage,
     setSessionNotices,
     setSessionSlashCommands,
     setSessionModelOptions,

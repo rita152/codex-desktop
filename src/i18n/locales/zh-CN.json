@@ -116,11 +116,6 @@
     "minutes_other": "{{count}} 分钟",
     "minutes_seconds": "{{minutes}} 分 {{seconds}} 秒"
   },
-  "remaining": {
-    "totalTokens": "总 token: {{count}}",
-    "remainingTokens": "剩余 token: {{count}}",
-    "ariaLabel": "剩余 {{count}}%"
-  },
   "select": {
     "placeholder": "请选择"
   },

@@ -103,11 +103,6 @@ export function ChatContainer({
   sidebarVisible = true,
   onSidebarToggle,
   onSettingsClick,
-  remainingPercent = 0,
-  remainingTokens,
-  totalTokens,
-  onRemainingClick,
-  remainingDisabled = false,
   welcomeContent,
   bodyRef: bodyRefProp,
   className = '',
@@ -254,11 +249,6 @@ export function ChatContainer({
                 modelOptions={modelOptions}
                 onModelChange={onModelChange}
                 slashCommands={slashCommands}
-                remainingPercent={remainingPercent}
-                remainingTokens={remainingTokens}
-                totalTokens={totalTokens}
-                onRemainingClick={onRemainingClick}
-                remainingDisabled={remainingDisabled}
                 className="chat-container__input"
               />
             </div>

@@ -23,10 +23,7 @@ import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { useSessionViewState } from './hooks/useSessionViewState';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
-import {
-  formatError,
-  newMessageId,
-} from './utils/codexParsing';
+import { formatError, newMessageId } from './utils/codexParsing';
 import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
 import { terminalKill } from './api/terminal';
@@ -52,12 +49,10 @@ export function App() {
   } = useSessionPersistence();
 
   const {
-    sessionTokenUsage,
     sessionNotices,
     sessionSlashCommands,
     sessionModelOptions,
     sessionModeOptions,
-    setSessionTokenUsage,
     setSessionNotices,
     setSessionSlashCommands,
     setSessionModelOptions,
@@ -120,7 +115,6 @@ export function App() {
       setSessions,
       setSessionMessages,
       setIsGeneratingBySession,
-      setSessionTokenUsage,
       setSessionSlashCommands,
       setSessionModeOptions,
       setSessionModelOptions,
@@ -148,9 +142,6 @@ export function App() {
     sessionNotice,
     agentOptions,
     modelOptions,
-    remainingPercent,
-    remainingTokens,
-    totalTokens,
     slashCommands,
     isGenerating,
     cwdLocked,
@@ -163,7 +154,6 @@ export function App() {
     sessionNotices,
     sessionModeOptions,
     sessionModelOptions,
-    sessionTokenUsage,
     sessionSlashCommands,
     modelCache,
     isGeneratingBySession,
@@ -606,9 +596,6 @@ export function App() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
-        remainingPercent={remainingPercent}
-        remainingTokens={remainingTokens}
-        totalTokens={totalTokens}
         inputValue={draftMessage}
         onInputChange={handleDraftChange}
         agentOptions={agentOptions}

@@ -18,19 +18,9 @@ import { useLatest } from './useLatest';
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
-import type { ApprovalRequest, TokenUsageEvent } from '../types/codex';
+import type { ApprovalRequest } from '../types/codex';
 
 type SessionMessages = Record<string, Message[]>;
-
-type SessionTokenUsage = Record<
-  string,
-  {
-    totalTokens: number;
-    lastTokens?: number;
-    contextWindow?: number | null;
-    percentRemaining?: number | null;
-  }
->;
 
 type UnlistenFn = () => void;
 
@@ -80,7 +70,6 @@ export interface UseCodexEventsParams {
   activeSessionIdRef: RefObject<string>;
   setSessionMessages: Dispatch<SetStateAction<SessionMessages>>;
   setIsGeneratingBySession: Dispatch<SetStateAction<Record<string, boolean>>>;
-  setSessionTokenUsage: Dispatch<SetStateAction<SessionTokenUsage>>;
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
   setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
   setSessionModelOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
@@ -99,7 +88,6 @@ export function useCodexEvents({
   activeSessionIdRef,
   setSessionMessages,
   setIsGeneratingBySession,
-  setSessionTokenUsage,
   setSessionSlashCommands,
   setSessionModeOptions,
   setSessionModelOptions,
@@ -112,7 +100,6 @@ export function useCodexEvents({
   const resolveChatSessionIdRef = useLatest(resolveChatSessionId);
   const setSessionMessagesRef = useLatest(setSessionMessages);
   const setIsGeneratingBySessionRef = useLatest(setIsGeneratingBySession);
-  const setSessionTokenUsageRef = useLatest(setSessionTokenUsage);
   const setSessionSlashCommandsRef = useLatest(setSessionSlashCommands);
   const setSessionModeOptionsRef = useLatest(setSessionModeOptions);
   const setSessionModelOptionsRef = useLatest(setSessionModelOptions);
@@ -161,20 +148,6 @@ export function useCodexEvents({
         if (!sessionId) return;
         finalizeStreamingMessages(sessionId);
         setIsGeneratingBySessionRef.current((prev) => ({ ...prev, [sessionId]: false }));
-      }),
-      listen<TokenUsageEvent>('codex:token-usage', (event) => {
-        if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
-        if (!sessionId) return;
-        setSessionTokenUsageRef.current((prev) => ({
-          ...prev,
-          [sessionId]: {
-            totalTokens: event.payload.totalTokens,
-            lastTokens: event.payload.lastTokens,
-            contextWindow: event.payload.contextWindow,
-            percentRemaining: event.payload.percentRemaining,
-          },
-        }));
       }),
       listen<{ error: string }>('codex:error', (event) => {
         if (!isListenerActive()) return;
