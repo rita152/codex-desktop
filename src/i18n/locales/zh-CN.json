@@ -180,7 +180,7 @@
       "advanced": "高级"
     },
     "remote": {
-      "description": "配置远程服务器连接，支持通过 SSH 在远程主机上运行 Codex"
+      "description": "远程服务器从 ~/.ssh/config 读取，请在该文件中管理配置"
     },
     "remoteServer": {
       "title": "远程服务器",
@@ -203,8 +203,8 @@
       "adding": "添加中...",
       "removeConfirm": "确定要删除此服务器吗？",
       "loading": "正在加载服务器...",
-      "empty": "尚未配置远程服务器",
-      "emptyHint": "添加服务器以连接远程开发环境",
+      "empty": "未在 ~/.ssh/config 中发现可用的 Host",
+      "emptyHint": "请在 ~/.ssh/config 中添加 Host 配置后重试",
       "authType": "认证方式",
       "testing": "测试中...",
       "testConnection": "测试连接",

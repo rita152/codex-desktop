@@ -180,7 +180,7 @@
       "advanced": "Advanced"
     },
     "remote": {
-      "description": "Configure remote server connections. Run Codex on remote hosts via SSH."
+      "description": "Remote servers are loaded from ~/.ssh/config. Edit that file to manage entries."
     },
     "remoteServer": {
       "title": "Remote Servers",
@@ -203,8 +203,8 @@
       "adding": "Adding...",
       "removeConfirm": "Are you sure you want to remove this server?",
       "loading": "Loading servers...",
-      "empty": "No remote servers configured",
-      "emptyHint": "Add a server to connect to remote development environments",
+      "empty": "No hosts found in ~/.ssh/config",
+      "emptyHint": "Add Host entries in ~/.ssh/config to connect to remote environments",
       "authType": "Auth",
       "testing": "Testing...",
       "testConnection": "Test Connection",
