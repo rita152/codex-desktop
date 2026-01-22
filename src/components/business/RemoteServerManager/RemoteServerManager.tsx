@@ -5,7 +5,11 @@ import { useRemoteServers } from '../../../hooks/useRemoteServers';
 import { Button } from '../../ui/data-entry/Button';
 import './RemoteServerManager.css';
 
-export function RemoteServerManager() {
+type RemoteServerManagerProps = {
+  hideTitle?: boolean;
+};
+
+export function RemoteServerManager({ hideTitle = false }: RemoteServerManagerProps) {
   const { t } = useTranslation();
   const { servers, loading, error, testConnection } = useRemoteServers();
   const [testingServer, setTestingServer] = useState<string | null>(null);
@@ -33,9 +37,11 @@ export function RemoteServerManager() {
 
   return (
     <div className="remote-server-manager">
-      <div className="manager-header">
-        <h2>{t('settings.remoteServer.title')}</h2>
-      </div>
+      {!hideTitle && (
+        <div className="manager-header">
+          <h2>{t('settings.remoteServer.title')}</h2>
+        </div>
+      )}
 
       {error && <div className="error-message">{error}</div>}
 
