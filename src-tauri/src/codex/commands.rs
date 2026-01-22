@@ -1,7 +1,10 @@
 //! Tauri command handlers for Codex interactions.
 
 use crate::codex::service::CodexService;
-use crate::codex::types::{ApprovalDecision, InitializeResult, NewSessionResult, PromptResult};
+use crate::codex::types::{
+    ApprovalDecision, CodexCliConfigInfo, InitializeResult, NewSessionResult, PromptResult,
+};
+use crate::codex_dev::config::load_codex_cli_config;
 use std::path::PathBuf;
 use std::sync::OnceLock;
 use tauri::{AppHandle, State};
@@ -47,6 +50,45 @@ pub async fn codex_auth(
     svc.authenticate(method, api_key)
         .await
         .map_err(|e| e.to_string())
+}
+
+/// Load the local Codex CLI configuration summary.
+#[tauri::command]
+pub async fn codex_load_cli_config(app: AppHandle) -> Result<CodexCliConfigInfo, String> {
+    let codex_home = crate::codex::binary::CodexAcpBinary::default_codex_home(Some(&app))
+        .map_err(|e| e.to_string())?;
+    let config_path = codex_home.join("config.toml");
+    let auth_path = codex_home.join("auth.json");
+    let config_found = config_path.is_file();
+    let auth_file_found = auth_path.is_file();
+    let config = if config_found {
+        Some(load_codex_cli_config(&codex_home).map_err(|e| e.to_string())?)
+    } else {
+        None
+    };
+
+    Ok(CodexCliConfigInfo {
+        codex_home: codex_home.display().to_string(),
+        config_path: config_path.display().to_string(),
+        config_found,
+        model_provider: config.as_ref().and_then(|cfg| cfg.model_provider.clone()),
+        base_url: config.as_ref().and_then(|cfg| cfg.base_url.clone()),
+        env_key: config.as_ref().and_then(|cfg| cfg.env_key.clone()),
+        auth_file_found,
+    })
+}
+
+/// Override an environment variable for codex-acp.
+#[tauri::command]
+pub async fn codex_set_env(
+    state: State<'_, CodexManager>,
+    key: String,
+    value: String,
+) -> Result<(), String> {
+    let svc = state
+        .get()
+        .ok_or_else(|| "codex service not initialized; call codex_init first".to_string())?;
+    svc.set_env(key, value).await.map_err(|e| e.to_string())
 }
 
 /// Create a new ACP session rooted at the provided working directory.

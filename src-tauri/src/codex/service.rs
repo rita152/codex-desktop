@@ -12,7 +12,7 @@ use agent_client_protocol::{
     SetSessionConfigOptionRequest, TextContent,
 };
 use anyhow::{anyhow, Context, Result};
-use std::{path::PathBuf, sync::Arc, time::Instant};
+use std::{collections::BTreeMap, path::PathBuf, sync::Arc, time::Instant};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::{mpsc, oneshot};
 
@@ -167,6 +167,21 @@ impl CodexService {
             .map_err(|_| anyhow!("codex service worker dropped response"))?
     }
 
+    /// Override an environment variable for the codex-acp process.
+    pub async fn set_env(&self, key: String, value: String) -> Result<()> {
+        let (reply_tx, reply_rx) = oneshot::channel();
+        self.tx
+            .send(ServiceCommand::SetEnv {
+                key,
+                value,
+                reply: reply_tx,
+            })
+            .map_err(|_| anyhow!("codex service worker stopped"))?;
+        reply_rx
+            .await
+            .map_err(|_| anyhow!("codex service worker dropped response"))?
+    }
+
     /// Respond to a pending approval request.
     pub fn respond_permission(
         &self,
@@ -208,6 +223,11 @@ enum ServiceCommand {
         value_id: String,
         reply: oneshot::Sender<Result<()>>,
     },
+    SetEnv {
+        key: String,
+        value: String,
+        reply: oneshot::Sender<Result<()>>,
+    },
 }
 
 struct WorkerState {
@@ -218,6 +238,7 @@ struct WorkerState {
     initialized: bool,
     last_init: Option<InitializeResult>,
     api_key_env: Option<(String, String)>,
+    env_overrides: BTreeMap<String, String>,
     // Remote session support
     remote_config: Option<crate::remote::RemoteSessionConfig>,
     remote_servers: std::collections::HashMap<String, crate::remote::RemoteServerConfig>,
@@ -258,7 +279,11 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
     } else {
         // Local mode: spawn local codex-acp process
         let mut cfg = CodexProcessConfig::default();
-        
+
+        for (key, value) in state.env_overrides.iter() {
+            cfg.set_env(key.as_str(), value.as_str());
+        }
+
         if let Some((key, value)) = state.api_key_env.as_ref() {
             cfg.set_env(key.as_str(), value.as_str());
         }
@@ -495,6 +520,7 @@ async fn worker_loop(
         initialized: false,
         last_init: None,
         api_key_env: None,
+        env_overrides: BTreeMap::new(),
         remote_config: None,
         remote_servers,
     };
@@ -662,6 +688,18 @@ async fn worker_loop(
                 );
 
                 let _ = reply.send(result);
+            }
+            ServiceCommand::SetEnv { key, value, reply } => {
+                let existing = state.env_overrides.get(&key).cloned();
+                if existing.as_deref() != Some(&value) {
+                    state.env_overrides.insert(key, value);
+                    if let Some(conn) = state.conn.take() {
+                        let _ = conn.kill().await;
+                    }
+                    state.initialized = false;
+                    state.last_init = None;
+                }
+                let _ = reply.send(Ok(()));
             }
         }
     }

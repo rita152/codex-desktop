@@ -63,6 +63,16 @@ export interface PromptResult {
   stopReason: unknown;
 }
 
+export interface CodexCliConfigInfo {
+  codexHome: string;
+  configPath: string;
+  configFound: boolean;
+  modelProvider?: string;
+  baseUrl?: string;
+  envKey?: string;
+  authFileFound: boolean;
+}
+
 export interface TokenUsageEvent {
   sessionId: string;
   totalTokens: number;

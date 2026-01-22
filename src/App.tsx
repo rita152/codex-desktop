@@ -30,6 +30,7 @@ import { terminalKill } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
+import type { SelectOption } from './components/ui/data-entry/Select/types';
 
 import './App.css';
 
@@ -241,6 +242,17 @@ export function App() {
       devDebug('[codex] init failed', err);
     });
   }, []);
+
+  const handleModelOptionsFetched = useCallback(
+    ({ options, currentId }: { options: SelectOption[]; currentId?: string }) => {
+      applyModelOptions({
+        options,
+        currentId,
+        fallbackCurrentId: DEFAULT_MODEL_ID,
+      });
+    },
+    [applyModelOptions]
+  );
 
   const [cwdSelectorOpen, setCwdSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -635,6 +647,7 @@ export function App() {
         isOpen={settingsOpen}
         onClose={handleSettingsClose}
         availableModels={modelOptions}
+        onModelOptionsResolved={handleModelOptionsFetched}
       />
     </>
   );

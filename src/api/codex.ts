@@ -2,6 +2,7 @@ import { invoke } from '@tauri-apps/api/core';
 
 import type {
   ApprovalDecision,
+  CodexCliConfigInfo,
   NewSessionResult,
   PromptResult,
   InitializeResult,
@@ -56,4 +57,19 @@ export async function setSessionMode(sessionId: string, modeId: string): Promise
     modeId,
     mode_id: modeId,
   });
+}
+
+export async function authCodex(method: string, apiKey?: string): Promise<void> {
+  await invoke<void>('codex_auth', {
+    method,
+    api_key: apiKey ?? null,
+  });
+}
+
+export async function loadCodexCliConfig(): Promise<CodexCliConfigInfo> {
+  return invoke<CodexCliConfigInfo>('codex_load_cli_config');
+}
+
+export async function setCodexEnv(key: string, value: string): Promise<void> {
+  await invoke<void>('codex_set_env', { key, value });
 }

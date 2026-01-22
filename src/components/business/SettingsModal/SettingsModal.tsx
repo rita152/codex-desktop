@@ -6,6 +6,7 @@ import { useEffect, useCallback, useId, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
+import { useModelFetch } from '../../../hooks/useModelFetch';
 import {
   GeneralSettings,
   ModelSettings,
@@ -28,6 +29,7 @@ interface SettingsModalProps {
   initialSection?: SettingsSection;
   /** 动态获取的可用模型列表 */
   availableModels?: SelectOption[];
+  onModelOptionsResolved?: (payload: { options: SelectOption[]; currentId?: string }) => void;
 }
 
 // Navigation items configuration
@@ -42,7 +44,7 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     id: 'model',
     icon: '🤖',
     labelKey: 'settings.sections.model',
-    keywords: ['api', 'token', 'temperature', 'openai', '模型', '温度'],
+    keywords: ['api', 'token', 'openai', '模型'],
   },
   {
     id: 'approval',
@@ -79,6 +81,7 @@ export function SettingsModal({
   onClose,
   initialSection,
   availableModels,
+  onModelOptionsResolved,
 }: SettingsModalProps) {
   const { t } = useTranslation();
   const generatedId = useId();
@@ -94,6 +97,26 @@ export function SettingsModal({
     resetSettings,
     saveStatus,
   } = useSettings();
+  const { config, loadingConfig, configError, fetching, fetchError, lastFetchedAt, fetchModels } =
+    useModelFetch();
+
+  const fetchStatus = useMemo(
+    () => ({
+      loading: fetching,
+      error: fetchError ?? null,
+      lastUpdated: lastFetchedAt ? lastFetchedAt.getTime() : null,
+    }),
+    [fetchError, fetching, lastFetchedAt]
+  );
+
+  const handleFetchModels = useCallback(async () => {
+    try {
+      const result = await fetchModels({ apiKey: settings.model.apiKey || undefined });
+      onModelOptionsResolved?.(result);
+    } catch {
+      // handled by hook state
+    }
+  }, [fetchModels, onModelOptionsResolved, settings.model.apiKey]);
 
   const {
     width: sidebarWidth,
@@ -199,6 +222,11 @@ export function SettingsModal({
             settings={settings.model}
             onUpdate={(values) => updateSettings('model', values)}
             availableModels={availableModels}
+            config={config}
+            loadingConfig={loadingConfig}
+            configError={configError}
+            onFetchModels={handleFetchModels}
+            fetchStatus={fetchStatus}
           />
         );
       case 'approval':

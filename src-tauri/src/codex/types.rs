@@ -68,19 +68,33 @@ pub struct PromptResult {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+/// JSON-friendly Codex CLI config summary.
+pub struct CodexCliConfigInfo {
+    /// Resolved Codex home directory.
+    pub codex_home: String,
+    /// Resolved config.toml path.
+    pub config_path: String,
+    /// Whether config.toml exists.
+    pub config_found: bool,
+    /// Selected model provider id.
+    pub model_provider: Option<String>,
+    /// Provider base URL.
+    pub base_url: Option<String>,
+    /// Provider env key name.
+    pub env_key: Option<String>,
+    /// Whether auth.json exists.
+    pub auth_file_found: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 /// Union of frontend event payloads emitted by the backend.
 pub enum CodexEventPayload {
     /// Assistant/user message chunk update.
-    MessageChunk {
-        session_id: String,
-        text: String,
-    },
+    MessageChunk { session_id: String, text: String },
     /// Assistant thought chunk update.
-    ThoughtChunk {
-        session_id: String,
-        text: String,
-    },
+    ThoughtChunk { session_id: String, text: String },
     /// New tool call information.
     ToolCall {
         session_id: String,
@@ -92,10 +106,7 @@ pub enum CodexEventPayload {
         update: ToolCallUpdate,
     },
     /// Plan update emitted by the agent.
-    Plan {
-        session_id: String,
-        plan: Plan,
-    },
+    Plan { session_id: String, plan: Plan },
     /// Available command list update.
     AvailableCommandsUpdate {
         session_id: String,

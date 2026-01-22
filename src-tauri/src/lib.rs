@@ -65,6 +65,8 @@ pub fn run() {
             codex_dev_prompt_once,
             codex::commands::codex_init,
             codex::commands::codex_auth,
+            codex::commands::codex_load_cli_config,
+            codex::commands::codex_set_env,
             codex::commands::codex_new_session,
             codex::commands::codex_prompt,
             codex::commands::codex_cancel,
