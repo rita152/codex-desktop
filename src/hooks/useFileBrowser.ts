@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { usePanelResize } from './usePanelResize';
 
@@ -31,11 +31,7 @@ export function useFileBrowser({
         setFileBrowserVisible((prev) => !prev);
     }, []);
 
-    useEffect(() => {
-        if (!fileBrowserVisible) {
-            setFileBrowserWidth(DEFAULT_FILE_BROWSER_WIDTH);
-        }
-    }, [fileBrowserVisible]);
+
 
     return {
         fileBrowserVisible,
