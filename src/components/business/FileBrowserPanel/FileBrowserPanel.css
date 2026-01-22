@@ -1,0 +1,252 @@
+/* File Browser Panel - matching RemoteServerPanel/TerminalPanel style */
+
+.file-browser-panel {
+    flex: 0 0 var(--file-browser-panel-width, 280px);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 101;
+    background: var(--color-bg-elevated);
+    border: var(--border-width-thin) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    min-height: 0;
+    align-self: stretch;
+}
+
+.file-browser-panel__resize-handle {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 2;
+}
+
+.file-browser-panel__resize-handle::before {
+    content: '';
+    position: absolute;
+    top: var(--spacing-lg);
+    bottom: var(--spacing-lg);
+    right: 2px;
+    width: 2px;
+    background: var(--color-border);
+    border-radius: 999px;
+    opacity: 0;
+    transition: opacity 0.15s ease, background-color 0.15s ease;
+}
+
+.file-browser-panel__resize-handle:hover::before,
+.file-browser-panel__resize-handle:focus-visible::before {
+    background: var(--color-border-hover);
+    opacity: 0.9;
+}
+
+.file-browser-panel--hidden {
+    opacity: 0;
+    pointer-events: none;
+    flex: 0 0 0;
+    width: 0;
+    border-width: 0;
+    box-shadow: none;
+}
+
+.file-browser-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: var(--border-width-thin) solid var(--color-border);
+    background: var(--color-bg-muted);
+    color: var(--color-text);
+    font-size: 0.85rem;
+}
+
+.file-browser-panel__title {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    font-weight: 600;
+}
+
+.file-browser-panel__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.file-browser-panel__close {
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.file-browser-panel__close:hover:not(:disabled),
+.file-browser-panel__close:focus-visible {
+    color: var(--color-text);
+    background-color: var(--color-bg-subtle);
+}
+
+.file-browser-panel__close:focus-visible {
+    outline: 2px solid var(--color-border-hover);
+    outline-offset: 2px;
+}
+
+.file-browser-panel__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--color-bg);
+    min-height: 0;
+    overflow: hidden;
+}
+
+.file-browser-panel__path-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--color-bg-muted);
+    border-bottom: var(--border-width-thin) solid var(--color-border);
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    overflow: hidden;
+}
+
+.file-browser-panel__path-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+}
+
+.file-browser-panel__nav-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.file-browser-panel__nav-btn:hover:not(:disabled) {
+    background: var(--color-bg-subtle);
+    color: var(--color-text);
+}
+
+.file-browser-panel__nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.file-browser-panel__list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--spacing-xs) 0;
+}
+
+.file-browser-panel__empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    padding: var(--spacing-md);
+    text-align: center;
+}
+
+.file-browser-panel__loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-text-secondary);
+    font-size: 0.85rem;
+    gap: var(--spacing-xs);
+}
+
+.file-browser-panel__error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--color-error);
+    font-size: 0.85rem;
+    padding: var(--spacing-md);
+    text-align: center;
+}
+
+.file-browser-panel__item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    cursor: pointer;
+    transition: background-color 0.1s ease;
+    font-size: 0.8rem;
+    color: var(--color-text);
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+}
+
+.file-browser-panel__item:hover {
+    background: var(--color-bg-subtle);
+}
+
+.file-browser-panel__item:focus-visible {
+    outline: none;
+    background: var(--color-bg-subtle);
+    box-shadow: inset 0 0 0 2px var(--color-border-hover);
+}
+
+.file-browser-panel__item-icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-secondary);
+}
+
+.file-browser-panel__item--dir .file-browser-panel__item-icon {
+    color: var(--color-primary);
+}
+
+.file-browser-panel__item-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-browser-panel__item-size {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    font-family: var(--font-mono);
+}
+
+@media (max-width: 900px) {
+    .file-browser-panel {
+        flex: 0 0 200px;
+        width: 100%;
+    }
+}

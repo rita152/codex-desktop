@@ -36,9 +36,18 @@
   "chatSideActions": {
     "label": "快捷操作",
     "files": "文件",
-    "tools": "工具",
+    "explorer": "文件浏览器",
     "terminal": "终端",
     "remote": "远程服务器"
+  },
+  "fileBrowser": {
+    "title": "文件浏览器",
+    "close": "关闭",
+    "loading": "加载中...",
+    "empty": "空目录",
+    "navigateUp": "上级目录",
+    "refresh": "刷新",
+    "resizePanel": "调整浏览器宽度"
   },
   "terminalPanel": {
     "title": "终端",

@@ -183,3 +183,91 @@ pub async fn codex_set_model(
 ) -> Result<(), String> {
     codex_set_config_option(state, session_id, "model".to_string(), model_id).await
 }
+
+/// Entry in a local directory listing.
+#[derive(serde::Serialize)]
+pub struct LocalDirectoryEntry {
+    /// File or directory name
+    pub name: String,
+    /// Absolute path
+    pub path: String,
+    /// true if this entry is a directory
+    pub is_dir: bool,
+    /// File size in bytes (0 for directories)
+    pub size: u64,
+    /// Last modified timestamp in milliseconds since epoch
+    pub modified: Option<u64>,
+}
+
+/// Result of listing a local directory.
+#[derive(serde::Serialize)]
+pub struct LocalDirectoryListing {
+    /// The path that was listed
+    pub path: String,
+    /// Entries in the directory
+    pub entries: Vec<LocalDirectoryEntry>,
+}
+
+/// List files and directories in a local path.
+#[tauri::command]
+pub async fn list_local_directory(path: String) -> Result<LocalDirectoryListing, String> {
+    use std::fs;
+    use std::time::UNIX_EPOCH;
+
+    let dir_path = PathBuf::from(&path);
+    if !dir_path.exists() {
+        return Err(format!("Path does not exist: {}", path));
+    }
+    if !dir_path.is_dir() {
+        return Err(format!("Path is not a directory: {}", path));
+    }
+
+    let mut entries = Vec::new();
+    let read_result = fs::read_dir(&dir_path).map_err(|e| format!("Failed to read directory: {}", e))?;
+
+    for entry in read_result {
+        let entry = match entry {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        
+        // Skip hidden files (starting with .)
+        if file_name.starts_with('.') {
+            continue;
+        }
+
+        let file_path = entry.path();
+        let metadata = match entry.metadata() {
+            Ok(m) => m,
+            Err(_) => continue,
+        };
+
+        let is_dir = metadata.is_dir();
+        let size = if is_dir { 0 } else { metadata.len() };
+        let modified = metadata
+            .modified()
+            .ok()
+            .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+            .map(|d| d.as_millis() as u64);
+
+        entries.push(LocalDirectoryEntry {
+            name: file_name,
+            path: file_path.to_string_lossy().to_string(),
+            is_dir,
+            size,
+            modified,
+        });
+    }
+
+    // Sort: directories first, then by name
+    entries.sort_by(|a, b| {
+        match (a.is_dir, b.is_dir) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        }
+    });
+
+    Ok(LocalDirectoryListing { path, entries })
+}

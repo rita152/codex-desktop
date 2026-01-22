@@ -33,6 +33,10 @@ const QueueIndicator = lazy(() =>
   import('../QueueIndicator').then((module) => ({ default: module.QueueIndicator }))
 );
 
+const FileBrowserPanel = lazy(() =>
+  import('../FileBrowserPanel').then((module) => ({ default: module.FileBrowserPanel }))
+);
+
 const SidePanelFallback = ({
   visible = false,
   className,
@@ -101,6 +105,11 @@ export function ChatContainer({
   remoteServerPanelWidth = 360,
   onRemoteServerPanelClose,
   onRemoteServerPanelResizeStart,
+  fileBrowserVisible = false,
+  fileBrowserWidth = 280,
+  onFileBrowserClose,
+  onFileBrowserResizeStart,
+  onFileSelect,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -190,17 +199,21 @@ export function ChatContainer({
             ...(remoteServerPanelVisible && {
               '--remote-server-panel-width': `${remoteServerPanelWidth}px`,
             }),
+            ...(fileBrowserVisible && {
+              '--file-browser-panel-width': `${fileBrowserWidth}px`,
+            }),
           } as CSSProperties
         }
       >
-        {!terminalVisible && !remoteServerPanelVisible && (
+        {!terminalVisible && !remoteServerPanelVisible && !fileBrowserVisible && (
           <ChatSideActions onAction={onSideAction} />
         )}
         <div
           className={cn(
             'chat-container__body',
             terminalVisible && 'chat-container__body--terminal-open',
-            remoteServerPanelVisible && 'chat-container__body--remote-open'
+            remoteServerPanelVisible && 'chat-container__body--remote-open',
+            fileBrowserVisible && 'chat-container__body--file-browser-open'
           )}
           ref={bodyRef}
         >
@@ -303,6 +316,25 @@ export function ChatContainer({
                 visible={remoteServerPanelVisible}
                 onClose={onRemoteServerPanelClose}
                 onResizeStart={onRemoteServerPanelResizeStart}
+              />
+            </Suspense>
+          )}
+          {fileBrowserVisible && (
+            <Suspense
+              fallback={
+                <SidePanelFallback
+                  visible={fileBrowserVisible}
+                  className="file-browser-panel"
+                  widthVar="--file-browser-panel-width"
+                />
+              }
+            >
+              <FileBrowserPanel
+                visible={fileBrowserVisible}
+                cwd={sessionCwd || ''}
+                onClose={onFileBrowserClose}
+                onResizeStart={onFileBrowserResizeStart}
+                onFileSelect={onFileSelect}
               />
             </Suspense>
           )}

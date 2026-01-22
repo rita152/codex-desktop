@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { IconButton } from '../../ui/data-entry/IconButton';
-import { CodeIcon, ServerIcon, SlidersIcon, TerminalIcon } from '../../ui/data-display/Icon';
+import { CodeIcon, FolderIcon, ServerIcon, TerminalIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 
 import './ChatSideActions.css';
@@ -24,7 +24,7 @@ export function ChatSideActions({ className = '', onAction }: ChatSideActionsPro
   const actions = useMemo<ChatSideAction[]>(
     () => [
       { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={18} /> },
-      { id: 'tools', label: t('chatSideActions.tools'), icon: <SlidersIcon size={18} /> },
+      { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={18} /> },
       { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={18} /> },
       { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={18} /> },
     ],

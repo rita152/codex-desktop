@@ -68,6 +68,16 @@ export interface ChatContainerProps {
   onRemoteServerPanelClose?: () => void;
   /** 远程服务器面板调整大小 */
   onRemoteServerPanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  /** 是否显示文件浏览器面板 */
+  fileBrowserVisible?: boolean;
+  /** 文件浏览器面板宽度 */
+  fileBrowserWidth?: number;
+  /** 关闭文件浏览器面板 */
+  onFileBrowserClose?: () => void;
+  /** 文件浏览器面板调整大小 */
+  onFileBrowserResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  /** 文件选择回调 */
+  onFileSelect?: (path: string) => void;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */

@@ -36,9 +36,18 @@
   "chatSideActions": {
     "label": "Quick actions",
     "files": "Files",
-    "tools": "Tools",
+    "explorer": "File Explorer",
     "terminal": "Terminal",
     "remote": "Remote Servers"
+  },
+  "fileBrowser": {
+    "title": "File Explorer",
+    "close": "Close",
+    "loading": "Loading...",
+    "empty": "Empty directory",
+    "navigateUp": "Go up",
+    "refresh": "Refresh",
+    "resizePanel": "Resize explorer"
   },
   "terminalPanel": {
     "title": "Terminal",

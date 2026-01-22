@@ -14,9 +14,12 @@ import {
 import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
+import { useFileBrowser } from './hooks/useFileBrowser';
 import { useRemotePanel } from './hooks/useRemotePanel';
 import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
+
+
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
@@ -112,6 +115,15 @@ export function App() {
     handleRemoteServerPanelResize,
     toggleRemoteServerPanel,
   } = useRemotePanel({ bodyRef });
+
+  const {
+    fileBrowserVisible,
+    fileBrowserWidth,
+    handleFileBrowserClose,
+    handleFileBrowserResize,
+    toggleFileBrowser,
+  } = useFileBrowser({ bodyRef });
+
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
     useCodexSessionSync({
       sessions,
@@ -549,9 +561,27 @@ export function App() {
         setTerminalVisible((prev) => !prev);
       } else if (actionId === 'remote') {
         toggleRemoteServerPanel();
+      } else if (actionId === 'explorer') {
+        toggleFileBrowser();
       }
     },
-    [selectedSessionId, toggleRemoteServerPanel]
+    [selectedSessionId, toggleRemoteServerPanel, toggleFileBrowser]
+  );
+
+  const handleFileSelect = useCallback(
+    (path: string) => {
+      // 当在文件浏览器中选择文件时，相当于添加文件到当前会话的草稿中
+      const sessionId = selectedSessionId;
+      if (!sessionId) return;
+
+      setSessionDrafts((prev) => {
+        const current = prev[sessionId] ?? '';
+        const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : '';
+        const nextValue = `${current}${separator}${t('chat.filePrefix', { path })}`;
+        return { ...prev, [sessionId]: nextValue };
+      });
+    },
+    [selectedSessionId, setSessionDrafts, t]
   );
 
   const handleTerminalClose = useCallback(() => {
@@ -706,6 +736,11 @@ export function App() {
         remoteServerPanelWidth={remoteServerPanelWidth}
         onRemoteServerPanelClose={handleRemoteServerPanelClose}
         onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
+        fileBrowserVisible={fileBrowserVisible}
+        fileBrowserWidth={fileBrowserWidth}
+        onFileBrowserClose={handleFileBrowserClose}
+        onFileBrowserResizeStart={handleFileBrowserResize}
+        onFileSelect={handleFileSelect}
       />
       <SettingsModal
         isOpen={settingsOpen}
