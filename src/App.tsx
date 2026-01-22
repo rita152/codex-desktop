@@ -22,6 +22,7 @@ import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { useSessionViewState } from './hooks/useSessionViewState';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
+import { useMessageQueue } from './hooks/useMessageQueue';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
 import { isRemotePath } from './utils/remotePath';
@@ -564,10 +565,10 @@ export function App() {
     void terminalKill(activeTerminalId);
   }, [activeTerminalId, selectedSessionId]);
 
-  const handleSendMessage = useCallback(
-    (content: string) => {
+  // 实际发送消息到后端的处理函数
+  const doSendMessage = useCallback(
+    (sessionId: string, content: string) => {
       const now = Date.now();
-      const sessionId = selectedSessionId;
       const userMessage: Message = {
         id: String(now),
         role: 'user',
@@ -584,7 +585,8 @@ export function App() {
       });
 
       // 如果是第一条消息，用消息内容更新会话标题
-      if (messages.length === 0) {
+      const sessionMessages_ = sessionMessages[sessionId] ?? [];
+      if (sessionMessages_.length === 0) {
         const title = content.slice(0, 20) + (content.length > 20 ? '...' : '');
         setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, title } : s)));
       }
@@ -611,7 +613,41 @@ export function App() {
         }
       })();
     },
-    [ensureCodexSession, messages, selectedSessionId, setSessions, setSessionMessages, t]
+    [ensureCodexSession, sessionMessages, setSessions, setSessionMessages, t]
+  );
+
+  // 消息队列 Hook
+  const {
+    currentQueue,
+    hasQueuedMessages,
+    enqueueMessage,
+    clearQueue,
+    removeFromQueue,
+  } = useMessageQueue({
+    selectedSessionId,
+    isGeneratingBySession,
+    onSendMessage: doSendMessage,
+  });
+
+  // 对外暴露的发送消息处理：支持排队
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      enqueueMessage(content);
+    },
+    [enqueueMessage]
+  );
+
+  // 清空当前会话的队列
+  const handleClearQueue = useCallback(() => {
+    clearQueue(selectedSessionId);
+  }, [clearQueue, selectedSessionId]);
+
+  // 从队列中移除消息
+  const handleRemoveFromQueue = useCallback(
+    (messageId: string) => {
+      removeFromQueue(selectedSessionId, messageId);
+    },
+    [removeFromQueue, selectedSessionId]
   );
 
   const approvalCards = useApprovalCards({
@@ -638,6 +674,10 @@ export function App() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
+        messageQueue={currentQueue}
+        hasQueuedMessages={hasQueuedMessages}
+        onClearQueue={handleClearQueue}
+        onRemoveFromQueue={handleRemoveFromQueue}
         inputValue={draftMessage}
         onInputChange={handleDraftChange}
         agentOptions={agentOptions}

@@ -5,6 +5,7 @@ import type { ChatSession } from '../Sidebar/types';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import type { SessionNotice } from '../../../hooks/useSessionMeta';
+import type { QueuedMessage } from '../../../hooks/useMessageQueue';
 
 export interface ChatContainerProps {
   /** 会话列表 */
@@ -21,6 +22,14 @@ export interface ChatContainerProps {
   approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
+  /** 消息队列 */
+  messageQueue?: QueuedMessage[];
+  /** 是否有排队中的消息 */
+  hasQueuedMessages?: boolean;
+  /** 清空队列回调 */
+  onClearQueue?: () => void;
+  /** 从队列移除消息回调 */
+  onRemoveFromQueue?: (messageId: string) => void;
   /** 输入框内容 */
   inputValue: string;
   /** 输入框内容变更 */

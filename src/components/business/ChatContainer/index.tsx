@@ -29,6 +29,10 @@ const RemoteServerPanel = lazy(() =>
   import('../RemoteServerPanel').then((module) => ({ default: module.RemoteServerPanel }))
 );
 
+const QueueIndicator = lazy(() =>
+  import('../QueueIndicator').then((module) => ({ default: module.QueueIndicator }))
+);
+
 const SidePanelFallback = ({
   visible = false,
   className,
@@ -40,10 +44,10 @@ const SidePanelFallback = ({
 }) => {
   const panelStyle: CSSProperties = visible
     ? {
-        flex: `0 0 var(${widthVar}, 360px)`,
-        minHeight: 0,
-        alignSelf: 'stretch',
-      }
+      flex: `0 0 var(${widthVar}, 360px)`,
+      minHeight: 0,
+      alignSelf: 'stretch',
+    }
     : { flex: '0 0 0', width: 0, minHeight: 0 };
 
   return (
@@ -74,6 +78,10 @@ export function ChatContainer({
   messages,
   approvals,
   isGenerating = false,
+  messageQueue = [],
+  hasQueuedMessages = false,
+  onClearQueue,
+  onRemoveFromQueue,
   inputValue,
   onInputChange,
   agentOptions,
@@ -235,11 +243,21 @@ export function ChatContainer({
               </div>
             )}
             <div className="chat-container__input-wrapper">
+              {hasQueuedMessages && (
+                <Suspense fallback={null}>
+                  <QueueIndicator
+                    queue={messageQueue}
+                    onRemove={onRemoveFromQueue}
+                    onClearAll={onClearQueue}
+                    className="chat-container__queue-indicator"
+                  />
+                </Suspense>
+              )}
               <ChatInput
                 value={inputValue}
                 onChange={onInputChange}
                 onSend={handleSend}
-                disabled={isGenerating}
+                disabled={false}
                 placeholder={inputPlaceholder}
                 onAddClick={onAddClick}
                 selectedAgent={selectedAgent}

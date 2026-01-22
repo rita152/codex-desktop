@@ -5,6 +5,13 @@
     "rename": "Rename",
     "delete": "Delete"
   },
+  "queue": {
+    "title": "{{count}} message(s) queued",
+    "clearAll": "Clear all",
+    "remove": "Remove",
+    "queued": "Queued",
+    "willSendNext": "Will be sent after current task completes"
+  },
   "chat": {
     "empty": "Start a new conversation",
     "defaultCwd": "Default directory",

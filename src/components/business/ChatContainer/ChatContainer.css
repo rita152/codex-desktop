@@ -306,3 +306,10 @@
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
+
+/* Message Queue Indicator */
+.chat-container__queue-indicator {
+  max-width: 768px;
+  min-width: 200px;
+  margin: 0 auto var(--spacing-sm);
+}
