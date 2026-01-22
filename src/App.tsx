@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import { WorkingDirectorySelector } from './components/business/WorkingDirectorySelector';
 import { SettingsModal } from './components/business/SettingsModal';
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
@@ -17,6 +16,7 @@ import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { useRemotePanel } from './hooks/useRemotePanel';
 import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
+import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
@@ -24,6 +24,7 @@ import { useSessionViewState } from './hooks/useSessionViewState';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
+import { isRemotePath } from './utils/remotePath';
 import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
 import { terminalKill } from './api/terminal';
@@ -87,6 +88,7 @@ export function App() {
   const { sidebarVisible, isNarrowLayout, toggleSidebar } = useResponsiveSidebar(
     SIDEBAR_AUTO_HIDE_MAX_WIDTH
   );
+  const pickRemoteCwd = useRemoteCwdPicker();
   const [terminalVisible, setTerminalVisible] = useState(false);
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
@@ -254,11 +256,7 @@ export function App() {
     [applyModelOptions]
   );
 
-  const [cwdSelectorOpen, setCwdSelectorOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const handleCwdSelectorClose = useCallback(() => {
-    setCwdSelectorOpen(false);
-  }, []);
 
   const handleCwdSelect = useCallback(
     (cwd: string) => {
@@ -387,7 +385,6 @@ export function App() {
       setSessionMessages,
       setSessions,
       terminalBySession,
-      setTerminalBySession,
       t,
     ]
   );
@@ -491,9 +488,42 @@ export function App() {
     ]
   );
 
-  const handleSelectCwd = useCallback(() => {
-    setCwdSelectorOpen(true);
-  }, []);
+  const handleSelectCwd = useCallback(async () => {
+    const sessionId = selectedSessionId;
+    if (!sessionId) return;
+    try {
+      const remoteSelection = await pickRemoteCwd();
+      if (remoteSelection) {
+        handleCwdSelect(remoteSelection);
+        return;
+      }
+      const selection = await open({
+        directory: true,
+        multiple: false,
+        defaultPath:
+          selectedCwd && selectedCwd.trim() !== '' && !isRemotePath(selectedCwd)
+            ? selectedCwd
+            : undefined,
+      });
+      const nextCwd =
+        typeof selection === 'string'
+          ? selection
+          : Array.isArray(selection) && typeof selection[0] === 'string'
+            ? selection[0]
+            : null;
+      if (!nextCwd) return;
+      handleCwdSelect(nextCwd);
+    } catch (err) {
+      devDebug('[codex] Failed to select working directory', err);
+      setSessionNotices((prev) => ({
+        ...prev,
+        [sessionId]: {
+          kind: 'error',
+          message: t('errors.genericError', { error: formatError(err) }),
+        },
+      }));
+    }
+  }, [handleCwdSelect, pickRemoteCwd, selectedCwd, selectedSessionId, setSessionNotices, t]);
 
   const handleAddFile = useCallback(async () => {
     const sessionId = selectedSessionId;
@@ -520,7 +550,7 @@ export function App() {
         toggleRemoteServerPanel();
       }
     },
-    [selectedSessionId, setTerminalVisible, toggleRemoteServerPanel]
+    [selectedSessionId, toggleRemoteServerPanel]
   );
 
   const handleTerminalClose = useCallback(() => {
@@ -532,7 +562,7 @@ export function App() {
       return next;
     });
     void terminalKill(activeTerminalId);
-  }, [activeTerminalId, selectedSessionId, setTerminalBySession, setTerminalVisible]);
+  }, [activeTerminalId, selectedSessionId]);
 
   const handleSendMessage = useCallback(
     (content: string) => {
@@ -636,12 +666,6 @@ export function App() {
         remoteServerPanelWidth={remoteServerPanelWidth}
         onRemoteServerPanelClose={handleRemoteServerPanelClose}
         onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
-      />
-      <WorkingDirectorySelector
-        isOpen={cwdSelectorOpen}
-        currentCwd={selectedCwd}
-        onClose={handleCwdSelectorClose}
-        onSelect={handleCwdSelect}
       />
       <SettingsModal
         isOpen={settingsOpen}
