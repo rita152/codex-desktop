@@ -1,7 +1,7 @@
 /* File Browser Panel - matching RemoteServerPanel/TerminalPanel style */
 
 .file-browser-panel {
-    flex: 0 0 var(--file-browser-panel-width, 280px);
+    flex: 0 0 var(--file-browser-panel-width, 360px);
     display: flex;
     flex-direction: column;
     position: relative;
@@ -18,7 +18,7 @@
 .file-browser-panel__resize-handle {
     position: absolute;
     top: 0;
-    right: 0;
+    left: 0;
     width: 8px;
     height: 100%;
     cursor: col-resize;
@@ -30,7 +30,7 @@
     position: absolute;
     top: var(--spacing-lg);
     bottom: var(--spacing-lg);
-    right: 2px;
+    left: 2px;
     width: 2px;
     background: var(--color-border);
     border-radius: 999px;

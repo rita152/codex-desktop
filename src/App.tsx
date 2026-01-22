@@ -110,18 +110,18 @@ export function App() {
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const {
     remoteServerPanelVisible,
+    setRemoteServerPanelVisible,
     remoteServerPanelWidth,
     handleRemoteServerPanelClose,
     handleRemoteServerPanelResize,
-    toggleRemoteServerPanel,
   } = useRemotePanel({ bodyRef });
 
   const {
     fileBrowserVisible,
+    setFileBrowserVisible,
     fileBrowserWidth,
     handleFileBrowserClose,
     handleFileBrowserResize,
-    toggleFileBrowser,
   } = useFileBrowser({ bodyRef });
 
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
@@ -558,14 +558,39 @@ export function App() {
     (actionId: string) => {
       if (actionId === 'terminal') {
         if (!selectedSessionId) return;
-        setTerminalVisible((prev) => !prev);
+        if (terminalVisible) {
+          setTerminalVisible(false);
+        } else {
+          setTerminalVisible(true);
+          setRemoteServerPanelVisible(false);
+          setFileBrowserVisible(false);
+        }
       } else if (actionId === 'remote') {
-        toggleRemoteServerPanel();
+        if (remoteServerPanelVisible) {
+          setRemoteServerPanelVisible(false);
+        } else {
+          setRemoteServerPanelVisible(true);
+          setTerminalVisible(false);
+          setFileBrowserVisible(false);
+        }
       } else if (actionId === 'explorer') {
-        toggleFileBrowser();
+        if (fileBrowserVisible) {
+          setFileBrowserVisible(false);
+        } else {
+          setFileBrowserVisible(true);
+          setTerminalVisible(false);
+          setRemoteServerPanelVisible(false);
+        }
       }
     },
-    [selectedSessionId, toggleRemoteServerPanel, toggleFileBrowser]
+    [
+      selectedSessionId,
+      terminalVisible,
+      remoteServerPanelVisible,
+      fileBrowserVisible,
+      setRemoteServerPanelVisible,
+      setFileBrowserVisible,
+    ]
   );
 
   const handleFileSelect = useCallback(

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { usePanelResize } from './usePanelResize';
 
-const DEFAULT_FILE_BROWSER_WIDTH = 280;
-const MIN_FILE_BROWSER_WIDTH = 200;
+const DEFAULT_FILE_BROWSER_WIDTH = 360;
+const MIN_FILE_BROWSER_WIDTH = 240;
 const MIN_CONVERSATION_WIDTH = 240;
 
 export function useFileBrowser({

@@ -106,7 +106,7 @@ export function ChatContainer({
   onRemoteServerPanelClose,
   onRemoteServerPanelResizeStart,
   fileBrowserVisible = false,
-  fileBrowserWidth = 280,
+  fileBrowserWidth = 360,
   onFileBrowserClose,
   onFileBrowserResizeStart,
   onFileSelect,
@@ -191,7 +191,8 @@ export function ChatContainer({
         className={cn(
           'chat-container__main',
           terminalVisible && 'chat-container__main--terminal-open',
-          remoteServerPanelVisible && 'chat-container__main--remote-open'
+          remoteServerPanelVisible && 'chat-container__main--remote-open',
+          fileBrowserVisible && 'chat-container__main--file-browser-open'
         )}
         style={
           {

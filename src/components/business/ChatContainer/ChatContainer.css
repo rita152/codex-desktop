@@ -313,3 +313,19 @@
   min-width: 200px;
   margin: 0 auto var(--spacing-sm);
 }
+/* File Browser Panel Integration */
+.chat-container__main--file-browser-open {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.chat-container__body--file-browser-open {
+  gap: 0;
+  padding-right: 0;
+}
+
+.chat-container__main--file-browser-open .file-browser-panel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}

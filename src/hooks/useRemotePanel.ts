@@ -41,6 +41,7 @@ export function useRemotePanel({ bodyRef, initialWidth = DEFAULT_REMOTE_PANEL_WI
   return useMemo(
     () => ({
       remoteServerPanelVisible,
+      setRemoteServerPanelVisible,
       remoteServerPanelWidth,
       handleRemoteServerPanelClose,
       handleRemoteServerPanelResize,
@@ -50,6 +51,7 @@ export function useRemotePanel({ bodyRef, initialWidth = DEFAULT_REMOTE_PANEL_WI
       handleRemoteServerPanelClose,
       handleRemoteServerPanelResize,
       remoteServerPanelVisible,
+      setRemoteServerPanelVisible,
       remoteServerPanelWidth,
       toggleRemoteServerPanel,
     ]
