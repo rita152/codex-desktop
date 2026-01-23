@@ -3,7 +3,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import type { GeneralSettings as GeneralSettingsType, ThemeOption, LanguageOption, StartupBehavior } from '../../../../types/settings';
+import type { GeneralSettings as GeneralSettingsType, ThemeOption, LanguageOption } from '../../../../types/settings';
 import { Input } from '../../../ui/data-entry/Input';
 import { NativeSelect } from '../../../ui/data-entry/NativeSelect';
 
@@ -63,23 +63,6 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
                         </label>
                     ))}
                 </div>
-            </div>
-
-            {/* Startup Behavior */}
-            <div className="settings-item">
-                <div className="settings-item__header">
-                    <label className="settings-item__label">{t('settings.general.startupBehavior')}</label>
-                </div>
-                <p className="settings-item__description">{t('settings.general.startupBehaviorDescription')}</p>
-                <NativeSelect
-                    className="settings-select"
-                    value={settings.startupBehavior}
-                    onChange={(e) => onUpdate({ startupBehavior: e.target.value as StartupBehavior })}
-                >
-                    <option value="last-session">{t('settings.general.startupLastSession')}</option>
-                    <option value="new-session">{t('settings.general.startupNewSession')}</option>
-                    <option value="welcome">{t('settings.general.startupWelcome')}</option>
-                </NativeSelect>
             </div>
         </div>
     );

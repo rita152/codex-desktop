@@ -19,14 +19,10 @@ export type ThemeOption = 'light' | 'dark' | 'system';
 // Language options
 export type LanguageOption = 'en-US' | 'zh-CN';
 
-// Startup behavior options
-export type StartupBehavior = 'last-session' | 'new-session' | 'welcome';
-
 // General settings
 export interface GeneralSettings {
   language: LanguageOption;
   theme: ThemeOption;
-  startupBehavior: StartupBehavior;
 }
 
 // API Provider options
@@ -88,7 +84,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
   general: {
     language: 'zh-CN',
     theme: 'system',
-    startupBehavior: 'last-session',
   },
   model: {
     defaultModel: DEFAULT_MODEL_ID,
