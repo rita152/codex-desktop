@@ -83,6 +83,7 @@ pub fn run() {
             remote::commands::remote_list_servers,
             remote::commands::remote_test_connection,
             remote::commands::remote_list_directory,
+            remote::commands::remote_list_entries,
             codex::commands::list_local_directory
         ])
         .run(tauri::generate_context!())

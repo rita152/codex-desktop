@@ -584,6 +584,126 @@ fn shell_escape(s: &str) -> String {
     out
 }
 
+#[derive(serde::Serialize)]
+pub struct RemoteFilesystemEntry {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+    pub size: u64,
+}
+
+#[derive(serde::Serialize)]
+pub struct RemoteFilesystemListing {
+    pub path: String,
+    pub entries: Vec<RemoteFilesystemEntry>,
+}
+
+#[tauri::command]
+pub async fn remote_list_entries(
+    server_id: String,
+    path: String,
+    manager: State<'_, RemoteServerManager>,
+) -> Result<RemoteFilesystemListing, String> {
+    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let trimmed = path.trim();
+
+    let (cd_target, use_home) = if trimmed.is_empty() || trimmed == "~" {
+        ("$HOME".to_string(), true)
+    } else {
+        (shell_escape(trimmed), false)
+    };
+
+    // Use ls -1p to list one entry per line, with trailing / for directories
+    // This is generally portable across GNU and BSD ls.
+    let remote_command = if use_home {
+        "cd $HOME && pwd -P && ls -1Ap".to_string()
+    } else {
+        format!("cd {} && pwd -P && ls -1Ap", cd_target)
+    };
+
+    let mut cmd = tokio::process::Command::new("ssh");
+    cmd.arg("-o")
+        .arg("StrictHostKeyChecking=accept-new")
+        .arg("-o")
+        .arg("BatchMode=yes")
+        .arg("-o")
+        .arg("ConnectTimeout=10")
+        .arg("-p")
+        .arg(config.port.to_string());
+
+    match &config.auth {
+        SshAuth::KeyFile { private_key_path, .. } => {
+            cmd.arg("-i").arg(private_key_path);
+        }
+        SshAuth::Agent => {}
+        SshAuth::Password { .. } => {
+            return Err("Password authentication is not supported".to_string());
+        }
+    }
+
+    cmd.arg(format!("{}@{}", config.username, config.host))
+        .arg(remote_command);
+
+    let output = cmd.output().await.map_err(|e| e.to_string())?;
+
+    if !output.status.success() {
+        return Err(decode_output(output.stderr));
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut lines = stdout.lines();
+
+    let resolved_path = lines.next().ok_or("Failed to resolve path")?.trim().to_string();
+    
+    // Normalize prefix
+    let prefix = if resolved_path == "/" {
+        "/".to_string()
+    } else {
+        format!("{}/", resolved_path)
+    };
+
+    let mut entries = Vec::new();
+    for line in lines {
+        if line.is_empty() {
+            continue;
+        }
+        let line = line.trim();
+        let is_dir = line.ends_with('/');
+        let name = if is_dir {
+            &line[..line.len() - 1]
+        } else {
+            line
+        };
+        
+        // Skip . and .. just in case ls -A outputs them (BSD/GNU behavior varies on -A vs -a)
+        if name == "." || name == ".." {
+            continue;
+        }
+
+        entries.push(RemoteFilesystemEntry {
+            name: name.to_string(),
+            path: format!("{}{}", prefix, name),
+            is_dir,
+            size: 0, // Placeholder as ls -1p doesn't give size
+        });
+    }
+
+    entries.sort_by(|a, b| {
+        if a.is_dir == b.is_dir {
+            a.name.cmp(&b.name)
+        } else if a.is_dir {
+            std::cmp::Ordering::Less
+        } else {
+            std::cmp::Ordering::Greater
+        }
+    });
+
+    Ok(RemoteFilesystemListing {
+        path: resolved_path,
+        entries,
+    })
+}
+
 fn decode_output(bytes: Vec<u8>) -> String {
     match String::from_utf8(bytes) {
         Ok(value) => value,
@@ -593,3 +713,4 @@ fn decode_output(bytes: Vec<u8>) -> String {
         }
     }
 }
+

@@ -28,3 +28,15 @@ export interface RemoteDirectoryListing {
     path: string;
     entries: RemoteDirectoryEntry[];
 }
+
+export interface RemoteFilesystemEntry {
+    name: string;
+    path: string;
+    is_dir: boolean;
+    size: number;
+}
+
+export interface RemoteFilesystemListing {
+    path: string;
+    entries: RemoteFilesystemEntry[];
+}

@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
+import { invoke } from '@tauri-apps/api/core';
+
+import { isRemotePath, parseRemotePath } from '../../../utils/remotePath';
+import type { RemoteFilesystemListing } from '../../../types/remote';
 
 import { FolderIcon, CodeIcon, ChevronDownIcon } from '../../ui/data-display/Icon';
 import { Button } from '../../ui/data-entry/Button';
@@ -52,9 +56,33 @@ export function FileBrowserPanel({
         setLoading(true);
         setError(null);
         try {
-            const result = await listLocalDirectory(path);
-            setEntries(result.entries);
-            setCurrentPath(result.path);
+            if (isRemotePath(path)) {
+                const { serverId, path: remotePath } = parseRemotePath(path);
+                if (!serverId) throw new Error('Invalid remote path');
+
+                const result = await invoke<RemoteFilesystemListing>('remote_list_entries', {
+                    serverId,
+                    path: remotePath || '',
+                });
+
+                const prefix = `remote://${serverId}`;
+                const resolvedPath = `${prefix}${result.path}`;
+
+                const mappedEntries: LocalDirectoryEntry[] = result.entries.map((e) => ({
+                    name: e.name,
+                    path: `${prefix}${e.path}`,
+                    is_dir: e.is_dir,
+                    size: e.size,
+                    modified: null,
+                }));
+
+                setEntries(mappedEntries);
+                setCurrentPath(resolvedPath);
+            } else {
+                const result = await listLocalDirectory(path);
+                setEntries(result.entries);
+                setCurrentPath(result.path);
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : String(err));
             setEntries([]);
@@ -74,9 +102,18 @@ export function FileBrowserPanel({
     }, [currentPath, loadDirectory]);
 
     const handleNavigateUp = useCallback(() => {
-        const parent = getParentPath(currentPath);
-        if (parent) {
-            void loadDirectory(parent);
+        if (isRemotePath(currentPath)) {
+            const { serverId, path } = parseRemotePath(currentPath);
+            if (!serverId || !path || path === '/') return;
+            // Simple string manipulation for now to go up
+            // path is like /home/user. parent is /home
+            const parent = path.replace(/\/$/, '').split('/').slice(0, -1).join('/') || '/';
+            void loadDirectory(`remote://${serverId}${parent}`);
+        } else {
+            const parent = getParentPath(currentPath);
+            if (parent) {
+                void loadDirectory(parent);
+            }
         }
     }, [currentPath, loadDirectory]);
 
@@ -92,7 +129,7 @@ export function FileBrowserPanel({
         [loadDirectory, onDirectorySelect, onFileSelect]
     );
 
-    const canNavigateUp = currentPath !== '/';
+    const canNavigateUp = currentPath !== '/' && !isRemotePath(currentPath) || (isRemotePath(currentPath) && currentPath.split('/').length > 3);
 
     return (
         <aside
