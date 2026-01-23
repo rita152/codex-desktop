@@ -49,35 +49,40 @@ export function ModelPanel({
 
       <ConfigEditor />
 
-      <div className="settings-item">
-        <div className="settings-item__header">
-          <label htmlFor="model-select" className="settings-item__label">
+      <div style={{ marginBottom: '24px', padding: '0 4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <label htmlFor="model-select" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)' }}>
             {t('settings.model.defaultModel')}
           </label>
-          <div className="settings-item__control">
-            <Button
-              className="settings-button"
-              onClick={onFetchModels}
-              disabled={fetchStatus?.loading}
-            >
-              {fetchStatus?.loading
-                ? t('settings.model.fetching')
-                : t('settings.model.fetchModels')}
-            </Button>
-          </div>
+          <Button
+            className="settings-button"
+            onClick={onFetchModels}
+            disabled={fetchStatus?.loading}
+            style={{ padding: '2px 8px', fontSize: '12px', height: '24px' }}
+          >
+            {fetchStatus?.loading
+              ? t('settings.model.fetching')
+              : t('settings.model.fetchModels')}
+          </Button>
         </div>
-        <p className="settings-item__description">{t('settings.model.defaultModelDescription')}</p>
-        {fetchStatus?.error && <div className="settings-item__error">{fetchStatus.error}</div>}
+
+        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: '1.5' }}>
+          {t('settings.model.defaultModelDescription')}
+        </p>
+
+        {fetchStatus?.error && <div className="settings-item__error" style={{ marginBottom: '8px' }}>{fetchStatus.error}</div>}
+
         {fetchStatus?.loading ? (
-          <span className="settings-modal__status settings-modal__status--saving">
-            {t('settings.model.fetching')}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
+            <span className="settings-loading__spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }} />
+            <span>{t('settings.model.fetching')}</span>
+          </div>
         ) : fetchStatus?.lastUpdated ? (
-          <span className="settings-modal__status settings-modal__status--saved">
-            {t('settings.model.fetchUpdated', {
+          <div style={{ marginBottom: '8px', fontSize: '12px', color: 'var(--color-success)' }}>
+            ✓ {t('settings.model.fetchUpdated', {
               time: new Date(fetchStatus.lastUpdated).toLocaleTimeString(),
             })}
-          </span>
+          </div>
         ) : null}
 
         {availableModels.length > 0 ? (
@@ -86,6 +91,7 @@ export function ModelPanel({
             className="settings-select"
             value={isCurrentModelAvailable ? settings.defaultModel : ''}
             onChange={(e) => onUpdate({ defaultModel: e.target.value })}
+            style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
           >
             {!isCurrentModelAvailable && (
               <option value="" disabled>
