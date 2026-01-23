@@ -1,0 +1,121 @@
+.directory-selector {
+  position: relative;
+  display: inline-block;
+}
+
+.directory-selector__dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  width: 320px;
+  max-height: 400px;
+  display: flex;
+  flex-direction: column;
+  z-index: 2000;
+  overflow: hidden;
+}
+
+.directory-selector__list {
+  overflow-y: auto;
+  flex: 1;
+  max-height: 320px;
+}
+
+.directory-selector__item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text);
+  font-size: 13px;
+  text-decoration: none;
+  min-height: 32px;
+}
+
+.directory-selector__item:hover {
+  background-color: var(--color-bg-hover);
+}
+
+.directory-selector__item--active {
+  background-color: var(--color-bg-active);
+  color: var(--color-primary);
+}
+
+.directory-selector__header {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  background-color: var(--color-bg-elevated);
+  flex-shrink: 0;
+}
+
+.directory-selector__title {
+  font-weight: 600;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.directory-selector__back {
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.directory-selector__back:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+.directory-selector__loading {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.directory-selector__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.directory-selector__backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1999;
+}
+
+.directory-selector__footer {
+  padding: 8px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-bg-elevated);
+}
+
+.directory-selector__breadcrumbs {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

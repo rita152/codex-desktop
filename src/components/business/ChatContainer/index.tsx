@@ -7,12 +7,12 @@ import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
-import { Button } from '../../ui/data-entry/Button';
-import { FolderIcon, SidebarRightIcon } from '../../ui/data-display/Icon';
+import { SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { usePanelResize } from '../../../hooks/usePanelResize';
 
 import type { ChatContainerProps } from './types';
+import { DirectorySelector } from './DirectorySelector';
 
 import './ChatContainer.css';
 
@@ -113,7 +113,8 @@ export function ChatContainer({
   onSessionSelect,
   onNewChat,
   onSendMessage,
-  onSelectCwd,
+  onPickLocalCwd,
+  onSetCwd,
   cwdLocked = false,
   onSessionDelete,
   onSessionRename,
@@ -222,16 +223,12 @@ export function ChatContainer({
             <div className="chat-container__session-header">
               <div className="chat-container__session-meta">
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
-                <Button
-                  type="button"
-                  className="chat-container__cwd-button"
-                  onClick={onSelectCwd}
-                  disabled={!onSelectCwd || cwdLocked}
-                  title={cwdLocked ? t('chat.cwdLocked') : displayCwd}
-                >
-                  <FolderIcon size={12} />
-                  <span className="chat-container__meta-value">{displayCwd}</span>
-                </Button>
+                <DirectorySelector
+                  currentCwd={displayCwd}
+                  cwdLocked={cwdLocked}
+                  onPickLocalCwd={onPickLocalCwd || (() => { })}
+                  onCwdSelect={onSetCwd || (() => { })}
+                />
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
               {sessionNotice && (

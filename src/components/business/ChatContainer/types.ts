@@ -84,8 +84,10 @@ export interface ChatContainerProps {
   onNewChat?: () => void;
   /** 发送消息回调 */
   onSendMessage?: (message: string) => void;
-  /** 选择工作目录 */
-  onSelectCwd?: () => void;
+  /** 打开本地目录选择器 */
+  onPickLocalCwd?: () => void;
+  /** 直接设置工作目录 */
+  onSetCwd?: (cwd: string) => void;
   /** 工作目录是否锁定（已发送过 prompt 时锁定） */
   cwdLocked?: boolean;
   /** 删除会话回调 */

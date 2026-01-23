@@ -750,7 +750,8 @@ export function App() {
         terminalVisible={terminalVisible}
         terminalId={activeTerminalId ?? null}
         onTerminalClose={handleTerminalClose}
-        onSelectCwd={handleSelectCwd}
+        onPickLocalCwd={handleSelectCwd}
+        onSetCwd={handleCwdSelect}
         cwdLocked={cwdLocked}
         onSessionDelete={handleSessionDelete}
         onSessionRename={handleSessionRename}
