@@ -116,8 +116,14 @@ export function ConfigEditor() {
                 <Button
                     onClick={handleSave}
                     disabled={loading || saving}
-                    className="settings-button settings-button--primary"
-                    style={{ padding: '4px 12px', fontSize: '12px' }}
+                    className="settings-button"
+                    style={{
+                        padding: '4px 12px',
+                        fontSize: '12px',
+                        backgroundColor: editorTheme === 'vs-dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                        border: '1px solid var(--color-border)',
+                        color: 'var(--text-primary)'
+                    }}
                 >
                     {saving ? 'Saving...' : 'Save Config'}
                 </Button>

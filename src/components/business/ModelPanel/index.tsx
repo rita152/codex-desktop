@@ -56,7 +56,7 @@ export function ModelPanel({
           </label>
           <div className="settings-item__control">
             <Button
-              className="settings-button settings-button--primary"
+              className="settings-button"
               onClick={onFetchModels}
               disabled={fetchStatus?.loading}
             >
