@@ -12,14 +12,12 @@ use tracing::warn;
 /// Remote server manager
 pub struct RemoteServerManager {
     servers: RwLock<HashMap<String, RemoteServerConfig>>,
-    config_path: std::path::PathBuf,
 }
 
 impl RemoteServerManager {
-    pub fn new(config_path: std::path::PathBuf) -> Self {
+    pub fn new(_config_path: std::path::PathBuf) -> Self {
         Self {
             servers: RwLock::new(HashMap::new()),
-            config_path,
         }
     }
 
