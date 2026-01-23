@@ -97,7 +97,7 @@ export function SettingsModal({
     resetSettings,
     saveStatus,
   } = useSettings();
-  const { config, loadingConfig, configError, fetching, fetchError, lastFetchedAt, fetchModels } =
+  const { fetching, fetchError, lastFetchedAt, fetchModels } =
     useModelFetch();
 
   const fetchStatus = useMemo(
@@ -222,9 +222,6 @@ export function SettingsModal({
             settings={settings.model}
             onUpdate={(values) => updateSettings('model', values)}
             availableModels={availableModels}
-            config={config}
-            loadingConfig={loadingConfig}
-            configError={configError}
             onFetchModels={handleFetchModels}
             fetchStatus={fetchStatus}
           />

@@ -5,7 +5,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
-import type { CodexCliConfigInfo } from '../../../types/codex';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import { Button } from '../../ui/data-entry/Button';
 import { Input } from '../../ui/data-entry/Input';
@@ -23,10 +22,6 @@ export interface ModelPanelProps {
   onUpdate: (values: Partial<ModelSettingsType>) => void;
   /** Dynamically fetched model list */
   availableModels?: SelectOption[];
-  /** Configuration from environment/files (read-only) */
-  config?: CodexCliConfigInfo;
-  loadingConfig?: boolean;
-  configError?: string;
   /** Handler to fetch models */
   onFetchModels?: () => void;
   /** Status of the model fetch operation */
@@ -37,9 +32,6 @@ export function ModelPanel({
   settings,
   onUpdate,
   availableModels = [],
-  config,
-  loadingConfig = false,
-  configError,
   onFetchModels,
   fetchStatus,
 }: ModelPanelProps) {
@@ -55,51 +47,7 @@ export function ModelPanel({
     <div className="settings-section-content">
       <h2 className="settings-content__title">{t('settings.sections.model')}</h2>
 
-      <div className="settings-item">
-        <div className="settings-item__header">
-          <span className="settings-item__label">{t('settings.model.configTitle')}</span>
-        </div>
-        <p className="settings-item__description">{t('settings.model.configDescription')}</p>
-        {loadingConfig ? (
-          <div className="settings-item__placeholder">
-            <span className="settings-item__placeholder-icon">⏳</span>
-            <span>{t('settings.model.configLoading')}</span>
-          </div>
-        ) : config?.configFound ? (
-          <div className="settings-list">
-            <div className="settings-list__item">
-              <span className="settings-list__item-text">{t('settings.model.providerId')}</span>
-              <span className="settings-list__item-text">{config.modelProvider ?? '-'}</span>
-            </div>
-            <div className="settings-list__item">
-              <span className="settings-list__item-text">{t('settings.model.baseUrl')}</span>
-              <span className="settings-list__item-text">{config.baseUrl ?? '-'}</span>
-            </div>
-            <div className="settings-list__item">
-              <span className="settings-list__item-text">{t('settings.model.envKey')}</span>
-              <span className="settings-list__item-text">{config.envKey ?? '-'}</span>
-            </div>
-            <div className="settings-list__item">
-              <span className="settings-list__item-text">{t('settings.model.configPath')}</span>
-              <span className="settings-list__item-text">{config.configPath}</span>
-            </div>
-            <div className="settings-list__item">
-              <span className="settings-list__item-text">{t('settings.model.authFile')}</span>
-              <span className="settings-list__item-text">
-                {config.authFileFound
-                  ? t('settings.model.authFileFound')
-                  : t('settings.model.authFileMissing')}
-              </span>
-            </div>
-          </div>
-        ) : (
-          <div className="settings-item__placeholder">
-            <span className="settings-item__placeholder-icon">ℹ️</span>
-            <span>{t('settings.model.configMissing')}</span>
-          </div>
-        )}
-        {configError && <div className="settings-item__error">{configError}</div>}
-      </div>
+      <ConfigEditor />
 
       <div className="settings-item">
         <div className="settings-item__header">
@@ -184,8 +132,6 @@ export function ModelPanel({
           </Button>
         </div>
       </div>
-
-      <ConfigEditor />
     </div>
   );
 }

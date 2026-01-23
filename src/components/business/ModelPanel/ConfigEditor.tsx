@@ -95,7 +95,8 @@ export function ConfigEditor() {
         borderRadius: '12px',
         border: editorTheme === 'vs-dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.05)',
         padding: '16px',
-        marginTop: '20px',
+        marginTop: '0px',
+        marginBottom: '20px',
         boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.3s ease',
     };
