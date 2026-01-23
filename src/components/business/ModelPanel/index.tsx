@@ -10,6 +10,7 @@ import type { SelectOption } from '../../ui/data-entry/Select/types';
 import { Button } from '../../ui/data-entry/Button';
 import { Input } from '../../ui/data-entry/Input';
 import { NativeSelect } from '../../ui/data-entry/NativeSelect';
+import { ConfigEditor } from './ConfigEditor';
 
 export interface FetchStatus {
   loading: boolean;
@@ -183,6 +184,8 @@ export function ModelPanel({
           </Button>
         </div>
       </div>
+
+      <ConfigEditor />
     </div>
   );
 }

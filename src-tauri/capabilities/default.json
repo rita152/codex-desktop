@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
@@ -10,10 +12,33 @@
     {
       "identifier": "opener:allow-open-path",
       "allow": [
-        { "path": "$HOME", "app": true },
-        { "path": "$HOME/**", "app": true }
+        {
+          "path": "$HOME",
+          "app": true
+        },
+        {
+          "path": "$HOME/**",
+          "app": true
+        }
       ]
     },
-    "dialog:default"
+    "dialog:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "$HOME/.codex/**"
+        }
+      ]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [
+        {
+          "path": "$HOME/.codex/**"
+        }
+      ]
+    }
   ]
 }

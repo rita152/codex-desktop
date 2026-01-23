@@ -57,6 +57,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(codex::commands::CodexManager::default())
         .manage(terminal::TerminalManager::default())
         .manage(remote::RemoteServerManager::new(remote_config_path))
