@@ -2,12 +2,12 @@
  * Model Panel
  */
 
-import { useState } from 'react';
+
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import { Button } from '../../ui/data-entry/Button';
-import { Input } from '../../ui/data-entry/Input';
+
 import { NativeSelect } from '../../ui/data-entry/NativeSelect';
 import { ConfigEditor } from './ConfigEditor';
 
@@ -36,7 +36,7 @@ export function ModelPanel({
   fetchStatus,
 }: ModelPanelProps) {
   const { t } = useTranslation();
-  const [showApiKey, setShowApiKey] = useState(false);
+
 
   // Check whether the selected model is still in the available list
   const isCurrentModelAvailable =
@@ -47,7 +47,8 @@ export function ModelPanel({
     <div className="settings-section-content">
       <h2 className="settings-content__title">{t('settings.sections.model')}</h2>
 
-      <ConfigEditor />
+      <ConfigEditor filename="config.toml" language="toml" />
+      <ConfigEditor filename="auth.json" language="json" />
 
       <div style={{ marginBottom: '24px', padding: '0 4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -112,32 +113,7 @@ export function ModelPanel({
         )}
       </div>
 
-      <div className="settings-item">
-        <div className="settings-item__header">
-          <label htmlFor="api-key-input" className="settings-item__label">
-            {t('settings.model.apiKey')}
-          </label>
-        </div>
-        <p className="settings-item__description">{t('settings.model.apiKeyDescription')}</p>
-        <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          <Input
-            id="api-key-input"
-            type={showApiKey ? 'text' : 'password'}
-            className="settings-input settings-input--password"
-            value={settings.apiKey}
-            onChange={(e) => onUpdate({ apiKey: e.target.value })}
-            placeholder="sk-..."
-            style={{ flex: 1 }}
-          />
-          <Button
-            type="button"
-            className="settings-button"
-            onClick={() => setShowApiKey(!showApiKey)}
-          >
-            {showApiKey ? '🙈' : '👁️'}
-          </Button>
-        </div>
-      </div>
+
     </div>
   );
 }

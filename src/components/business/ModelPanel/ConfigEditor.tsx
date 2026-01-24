@@ -5,7 +5,12 @@ import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { homeDir, join } from '@tauri-apps/api/path';
 import { Button } from '../../ui/data-entry/Button';
 
-export function ConfigEditor() {
+interface ConfigEditorProps {
+    filename: string;
+    language: string;
+}
+
+export function ConfigEditor({ filename, language }: ConfigEditorProps) {
     const [content, setContent] = useState('');
     const [configPath, setConfigPath] = useState('');
     const [loading, setLoading] = useState(true);
@@ -51,7 +56,7 @@ export function ConfigEditor() {
         const load = async () => {
             try {
                 const home = await homeDir();
-                const path = await join(home, '.codex', 'config.toml');
+                const path = await join(home, '.codex', filename);
                 setConfigPath(path);
 
                 try {
@@ -61,8 +66,11 @@ export function ConfigEditor() {
                 } catch (e) {
                     // File might not exist
                     console.error(e);
-                    setError("Could not read config file (it might not exist).");
-                    setContent("# .codex/config.toml\n");
+                    // setError(`Could not read ${filename} (it might not exist).`);
+                    setContent(`# .codex/${filename}\n`);
+                    if (language === 'json') {
+                        setContent(`{\n  "note": "File .codex/${filename} not found or empty"\n}`);
+                    }
                 }
             } catch (err) {
                 console.error('Failed to resolve path', err);
@@ -72,7 +80,7 @@ export function ConfigEditor() {
             }
         };
         load();
-    }, []);
+    }, [filename, language]);
 
     const handleSave = async () => {
         if (!configPath) return;
@@ -109,10 +117,31 @@ export function ConfigEditor() {
         color: 'var(--text-primary)',
     }
 
+
+    const [editorHeight, setEditorHeight] = useState(100);
+
+    const handleEditorDidMount = (editor: any) => {
+        // Initial sizing
+        const updateHeight = () => {
+            const contentHeight = editor.getContentHeight();
+            setEditorHeight(Math.min(Math.max(contentHeight, 100), 600));
+        };
+
+        // We might need to wait for a render cycle or content load
+        // But usually content is already passed.
+        // Let's use the event listener for robust updates
+        editor.onDidContentSizeChange((e: any) => {
+            setEditorHeight(Math.min(Math.max(e.contentHeight, 100), 600));
+        });
+
+        // Trigger once
+        updateHeight();
+    };
+
     return (
         <div style={glassStyle}>
             <div style={headerStyle}>
-                <span style={{ fontWeight: 600 }}>~/.codex/config.toml</span>
+                <span style={{ fontWeight: 600 }}>~/.codex/{filename}</span>
                 <Button
                     onClick={handleSave}
                     disabled={loading || saving}
@@ -131,12 +160,13 @@ export function ConfigEditor() {
 
             {error && <div style={{ color: 'var(--status-error)', marginBottom: '8px', fontSize: '12px' }}>{error}</div>}
 
-            <div style={{ height: '300px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+            <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border-color)', transition: 'height 0.2s ease' }}>
                 <Editor
-                    height="100%"
-                    defaultLanguage="toml"
+                    height={editorHeight}
+                    defaultLanguage={language}
                     value={content}
                     onChange={(value) => setContent(value || '')}
+                    onMount={handleEditorDidMount}
                     theme={editorTheme}
                     options={{
                         minimap: { enabled: false },
@@ -145,8 +175,6 @@ export function ConfigEditor() {
                         scrollBeyondLastLine: false,
                         automaticLayout: true,
                         padding: { top: 10, bottom: 10 },
-                        // Make transparent background for editor (requires vs-dark theme tweaking usually, 
-                        // but we can just let it be opaque inside the glass container for functionality)
                     }}
                 />
             </div>
