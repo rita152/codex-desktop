@@ -10,7 +10,6 @@ import { useModelFetch } from '../../../hooks/useModelFetch';
 import {
   GeneralSettings,
   ModelSettings,
-  ApprovalSettings,
   ShortcutSettings,
   AdvancedSettings,
   RemoteSettings,
@@ -46,12 +45,7 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     labelKey: 'settings.sections.model',
     keywords: ['api', 'token', 'openai', '模型'],
   },
-  {
-    id: 'approval',
-    icon: '🛡️',
-    labelKey: 'settings.sections.approval',
-    keywords: ['approve', 'command', 'trust', '审批', '命令', '信任'],
-  },
+
   {
     id: 'remote',
     icon: '🌐',
@@ -226,13 +220,7 @@ export function SettingsModal({
             fetchStatus={fetchStatus}
           />
         );
-      case 'approval':
-        return (
-          <ApprovalSettings
-            settings={settings.approval}
-            onUpdate={(values) => updateSettings('approval', values)}
-          />
-        );
+
       case 'remote':
         return <RemoteSettings />;
       case 'shortcuts':
