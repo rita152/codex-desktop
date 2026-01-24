@@ -15,6 +15,13 @@
   width: 8px;
 }
 
+.chat-message-list::-webkit-scrollbar-track {
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
 .chat-message-list::-webkit-scrollbar-thumb {
   background-color: color-mix(in srgb, var(--color-border) 30%, var(--color-bg) 70%);
   border-radius: var(--radius-full);
