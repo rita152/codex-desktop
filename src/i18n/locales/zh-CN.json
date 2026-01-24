@@ -17,7 +17,8 @@
     "defaultCwd": "默认目录",
     "cwdLocked": "对话进行中，无法切换工作目录",
     "newSessionTitle": "新对话",
-    "filePrefix": "文件: {{path}}"
+    "filePrefix": "文件: {{path}}",
+    "planTitle": "执行计划"
   },
   "chatInput": {
     "slashTitle": "Slash 命令",

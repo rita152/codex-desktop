@@ -19,6 +19,7 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { SelectOption } from '../components/ui/data-entry/Select/types';
 import type { ApprovalRequest } from '../types/codex';
+import type { PlanStep } from '../components/ui/data-display/Plan/types';
 
 type SessionMessages = Record<string, Message[]>;
 
@@ -44,7 +45,7 @@ const beginListeners = () => {
   if (state.unlistenPromise) {
     state.unlistenPromise
       .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
-      .catch(() => {});
+      .catch(() => { });
   }
   state.token += 1;
   return state.token;
@@ -61,7 +62,7 @@ const removeListeners = (token: number) => {
   if (token !== state.token || !state.unlistenPromise) return;
   state.unlistenPromise
     .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
-    .catch(() => {});
+    .catch(() => { });
   state.unlistenPromise = null;
 };
 
@@ -232,6 +233,16 @@ export function useCodexEvents({
         const update = asRecord(event.payload.update);
         if (!update) return;
         applyToolCallUpdateMessage(sessionId, update);
+      }),
+      listen<{ sessionId: string; steps: PlanStep[] }>('codex:plan', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        if (!sessionId) return;
+        const steps = event.payload.steps;
+        if (steps && Array.isArray(steps)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          messageHandlers.updatePlan(sessionId, steps as any);
+        }
       }),
     ];
     commitListeners(listenerToken, unlistenPromises);

@@ -1,5 +1,6 @@
 import type { ThinkingPhase } from '../../ui/feedback/Thinking';
 import type { ToolCallProps } from '../../ui/feedback/ToolCall';
+import type { PlanStep } from '../../ui/data-display/Plan/types';
 
 export type MessageRole = 'user' | 'assistant' | 'thought' | 'tool';
 
@@ -23,6 +24,8 @@ export interface ChatMessageProps {
   content: string;
   /** 思考数据（assistant/thought 角色） */
   thinking?: ThinkingData;
+  /** 执行计划步骤 */
+  planSteps?: PlanStep[];
   /** 工具调用卡片（仅 tool 角色） */
   toolCalls?: ToolCallProps[];
   /** 是否正在流式输出 */

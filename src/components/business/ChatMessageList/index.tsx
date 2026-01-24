@@ -142,6 +142,7 @@ export const ChatMessageList = memo(function ChatMessageList({
             role={message.role}
             content={message.content}
             thinking={message.thinking}
+            planSteps={message.planSteps}
             toolCalls={message.toolCalls}
             isStreaming={message.role !== 'user' ? message.isStreaming : false}
             timestamp={message.timestamp}

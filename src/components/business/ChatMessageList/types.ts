@@ -1,6 +1,7 @@
 import type { MessageRole, ThinkingData } from '../ChatMessage/types';
 import type { ToolCallProps } from '../../ui/feedback/ToolCall';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
+import type { PlanStep } from '../../ui/data-display/Plan/types';
 
 export interface Message {
   /** 消息唯一标识 */
@@ -11,6 +12,8 @@ export interface Message {
   content: string;
   /** 思考数据（assistant/thought） */
   thinking?: ThinkingData;
+  /** 执行计划步骤 */
+  planSteps?: PlanStep[];
   /** 是否正在流式输出 */
   isStreaming?: boolean;
   /** 工具调用 */

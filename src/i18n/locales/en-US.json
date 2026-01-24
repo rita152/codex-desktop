@@ -17,7 +17,8 @@
     "defaultCwd": "Default directory",
     "cwdLocked": "Conversation in progress, cannot change working directory",
     "newSessionTitle": "New chat",
-    "filePrefix": "File: {{path}}"
+    "filePrefix": "File: {{path}}",
+    "planTitle": "Plan"
   },
   "chatInput": {
     "slashTitle": "Slash commands",

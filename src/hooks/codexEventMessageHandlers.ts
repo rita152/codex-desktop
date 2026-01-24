@@ -3,6 +3,7 @@ import { devDebug } from '../utils/logger';
 import { applyToolCallUpdate, getToolCallId, newMessageId } from '../utils/codexParsing';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { PlanStep } from '../components/ui/data-display/Plan/types';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
 import type { ToolCall } from '../types/codex';
@@ -21,6 +22,7 @@ export type CodexMessageHandlers = {
   upsertToolCallMessage: (sessionId: string, toolCall: ToolCallProps) => void;
   applyToolCallUpdateMessage: (sessionId: string, update: ToolCall) => void;
   finalizeStreamingMessages: (sessionId: string) => void;
+  updatePlan: (sessionId: string, steps: PlanStep[]) => void;
 };
 
 const buildUpdater = (setSessionMessagesRef: SetSessionMessagesRef): UpdateMessages => {
@@ -273,11 +275,38 @@ export function createCodexMessageHandlers(
     });
   };
 
+  const updatePlan = (sessionId: string, steps: PlanStep[]) => {
+    updateMessages((prev) => {
+      const list = prev[sessionId] ?? [];
+      const lastMessage = list[list.length - 1];
+
+      if (lastMessage?.role === 'assistant') {
+        const nextList = [...list];
+        nextList[nextList.length - 1] = {
+          ...lastMessage,
+          planSteps: steps,
+        };
+        return { ...prev, [sessionId]: nextList };
+      }
+
+      const nextMessage: Message = {
+        id: newMessageId(),
+        role: 'assistant',
+        content: '',
+        planSteps: steps,
+        isStreaming: true,
+        timestamp: new Date(),
+      };
+      return { ...prev, [sessionId]: [...list, nextMessage] };
+    });
+  };
+
   return {
     appendThoughtChunk,
     appendAssistantChunk,
     upsertToolCallMessage,
     applyToolCallUpdateMessage,
     finalizeStreamingMessages,
+    updatePlan,
   };
 }
