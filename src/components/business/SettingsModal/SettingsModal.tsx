@@ -11,7 +11,6 @@ import {
   GeneralSettings,
   ModelSettings,
   ShortcutSettings,
-  AdvancedSettings,
   RemoteSettings,
 } from './sections';
 import { List } from '../../ui/data-display/List';
@@ -58,12 +57,7 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     labelKey: 'settings.sections.shortcuts',
     keywords: ['keyboard', 'hotkey', 'shortcut', '快捷键', '键盘'],
   },
-  {
-    id: 'advanced',
-    icon: '🔧',
-    labelKey: 'settings.sections.advanced',
-    keywords: ['debug', 'cache', 'reset', 'log', '调试', '缓存', '重置', '日志'],
-  },
+
 ];
 
 const MIN_SIDEBAR_WIDTH = 200;
@@ -88,7 +82,6 @@ export function SettingsModal({
     activeSection,
     setActiveSection,
     updateSettings,
-    resetSettings,
     saveStatus,
   } = useSettings();
   const { fetching, fetchError, lastFetchedAt, fetchModels } =
@@ -230,14 +223,7 @@ export function SettingsModal({
             onUpdate={(values) => updateSettings('shortcuts', values)}
           />
         );
-      case 'advanced':
-        return (
-          <AdvancedSettings
-            settings={settings.advanced}
-            onUpdate={(values) => updateSettings('advanced', values)}
-            onReset={resetSettings}
-          />
-        );
+
       default:
         return null;
     }
