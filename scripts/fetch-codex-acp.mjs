@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-const VERSION = '0.8.2';
+const VERSION = '0.9.0';
 
 function fail(message) {
   console.error(message);

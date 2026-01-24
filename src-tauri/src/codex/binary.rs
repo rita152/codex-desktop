@@ -109,7 +109,7 @@ impl CodexAcpBinary {
         let program: OsString =
             std::env::var_os("CODEX_DESKTOP_NPX_BIN").unwrap_or_else(|| OsString::from("npx"));
         let spec = std::env::var_os("CODEX_DESKTOP_ACP_NPX_SPEC")
-            .unwrap_or_else(|| OsString::from("@zed-industries/codex-acp@0.8.2"));
+            .unwrap_or_else(|| OsString::from("@zed-industries/codex-acp@0.9.0"));
         Self {
             mode: CodexAcpLaunchMode::Npx,
             program,

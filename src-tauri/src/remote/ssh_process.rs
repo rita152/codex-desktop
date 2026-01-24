@@ -85,7 +85,7 @@ impl RemoteSshProcess {
             }
         }
         let spec = std::env::var("CODEX_DESKTOP_ACP_NPX_SPEC")
-            .unwrap_or_else(|_| "@zed-industries/codex-acp@0.8.2".to_string());
+            .unwrap_or_else(|_| "@zed-industries/codex-acp@0.9.0".to_string());
         format!(
             "cd {} && {}NO_BROWSER=1 npx --yes {}",
             shell_escape(remote_cwd),
