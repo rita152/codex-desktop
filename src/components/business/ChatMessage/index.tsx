@@ -49,7 +49,6 @@ export const ChatMessage = memo(function ChatMessage({
       : (thinking?.phase ?? 'done');
   const thoughtStreaming =
     role === 'thought' ? (thinking?.isStreaming ?? isStreaming) : thinking?.isStreaming;
-  const showCursor = role === 'assistant' && isStreaming;
   const hasToolCalls = Boolean(toolCalls && toolCalls.length > 0);
 
   const visualRole = role === 'user' ? 'user' : 'assistant';
@@ -106,7 +105,6 @@ export const ChatMessage = memo(function ChatMessage({
       {showBubble && (
         <div className="chat-message__bubble">
           {renderContent()}
-          {showCursor && <span className="chat-message__cursor" aria-hidden="true" />}
         </div>
       )}
       {timestamp && (role === 'user' || !isStreaming) && (
