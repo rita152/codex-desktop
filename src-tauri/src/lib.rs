@@ -26,6 +26,8 @@ fn greet(name: &str) -> String {
 pub mod codex;
 /// Development-only helpers for Codex ACP.
 pub mod codex_dev;
+/// Git integration helpers.
+pub mod git;
 /// Local terminal PTY integration.
 pub mod terminal;
 /// Remote server connection module.
@@ -79,6 +81,21 @@ pub fn run() {
             terminal::terminal_write,
             terminal::terminal_resize,
             terminal::terminal_kill,
+            git::commands::git_status,
+            git::commands::git_diff,
+            git::commands::git_stage,
+            git::commands::git_unstage,
+            git::commands::git_commit,
+            git::commands::git_discard,
+            git::commands::git_history,
+            git::commands::git_branch_list,
+            git::commands::git_checkout,
+            git::commands::git_push,
+            git::commands::git_pull,
+            git::commands::git_fetch,
+            git::commands::git_remotes,
+            git::commands::git_file_view,
+            git::commands::git_reset,
             remote::commands::remote_add_server,
             remote::commands::remote_remove_server,
             remote::commands::remote_list_servers,

@@ -329,3 +329,20 @@
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
+
+/* Git Panel Integration */
+.chat-container__main--git-open {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.chat-container__body--git-open {
+  gap: 0;
+  padding-right: 0;
+}
+
+.chat-container__main--git-open .git-panel {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}

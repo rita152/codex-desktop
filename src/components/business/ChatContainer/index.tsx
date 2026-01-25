@@ -37,6 +37,8 @@ const FileBrowserPanel = lazy(() =>
   import('../FileBrowserPanel').then((module) => ({ default: module.FileBrowserPanel }))
 );
 
+const GitPanel = lazy(() => import('../GitPanel').then((module) => ({ default: module.GitPanel })));
+
 const SidePanelFallback = ({
   visible = false,
   className,
@@ -110,6 +112,10 @@ export function ChatContainer({
   onFileBrowserClose,
   onFileBrowserResizeStart,
   onFileSelect,
+  gitPanelVisible = false,
+  gitPanelWidth = 420,
+  onGitPanelClose,
+  onGitPanelResizeStart,
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -193,7 +199,8 @@ export function ChatContainer({
           'chat-container__main',
           terminalVisible && 'chat-container__main--terminal-open',
           remoteServerPanelVisible && 'chat-container__main--remote-open',
-          fileBrowserVisible && 'chat-container__main--file-browser-open'
+          fileBrowserVisible && 'chat-container__main--file-browser-open',
+          gitPanelVisible && 'chat-container__main--git-open'
         )}
         style={
           {
@@ -204,18 +211,23 @@ export function ChatContainer({
             ...(fileBrowserVisible && {
               '--file-browser-panel-width': `${fileBrowserWidth}px`,
             }),
+            ...(gitPanelVisible && {
+              '--git-panel-width': `${gitPanelWidth}px`,
+            }),
           } as CSSProperties
         }
       >
-        {!terminalVisible && !remoteServerPanelVisible && !fileBrowserVisible && (
-          <ChatSideActions onAction={onSideAction} />
-        )}
+        {!terminalVisible &&
+          !remoteServerPanelVisible &&
+          !fileBrowserVisible &&
+          !gitPanelVisible && <ChatSideActions onAction={onSideAction} />}
         <div
           className={cn(
             'chat-container__body',
             terminalVisible && 'chat-container__body--terminal-open',
             remoteServerPanelVisible && 'chat-container__body--remote-open',
-            fileBrowserVisible && 'chat-container__body--file-browser-open'
+            fileBrowserVisible && 'chat-container__body--file-browser-open',
+            gitPanelVisible && 'chat-container__body--git-open'
           )}
           ref={bodyRef}
         >
@@ -333,6 +345,24 @@ export function ChatContainer({
                 onClose={onFileBrowserClose}
                 onResizeStart={onFileBrowserResizeStart}
                 onFileSelect={onFileSelect}
+              />
+            </Suspense>
+          )}
+          {gitPanelVisible && (
+            <Suspense
+              fallback={
+                <SidePanelFallback
+                  visible={gitPanelVisible}
+                  className="git-panel"
+                  widthVar="--git-panel-width"
+                />
+              }
+            >
+              <GitPanel
+                visible={gitPanelVisible}
+                cwd={sessionCwd || ''}
+                onClose={onGitPanelClose}
+                onResizeStart={onGitPanelResizeStart}
               />
             </Suspense>
           )}

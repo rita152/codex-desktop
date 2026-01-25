@@ -58,7 +58,7 @@
 ### 第二阶段：前端 Hook 与状态
 
 1.  **Git Context**：
-    - 状态：`isGitRepo`, `currentBranch`, `changes`, `stagedChanges`, `history`, `remotes`。
+    - 状态：`isGitRepo`, `currentBranch`, `history`, `remotes`。
     - 增加 `syncStatus` (ahead/behind counts)。
 
 2.  **交互逻辑**：
@@ -67,17 +67,18 @@
 ### 第三阶段：UI 集成
 
 1.  **侧边栏组件**：
-    - **源代码管理**：Changes 列表, Staged Changes 列表。
-    - **操作区**：Commit 输入框，一键 Sync 按钮（Push/Pull）。
-    - **更多菜单**：Switch Branch, Create Branch, Discard All。
+    - **历史视图**：提交历史列表与分支/标签引用。
+    - **同步与分支**：Refresh / Sync / Switch Branch / Create Branch。
+    - **变更模块说明**：Commit/Stage/Diff UI 由 Codex 处理，不在产品内暴露。
 
-2.  **Diff 视图**：
-    - 集成 Monaco Diff Editor。
-
-3.  **Git Graph 视图**：
-    - 独立标签页。
+2.  **Git Graph 视图**：
+    - 独立视图区域。
     - 可视化提交历史与分支轨道。
     - 右键菜单：Checkout commit, Reset to here 等。
 
-## 5. 即将执行的操作
-**第一步**：搭建后端基础。我将创建 Rust 模块并实现基础命令框架。
+## 5. 执行结果
+- 已完成 Rust Git 模块与命令注册（`git_status`, `git_diff`, `git_stage`, `git_unstage`, `git_commit`, `git_discard`, `git_history`, `git_branch_list`, `git_checkout`, `git_push`, `git_pull`, `git_fetch` 等）。  
+- 已补齐前端 Git 状态管理与自动刷新逻辑，包含 `syncStatus`/remotes/history。  
+- 已接入 Git 面板：History 列表、Sync、分支操作、Checkout/Reset 上下文菜单。  
+- 已将提交历史改为 `--all` 模式，展示完整分支历史。  
+- 已移除 Changes/Commit/Diff UI，提交由 Codex 负责。  

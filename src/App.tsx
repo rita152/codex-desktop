@@ -15,6 +15,7 @@ import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { useFileBrowser } from './hooks/useFileBrowser';
+import { useGitPanel } from './hooks/useGitPanel';
 import { useRemotePanel } from './hooks/useRemotePanel';
 import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
@@ -123,6 +124,14 @@ export function App() {
     handleFileBrowserClose,
     handleFileBrowserResize,
   } = useFileBrowser({ bodyRef });
+
+  const {
+    gitPanelVisible,
+    setGitPanelVisible,
+    gitPanelWidth,
+    handleGitPanelClose,
+    handleGitPanelResize,
+  } = useGitPanel({ bodyRef });
 
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
     useCodexSessionSync({
@@ -564,6 +573,7 @@ export function App() {
           setTerminalVisible(true);
           setRemoteServerPanelVisible(false);
           setFileBrowserVisible(false);
+          setGitPanelVisible(false);
         }
       } else if (actionId === 'remote') {
         if (remoteServerPanelVisible) {
@@ -572,6 +582,7 @@ export function App() {
           setRemoteServerPanelVisible(true);
           setTerminalVisible(false);
           setFileBrowserVisible(false);
+          setGitPanelVisible(false);
         }
       } else if (actionId === 'explorer') {
         if (fileBrowserVisible) {
@@ -580,6 +591,16 @@ export function App() {
           setFileBrowserVisible(true);
           setTerminalVisible(false);
           setRemoteServerPanelVisible(false);
+          setGitPanelVisible(false);
+        }
+      } else if (actionId === 'git') {
+        if (gitPanelVisible) {
+          setGitPanelVisible(false);
+        } else {
+          setGitPanelVisible(true);
+          setTerminalVisible(false);
+          setRemoteServerPanelVisible(false);
+          setFileBrowserVisible(false);
         }
       }
     },
@@ -588,8 +609,10 @@ export function App() {
       terminalVisible,
       remoteServerPanelVisible,
       fileBrowserVisible,
+      gitPanelVisible,
       setRemoteServerPanelVisible,
       setFileBrowserVisible,
+      setGitPanelVisible,
     ]
   );
 
@@ -767,6 +790,10 @@ export function App() {
         onFileBrowserClose={handleFileBrowserClose}
         onFileBrowserResizeStart={handleFileBrowserResize}
         onFileSelect={handleFileSelect}
+        gitPanelVisible={gitPanelVisible}
+        gitPanelWidth={gitPanelWidth}
+        onGitPanelClose={handleGitPanelClose}
+        onGitPanelResizeStart={handleGitPanelResize}
       />
       <SettingsModal
         isOpen={settingsOpen}

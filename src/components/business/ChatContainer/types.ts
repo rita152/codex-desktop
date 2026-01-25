@@ -78,6 +78,14 @@ export interface ChatContainerProps {
   onFileBrowserResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   /** 文件选择回调 */
   onFileSelect?: (path: string) => void;
+  /** 是否显示 Git 面板 */
+  gitPanelVisible?: boolean;
+  /** Git 面板宽度 */
+  gitPanelWidth?: number;
+  /** 关闭 Git 面板 */
+  onGitPanelClose?: () => void;
+  /** Git 面板调整大小 */
+  onGitPanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */
