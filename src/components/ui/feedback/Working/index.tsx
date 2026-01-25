@@ -112,22 +112,23 @@ export function Working({
   }, [isOpen]);
 
   const hasIncompleteItem = useMemo(() => items.some(hasIncompleteWorkingItem), [items]);
+  const shouldTimerRun = isActive || hasIncompleteItem;
 
   useEffect(() => {
-    if (!hasIncompleteItem) return;
+    if (!shouldTimerRun) return;
     const timer = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(timer);
-  }, [hasIncompleteItem]);
+  }, [shouldTimerRun]);
 
   useEffect(() => {
-    if (hasIncompleteItem) {
+    if (shouldTimerRun) {
       finishedAtRef.current = null;
       return;
     }
     if (finishedAtRef.current === null) {
       finishedAtRef.current = Date.now();
     }
-  }, [hasIncompleteItem]);
+  }, [shouldTimerRun]);
 
   const handleToggle = () => {
     if (!canToggle) return;
@@ -160,7 +161,7 @@ export function Working({
     return { effectiveStart: minStart, effectiveEnd: maxEnd };
   }, [items, startTime]);
 
-  const resolvedEnd = hasIncompleteItem ? now : (effectiveEnd ?? finishedAtRef.current);
+  const resolvedEnd = shouldTimerRun ? now : (effectiveEnd ?? finishedAtRef.current);
   const totalSeconds =
     effectiveStart !== null && resolvedEnd !== null
       ? Math.max(0, (resolvedEnd - effectiveStart) / 1000)
