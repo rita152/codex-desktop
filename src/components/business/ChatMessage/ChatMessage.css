@@ -44,6 +44,8 @@
   border-color: transparent;
   border-bottom-left-radius: var(--radius-sm);
   padding-top: 0;
+  padding-left: var(--spacing-md);
+  padding-right: var(--spacing-md);
 }
 
 .chat-message--tool .chat-message__bubble {
@@ -67,7 +69,7 @@
 .chat-message__timestamp {
   font-size: 11px;
   color: var(--color-text-secondary);
-  padding: 0 var(--spacing-xs);
+  padding: 0 var(--spacing-md);
 }
 
 .chat-message__cursor {
@@ -91,10 +93,12 @@
 }
 
 @keyframes chat-message-cursor-blink {
+
   0%,
   49% {
     opacity: 1;
   }
+
   50%,
   100% {
     opacity: 0;
