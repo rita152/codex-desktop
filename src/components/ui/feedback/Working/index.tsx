@@ -55,15 +55,14 @@ const renderItem = (item: WorkingItem, index: number) => {
 
 const hasIncompleteWorkingItem = (item: WorkingItem): boolean => {
   if (item.type === 'thinking') {
-    return item.data.startTime === undefined || item.data.duration === undefined;
+    return (
+      item.data.isStreaming === true ||
+      item.data.phase === 'thinking' ||
+      item.data.phase === 'working'
+    );
   }
   if (item.type === 'toolcall') {
-    return (
-      item.data.startTime === undefined ||
-      item.data.duration === undefined ||
-      item.data.status === 'pending' ||
-      item.data.status === 'in-progress'
-    );
+    return item.data.status === 'pending' || item.data.status === 'in-progress';
   }
   return item.data.status === 'pending' || Boolean(item.data.loading);
 };
