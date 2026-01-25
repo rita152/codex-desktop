@@ -117,6 +117,7 @@
   },
   "working": {
     "title": "处理中",
+    "finished": "已完成",
     "inProgress": "进行中",
     "itemCount_one": "{{count}} 项",
     "itemCount_other": "{{count}} 项",

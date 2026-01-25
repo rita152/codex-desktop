@@ -117,6 +117,7 @@
   },
   "working": {
     "title": "Working",
+    "finished": "Completed",
     "inProgress": "In progress",
     "itemCount_one": "{{count}} item",
     "itemCount_other": "{{count}} items",
