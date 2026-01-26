@@ -342,3 +342,15 @@
   gap: 0;
   padding-right: 0;
 }
+
+.chat-container__body--side-panel-open .chat-container__messages {
+  padding-right: var(--spacing-md);
+}
+
+.chat-container__body--side-panel-open .chat-container__session-header {
+  padding-right: var(--spacing-md);
+}
+
+.chat-container__body--side-panel-open .chat-container__input-wrapper {
+  padding-right: var(--spacing-md);
+}

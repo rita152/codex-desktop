@@ -3,7 +3,9 @@
     flex-direction: column;
     height: 100%;
     background-color: var(--color-bg-secondary);
-    border-left: var(--border-width-thin) solid var(--color-border);
+    border: var(--border-width-thin) solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
     position: relative;
 }
