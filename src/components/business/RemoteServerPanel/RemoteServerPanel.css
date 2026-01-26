@@ -36,54 +36,10 @@
     box-shadow: none;
 }
 
-.remote-server-panel__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: var(--border-width-thin) solid var(--color-border);
-    background: var(--color-bg-muted);
-    color: var(--color-text);
-    font-size: 0.85rem;
-}
-
-.remote-server-panel__title {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-weight: 600;
-}
-
-.remote-server-panel__close {
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    transition:
-        color 0.2s ease,
-        background-color 0.2s ease;
-}
-
-.remote-server-panel__close:hover:not(:disabled),
-.remote-server-panel__close:focus-visible {
-    color: var(--color-text);
-    background-color: var(--color-bg-subtle);
-}
-
-.remote-server-panel__close:focus-visible {
-    outline: 2px solid var(--color-border-hover);
-    outline-offset: 2px;
-}
-
 .remote-server-panel__body {
     flex: 1;
     display: flex;
-    padding: 0;
+    padding: var(--spacing-xs) 0 var(--spacing-xs) var(--spacing-sm);
     background: var(--color-bg);
     min-height: 0;
     overflow-y: auto;

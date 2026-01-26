@@ -2,8 +2,7 @@ import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { RemoteServerManager } from '../RemoteServerManager';
-import { ServerIcon } from '../../ui/data-display/Icon';
-import { Button } from '../../ui/data-entry/Button';
+
 import { cn } from '../../../utils/cn';
 
 import './RemoteServerPanel.css';
@@ -16,6 +15,7 @@ type RemoteServerPanelProps = {
 
 export function RemoteServerPanel({
   visible = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onClose,
   onResizeStart,
 }: RemoteServerPanelProps) {
@@ -36,20 +36,7 @@ export function RemoteServerPanel({
           tabIndex={0}
         />
       )}
-      <header className="remote-server-panel__header">
-        <div className="remote-server-panel__title">
-          <ServerIcon size={16} />
-          <span>{t('chatSideActions.remote')}</span>
-        </div>
-        <Button
-          type="button"
-          className="remote-server-panel__close"
-          onClick={onClose}
-          aria-label={t('settings.remoteServer.close')}
-        >
-          {t('settings.remoteServer.close')}
-        </Button>
-      </header>
+
       <div className="remote-server-panel__body">
         <RemoteServerManager hideTitle />
       </div>
