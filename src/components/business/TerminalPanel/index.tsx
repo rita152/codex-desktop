@@ -6,8 +6,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 
 import { terminalResize, terminalWrite } from '../../../api/terminal';
-import { TerminalIcon } from '../../ui/data-display/Icon';
-import { Button } from '../../ui/data-entry/Button';
+
 import { cn } from '../../../utils/cn';
 
 import '@xterm/xterm/css/xterm.css';
@@ -28,6 +27,7 @@ type TerminalOutputEvent = {
 export function TerminalPanel({
   terminalId,
   visible = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onClose,
   onResizeStart,
 }: TerminalPanelProps) {
@@ -187,20 +187,7 @@ export function TerminalPanel({
           tabIndex={0}
         />
       )}
-      <header className="terminal-panel__header">
-        <div className="terminal-panel__title">
-          <TerminalIcon size={16} />
-          <span>{t('terminalPanel.title')}</span>
-        </div>
-        <Button
-          type="button"
-          className="terminal-panel__close"
-          onClick={onClose}
-          aria-label={t('terminalPanel.close')}
-        >
-          {t('terminalPanel.close')}
-        </Button>
-      </header>
+
       <div className="terminal-panel__body">
         {terminalId ? (
           <div ref={containerRef} className="terminal-panel__terminal" />
