@@ -305,6 +305,7 @@
       "configDescription": "从 ~/.codex/config.toml 与 auth.json 读取的配置",
       "configLoading": "正在加载 Codex 配置",
       "configMissing": "未找到本地 Codex 配置",
+      "configUnavailableWeb": "Web 预览中无法读取配置",
       "providerId": "Provider ID",
       "baseUrl": "Base URL",
       "envKey": "Env Key",

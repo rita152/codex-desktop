@@ -305,6 +305,7 @@
       "configDescription": "Configuration loaded from ~/.codex/config.toml and auth.json",
       "configLoading": "Loading Codex config",
       "configMissing": "No local Codex config found",
+      "configUnavailableWeb": "Config unavailable in web preview",
       "providerId": "Provider ID",
       "baseUrl": "Base URL",
       "envKey": "Env key",

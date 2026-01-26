@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
+import { useTranslation } from 'react-i18next';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
 import { homeDir, join } from '@tauri-apps/api/path';
 import { Button } from '../../ui/data-entry/Button';
@@ -11,6 +12,7 @@ interface ConfigEditorProps {
 }
 
 export function ConfigEditor({ filename, language }: ConfigEditorProps) {
+    const { t } = useTranslation();
     const [content, setContent] = useState('');
     const [configPath, setConfigPath] = useState('');
     const [loading, setLoading] = useState(true);
@@ -61,10 +63,11 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
     useEffect(() => {
         const load = async () => {
             if (!hasTauriInvoke) {
+                const note = t('settings.model.configUnavailableWeb');
                 setContent(
                     language === 'json'
-                        ? `{\n  "note": "File .codex/${filename} not available outside the desktop app"\n}`
-                        : `# .codex/${filename}\n`
+                        ? `{\n  "note": ${JSON.stringify(note)}\n}`
+                        : `# .codex/${filename}\n# ${note}\n`
                 );
                 setError(null);
                 setLoading(false);
@@ -95,7 +98,7 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
             }
         };
         load();
-    }, [filename, language, hasTauriInvoke]);
+    }, [filename, language, hasTauriInvoke, t]);
 
     const handleSave = async () => {
         if (!configPath) return;
