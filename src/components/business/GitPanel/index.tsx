@@ -33,11 +33,11 @@ function formatCommitDate(value: string): string {
 export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPanelProps) {
   const { t } = useTranslation();
   const [commitMenu, setCommitMenu] = useState<CommitMenuState>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const {
     status,
     history,
-    loading,
     error,
     refreshHistory,
     checkout,
@@ -53,11 +53,23 @@ export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPa
     }
   }, [visible]);
 
+  const refreshHistoryWithLoading = useCallback(
+    async (limit?: number, all?: boolean) => {
+      setHistoryLoading(true);
+      try {
+        await refreshHistory(limit, all);
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [refreshHistory]
+  );
+
   useEffect(() => {
     if (visible && isGitRepo) {
-      void refreshHistory(undefined, true);
+      void refreshHistoryWithLoading(undefined, true);
     }
-  }, [visible, isGitRepo, refreshHistory]);
+  }, [visible, isGitRepo, refreshHistoryWithLoading]);
 
   useEffect(() => {
     if (!visible) return;
@@ -76,7 +88,12 @@ export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPa
 
   const handleCheckoutCommit = useCallback(async () => {
     if (!commitMenu) return;
-    await checkout(commitMenu.commit.id);
+    setHistoryLoading(true);
+    try {
+      await checkout(commitMenu.commit.id);
+    } finally {
+      setHistoryLoading(false);
+    }
     setCommitMenu(null);
   }, [checkout, commitMenu]);
 
@@ -84,7 +101,12 @@ export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPa
     if (!commitMenu) return;
     const confirmed = window.confirm(t('gitPanel.confirmReset'));
     if (!confirmed) return;
-    await reset(commitMenu.commit.id, 'hard');
+    setHistoryLoading(true);
+    try {
+      await reset(commitMenu.commit.id, 'hard');
+    } finally {
+      setHistoryLoading(false);
+    }
     setCommitMenu(null);
   }, [commitMenu, reset, t]);
 
@@ -117,11 +139,11 @@ export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPa
         )}
         {!isRemote && isGitRepo && (
           <div className="git-panel__history-view">
-            {loading && <div className="git-panel__loading">{t('gitPanel.loading')}</div>}
-            {!loading && history.length === 0 && (
+            {historyLoading && <div className="git-panel__loading">{t('gitPanel.loading')}</div>}
+            {!historyLoading && history.length === 0 && (
               <div className="git-panel__empty">{t('gitPanel.noHistory')}</div>
             )}
-            {!loading && history.length > 0 && (
+            {history.length > 0 && (
               <div className="git-panel__history-list">
                 {history.map((commitItem) => (
                   <div
