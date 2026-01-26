@@ -36,7 +36,6 @@
   },
   "chatSideActions": {
     "label": "Quick actions",
-    "files": "Files",
     "explorer": "File Explorer",
     "git": "Source Control",
     "terminal": "Terminal",

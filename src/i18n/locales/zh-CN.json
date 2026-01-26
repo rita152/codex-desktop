@@ -36,7 +36,6 @@
   },
   "chatSideActions": {
     "label": "快捷操作",
-    "files": "文件",
     "explorer": "文件浏览器",
     "git": "源代码管理",
     "terminal": "终端",

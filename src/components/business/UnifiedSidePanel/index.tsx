@@ -3,7 +3,6 @@ import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import {
-    CodeIcon,
     FolderIcon,
     GitBranchIcon,
     ServerIcon,
@@ -27,7 +26,7 @@ const FileBrowserPanel = lazy(() =>
 
 const GitPanel = lazy(() => import('../GitPanel').then((module) => ({ default: module.GitPanel })));
 
-export type SidePanelTab = 'terminal' | 'git' | 'explorer' | 'remote' | 'files';
+export type SidePanelTab = 'terminal' | 'git' | 'explorer' | 'remote';
 
 interface UnifiedSidePanelProps {
     activeTab: SidePanelTab;
@@ -58,7 +57,6 @@ export function UnifiedSidePanel({
     const { t } = useTranslation();
 
     const tabs = useMemo<Array<{ id: SidePanelTab; label: string; icon: ReactNode }>>(() => [
-        { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={14} /> },
         { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
         { id: 'git', label: t('chatSideActions.git'), icon: <GitBranchIcon size={14} /> },
         { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={14} /> },
@@ -159,13 +157,6 @@ export function UnifiedSidePanel({
                     <RemoteServerPanel
                         visible={activeTab === 'remote'}
                     />
-                )}
-
-                {renderPanel(
-                    'files',
-                    <div className="p-4 text-center text-secondary">
-                        Files implementation stub
-                    </div>
                 )}
             </div>
         </div>

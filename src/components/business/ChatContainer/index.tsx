@@ -50,7 +50,7 @@ export function ChatContainer({
   onSideAction,
   /* Unified Panel Props */
   sidePanelVisible = false,
-  activeSidePanelTab = 'files',
+  activeSidePanelTab = 'explorer',
   sidePanelWidth = 360,
   onSidePanelClose,
   onSidePanelResizeStart,

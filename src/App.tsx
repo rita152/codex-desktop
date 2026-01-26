@@ -100,7 +100,7 @@ export function App() {
 
   // Unified Side Panel State
   const [sidePanelVisible, setSidePanelVisible] = useState(false);
-  const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('files');
+  const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
   const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
   const {
     pendingApprovals,
@@ -570,7 +570,7 @@ export function App() {
   const handleSideAction = useCallback(
     (actionId: string) => {
       // Map simple IDs to our strongly typed SidePanelTab
-      // 'files' | 'explorer' | 'git' | 'terminal' | 'remote'
+      // 'explorer' | 'git' | 'terminal' | 'remote'
       const tabId = actionId as SidePanelTab;
 
       if (sidePanelVisible && activeSidePanelTab === tabId) {
