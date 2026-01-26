@@ -7,7 +7,7 @@ import { isRemotePath, parseRemotePath } from '../../../utils/remotePath';
 import type { RemoteFilesystemListing } from '../../../types/remote';
 
 import { FolderIcon, CodeIcon, ChevronDownIcon } from '../../ui/data-display/Icon';
-import { Button } from '../../ui/data-entry/Button';
+
 import { cn } from '../../../utils/cn';
 import { listLocalDirectory } from '../../../api/filesystem';
 import type { LocalDirectoryEntry } from '../../../api/filesystem';
@@ -41,6 +41,7 @@ function getParentPath(path: string): string | null {
 export function FileBrowserPanel({
     visible = false,
     cwd,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onClose,
     onResizeStart,
     onFileSelect,
@@ -146,22 +147,7 @@ export function FileBrowserPanel({
                     tabIndex={0}
                 />
             )}
-            <header className="file-browser-panel__header">
-                <div className="file-browser-panel__title">
-                    <FolderIcon size={16} />
-                    <span>{t('fileBrowser.title')}</span>
-                </div>
-                <div className="file-browser-panel__actions">
-                    <Button
-                        type="button"
-                        className="file-browser-panel__close"
-                        onClick={onClose}
-                        aria-label={t('fileBrowser.close')}
-                    >
-                        {t('fileBrowser.close')}
-                    </Button>
-                </div>
-            </header>
+
             <div className="file-browser-panel__body">
                 <div className="file-browser-panel__path-bar">
                     <button
