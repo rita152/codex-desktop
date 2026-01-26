@@ -1,4 +1,5 @@
-import { useMemo, lazy, Suspense } from 'react';
+import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import {
@@ -50,12 +51,13 @@ export function UnifiedSidePanel({
     width,
     onResizeStart,
     terminalId,
+    onTerminalClose,
     sessionCwd,
     onFileSelect,
 }: UnifiedSidePanelProps) {
     const { t } = useTranslation();
 
-    const tabs = useMemo(() => [
+    const tabs = useMemo<Array<{ id: SidePanelTab; label: string; icon: ReactNode }>>(() => [
         { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={14} /> },
         { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
         { id: 'git', label: t('chatSideActions.git'), icon: <NotebookIcon size={14} /> },
@@ -63,9 +65,27 @@ export function UnifiedSidePanel({
         { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={14} /> },
     ], [t]);
 
-    // Determine current title based on active tab
-    // const activeTabInfo = tabs.find(t => t.id === activeTab);
-    // const title = activeTabInfo ? activeTabInfo.label : '';
+    const [mountedTabs, setMountedTabs] = useState<SidePanelTab[]>([activeTab]);
+
+    useEffect(() => {
+        setMountedTabs((prev) => (prev.includes(activeTab) ? prev : [...prev, activeTab]));
+    }, [activeTab]);
+
+    const renderPanel = (tabId: SidePanelTab, content: ReactNode) => {
+        if (!mountedTabs.includes(tabId)) return null;
+        return (
+            <div
+                className={cn(
+                    'unified-side-panel__view',
+                    activeTab !== tabId && 'unified-side-panel__view--hidden'
+                )}
+            >
+                <Suspense fallback={<div className="p-4 text-secondary">Loading...</div>}>
+                    {content}
+                </Suspense>
+            </div>
+        );
+    };
 
     return (
         <div
@@ -86,7 +106,7 @@ export function UnifiedSidePanel({
                                 'unified-side-panel__tab',
                                 activeTab === tab.id && 'unified-side-panel__tab--active'
                             )}
-                            onClick={() => onTabChange(tab.id as SidePanelTab)}
+                            onClick={() => onTabChange(tab.id)}
                             title={tab.label}
                             aria-label={tab.label}
                             aria-selected={activeTab === tab.id}
@@ -108,49 +128,45 @@ export function UnifiedSidePanel({
             </div>
 
             <div className="unified-side-panel__content">
-                <Suspense fallback={<div className="p-4 text-secondary">Loading...</div>}>
-                    <div style={{ display: activeTab === 'terminal' ? 'block' : 'none', height: '100%' }}>
-                        <TerminalPanel
-                            terminalId={terminalId}
-                            visible={true} // Always "visible" to component logic if we are just hiding it with CSS
-                            onClose={() => { }} // TerminalPanel's internal close button might need handling or hiding
-                            onResizeStart={() => { }} // Handle resize at unified level
-                        />
+                {renderPanel(
+                    'terminal',
+                    <TerminalPanel
+                        terminalId={terminalId}
+                        visible={activeTab === 'terminal'}
+                        onClose={onTerminalClose}
+                    />
+                )}
+
+                {renderPanel(
+                    'git',
+                    <GitPanel
+                        visible={activeTab === 'git'}
+                        cwd={sessionCwd}
+                    />
+                )}
+
+                {renderPanel(
+                    'explorer',
+                    <FileBrowserPanel
+                        visible={activeTab === 'explorer'}
+                        cwd={sessionCwd}
+                        onFileSelect={onFileSelect}
+                    />
+                )}
+
+                {renderPanel(
+                    'remote',
+                    <RemoteServerPanel
+                        visible={activeTab === 'remote'}
+                    />
+                )}
+
+                {renderPanel(
+                    'files',
+                    <div className="p-4 text-center text-secondary">
+                        Files implementation stub
                     </div>
-
-                    {activeTab === 'git' && (
-                        <GitPanel
-                            visible={true}
-                            cwd={sessionCwd}
-                            onClose={() => { }}
-                            onResizeStart={() => { }}
-                        />
-                    )}
-
-                    {activeTab === 'explorer' && (
-                        <FileBrowserPanel
-                            visible={true}
-                            cwd={sessionCwd}
-                            onClose={() => { }}
-                            onResizeStart={() => { }}
-                            onFileSelect={onFileSelect}
-                        />
-                    )}
-
-                    {activeTab === 'remote' && (
-                        <RemoteServerPanel
-                            visible={true}
-                            onClose={() => { }}
-                            onResizeStart={() => { }}
-                        />
-                    )}
-
-                    {activeTab === 'files' && (
-                        <div className="p-4 text-center text-secondary">
-                            Files implementation stub
-                        </div>
-                    )}
-                </Suspense>
+                )}
             </div>
         </div>
     );
