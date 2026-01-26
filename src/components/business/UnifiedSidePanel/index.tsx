@@ -56,11 +56,11 @@ export function UnifiedSidePanel({
     const { t } = useTranslation();
 
     const tabs = useMemo(() => [
-        { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={16} /> },
-        { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={16} /> },
-        { id: 'git', label: t('chatSideActions.git'), icon: <NotebookIcon size={16} /> },
-        { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={16} /> },
-        { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={16} /> },
+        { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={14} /> },
+        { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
+        { id: 'git', label: t('chatSideActions.git'), icon: <NotebookIcon size={14} /> },
+        { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={14} /> },
+        { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={14} /> },
     ], [t]);
 
     // Determine current title based on active tab
