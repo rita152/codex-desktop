@@ -14,9 +14,7 @@ import {
 import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
-import { useFileBrowser } from './hooks/useFileBrowser';
-import { useGitPanel } from './hooks/useGitPanel';
-import { useRemotePanel } from './hooks/useRemotePanel';
+import { usePanelResize } from './hooks/usePanelResize';
 import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 
@@ -37,10 +35,12 @@ import { terminalKill } from './api/terminal';
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
 import type { SelectOption } from './components/ui/data-entry/Select/types';
-
+import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
+const DEFAULT_SIDE_PANEL_WIDTH = 360;
+const MIN_SIDE_PANEL_WIDTH = 260;
 
 export function App() {
   const { t } = useTranslation();
@@ -94,9 +94,14 @@ export function App() {
     SIDEBAR_AUTO_HIDE_MAX_WIDTH
   );
   const pickRemoteCwd = useRemoteCwdPicker();
-  const [terminalVisible, setTerminalVisible] = useState(false);
+  const [terminalVisible, setTerminalVisible] = useState(false); // Kept for terminal lifecycle hooks for now, but synced with sidePanel
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
+
+  // Unified Side Panel State
+  const [sidePanelVisible, setSidePanelVisible] = useState(false);
+  const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('files');
+  const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
   const {
     pendingApprovals,
     approvalStatuses,
@@ -109,29 +114,18 @@ export function App() {
 
   const activeSessionIdRef = useRef<string>(selectedSessionId);
   const bodyRef = useRef<HTMLDivElement | null>(null);
-  const {
-    remoteServerPanelVisible,
-    setRemoteServerPanelVisible,
-    remoteServerPanelWidth,
-    handleRemoteServerPanelClose,
-    handleRemoteServerPanelResize,
-  } = useRemotePanel({ bodyRef });
+  // We can keep these hooks if they provide other utility, but we will ignore their visibility state for UI rendering
+  // Ideally we should refactor them later to remove the UI state from them entirely if unused.
+  // For now, let's just use usePanelResize for the unified panel directly.
 
-  const {
-    fileBrowserVisible,
-    setFileBrowserVisible,
-    fileBrowserWidth,
-    handleFileBrowserClose,
-    handleFileBrowserResize,
-  } = useFileBrowser({ bodyRef });
-
-  const {
-    gitPanelVisible,
-    setGitPanelVisible,
-    gitPanelWidth,
-    handleGitPanelClose,
-    handleGitPanelResize,
-  } = useGitPanel({ bodyRef });
+  const handleSidePanelResize = usePanelResize({
+    isOpen: sidePanelVisible,
+    width: sidePanelWidth,
+    setWidth: setSidePanelWidth,
+    minWidth: MIN_SIDE_PANEL_WIDTH,
+    minContentWidth: 240, // MIN_CONVERSATION_WIDTH
+    getContainerWidth: () => bodyRef.current?.getBoundingClientRect().width ?? 0,
+  });
 
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
     useCodexSessionSync({
@@ -189,12 +183,22 @@ export function App() {
   });
 
   useTerminalLifecycle({
-    terminalVisible,
+    terminalVisible: sidePanelVisible && activeSidePanelTab === 'terminal', // Sync lifecycle with unified state
     selectedSessionId,
     activeTerminalId,
     selectedCwd,
     setTerminalBySession,
-    setTerminalVisible,
+    setTerminalVisible: (visible) => {
+      // If the lifecycle wants to close the terminal, we close the panel if it's the terminal tab
+      if (!visible && activeSidePanelTab === 'terminal') {
+        setSidePanelVisible(false);
+      }
+      // If it wants to open, we open the panel
+      if (visible) {
+        setSidePanelVisible(true);
+        setActiveSidePanelTab('terminal');
+      }
+    },
     setSessionNotices,
     t,
   });
@@ -565,56 +569,29 @@ export function App() {
 
   const handleSideAction = useCallback(
     (actionId: string) => {
-      if (actionId === 'terminal') {
-        if (!selectedSessionId) return;
-        if (terminalVisible) {
-          setTerminalVisible(false);
-        } else {
-          setTerminalVisible(true);
-          setRemoteServerPanelVisible(false);
-          setFileBrowserVisible(false);
-          setGitPanelVisible(false);
-        }
-      } else if (actionId === 'remote') {
-        if (remoteServerPanelVisible) {
-          setRemoteServerPanelVisible(false);
-        } else {
-          setRemoteServerPanelVisible(true);
-          setTerminalVisible(false);
-          setFileBrowserVisible(false);
-          setGitPanelVisible(false);
-        }
-      } else if (actionId === 'explorer') {
-        if (fileBrowserVisible) {
-          setFileBrowserVisible(false);
-        } else {
-          setFileBrowserVisible(true);
-          setTerminalVisible(false);
-          setRemoteServerPanelVisible(false);
-          setGitPanelVisible(false);
-        }
-      } else if (actionId === 'git') {
-        if (gitPanelVisible) {
-          setGitPanelVisible(false);
-        } else {
-          setGitPanelVisible(true);
-          setTerminalVisible(false);
-          setRemoteServerPanelVisible(false);
-          setFileBrowserVisible(false);
-        }
+      // Map simple IDs to our strongly typed SidePanelTab
+      // 'files' | 'explorer' | 'git' | 'terminal' | 'remote'
+      const tabId = actionId as SidePanelTab;
+
+      if (sidePanelVisible && activeSidePanelTab === tabId) {
+        // Toggle off if clicking the same active tab
+        setSidePanelVisible(false);
+      } else {
+        // Switch tab and ensure open
+        setActiveSidePanelTab(tabId);
+        setSidePanelVisible(true);
       }
     },
-    [
-      selectedSessionId,
-      terminalVisible,
-      remoteServerPanelVisible,
-      fileBrowserVisible,
-      gitPanelVisible,
-      setRemoteServerPanelVisible,
-      setFileBrowserVisible,
-      setGitPanelVisible,
-    ]
+    [sidePanelVisible, activeSidePanelTab]
   );
+
+  const handleSidePanelClose = useCallback(() => {
+    setSidePanelVisible(false);
+  }, []);
+
+  const handleSidePanelTabChange = useCallback((tab: SidePanelTab) => {
+    setActiveSidePanelTab(tab);
+  }, []);
 
   const handleFileSelect = useCallback(
     (path: string) => {
@@ -633,7 +610,11 @@ export function App() {
   );
 
   const handleTerminalClose = useCallback(() => {
-    setTerminalVisible(false);
+    // When terminal closes via its internal logic (if any)
+    if (activeSidePanelTab === 'terminal') {
+      setSidePanelVisible(false);
+    }
+
     if (!selectedSessionId || !activeTerminalId) return;
     setTerminalBySession((prev) => {
       const next = { ...prev };
@@ -641,7 +622,7 @@ export function App() {
       return next;
     });
     void terminalKill(activeTerminalId);
-  }, [activeTerminalId, selectedSessionId]);
+  }, [activeTerminalId, activeSidePanelTab, selectedSessionId]);
 
   // 实际发送消息到后端的处理函数
   const doSendMessage = useCallback(
@@ -770,9 +751,18 @@ export function App() {
         onSendMessage={handleSendMessage}
         onAddClick={handleAddFile}
         onSideAction={handleSideAction}
-        terminalVisible={terminalVisible}
+
+        // Unified Side Panel Props
+        sidePanelVisible={sidePanelVisible}
+        activeSidePanelTab={activeSidePanelTab}
+        sidePanelWidth={sidePanelWidth}
+        onSidePanelClose={handleSidePanelClose}
+        onSidePanelResizeStart={handleSidePanelResize}
+        onSidePanelTabChange={handleSidePanelTabChange}
+
+        // Feature specific props needed inside the panel
         terminalId={activeTerminalId ?? null}
-        onTerminalClose={handleTerminalClose}
+        onTerminalClose={handleTerminalClose} // Still needed for internal logic if any
         onPickLocalCwd={handleSelectCwd}
         onSetCwd={handleCwdSelect}
         cwdLocked={cwdLocked}
@@ -781,19 +771,8 @@ export function App() {
         onSidebarToggle={isNarrowLayout ? undefined : toggleSidebar}
         onSettingsClick={handleSettingsClick}
         bodyRef={bodyRef}
-        remoteServerPanelVisible={remoteServerPanelVisible}
-        remoteServerPanelWidth={remoteServerPanelWidth}
-        onRemoteServerPanelClose={handleRemoteServerPanelClose}
-        onRemoteServerPanelResizeStart={handleRemoteServerPanelResize}
-        fileBrowserVisible={fileBrowserVisible}
-        fileBrowserWidth={fileBrowserWidth}
-        onFileBrowserClose={handleFileBrowserClose}
-        onFileBrowserResizeStart={handleFileBrowserResize}
+
         onFileSelect={handleFileSelect}
-        gitPanelVisible={gitPanelVisible}
-        gitPanelWidth={gitPanelWidth}
-        onGitPanelClose={handleGitPanelClose}
-        onGitPanelResizeStart={handleGitPanelResize}
       />
       <SettingsModal
         isOpen={settingsOpen}

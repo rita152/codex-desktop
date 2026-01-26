@@ -1,0 +1,122 @@
+.unified-side-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--color-bg-secondary);
+    border-left: var(--border-width-thin) solid var(--color-border);
+    overflow: hidden;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.unified-side-panel__header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: var(--color-bg-elevated);
+    border-bottom: var(--border-width-thin) solid var(--color-border);
+    min-height: 48px;
+    flex-shrink: 0;
+}
+
+.unified-side-panel__title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: auto;
+    color: var(--color-text);
+}
+
+.unified-side-panel__tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.unified-side-panel__tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome/Safari */
+}
+
+.unified-side-panel__tab {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.unified-side-panel__tab:hover {
+    background-color: var(--color-bg-subtle);
+    color: var(--color-text);
+}
+
+.unified-side-panel__tab--active {
+    background-color: var(--color-bg-selected);
+    color: var(--color-primary);
+}
+
+.unified-side-panel__tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -9px;
+    /* Adjust based on padding/height to align with border-bottom */
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--color-primary);
+    border-radius: 999px;
+    display: none;
+    /* Disable underline style in favor of background pill for now */
+}
+
+.unified-side-panel__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding-left: var(--spacing-xs);
+    border-left: var(--border-width-thin) solid var(--color-border);
+    margin-left: var(--spacing-xs);
+}
+
+.unified-side-panel__content {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    /* Ensure children can fill height */
+    flex-direction: column;
+}
+
+.unified-side-panel__resize-handle {
+    position: absolute;
+    left: -4px;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    cursor: col-resize;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+}
+
+/* Specific panel overrides to ensure they fit */
+.terminal-panel,
+.git-panel,
+.file-browser-panel,
+.remote-server-panel {
+    flex: 1;
+    width: 100% !important;
+    height: 100%;
+}

@@ -54,38 +54,28 @@ export interface ChatContainerProps {
   onAddClick?: () => void;
   /** 侧边快捷操作 */
   onSideAction?: (actionId: string) => void;
-  /** 是否显示终端面板 */
-  terminalVisible?: boolean;
-  /** 终端会话 ID */
+
+  /** 统一侧边栏可见性 */
+  sidePanelVisible?: boolean;
+  /** 当前激活的侧边栏 Tab */
+  activeSidePanelTab?: string; // Should be SidePanelTab type ideally but string is easier for pure interface here without importing specifics
+  /** 侧边栏宽度 */
+  sidePanelWidth?: number;
+  /** 关闭侧边栏回调 */
+  onSidePanelClose?: () => void;
+  /** 侧边栏调整大小回调 */
+  onSidePanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+  /** 切换侧边栏 Tab 回调 */
+  onSidePanelTabChange?: (tab: any) => void;
+
+  /** 终端会话 ID (still needed for TerminalPanel inside UnifiedPanel) */
   terminalId?: string | null;
-  /** 关闭终端面板 */
+  /** 关闭终端面板 (logic handler) */
   onTerminalClose?: () => void;
-  /** 是否显示远程服务器面板 */
-  remoteServerPanelVisible?: boolean;
-  /** 远程服务器面板宽度 */
-  remoteServerPanelWidth?: number;
-  /** 关闭远程服务器面板 */
-  onRemoteServerPanelClose?: () => void;
-  /** 远程服务器面板调整大小 */
-  onRemoteServerPanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
-  /** 是否显示文件浏览器面板 */
-  fileBrowserVisible?: boolean;
-  /** 文件浏览器面板宽度 */
-  fileBrowserWidth?: number;
-  /** 关闭文件浏览器面板 */
-  onFileBrowserClose?: () => void;
-  /** 文件浏览器面板调整大小 */
-  onFileBrowserResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+
   /** 文件选择回调 */
   onFileSelect?: (path: string) => void;
-  /** 是否显示 Git 面板 */
-  gitPanelVisible?: boolean;
-  /** Git 面板宽度 */
-  gitPanelWidth?: number;
-  /** 关闭 Git 面板 */
-  onGitPanelClose?: () => void;
-  /** Git 面板调整大小 */
-  onGitPanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
+
   /** 会话选择回调 */
   onSessionSelect?: (sessionId: string) => void;
   /** 新建对话回调 */

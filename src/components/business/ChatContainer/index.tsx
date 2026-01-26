@@ -9,72 +9,20 @@ import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
-import { usePanelResize } from '../../../hooks/usePanelResize';
 
 import type { ChatContainerProps } from './types';
+import { UnifiedSidePanel, SidePanelTab } from '../UnifiedSidePanel';
 import { DirectorySelector } from './DirectorySelector';
 
 import './ChatContainer.css';
 
 const DEFAULT_SIDEBAR_WIDTH = 200;
-const DEFAULT_TERMINAL_WIDTH = 360;
-const MIN_TERMINAL_WIDTH = 240;
-const MIN_CONVERSATION_WIDTH = 240;
-
-const TerminalPanel = lazy(() =>
-  import('../TerminalPanel').then((module) => ({ default: module.TerminalPanel }))
-);
-
-const RemoteServerPanel = lazy(() =>
-  import('../RemoteServerPanel').then((module) => ({ default: module.RemoteServerPanel }))
-);
 
 const QueueIndicator = lazy(() =>
   import('../QueueIndicator').then((module) => ({ default: module.QueueIndicator }))
 );
 
-const FileBrowserPanel = lazy(() =>
-  import('../FileBrowserPanel').then((module) => ({ default: module.FileBrowserPanel }))
-);
 
-const GitPanel = lazy(() => import('../GitPanel').then((module) => ({ default: module.GitPanel })));
-
-const SidePanelFallback = ({
-  visible = false,
-  className,
-  widthVar,
-}: {
-  visible?: boolean;
-  className: string;
-  widthVar: string;
-}) => {
-  const panelStyle: CSSProperties = visible
-    ? {
-      flex: `0 0 var(${widthVar}, 360px)`,
-      minHeight: 0,
-      alignSelf: 'stretch',
-    }
-    : { flex: '0 0 0', width: 0, minHeight: 0 };
-
-  return (
-    <aside className={className} aria-hidden={!visible} style={panelStyle}>
-      {visible && (
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-text-secondary)',
-            fontSize: '0.85rem',
-          }}
-        >
-          Loading...
-        </div>
-      )}
-    </aside>
-  );
-};
 
 export function ChatContainer({
   sessions,
@@ -100,22 +48,20 @@ export function ChatContainer({
   inputPlaceholder,
   onAddClick,
   onSideAction,
-  terminalVisible = false,
+  /* Unified Panel Props */
+  sidePanelVisible = false,
+  activeSidePanelTab = 'files',
+  sidePanelWidth = 360,
+  onSidePanelClose,
+  onSidePanelResizeStart,
+  onSidePanelTabChange,
+
+  /* Legacy Panel Props (To be safe or if passed by parent for other reasons) */
   terminalId,
   onTerminalClose,
-  remoteServerPanelVisible = false,
-  remoteServerPanelWidth = 360,
-  onRemoteServerPanelClose,
-  onRemoteServerPanelResizeStart,
-  fileBrowserVisible = false,
-  fileBrowserWidth = 360,
-  onFileBrowserClose,
-  onFileBrowserResizeStart,
+
   onFileSelect,
-  gitPanelVisible = false,
-  gitPanelWidth = 420,
-  onGitPanelClose,
-  onGitPanelResizeStart,
+
   onSessionSelect,
   onNewChat,
   onSendMessage,
@@ -133,7 +79,7 @@ export function ChatContainer({
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
-  const [terminalWidth, setTerminalWidth] = useState(DEFAULT_TERMINAL_WIDTH);
+  // Remove local state for terminal width since it's unified now
   const internalBodyRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = bodyRefProp ?? internalBodyRef;
 
@@ -146,15 +92,6 @@ export function ChatContainer({
 
   const showWelcome = messages.length === 0 && (!approvals || approvals.length === 0);
   const displayCwd = sessionCwd && sessionCwd.trim() !== '' ? sessionCwd : t('chat.defaultCwd');
-
-  const handleTerminalResize = usePanelResize({
-    isOpen: terminalVisible,
-    width: terminalWidth,
-    setWidth: setTerminalWidth,
-    minWidth: MIN_TERMINAL_WIDTH,
-    minContentWidth: MIN_CONVERSATION_WIDTH,
-    getContainerWidth: () => bodyRef.current?.getBoundingClientRect().width ?? 0,
-  });
 
   return (
     <div className={classNames}>
@@ -197,37 +134,19 @@ export function ChatContainer({
       <div
         className={cn(
           'chat-container__main',
-          terminalVisible && 'chat-container__main--terminal-open',
-          remoteServerPanelVisible && 'chat-container__main--remote-open',
-          fileBrowserVisible && 'chat-container__main--file-browser-open',
-          gitPanelVisible && 'chat-container__main--git-open'
+          sidePanelVisible && 'chat-container__main--side-panel-open'
         )}
         style={
           {
-            ...(terminalVisible && { '--terminal-panel-width': `${terminalWidth}px` }),
-            ...(remoteServerPanelVisible && {
-              '--remote-server-panel-width': `${remoteServerPanelWidth}px`,
-            }),
-            ...(fileBrowserVisible && {
-              '--file-browser-panel-width': `${fileBrowserWidth}px`,
-            }),
-            ...(gitPanelVisible && {
-              '--git-panel-width': `${gitPanelWidth}px`,
-            }),
+            ...(sidePanelVisible && { '--side-panel-width': `${sidePanelWidth}px` }),
           } as CSSProperties
         }
       >
-        {!terminalVisible &&
-          !remoteServerPanelVisible &&
-          !fileBrowserVisible &&
-          !gitPanelVisible && <ChatSideActions onAction={onSideAction} />}
+        {!sidePanelVisible && <ChatSideActions onAction={onSideAction} />}
         <div
           className={cn(
             'chat-container__body',
-            terminalVisible && 'chat-container__body--terminal-open',
-            remoteServerPanelVisible && 'chat-container__body--remote-open',
-            fileBrowserVisible && 'chat-container__body--file-browser-open',
-            gitPanelVisible && 'chat-container__body--git-open'
+            sidePanelVisible && 'chat-container__body--side-panel-open'
           )}
           ref={bodyRef}
         >
@@ -294,78 +213,23 @@ export function ChatContainer({
               />
             </div>
           </div>
-          {(terminalVisible || terminalId) && (
-            <Suspense
-              fallback={
-                <SidePanelFallback
-                  visible={terminalVisible}
-                  className="terminal-panel"
-                  widthVar="--terminal-panel-width"
-                />
-              }
-            >
-              <TerminalPanel
-                terminalId={terminalId}
-                visible={terminalVisible}
-                onClose={onTerminalClose}
-                onResizeStart={handleTerminalResize}
-              />
-            </Suspense>
+
+          {sidePanelVisible && onSidePanelClose && onSidePanelTabChange && onSidePanelResizeStart && (
+            <UnifiedSidePanel
+              activeTab={activeSidePanelTab as SidePanelTab}
+              onTabChange={onSidePanelTabChange}
+              onClose={onSidePanelClose}
+              width={sidePanelWidth}
+              onResizeStart={onSidePanelResizeStart}
+
+              terminalId={terminalId || null}
+              onTerminalClose={onTerminalClose || (() => { })}
+
+              sessionCwd={sessionCwd || ''}
+              onFileSelect={onFileSelect || (() => { })}
+            />
           )}
-          {remoteServerPanelVisible && (
-            <Suspense
-              fallback={
-                <SidePanelFallback
-                  visible={remoteServerPanelVisible}
-                  className="remote-server-panel"
-                  widthVar="--remote-server-panel-width"
-                />
-              }
-            >
-              <RemoteServerPanel
-                visible={remoteServerPanelVisible}
-                onClose={onRemoteServerPanelClose}
-                onResizeStart={onRemoteServerPanelResizeStart}
-              />
-            </Suspense>
-          )}
-          {fileBrowserVisible && (
-            <Suspense
-              fallback={
-                <SidePanelFallback
-                  visible={fileBrowserVisible}
-                  className="file-browser-panel"
-                  widthVar="--file-browser-panel-width"
-                />
-              }
-            >
-              <FileBrowserPanel
-                visible={fileBrowserVisible}
-                cwd={sessionCwd || ''}
-                onClose={onFileBrowserClose}
-                onResizeStart={onFileBrowserResizeStart}
-                onFileSelect={onFileSelect}
-              />
-            </Suspense>
-          )}
-          {gitPanelVisible && (
-            <Suspense
-              fallback={
-                <SidePanelFallback
-                  visible={gitPanelVisible}
-                  className="git-panel"
-                  widthVar="--git-panel-width"
-                />
-              }
-            >
-              <GitPanel
-                visible={gitPanelVisible}
-                cwd={sessionCwd || ''}
-                onClose={onGitPanelClose}
-                onResizeStart={onGitPanelResizeStart}
-              />
-            </Suspense>
-          )}
+
         </div>
       </div>
     </div>
