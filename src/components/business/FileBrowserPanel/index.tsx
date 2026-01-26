@@ -6,7 +6,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { isRemotePath, parseRemotePath } from '../../../utils/remotePath';
 import type { RemoteFilesystemListing } from '../../../types/remote';
 
-import { FolderIcon, CodeIcon, ChevronDownIcon } from '../../ui/data-display/Icon';
+import { FolderIcon, CodeIcon } from '../../ui/data-display/Icon';
 
 import { cn } from '../../../utils/cn';
 import { listLocalDirectory } from '../../../api/filesystem';
@@ -98,9 +98,7 @@ export function FileBrowserPanel({
         }
     }, [visible, cwd, loadDirectory]);
 
-    const handleRefresh = useCallback(() => {
-        void loadDirectory(currentPath);
-    }, [currentPath, loadDirectory]);
+
 
     const handleNavigateUp = useCallback(() => {
         if (isRemotePath(currentPath)) {
@@ -149,31 +147,18 @@ export function FileBrowserPanel({
             )}
 
             <div className="file-browser-panel__body">
-                <div className="file-browser-panel__path-bar">
-                    <button
-                        type="button"
-                        className="file-browser-panel__nav-btn"
-                        onClick={handleNavigateUp}
-                        disabled={!canNavigateUp}
-                        aria-label={t('fileBrowser.navigateUp')}
-                        title={t('fileBrowser.navigateUp')}
-                    >
-                        <ChevronDownIcon size={14} className="icon--rotate-90" />
-                    </button>
-                    <button
-                        type="button"
-                        className="file-browser-panel__nav-btn"
-                        onClick={handleRefresh}
-                        aria-label={t('fileBrowser.refresh')}
-                        title={t('fileBrowser.refresh')}
-                    >
-                        ↻
-                    </button>
-                    <span className="file-browser-panel__path-text" title={currentPath}>
-                        {currentPath}
-                    </span>
-                </div>
                 <div className="file-browser-panel__list">
+                    {canNavigateUp && (
+                        <button
+                            type="button"
+                            className="file-browser-panel__item file-browser-panel__item--up"
+                            onClick={handleNavigateUp}
+                            title={t('fileBrowser.navigateUp')}
+                        >
+                            <span className="file-browser-panel__item-icon" />
+                            <span className="file-browser-panel__item-name">...</span>
+                        </button>
+                    )}
                     {loading && (
                         <div className="file-browser-panel__loading">
                             {t('fileBrowser.loading')}

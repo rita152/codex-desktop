@@ -95,48 +95,7 @@
     overflow: hidden;
 }
 
-.file-browser-panel__path-bar {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background: var(--color-bg-muted);
-    border-bottom: var(--border-width-thin) solid var(--color-border);
-    font-size: 0.75rem;
-    color: var(--color-text-secondary);
-    overflow: hidden;
-}
 
-.file-browser-panel__path-text {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-family: var(--font-mono);
-}
-
-.file-browser-panel__nav-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
-    cursor: pointer;
-    border-radius: var(--radius-sm);
-    transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.file-browser-panel__nav-btn:hover:not(:disabled) {
-    background: var(--color-bg-subtle);
-    color: var(--color-text);
-}
-
-.file-browser-panel__nav-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
 
 .file-browser-panel__list {
     flex: 1;
