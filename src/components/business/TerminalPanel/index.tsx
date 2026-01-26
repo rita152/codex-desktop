@@ -126,11 +126,18 @@ export function TerminalPanel({
     });
 
     let unlisten: (() => void) | undefined;
+    let isMounted = true;
     const setupListener = async () => {
-      unlisten = await listen<TerminalOutputEvent>('terminal-output', (event) => {
+      const dispose = await listen<TerminalOutputEvent>('terminal-output', (event) => {
         if (event.payload.terminalId !== terminalId) return;
         term.write(event.payload.data);
       });
+      if (!isMounted) {
+        dispose();
+        return;
+      }
+      unlisten = dispose;
+      performResize();
     };
     void setupListener();
 
@@ -151,6 +158,7 @@ export function TerminalPanel({
       dataDisposable.dispose();
       resizeObserver.disconnect();
       themeObserver.disconnect();
+      isMounted = false;
       if (unlisten) {
         unlisten();
       }
