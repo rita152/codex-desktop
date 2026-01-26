@@ -9,6 +9,7 @@ import {
   EditIcon,
   FolderIcon,
   ForwardIcon,
+  GitBranchIcon,
   MenuIcon,
   NotebookIcon,
   PencilIcon,
@@ -51,6 +52,7 @@ export const Default: Story = {
       <EditIcon {...args} />
       <FolderIcon {...args} />
       <ForwardIcon {...args} />
+      <GitBranchIcon {...args} />
       <MenuIcon {...args} />
       <NotebookIcon {...args} />
       <PencilIcon {...args} />

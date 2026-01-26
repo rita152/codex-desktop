@@ -5,7 +5,7 @@ import { IconButton } from '../../ui/data-entry/IconButton';
 import {
     CodeIcon,
     FolderIcon,
-    NotebookIcon,
+    GitBranchIcon,
     ServerIcon,
     TerminalIcon,
     CloseIcon,
@@ -60,7 +60,7 @@ export function UnifiedSidePanel({
     const tabs = useMemo<Array<{ id: SidePanelTab; label: string; icon: ReactNode }>>(() => [
         { id: 'files', label: t('chatSideActions.files'), icon: <CodeIcon size={14} /> },
         { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
-        { id: 'git', label: t('chatSideActions.git'), icon: <NotebookIcon size={14} /> },
+        { id: 'git', label: t('chatSideActions.git'), icon: <GitBranchIcon size={14} /> },
         { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={14} /> },
         { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={14} /> },
     ], [t]);
