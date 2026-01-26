@@ -168,6 +168,25 @@
     color: var(--color-text-secondary);
 }
 
+.file-browser-panel__disclosure {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+    transition: transform 0.15s ease;
+}
+
+.file-browser-panel__disclosure--collapsed {
+    transform: rotate(-90deg);
+}
+
+.file-browser-panel__disclosure--placeholder {
+    opacity: 0;
+}
+
 .file-browser-panel__item--dir .file-browser-panel__item-icon {
     color: var(--color-primary);
 }
@@ -184,6 +203,24 @@
     font-size: 0.7rem;
     color: var(--color-text-muted);
     font-family: var(--font-mono);
+}
+
+.file-browser-panel__item--status {
+    cursor: default;
+    background: transparent;
+}
+
+.file-browser-panel__item--status:hover {
+    background: transparent;
+}
+
+.file-browser-panel__item--status .file-browser-panel__item-name {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
+
+.file-browser-panel__item--error .file-browser-panel__item-name {
+    color: var(--color-error);
 }
 
 @media (max-width: 900px) {
