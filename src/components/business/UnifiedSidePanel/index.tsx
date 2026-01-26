@@ -78,7 +78,7 @@ export function UnifiedSidePanel({
                     activeTab !== tabId && 'unified-side-panel__view--hidden'
                 )}
             >
-                <Suspense fallback={<div className="p-4 text-secondary">Loading...</div>}>
+                <Suspense fallback={null}>
                     {content}
                 </Suspense>
             </div>
