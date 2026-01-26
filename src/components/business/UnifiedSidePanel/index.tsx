@@ -37,7 +37,6 @@ interface UnifiedSidePanelProps {
 
     // Panel specific props
     terminalId: string | null;
-    onTerminalClose: () => void; // Maybe not needed if we just switch tabs?
 
     sessionCwd: string;
     onFileSelect: (path: string) => void;
@@ -50,7 +49,6 @@ export function UnifiedSidePanel({
     width,
     onResizeStart,
     terminalId,
-    onTerminalClose,
     sessionCwd,
     onFileSelect,
 }: UnifiedSidePanelProps) {
@@ -131,7 +129,6 @@ export function UnifiedSidePanel({
                     <TerminalPanel
                         terminalId={terminalId}
                         visible={activeTab === 'terminal'}
-                        onClose={onTerminalClose}
                     />
                 )}
 

@@ -2,17 +2,12 @@
  * Settings Modal - Main Component
  */
 
-import { useEffect, useCallback, useId, useState, useMemo } from 'react';
+import { useEffect, useCallback, useId, useState, useMemo, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
 import { useModelFetch } from '../../../hooks/useModelFetch';
-import {
-  GeneralSettings,
-  ModelSettings,
-  ShortcutSettings,
-  RemoteSettings,
-} from './sections';
+import { GeneralSettings, ShortcutSettings, RemoteSettings } from './sections';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { Button } from '../../ui/data-entry/Button';
@@ -20,6 +15,10 @@ import { cn } from '../../../utils/cn';
 import type { SettingsSection } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import './SettingsModal.css';
+
+const ModelSettings = lazy(() =>
+  import('./sections/ModelSettings').then((module) => ({ default: module.ModelSettings }))
+);
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -184,6 +183,13 @@ export function SettingsModal({
     }
   };
 
+  const lazyFallback = (
+    <div className="settings-loading">
+      <div className="settings-loading__spinner" />
+      <span>{t('settings.loading')}</span>
+    </div>
+  );
+
   // Render active section content
   const renderContent = () => {
     if (loading) {
@@ -205,13 +211,15 @@ export function SettingsModal({
         );
       case 'model':
         return (
-          <ModelSettings
-            settings={settings.model}
-            onUpdate={(values) => updateSettings('model', values)}
-            availableModels={availableModels}
-            onFetchModels={handleFetchModels}
-            fetchStatus={fetchStatus}
-          />
+          <Suspense fallback={lazyFallback}>
+            <ModelSettings
+              settings={settings.model}
+              onUpdate={(values) => updateSettings('model', values)}
+              availableModels={availableModels}
+              onFetchModels={handleFetchModels}
+              fetchStatus={fetchStatus}
+            />
+          </Suspense>
         );
 
       case 'remote':

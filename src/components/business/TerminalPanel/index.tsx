@@ -15,7 +15,6 @@ import './TerminalPanel.css';
 type TerminalPanelProps = {
   terminalId?: string | null;
   visible?: boolean;
-  onClose?: () => void;
   onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
@@ -27,8 +26,6 @@ type TerminalOutputEvent = {
 export function TerminalPanel({
   terminalId,
   visible = false,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onClose,
   onResizeStart,
 }: TerminalPanelProps) {
   const { t } = useTranslation();

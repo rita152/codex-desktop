@@ -9,14 +9,11 @@ import './RemoteServerPanel.css';
 
 type RemoteServerPanelProps = {
   visible?: boolean;
-  onClose?: () => void;
   onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
 export function RemoteServerPanel({
   visible = false,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onClose,
   onResizeStart,
 }: RemoteServerPanelProps) {
   const { t } = useTranslation();

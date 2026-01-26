@@ -94,7 +94,6 @@ export function App() {
     SIDEBAR_AUTO_HIDE_MAX_WIDTH
   );
   const pickRemoteCwd = useRemoteCwdPicker();
-  const [terminalVisible, setTerminalVisible] = useState(false); // Kept for terminal lifecycle hooks for now, but synced with sidePanel
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
 
@@ -609,21 +608,6 @@ export function App() {
     [selectedSessionId, setSessionDrafts, t]
   );
 
-  const handleTerminalClose = useCallback(() => {
-    // When terminal closes via its internal logic (if any)
-    if (activeSidePanelTab === 'terminal') {
-      setSidePanelVisible(false);
-    }
-
-    if (!selectedSessionId || !activeTerminalId) return;
-    setTerminalBySession((prev) => {
-      const next = { ...prev };
-      delete next[selectedSessionId];
-      return next;
-    });
-    void terminalKill(activeTerminalId);
-  }, [activeTerminalId, activeSidePanelTab, selectedSessionId]);
-
   // 实际发送消息到后端的处理函数
   const doSendMessage = useCallback(
     (sessionId: string, content: string) => {
@@ -762,7 +746,6 @@ export function App() {
 
         // Feature specific props needed inside the panel
         terminalId={activeTerminalId ?? null}
-        onTerminalClose={handleTerminalClose} // Still needed for internal logic if any
         onPickLocalCwd={handleSelectCwd}
         onSetCwd={handleCwdSelect}
         cwdLocked={cwdLocked}

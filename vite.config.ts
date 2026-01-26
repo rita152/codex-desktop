@@ -18,6 +18,37 @@ export default defineConfig(async () => ({
       instances: [{ browser: 'chromium' }],
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined;
+
+          if (id.includes('@monaco-editor') || id.includes('monaco-editor')) {
+            return 'monaco';
+          }
+          if (id.includes('@xterm')) {
+            return 'xterm';
+          }
+          if (
+            id.includes('react-markdown') ||
+            id.includes('remark-') ||
+            id.includes('rehype-') ||
+            id.includes('katex')
+          ) {
+            return 'markdown';
+          }
+          if (id.includes('@tauri-apps')) {
+            return 'tauri';
+          }
+          if (id.includes('@tanstack')) {
+            return 'tanstack';
+          }
+          return undefined;
+        },
+      },
+    },
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //

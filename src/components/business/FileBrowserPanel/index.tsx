@@ -17,7 +17,6 @@ import './FileBrowserPanel.css';
 type FileBrowserPanelProps = {
     visible?: boolean;
     cwd: string;
-    onClose?: () => void;
     onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
     onFileSelect?: (path: string) => void;
     onDirectorySelect?: (path: string) => void;
@@ -60,8 +59,6 @@ type VisibleItem =
 export function FileBrowserPanel({
     visible = false,
     cwd,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    onClose,
     onResizeStart,
     onFileSelect,
     onDirectorySelect,

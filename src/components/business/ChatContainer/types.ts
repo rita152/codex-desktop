@@ -70,8 +70,6 @@ export interface ChatContainerProps {
 
   /** 终端会话 ID (still needed for TerminalPanel inside UnifiedPanel) */
   terminalId?: string | null;
-  /** 关闭终端面板 (logic handler) */
-  onTerminalClose?: () => void;
 
   /** 文件选择回调 */
   onFileSelect?: (path: string) => void;

@@ -12,8 +12,6 @@ import './GitPanel.css';
 type GitPanelProps = {
   visible?: boolean;
   cwd: string;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  onClose?: () => void;
   onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
@@ -30,7 +28,7 @@ function formatCommitDate(value: string): string {
   return parsed.toLocaleDateString();
 }
 
-export function GitPanel({ visible = false, cwd, onClose, onResizeStart }: GitPanelProps) {
+export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps) {
   const { t } = useTranslation();
   const [commitMenu, setCommitMenu] = useState<CommitMenuState>(null);
   const [historyLoading, setHistoryLoading] = useState(false);

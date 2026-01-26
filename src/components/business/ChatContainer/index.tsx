@@ -58,7 +58,6 @@ export function ChatContainer({
 
   /* Legacy Panel Props (To be safe or if passed by parent for other reasons) */
   terminalId,
-  onTerminalClose,
 
   onFileSelect,
 
@@ -223,7 +222,6 @@ export function ChatContainer({
               onResizeStart={onSidePanelResizeStart}
 
               terminalId={terminalId || null}
-              onTerminalClose={onTerminalClose || (() => { })}
 
               sessionCwd={sessionCwd || ''}
               onFileSelect={onFileSelect || (() => { })}
