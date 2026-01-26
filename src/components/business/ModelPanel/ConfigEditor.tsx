@@ -16,6 +16,12 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const hasTauriInvoke =
+        typeof window !== 'undefined' &&
+        (typeof (window as typeof window & { __TAURI__?: { core?: { invoke?: unknown } } }).__TAURI__
+            ?.core?.invoke === 'function' ||
+            typeof (window as typeof window & { __TAURI_INTERNALS__?: { invoke?: unknown } })
+                .__TAURI_INTERNALS__?.invoke === 'function');
 
     const [editorTheme, setEditorTheme] = useState<'vs-dark' | 'light'>('vs-dark');
 
@@ -54,6 +60,16 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
 
     useEffect(() => {
         const load = async () => {
+            if (!hasTauriInvoke) {
+                setContent(
+                    language === 'json'
+                        ? `{\n  "note": "File .codex/${filename} not available outside the desktop app"\n}`
+                        : `# .codex/${filename}\n`
+                );
+                setError(null);
+                setLoading(false);
+                return;
+            }
             try {
                 const home = await homeDir();
                 const path = await join(home, '.codex', filename);
@@ -65,7 +81,6 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
                     setError(null);
                 } catch (e) {
                     // File might not exist
-                    console.error(e);
                     // setError(`Could not read ${filename} (it might not exist).`);
                     setContent(`# .codex/${filename}\n`);
                     if (language === 'json') {
@@ -80,7 +95,7 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
             }
         };
         load();
-    }, [filename, language]);
+    }, [filename, language, hasTauriInvoke]);
 
     const handleSave = async () => {
         if (!configPath) return;
@@ -144,7 +159,7 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
                 <span style={{ fontWeight: 600 }}>~/.codex/{filename}</span>
                 <Button
                     onClick={handleSave}
-                    disabled={loading || saving}
+                    disabled={loading || saving || !hasTauriInvoke}
                     className="settings-button"
                     style={{
                         padding: '4px 12px',
