@@ -83,4 +83,51 @@ describe('chatGroups', () => {
       expect(group.items[0]?.type).toBe('approval');
     }
   });
+
+  it('groups thought and tool messages together', () => {
+    const toolCalls: ToolCallProps[] = [
+      {
+        toolCallId: 'tool-1',
+        title: 'Read file',
+        status: 'completed',
+      },
+    ];
+    const messages: Message[] = [
+      { id: 'u1', role: 'user', content: 'hi' },
+      {
+        id: 't1',
+        role: 'thought',
+        content: 'thinking',
+        isStreaming: false,
+      },
+      {
+        id: 'tool-1',
+        role: 'tool',
+        content: '',
+        toolCalls,
+      },
+    ];
+
+    const groups = buildChatGroups(messages);
+    expect(groups).toHaveLength(2);
+    const working = groups[1];
+    expect(working?.type).toBe('working');
+    if (working?.type === 'working') {
+      expect(working.items).toHaveLength(2);
+      expect(working.isActive).toBe(false);
+    }
+  });
+
+  it('inserts placeholder after the last user message while generating', () => {
+    const messages: Message[] = [
+      { id: 'u1', role: 'user', content: 'hi' },
+      { id: 'a1', role: 'assistant', content: 'hello' },
+    ];
+
+    const groups = buildChatGroups(messages, undefined, true);
+
+    expect(groups).toHaveLength(3);
+    expect(groups[1]?.type).toBe('working');
+    expect(groups[2]?.type).toBe('message');
+  });
 });

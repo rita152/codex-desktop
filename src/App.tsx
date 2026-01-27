@@ -18,7 +18,6 @@ import { usePanelResize } from './hooks/usePanelResize';
 import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 
-
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
@@ -660,17 +659,12 @@ export function App() {
   );
 
   // 消息队列 Hook
-  const {
-    currentQueue,
-    hasQueuedMessages,
-    enqueueMessage,
-    clearQueue,
-    removeFromQueue,
-  } = useMessageQueue({
-    selectedSessionId,
-    isGeneratingBySession,
-    onSendMessage: doSendMessage,
-  });
+  const { currentQueue, hasQueuedMessages, enqueueMessage, clearQueue, removeFromQueue } =
+    useMessageQueue({
+      selectedSessionId,
+      isGeneratingBySession,
+      onSendMessage: doSendMessage,
+    });
 
   // 对外暴露的发送消息处理：支持排队
   const handleSendMessage = useCallback(
@@ -735,7 +729,6 @@ export function App() {
         onSendMessage={handleSendMessage}
         onAddClick={handleAddFile}
         onSideAction={handleSideAction}
-
         // Unified Side Panel Props
         sidePanelVisible={sidePanelVisible}
         activeSidePanelTab={activeSidePanelTab}
@@ -743,7 +736,6 @@ export function App() {
         onSidePanelClose={handleSidePanelClose}
         onSidePanelResizeStart={handleSidePanelResize}
         onSidePanelTabChange={handleSidePanelTabChange}
-
         // Feature specific props needed inside the panel
         terminalId={activeTerminalId ?? null}
         onPickLocalCwd={handleSelectCwd}
@@ -754,7 +746,6 @@ export function App() {
         onSidebarToggle={isNarrowLayout ? undefined : toggleSidebar}
         onSettingsClick={handleSettingsClick}
         bodyRef={bodyRef}
-
         onFileSelect={handleFileSelect}
       />
       <SettingsModal

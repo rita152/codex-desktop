@@ -497,7 +497,9 @@ export function resolveModeOptions(
   modes: unknown,
   configOptions: unknown
 ): { currentModeId?: string; options: SelectOption[] } | null {
-  return parseModeOptionsFromSessionModes(modes) ?? parseModeOptionsFromConfigOptions(configOptions);
+  return (
+    parseModeOptionsFromSessionModes(modes) ?? parseModeOptionsFromConfigOptions(configOptions)
+  );
 }
 
 export function extractSlashCommands(update: unknown): string[] {

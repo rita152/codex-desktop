@@ -236,7 +236,8 @@ export function createCodexMessageHandlers(
         if (m.role === 'user' || !m.isStreaming) return m;
         if (m.role === 'thought') {
           const startTime = m.thinking?.startTime;
-          const duration = startTime !== undefined ? (nowMs - startTime) / 1000 : m.thinking?.duration;
+          const duration =
+            startTime !== undefined ? (nowMs - startTime) / 1000 : m.thinking?.duration;
           return {
             ...m,
             isStreaming: false,
@@ -252,7 +253,8 @@ export function createCodexMessageHandlers(
         }
         if (m.thinking) {
           const startTime = m.thinking.startTime;
-          const duration = startTime !== undefined ? (nowMs - startTime) / 1000 : m.thinking.duration;
+          const duration =
+            startTime !== undefined ? (nowMs - startTime) / 1000 : m.thinking.duration;
           return {
             ...m,
             isStreaming: false,

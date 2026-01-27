@@ -21,9 +21,7 @@ type Story = StoryObj<typeof ShortcutSettings>;
 
 export const Default: Story = {
   render: () => {
-    const [settings, setSettings] = useState<ShortcutSettingsType>(
-      DEFAULT_SETTINGS.shortcuts
-    );
+    const [settings, setSettings] = useState<ShortcutSettingsType>(DEFAULT_SETTINGS.shortcuts);
 
     return (
       <div className="settings-section-story">

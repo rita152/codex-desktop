@@ -102,11 +102,7 @@ export const ChatMessage = memo(function ChatMessage({
           <Plan steps={planSteps} title={i18n.t('chat.planTitle')} />
         </div>
       )}
-      {showBubble && (
-        <div className="chat-message__bubble">
-          {renderContent()}
-        </div>
-      )}
+      {showBubble && <div className="chat-message__bubble">{renderContent()}</div>}
       {timestamp && (role === 'user' || !isStreaming) && (
         <span className="chat-message__timestamp">{timeFormatter.format(timestamp)}</span>
       )}

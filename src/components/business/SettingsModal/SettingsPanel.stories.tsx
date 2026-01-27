@@ -155,7 +155,11 @@ function SettingsPanelStory() {
               {navItems.map((item) => (
                 <ListItem
                   key={item.id}
-                  icon={<span className="settings-nav__icon" aria-hidden="true">{item.icon}</span>}
+                  icon={
+                    <span className="settings-nav__icon" aria-hidden="true">
+                      {item.icon}
+                    </span>
+                  }
                   selected={activeSection === item.id}
                   onClick={() => setActiveSection(item.id)}
                   className="settings-nav__item"

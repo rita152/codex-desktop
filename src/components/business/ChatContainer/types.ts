@@ -6,6 +6,7 @@ import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import type { SessionNotice } from '../../../hooks/useSessionMeta';
 import type { QueuedMessage } from '../../../hooks/useMessageQueue';
+import type { SidePanelTab } from '../UnifiedSidePanel';
 
 export interface ChatContainerProps {
   /** 会话列表 */
@@ -58,7 +59,7 @@ export interface ChatContainerProps {
   /** 统一侧边栏可见性 */
   sidePanelVisible?: boolean;
   /** 当前激活的侧边栏 Tab */
-  activeSidePanelTab?: string; // Should be SidePanelTab type ideally but string is easier for pure interface here without importing specifics
+  activeSidePanelTab?: SidePanelTab;
   /** 侧边栏宽度 */
   sidePanelWidth?: number;
   /** 关闭侧边栏回调 */
@@ -66,7 +67,7 @@ export interface ChatContainerProps {
   /** 侧边栏调整大小回调 */
   onSidePanelResizeStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   /** 切换侧边栏 Tab 回调 */
-  onSidePanelTabChange?: (tab: any) => void;
+  onSidePanelTabChange?: (tab: SidePanelTab) => void;
 
   /** 终端会话 ID (still needed for TerminalPanel inside UnifiedPanel) */
   terminalId?: string | null;

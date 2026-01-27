@@ -13,19 +13,11 @@ export async function gitStatus(cwd: string): Promise<GitStatusResult> {
   return invoke<GitStatusResult>('git_status', { cwd });
 }
 
-export async function gitDiff(
-  cwd: string,
-  path?: string,
-  staged?: boolean
-): Promise<string> {
+export async function gitDiff(cwd: string, path?: string, staged?: boolean): Promise<string> {
   return invoke<string>('git_diff', { cwd, path, staged });
 }
 
-export async function gitStage(
-  cwd: string,
-  paths: string[],
-  stageAll?: boolean
-): Promise<void> {
+export async function gitStage(cwd: string, paths: string[], stageAll?: boolean): Promise<void> {
   await invoke('git_stage', { cwd, paths, stage_all: stageAll });
 }
 
@@ -45,11 +37,7 @@ export async function gitDiscard(
   await invoke('git_discard', { cwd, paths, include_untracked: includeUntracked });
 }
 
-export async function gitHistory(
-  cwd: string,
-  limit?: number,
-  all?: boolean
-): Promise<GitCommit[]> {
+export async function gitHistory(cwd: string, limit?: number, all?: boolean): Promise<GitCommit[]> {
   return invoke<GitCommit[]>('git_history', { cwd, limit, all });
 }
 
@@ -75,11 +63,7 @@ export async function gitPush(
   return invoke<string>('git_push', { cwd, remote, branch, set_upstream: setUpstream });
 }
 
-export async function gitPull(
-  cwd: string,
-  remote?: string,
-  branch?: string
-): Promise<string> {
+export async function gitPull(cwd: string, remote?: string, branch?: string): Promise<string> {
   return invoke<string>('git_pull', { cwd, remote, branch });
 }
 
@@ -91,10 +75,7 @@ export async function gitRemotes(cwd: string): Promise<GitRemote[]> {
   return invoke<GitRemote[]>('git_remotes', { cwd });
 }
 
-export async function gitFileView(
-  cwd: string,
-  payload: GitFileViewRequest
-): Promise<GitFileView> {
+export async function gitFileView(cwd: string, payload: GitFileViewRequest): Promise<GitFileView> {
   const { path, oldPath, indexStatus, worktreeStatus, staged } = payload;
   return invoke<GitFileView>('git_file_view', {
     cwd,

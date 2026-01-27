@@ -39,12 +39,7 @@ const getItemKey = (item: WorkingItem, index: number): string => {
 const renderItem = (item: WorkingItem, index: number) => {
   if (item.type === 'thinking') {
     return (
-      <Thinking
-        key={getItemKey(item, index)}
-        {...item.data}
-        variant="embedded"
-        hideWorkingLabel
-      />
+      <Thinking key={getItemKey(item, index)} {...item.data} variant="embedded" hideWorkingLabel />
     );
   }
   if (item.type === 'toolcall') {
@@ -196,7 +191,9 @@ export function Working({
         aria-expanded={open}
         disabled={!canToggle}
       >
-        <span className="working__label">{isActive ? t('working.title') : t('working.finished')}</span>
+        <span className="working__label">
+          {isActive ? t('working.title') : t('working.finished')}
+        </span>
         <span className="working__meta">
           <span className="working__count">{itemLabel}</span>
           <span className="working__duration">

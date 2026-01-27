@@ -48,14 +48,13 @@ export function Sidebar({
   const safeId = generatedId.replace(/:/g, '');
   const sidebarId = `sidebar-${safeId}`;
 
-  const { width, isDragging, sidebarRef, handleMouseDown, handleResizeKeyDown } =
-    useSidebarResize({
-      width: controlledWidth,
-      onWidthChange,
-      minWidth: MIN_WIDTH,
-      maxWidth: MAX_WIDTH,
-      defaultWidth: DEFAULT_WIDTH,
-    });
+  const { width, isDragging, sidebarRef, handleMouseDown, handleResizeKeyDown } = useSidebarResize({
+    width: controlledWidth,
+    onWidthChange,
+    minWidth: MIN_WIDTH,
+    maxWidth: MAX_WIDTH,
+    defaultWidth: DEFAULT_WIDTH,
+  });
 
   const handleStartRename = useCallback((sessionId: string, currentTitle: string) => {
     setEditingSessionId(sessionId);

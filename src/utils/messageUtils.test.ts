@@ -47,4 +47,33 @@ describe('messageUtils', () => {
     expect(next[0]?.thinking?.duration).toBe(1);
     expect(next[0]?.timestamp instanceof Date).toBe(true);
   });
+
+  it('returns original list when no streaming messages are present', () => {
+    const list: Message[] = [
+      {
+        id: '3',
+        role: 'assistant',
+        content: 'done',
+        isStreaming: false,
+      },
+    ];
+    const next = closeActiveAssistantMessages(list, 1234);
+    expect(next).toBe(list);
+  });
+
+  it('closes streaming assistant messages without thinking metadata', () => {
+    const now = 10000;
+    const list: Message[] = [
+      {
+        id: '4',
+        role: 'assistant',
+        content: 'ok',
+        isStreaming: true,
+      },
+    ];
+    const next = closeActiveAssistantMessages(list, now);
+    expect(next[0]?.isStreaming).toBe(false);
+    expect(next[0]?.thinking).toBeUndefined();
+    expect(next[0]?.timestamp instanceof Date).toBe(true);
+  });
 });

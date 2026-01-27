@@ -1,231 +1,227 @@
 /* File Browser Panel - matching RemoteServerPanel/TerminalPanel style */
 
 .file-browser-panel {
-    flex: 0 0 var(--file-browser-panel-width, 360px);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 101;
-    background: var(--color-bg-elevated);
-    border: var(--border-width-thin) solid var(--color-border);
+  flex: 0 0 var(--file-browser-panel-width, 360px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 101;
+  background: var(--color-bg-elevated);
+  border: var(--border-width-thin) solid var(--color-border);
 
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-    min-height: 0;
-    align-self: stretch;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .file-browser-panel__resize-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 2;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
 }
 
-
-
 .file-browser-panel--hidden {
-    opacity: 0;
-    pointer-events: none;
-    flex: 0 0 0;
-    width: 0;
-    border-width: 0;
-    box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  flex: 0 0 0;
+  width: 0;
+  border-width: 0;
+  box-shadow: none;
 }
 
 .file-browser-panel__header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: var(--border-width-thin) solid var(--color-border);
-    background: var(--color-bg-muted);
-    color: var(--color-text);
-    font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: var(--border-width-thin) solid var(--color-border);
+  background: var(--color-bg-muted);
+  color: var(--color-text);
+  font-size: 0.85rem;
 }
 
 .file-browser-panel__title {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-weight: 600;
 }
 
 .file-browser-panel__actions {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .file-browser-panel__close {
-    border: none;
-    background: transparent;
-    color: var(--color-text-secondary);
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    cursor: pointer;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    transition:
-        color 0.2s ease,
-        background-color 0.2s ease;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .file-browser-panel__close:hover:not(:disabled),
 .file-browser-panel__close:focus-visible {
-    color: var(--color-text);
-    background-color: var(--color-bg-subtle);
+  color: var(--color-text);
+  background-color: var(--color-bg-subtle);
 }
 
 .file-browser-panel__close:focus-visible {
-    outline: 2px solid var(--color-border-hover);
-    outline-offset: 2px;
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: 2px;
 }
 
 .file-browser-panel__body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: var(--color-bg);
-    min-height: 0;
-    overflow: hidden;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  min-height: 0;
+  overflow: hidden;
 }
 
-
-
 .file-browser-panel__list {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--spacing-xs) 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xs) 0;
 }
 
 .file-browser-panel__empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-    padding: var(--spacing-md);
-    text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  padding: var(--spacing-md);
+  text-align: center;
 }
 
 .file-browser-panel__loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-text-secondary);
-    font-size: 0.85rem;
-    gap: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  gap: var(--spacing-xs);
 }
 
 .file-browser-panel__error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: var(--color-error);
-    font-size: 0.85rem;
-    padding: var(--spacing-md);
-    text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-error);
+  font-size: 0.85rem;
+  padding: var(--spacing-md);
+  text-align: center;
 }
 
 .file-browser-panel__item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-xs) var(--spacing-md);
-    cursor: pointer;
-    transition: background-color 0.1s ease;
-    font-size: 0.8rem;
-    color: var(--color-text);
-    border: none;
-    background: transparent;
-    width: 100%;
-    text-align: left;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md);
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
 }
 
 .file-browser-panel__item:hover {
-    background: var(--color-bg-subtle);
+  background: var(--color-bg-subtle);
 }
 
 .file-browser-panel__item:focus-visible {
-    outline: none;
-    background: var(--color-bg-subtle);
-    box-shadow: inset 0 0 0 2px var(--color-border-hover);
+  outline: none;
+  background: var(--color-bg-subtle);
+  box-shadow: inset 0 0 0 2px var(--color-border-hover);
 }
 
 .file-browser-panel__item-icon {
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-secondary);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
 }
 
 .file-browser-panel__disclosure {
-    width: 12px;
-    height: 12px;
-    flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-text-muted);
-    transition: transform 0.15s ease;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  transition: transform 0.15s ease;
 }
 
 .file-browser-panel__disclosure--collapsed {
-    transform: rotate(-90deg);
+  transform: rotate(-90deg);
 }
 
 .file-browser-panel__disclosure--placeholder {
-    opacity: 0;
+  opacity: 0;
 }
 
 .file-browser-panel__item--dir .file-browser-panel__item-icon {
-    color: var(--color-primary);
+  color: var(--color-primary);
 }
 
 .file-browser-panel__item-name {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .file-browser-panel__item-size {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    font-family: var(--font-mono);
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
 }
 
 .file-browser-panel__item--status {
-    cursor: default;
-    background: transparent;
+  cursor: default;
+  background: transparent;
 }
 
 .file-browser-panel__item--status:hover {
-    background: transparent;
+  background: transparent;
 }
 
 .file-browser-panel__item--status .file-browser-panel__item-name {
-    color: var(--color-text-secondary);
-    font-style: italic;
+  color: var(--color-text-secondary);
+  font-style: italic;
 }
 
 .file-browser-panel__item--error .file-browser-panel__item-name {
-    color: var(--color-error);
+  color: var(--color-error);
 }
 
 @media (max-width: 900px) {
-    .file-browser-panel {
-        flex: 0 0 200px;
-        width: 100%;
-    }
+  .file-browser-panel {
+    flex: 0 0 200px;
+    width: 100%;
+  }
 }

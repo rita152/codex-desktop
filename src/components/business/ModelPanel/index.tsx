@@ -2,7 +2,6 @@
  * Model Panel
  */
 
-
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -37,7 +36,6 @@ export function ModelPanel({
 }: ModelPanelProps) {
   const { t } = useTranslation();
 
-
   // Check whether the selected model is still in the available list
   const isCurrentModelAvailable =
     availableModels.length === 0 ||
@@ -51,8 +49,18 @@ export function ModelPanel({
       <ConfigEditor filename="auth.json" language="json" />
 
       <div style={{ marginBottom: '24px', padding: '0 4px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <label htmlFor="model-select" style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '8px',
+          }}
+        >
+          <label
+            htmlFor="model-select"
+            style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text)' }}
+          >
             {t('settings.model.defaultModel')}
           </label>
           <Button
@@ -61,26 +69,48 @@ export function ModelPanel({
             disabled={fetchStatus?.loading}
             style={{ padding: '2px 8px', fontSize: '12px', height: '24px' }}
           >
-            {fetchStatus?.loading
-              ? t('settings.model.fetching')
-              : t('settings.model.fetchModels')}
+            {fetchStatus?.loading ? t('settings.model.fetching') : t('settings.model.fetchModels')}
           </Button>
         </div>
 
-        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: '1.5' }}>
+        <p
+          style={{
+            fontSize: '12px',
+            color: 'var(--color-text-secondary)',
+            marginBottom: '12px',
+            lineHeight: '1.5',
+          }}
+        >
           {t('settings.model.defaultModelDescription')}
         </p>
 
-        {fetchStatus?.error && <div className="settings-item__error" style={{ marginBottom: '8px' }}>{fetchStatus.error}</div>}
+        {fetchStatus?.error && (
+          <div className="settings-item__error" style={{ marginBottom: '8px' }}>
+            {fetchStatus.error}
+          </div>
+        )}
 
         {fetchStatus?.loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-            <span className="settings-loading__spinner" style={{ width: '12px', height: '12px', borderWidth: '2px' }} />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              marginBottom: '8px',
+              fontSize: '12px',
+              color: 'var(--color-text-secondary)',
+            }}
+          >
+            <span
+              className="settings-loading__spinner"
+              style={{ width: '12px', height: '12px', borderWidth: '2px' }}
+            />
             <span>{t('settings.model.fetching')}</span>
           </div>
         ) : fetchStatus?.lastUpdated ? (
           <div style={{ marginBottom: '8px', fontSize: '12px', color: 'var(--color-success)' }}>
-            ✓ {t('settings.model.fetchUpdated', {
+            ✓{' '}
+            {t('settings.model.fetchUpdated', {
               time: new Date(fetchStatus.lastUpdated).toLocaleTimeString(),
             })}
           </div>
@@ -112,8 +142,6 @@ export function ModelPanel({
           </div>
         )}
       </div>
-
-
     </div>
   );
 }

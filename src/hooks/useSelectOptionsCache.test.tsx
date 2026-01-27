@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { act, create } from 'react-test-renderer';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useSelectOptionsCache } from './useSelectOptionsCache';
 
@@ -15,19 +15,23 @@ describe('useSelectOptionsCache', () => {
     const cachedOptions: SelectOption[] = [{ value: 'a', label: 'A' }];
     const saveCache = vi.fn();
 
-    let latest:
-      | {
-          cache: { options: SelectOption[] | null; currentId?: string };
-          applyOptions: (payload: {
-            options: SelectOption[];
-            currentId?: string;
-            fallbackCurrentId?: string;
-          }) => void;
-          sessionOptions: Record<string, SelectOption[]>;
-        }
-      | undefined;
+    type LatestState = {
+      cache: { options: SelectOption[] | null; currentId?: string };
+      applyOptions: (payload: {
+        options: SelectOption[];
+        currentId?: string;
+        fallbackCurrentId?: string;
+      }) => void;
+      sessionOptions: Record<string, SelectOption[]>;
+    };
 
-    function Test({ items }: { items: ChatSession[] }) {
+    let latest: LatestState | undefined;
+
+    const handleUpdate = (nextState: LatestState) => {
+      latest = nextState;
+    };
+
+    function Test({ items, onUpdate }: { items: ChatSession[]; onUpdate: typeof handleUpdate }) {
       const [sessionOptions, setSessionOptions] = useState<Record<string, SelectOption[]>>({});
       const hook = useSelectOptionsCache({
         sessions: items,
@@ -36,12 +40,14 @@ describe('useSelectOptionsCache', () => {
         saveCache,
         setSessionOptions,
       });
-      latest = { ...hook, sessionOptions };
+      useEffect(() => {
+        onUpdate({ ...hook, sessionOptions });
+      }, [hook, onUpdate, sessionOptions]);
       return null;
     }
 
     act(() => {
-      create(<Test items={sessions} />);
+      create(<Test items={sessions} onUpdate={handleUpdate} />);
     });
 
     expect(latest?.cache.options).toEqual(cachedOptions);
@@ -54,5 +60,97 @@ describe('useSelectOptionsCache', () => {
 
     expect(saveCache).toHaveBeenCalledWith({ options: nextOptions, currentId: 'b' });
     expect(latest?.cache.currentId).toBe('b');
+  });
+
+  it('skips hydration when cache is empty', () => {
+    const sessions: ChatSession[] = [{ id: '1', title: 'Session 1' }];
+    const saveCache = vi.fn();
+
+    type LatestState = {
+      cache: { options: SelectOption[] | null; currentId?: string };
+      sessionOptions: Record<string, SelectOption[]>;
+    };
+
+    let latest: LatestState | undefined;
+
+    const handleUpdate = (nextState: LatestState) => {
+      latest = nextState;
+    };
+
+    function Test({ onUpdate }: { onUpdate: typeof handleUpdate }) {
+      const [sessionOptions, setSessionOptions] = useState<Record<string, SelectOption[]>>({});
+      const hook = useSelectOptionsCache({
+        sessions,
+        defaultId: 'default',
+        loadCache: () => null,
+        saveCache,
+        setSessionOptions,
+      });
+      useEffect(() => {
+        onUpdate({ cache: hook.cache, sessionOptions });
+      }, [hook.cache, onUpdate, sessionOptions]);
+      return null;
+    }
+
+    act(() => {
+      create(<Test onUpdate={handleUpdate} />);
+    });
+
+    expect(latest?.cache.options).toBeNull();
+    expect(latest?.cache.currentId).toBe('default');
+    expect(latest?.sessionOptions['1']).toBeUndefined();
+  });
+
+  it('preserves existing session options and uses fallback id', () => {
+    const sessions: ChatSession[] = [{ id: '1', title: 'Session 1' }];
+    const saveCache = vi.fn();
+    const existingOptions: SelectOption[] = [{ value: 'existing', label: 'Existing' }];
+
+    type LatestState = {
+      cache: { options: SelectOption[] | null; currentId?: string };
+      applyOptions: (payload: {
+        options: SelectOption[];
+        currentId?: string;
+        fallbackCurrentId?: string;
+      }) => void;
+      sessionOptions: Record<string, SelectOption[]>;
+    };
+
+    let latest: LatestState | undefined;
+
+    const handleUpdate = (nextState: LatestState) => {
+      latest = nextState;
+    };
+
+    function Test({ onUpdate }: { onUpdate: typeof handleUpdate }) {
+      const [sessionOptions, setSessionOptions] = useState<Record<string, SelectOption[]>>({
+        '1': existingOptions,
+      });
+      const hook = useSelectOptionsCache({
+        sessions,
+        defaultId: 'default',
+        loadCache: () => ({ options: [{ value: 'cached', label: 'Cached' }] }),
+        saveCache,
+        setSessionOptions,
+      });
+      useEffect(() => {
+        onUpdate({ ...hook, sessionOptions });
+      }, [hook, onUpdate, sessionOptions]);
+      return null;
+    }
+
+    act(() => {
+      create(<Test onUpdate={handleUpdate} />);
+    });
+
+    expect(latest?.sessionOptions['1']).toEqual(existingOptions);
+
+    const nextOptions: SelectOption[] = [{ value: 'next', label: 'Next' }];
+    act(() => {
+      latest?.applyOptions({ options: nextOptions, fallbackCurrentId: 'fallback' });
+    });
+
+    expect(latest?.cache.currentId).toBe('fallback');
+    expect(saveCache).toHaveBeenCalledWith({ options: nextOptions, currentId: 'fallback' });
   });
 });

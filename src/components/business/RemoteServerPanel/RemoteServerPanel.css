@@ -1,53 +1,51 @@
 /* Remote Server Panel - matching TerminalPanel style */
 
 .remote-server-panel {
-    flex: 0 0 var(--remote-server-panel-width, 360px);
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    z-index: 101;
-    background: var(--color-bg-elevated);
-    border: var(--border-width-thin) solid var(--color-border);
+  flex: 0 0 var(--remote-server-panel-width, 360px);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 101;
+  background: var(--color-bg-elevated);
+  border: var(--border-width-thin) solid var(--color-border);
 
-    box-shadow: var(--shadow-md);
-    overflow: hidden;
-    min-height: 0;
-    align-self: stretch;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-height: 0;
+  align-self: stretch;
 }
 
 .remote-server-panel__resize-handle {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 8px;
-    height: 100%;
-    cursor: col-resize;
-    z-index: 2;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
 }
 
-
-
 .remote-server-panel--hidden {
-    opacity: 0;
-    pointer-events: none;
-    flex: 0 0 0;
-    width: 0;
-    border-width: 0;
-    box-shadow: none;
+  opacity: 0;
+  pointer-events: none;
+  flex: 0 0 0;
+  width: 0;
+  border-width: 0;
+  box-shadow: none;
 }
 
 .remote-server-panel__body {
-    flex: 1;
-    display: flex;
-    padding: var(--spacing-xs) 0 var(--spacing-xs) var(--spacing-sm);
-    background: var(--color-bg);
-    min-height: 0;
-    overflow-y: auto;
+  flex: 1;
+  display: flex;
+  padding: var(--spacing-xs) 0 var(--spacing-xs) var(--spacing-sm);
+  background: var(--color-bg);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 @media (max-width: 900px) {
-    .remote-server-panel {
-        flex: 0 0 240px;
-        width: 100%;
-    }
+  .remote-server-panel {
+    flex: 0 0 240px;
+    width: 100%;
+  }
 }

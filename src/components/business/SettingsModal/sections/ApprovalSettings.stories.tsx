@@ -21,9 +21,7 @@ type Story = StoryObj<typeof ApprovalSettings>;
 
 export const Default: Story = {
   render: () => {
-    const [settings, setSettings] = useState<ApprovalSettingsType>(
-      DEFAULT_SETTINGS.approval
-    );
+    const [settings, setSettings] = useState<ApprovalSettingsType>(DEFAULT_SETTINGS.approval);
 
     return (
       <div className="settings-section-story">

@@ -93,8 +93,11 @@ export function useSlashCommands({
     [onChange, slashState.leading, textareaRef]
   );
 
-  const safeStripCommandSeparator = useCallback(stripCommandSeparator, []);
-  const safeBuildSlashCommandValue = useCallback(buildSlashCommandValue, []);
+  const safeStripCommandSeparator = useCallback((tail: string) => stripCommandSeparator(tail), []);
+  const safeBuildSlashCommandValue = useCallback(
+    (command: string, tail: string) => buildSlashCommandValue(command, tail),
+    []
+  );
 
   return {
     activeIndex,

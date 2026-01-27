@@ -45,7 +45,7 @@ const beginListeners = () => {
   if (state.unlistenPromise) {
     state.unlistenPromise
       .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
-      .catch(() => { });
+      .catch(() => {});
   }
   state.token += 1;
   return state.token;
@@ -62,7 +62,7 @@ const removeListeners = (token: number) => {
   if (token !== state.token || !state.unlistenPromise) return;
   state.unlistenPromise
     .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
-    .catch(() => { });
+    .catch(() => {});
   state.unlistenPromise = null;
 };
 
@@ -251,5 +251,19 @@ export function useCodexEvents({
       isActive = false;
       removeListeners(listenerToken);
     };
-  }, [activeSessionIdRef, messageHandlers]);
+  }, [
+    activeSessionIdRef,
+    messageHandlers,
+    onModeOptionsResolvedRef,
+    onModelOptionsResolvedRef,
+    registerApprovalRequestRef,
+    resolveChatSessionIdRef,
+    setIsGeneratingBySessionRef,
+    setSessionMessagesRef,
+    setSessionModeOptionsRef,
+    setSessionModeRef,
+    setSessionModelOptionsRef,
+    setSessionModelRef,
+    setSessionSlashCommandsRef,
+  ]);
 }

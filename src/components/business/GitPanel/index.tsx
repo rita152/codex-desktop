@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
-
 import { useGitRepository } from '../../../hooks/useGitRepository';
 import type { GitCommit } from '../../../types/git';
 import { isRemotePath } from '../../../utils/remotePath';
@@ -33,14 +32,10 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
   const [commitMenu, setCommitMenu] = useState<CommitMenuState>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const {
-    status,
-    history,
-    error,
-    refreshHistory,
-    checkout,
-    reset,
-  } = useGitRepository({ cwd, enabled: visible });
+  const { status, history, error, refreshHistory, checkout, reset } = useGitRepository({
+    cwd,
+    enabled: visible,
+  });
 
   const isRemote = useMemo(() => isRemotePath(cwd), [cwd]);
   const isGitRepo = status?.isGitRepo ?? false;
@@ -76,13 +71,10 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
     return () => window.removeEventListener('click', handleClick);
   }, [visible]);
 
-  const handleCommitContextMenu = useCallback(
-    (event: React.MouseEvent, commitItem: GitCommit) => {
-      event.preventDefault();
-      setCommitMenu({ x: event.clientX, y: event.clientY, commit: commitItem });
-    },
-    []
-  );
+  const handleCommitContextMenu = useCallback((event: React.MouseEvent, commitItem: GitCommit) => {
+    event.preventDefault();
+    setCommitMenu({ x: event.clientX, y: event.clientY, commit: commitItem });
+  }, []);
 
   const handleCheckoutCommit = useCallback(async () => {
     if (!commitMenu) return;
@@ -128,13 +120,9 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
       />
 
       <div className="git-panel__body">
-        {isRemote && (
-          <div className="git-panel__empty">{t('gitPanel.remoteNotSupported')}</div>
-        )}
+        {isRemote && <div className="git-panel__empty">{t('gitPanel.remoteNotSupported')}</div>}
         {!isRemote && error && <div className="git-panel__error">{error}</div>}
-        {!isRemote && !isGitRepo && (
-          <div className="git-panel__empty">{t('gitPanel.noRepo')}</div>
-        )}
+        {!isRemote && !isGitRepo && <div className="git-panel__empty">{t('gitPanel.noRepo')}</div>}
         {!isRemote && isGitRepo && (
           <div className="git-panel__history-view">
             {historyLoading && <div className="git-panel__loading">{t('gitPanel.loading')}</div>}
@@ -179,22 +167,11 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
       </div>
 
       {commitMenu && (
-        <div
-          className="git-panel__context-menu"
-          style={{ left: commitMenu.x, top: commitMenu.y }}
-        >
-          <button
-            type="button"
-            className="git-panel__context-item"
-            onClick={handleCheckoutCommit}
-          >
+        <div className="git-panel__context-menu" style={{ left: commitMenu.x, top: commitMenu.y }}>
+          <button type="button" className="git-panel__context-item" onClick={handleCheckoutCommit}>
             {t('gitPanel.contextCheckout')}
           </button>
-          <button
-            type="button"
-            className="git-panel__context-item"
-            onClick={handleResetCommit}
-          >
+          <button type="button" className="git-panel__context-item" onClick={handleResetCommit}>
             {t('gitPanel.contextReset')}
           </button>
         </div>

@@ -76,13 +76,23 @@ export function useSessionPersistence(): SessionPersistenceResult {
 
   useEffect(() => {
     setSessionMessages((prev) =>
-      syncSessionRecord<Message[]>(prev, sessions, () => [], (value) => Array.isArray(value))
+      syncSessionRecord<Message[]>(
+        prev,
+        sessions,
+        () => [],
+        (value) => Array.isArray(value)
+      )
     );
   }, [sessions]);
 
   useEffect(() => {
     setSessionDrafts((prev) =>
-      syncSessionRecord(prev, sessions, () => '', (value) => typeof value === 'string')
+      syncSessionRecord(
+        prev,
+        sessions,
+        () => '',
+        (value) => typeof value === 'string'
+      )
     );
   }, [sessions]);
 

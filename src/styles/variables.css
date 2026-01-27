@@ -78,7 +78,7 @@
 }
 
 /* 暗色模式 - 通过 data-theme 属性控制（用户手动选择） */
-:root[data-theme="dark"] {
+:root[data-theme='dark'] {
   /* 文字 - 暗色模式 */
   --color-text: #ececec;
   --color-text-inverse: #0d0d0d;

@@ -119,14 +119,6 @@ export const ChatMessageList = memo(function ChatMessageList({
 
   const classNames = cn('chat-message-list', className);
 
-  if (!isGenerating && messages.length === 0 && approvalCount === 0) {
-    return (
-      <div className={classNames} ref={containerRef}>
-        <div className="chat-message-list__empty">{t('chat.empty')}</div>
-      </div>
-    );
-  }
-
   const virtualItems = virtualizer.getVirtualItems();
   const renderRow = useCallback(
     (virtualRow: (typeof virtualItems)[number]) => {
@@ -193,6 +185,14 @@ export const ChatMessageList = memo(function ChatMessageList({
     },
     [groups, lastWorkingId, virtualizer, workingOpenMap]
   );
+
+  if (!isGenerating && messages.length === 0 && approvalCount === 0) {
+    return (
+      <div className={classNames} ref={containerRef}>
+        <div className="chat-message-list__empty">{t('chat.empty')}</div>
+      </div>
+    );
+  }
 
   return (
     <div className={classNames} ref={containerRef}>

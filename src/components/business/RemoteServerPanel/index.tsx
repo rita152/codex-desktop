@@ -12,10 +12,7 @@ type RemoteServerPanelProps = {
   onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
-export function RemoteServerPanel({
-  visible = false,
-  onResizeStart,
-}: RemoteServerPanelProps) {
+export function RemoteServerPanel({ visible = false, onResizeStart }: RemoteServerPanelProps) {
   const { t } = useTranslation();
 
   return (

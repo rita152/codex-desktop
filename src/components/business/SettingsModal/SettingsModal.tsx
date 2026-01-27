@@ -56,7 +56,6 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     labelKey: 'settings.sections.shortcuts',
     keywords: ['keyboard', 'hotkey', 'shortcut', '快捷键', '键盘'],
   },
-
 ];
 
 const MIN_SIDEBAR_WIDTH = 200;
@@ -75,16 +74,9 @@ export function SettingsModal({
   const safeId = generatedId.replace(/:/g, '');
   const sidebarId = `settings-sidebar-${safeId}`;
   const [searchQuery, setSearchQuery] = useState('');
-  const {
-    settings,
-    loading,
-    activeSection,
-    setActiveSection,
-    updateSettings,
-    saveStatus,
-  } = useSettings();
-  const { fetching, fetchError, lastFetchedAt, fetchModels } =
-    useModelFetch();
+  const { settings, loading, activeSection, setActiveSection, updateSettings, saveStatus } =
+    useSettings();
+  const { fetching, fetchError, lastFetchedAt, fetchModels } = useModelFetch();
 
   const fetchStatus = useMemo(
     () => ({

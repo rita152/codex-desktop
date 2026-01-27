@@ -21,9 +21,7 @@ type Story = StoryObj<typeof GeneralSettings>;
 
 export const Default: Story = {
   render: () => {
-    const [settings, setSettings] = useState<GeneralSettingsType>(
-      DEFAULT_SETTINGS.general
-    );
+    const [settings, setSettings] = useState<GeneralSettingsType>(DEFAULT_SETTINGS.general);
 
     return (
       <div className="settings-section-story">
