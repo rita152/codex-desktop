@@ -261,8 +261,6 @@
     right: var(--spacing-lg);
   }
 
-
-
   .chat-container__terminal-resizer {
     display: none;
   }
