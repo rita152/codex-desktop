@@ -22,6 +22,14 @@
   pointer-events: none;
 }
 
+.chat-container__side-panel {
+  flex-shrink: 0;
+  height: 100%;
+  transition:
+    margin-right 0.2s ease,
+    opacity 0.2s ease;
+}
+
 .chat-container__main {
   flex: 1;
   display: flex;

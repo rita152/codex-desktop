@@ -154,8 +154,8 @@ export function ChatContainer({
                 <DirectorySelector
                   currentCwd={displayCwd}
                   cwdLocked={cwdLocked}
-                  onPickLocalCwd={onPickLocalCwd || (() => {})}
-                  onCwdSelect={onSetCwd || (() => {})}
+                  onPickLocalCwd={onPickLocalCwd || (() => { })}
+                  onCwdSelect={onSetCwd || (() => { })}
                 />
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
@@ -211,22 +211,29 @@ export function ChatContainer({
             </div>
           </div>
 
-          {sidePanelVisible &&
-            onSidePanelClose &&
-            onSidePanelTabChange &&
-            onSidePanelResizeStart && (
-              <UnifiedSidePanel
-                activeTab={activeSidePanelTab as SidePanelTab}
-                onTabChange={onSidePanelTabChange}
-                onClose={onSidePanelClose}
-                width={sidePanelWidth}
-                onResizeStart={onSidePanelResizeStart}
-                terminalId={terminalId || null}
-                sessionCwd={sessionCwd || ''}
-                onFileSelect={onFileSelect || (() => {})}
-              />
-            )}
         </div>
+      </div>
+      <div
+        className="chat-container__side-panel"
+        style={{
+          width: sidePanelWidth,
+          marginRight: sidePanelVisible ? 0 : -sidePanelWidth,
+          opacity: sidePanelVisible ? 1 : 0,
+        }}
+        aria-hidden={!sidePanelVisible}
+      >
+        {onSidePanelClose && onSidePanelTabChange && onSidePanelResizeStart && (
+          <UnifiedSidePanel
+            activeTab={activeSidePanelTab as SidePanelTab}
+            onTabChange={onSidePanelTabChange}
+            onClose={onSidePanelClose}
+            width={sidePanelWidth}
+            onResizeStart={onSidePanelResizeStart}
+            terminalId={terminalId || null}
+            sessionCwd={sessionCwd || ''}
+            onFileSelect={onFileSelect || (() => { })}
+          />
+        )}
       </div>
     </div>
   );
