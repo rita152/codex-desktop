@@ -1,10 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 
-import type {
-  GitStatusResult,
-  GitCommit,
-  RemoteGitHistoryResult,
-} from '../types/git';
+import type { GitStatusResult, GitCommit, RemoteGitHistoryResult } from '../types/git';
 
 export async function gitStatus(cwd: string): Promise<GitStatusResult> {
   return invoke<GitStatusResult>('git_status', { cwd });

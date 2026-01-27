@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  gitHistory,
-  gitStatus,
-  gitCheckout,
-  gitReset,
-  remoteGitHistory,
-} from '../api/git';
+import { gitHistory, gitStatus, gitCheckout, gitReset, remoteGitHistory } from '../api/git';
 import type { GitCommit, GitStatusResult } from '../types/git';
 import { isRemotePath, parseRemotePath } from '../utils/remotePath';
 
@@ -67,7 +61,12 @@ export function useGitRepository({
             throw new Error(parsed.error || 'Invalid remote path');
           }
           const resolvedAll = all ?? true;
-          const result = await remoteGitHistory(parsed.serverId, parsed.path || '', limit, resolvedAll);
+          const result = await remoteGitHistory(
+            parsed.serverId,
+            parsed.path || '',
+            limit,
+            resolvedAll
+          );
           setHistory(result.history);
           setStatus({
             isGitRepo: result.isGitRepo,
