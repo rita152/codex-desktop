@@ -30,27 +30,7 @@ export type GitCommit = {
   refs: string[];
 };
 
-export type GitBranch = {
-  name: string;
-  isCurrent: boolean;
-  isRemote: boolean;
-};
-
-export type GitRemote = {
-  name: string;
-  fetchUrl?: string | null;
-  pushUrl?: string | null;
-};
-
-export type GitFileViewRequest = {
-  path: string;
-  oldPath?: string | null;
-  indexStatus: string;
-  worktreeStatus: string;
-  staged: boolean;
-};
-
-export type GitFileView = {
-  original: string;
-  modified: string;
+export type RemoteGitHistoryResult = {
+  isGitRepo: boolean;
+  history: GitCommit[];
 };

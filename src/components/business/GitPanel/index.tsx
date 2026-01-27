@@ -39,12 +39,19 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
 
   const isRemote = useMemo(() => isRemotePath(cwd), [cwd]);
   const isGitRepo = status?.isGitRepo ?? false;
+  const showHistory = isGitRepo || historyLoading || history.length > 0;
 
   useEffect(() => {
     if (!visible) {
       setCommitMenu(null);
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (isRemote) {
+      setCommitMenu(null);
+    }
+  }, [isRemote]);
 
   const refreshHistoryWithLoading = useCallback(
     async (limit?: number, all?: boolean) => {
@@ -59,10 +66,10 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
   );
 
   useEffect(() => {
-    if (visible && isGitRepo) {
+    if (visible && (isGitRepo || isRemote)) {
       void refreshHistoryWithLoading(undefined, true);
     }
-  }, [visible, isGitRepo, refreshHistoryWithLoading]);
+  }, [visible, isGitRepo, isRemote, refreshHistoryWithLoading]);
 
   useEffect(() => {
     if (!visible) return;
@@ -71,10 +78,14 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
     return () => window.removeEventListener('click', handleClick);
   }, [visible]);
 
-  const handleCommitContextMenu = useCallback((event: React.MouseEvent, commitItem: GitCommit) => {
-    event.preventDefault();
-    setCommitMenu({ x: event.clientX, y: event.clientY, commit: commitItem });
-  }, []);
+  const handleCommitContextMenu = useCallback(
+    (event: React.MouseEvent, commitItem: GitCommit) => {
+      if (isRemote) return;
+      event.preventDefault();
+      setCommitMenu({ x: event.clientX, y: event.clientY, commit: commitItem });
+    },
+    [isRemote]
+  );
 
   const handleCheckoutCommit = useCallback(async () => {
     if (!commitMenu) return;
@@ -120,11 +131,18 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
       />
 
       <div className="git-panel__body">
-        {isRemote && <div className="git-panel__empty">{t('gitPanel.remoteNotSupported')}</div>}
-        {!isRemote && error && <div className="git-panel__error">{error}</div>}
-        {!isRemote && !isGitRepo && <div className="git-panel__empty">{t('gitPanel.noRepo')}</div>}
-        {!isRemote && isGitRepo && (
+        {error && <div className="git-panel__error">{error}</div>}
+        {!showHistory && !error && <div className="git-panel__empty">{t('gitPanel.noRepo')}</div>}
+        {showHistory && (
           <div className="git-panel__history-view">
+            {isRemote && (
+              <div className="git-panel__meta">
+                <div className="git-panel__branch">
+                  <span className="git-panel__meta-label">{t('gitPanel.remoteLabel')}</span>
+                  <span className="git-panel__meta-value">{t('gitPanel.remoteReadonly')}</span>
+                </div>
+              </div>
+            )}
             {historyLoading && <div className="git-panel__loading">{t('gitPanel.loading')}</div>}
             {!historyLoading && history.length === 0 && (
               <div className="git-panel__empty">{t('gitPanel.noHistory')}</div>

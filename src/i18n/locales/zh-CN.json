@@ -83,6 +83,8 @@
     "noHistory": "暂无提交历史",
     "noRepo": "未检测到 Git 仓库",
     "remoteNotSupported": "Git 仅支持本地目录。",
+    "remoteLabel": "远程",
+    "remoteReadonly": "只读历史",
     "diffPlaceholder": "选择文件查看差异",
     "checkoutPrompt": "切换到分支",
     "createBranchPrompt": "新建分支名称",

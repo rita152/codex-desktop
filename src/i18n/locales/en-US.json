@@ -83,6 +83,8 @@
     "noHistory": "No commits yet",
     "noRepo": "No git repository detected",
     "remoteNotSupported": "Git is only available for local folders.",
+    "remoteLabel": "Remote",
+    "remoteReadonly": "History (read-only)",
     "diffPlaceholder": "Select a file to view changes",
     "checkoutPrompt": "Switch to branch",
     "createBranchPrompt": "Create new branch",

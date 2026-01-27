@@ -98,6 +98,12 @@ codex-desktop/
 └── docs/                  # 项目文档
 ```
 
+## 文档
+
+- Git 集成：`docs/git.md`
+- 远程服务器：`docs/remote-servers.md`
+- 设置面板：`docs/settings.md`
+
 ## 推荐 IDE 配置
 
 - [VS Code](https://code.visualstudio.com/)

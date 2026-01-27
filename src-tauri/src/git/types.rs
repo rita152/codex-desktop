@@ -39,26 +39,3 @@ pub struct GitCommit {
     pub summary: String,
     pub refs: Vec<String>,
 }
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GitBranch {
-    pub name: String,
-    pub is_current: bool,
-    pub is_remote: bool,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GitRemote {
-    pub name: String,
-    pub fetch_url: Option<String>,
-    pub push_url: Option<String>,
-}
-
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct GitFileView {
-    pub original: String,
-    pub modified: String,
-}

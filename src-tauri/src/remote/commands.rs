@@ -1,6 +1,7 @@
 //! Tauri commands for remote server management.
 
 use super::types::*;
+use crate::git::types::GitCommit;
 use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -704,6 +705,177 @@ pub async fn remote_list_entries(
     })
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteGitHistoryResult {
+    pub is_git_repo: bool,
+    pub history: Vec<GitCommit>,
+}
+
+fn parse_git_log_output(output: &str) -> Vec<GitCommit> {
+    let mut commits = Vec::new();
+    for record in output.split('\x1e') {
+        if record.trim().is_empty() {
+            continue;
+        }
+        let fields: Vec<&str> = record.split('\x1f').collect();
+        if fields.len() < 6 {
+            continue;
+        }
+        let parents = if fields[1].trim().is_empty() {
+            Vec::new()
+        } else {
+            fields[1]
+                .split_whitespace()
+                .map(|s| s.to_string())
+                .collect()
+        };
+        let refs = if fields[4].trim().is_empty() {
+            Vec::new()
+        } else {
+            fields[4]
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+                .collect()
+        };
+
+        commits.push(GitCommit {
+            id: fields[0].to_string(),
+            parents,
+            author: fields[2].to_string(),
+            date: fields[3].to_string(),
+            refs,
+            summary: fields[5].to_string(),
+        });
+    }
+    commits
+}
+
+#[tauri::command]
+pub async fn remote_git_history(
+    server_id: String,
+    path: String,
+    limit: Option<usize>,
+    all: Option<bool>,
+    manager: State<'_, RemoteServerManager>,
+) -> Result<RemoteGitHistoryResult, String> {
+    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let trimmed = path.trim();
+
+    let (cd_target, use_home) = if trimmed.is_empty() || trimmed == "~" {
+        ("$HOME".to_string(), true)
+    } else {
+        (shell_escape(trimmed), false)
+    };
+
+    let mut log_args = vec![
+        "git".to_string(),
+        "log".to_string(),
+        "--pretty=format:%H%x1f%P%x1f%an%x1f%ad%x1f%D%x1f%s%x1e".to_string(),
+        "--date=iso-strict".to_string(),
+        "--date-order".to_string(),
+    ];
+    if all.unwrap_or(false) {
+        log_args.push("--all".to_string());
+    }
+    if let Some(limit) = limit {
+        log_args.push(format!("--max-count={}", limit));
+    }
+    let log_command = log_args
+        .iter()
+        .map(|arg| shell_escape(arg))
+        .collect::<Vec<_>>()
+        .join(" ");
+
+    let repo_marker = "__CODEX_GIT_REPO__";
+    let not_repo_marker = "__CODEX_NOT_GIT__";
+
+    let remote_command = if use_home {
+        format!(
+            "cd $HOME && if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then echo {}; {}; else echo {}; fi",
+            shell_escape(repo_marker),
+            log_command,
+            shell_escape(not_repo_marker)
+        )
+    } else {
+        format!(
+            "cd {} && if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then echo {}; {}; else echo {}; fi",
+            cd_target,
+            shell_escape(repo_marker),
+            log_command,
+            shell_escape(not_repo_marker)
+        )
+    };
+
+    let mut cmd = tokio::process::Command::new("ssh");
+    cmd.arg("-o")
+        .arg("StrictHostKeyChecking=accept-new")
+        .arg("-o")
+        .arg("BatchMode=yes")
+        .arg("-o")
+        .arg("ConnectTimeout=10")
+        .arg("-p")
+        .arg(config.port.to_string());
+
+    match &config.auth {
+        SshAuth::KeyFile { private_key_path, .. } => {
+            cmd.arg("-i").arg(private_key_path);
+        }
+        SshAuth::Agent => {}
+        SshAuth::Password { .. } => {
+            return Err("Password authentication is not supported".to_string());
+        }
+    }
+
+    cmd.arg(format!("{}@{}", config.username, config.host))
+        .arg(remote_command);
+
+    let output = cmd.output().await.map_err(|e| e.to_string())?;
+    let stdout = decode_output(output.stdout);
+    let stderr = decode_output(output.stderr);
+
+    let is_no_commits = stderr.contains("does not have any commits yet")
+        || stderr.contains("No commits yet");
+
+    if !output.status.success() && !is_no_commits {
+        return Err(if stderr.trim().is_empty() {
+            "Failed to read remote git history".to_string()
+        } else {
+            stderr
+        });
+    }
+
+    let (marker, log_output) = match stdout.find('\n') {
+        Some(index) => (stdout[..index].trim(), &stdout[index + 1..]),
+        None => (stdout.trim(), ""),
+    };
+
+    if marker == repo_marker {
+        let history = parse_git_log_output(log_output);
+        Ok(RemoteGitHistoryResult {
+            is_git_repo: true,
+            history,
+        })
+    } else if marker == not_repo_marker {
+        Ok(RemoteGitHistoryResult {
+            is_git_repo: false,
+            history: Vec::new(),
+        })
+    } else if is_no_commits {
+        Ok(RemoteGitHistoryResult {
+            is_git_repo: true,
+            history: Vec::new(),
+        })
+    } else {
+        Err(if stderr.trim().is_empty() {
+            "Unexpected remote git output".to_string()
+        } else {
+            stderr
+        })
+    }
+}
+
 fn decode_output(bytes: Vec<u8>) -> String {
     match String::from_utf8(bytes) {
         Ok(value) => value,
@@ -713,4 +885,3 @@ fn decode_output(bytes: Vec<u8>) -> String {
         }
     }
 }
-
