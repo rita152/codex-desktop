@@ -56,8 +56,15 @@ ensureDir(outDir);
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-acp-pack-'));
 try {
-  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-  const tarball = sh(npmCommand, ['pack', `${pkg}@${VERSION}`], { cwd: tmp });
+  const npmExecPath = process.env.npm_execpath;
+  let tarball;
+  if (npmExecPath) {
+    tarball = sh(process.execPath, [npmExecPath, 'pack', `${pkg}@${VERSION}`], { cwd: tmp });
+  } else if (process.platform === 'win32') {
+    tarball = sh('cmd.exe', ['/d', '/s', '/c', 'npm', 'pack', `${pkg}@${VERSION}`], { cwd: tmp });
+  } else {
+    tarball = sh('npm', ['pack', `${pkg}@${VERSION}`], { cwd: tmp });
+  }
   const tarballPath = path.join(tmp, tarball);
 
   try {
