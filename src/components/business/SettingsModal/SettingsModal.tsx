@@ -17,7 +17,7 @@ import type { SelectOption } from '../../ui/data-entry/Select/types';
 import './SettingsModal.css';
 
 const ModelSettings = lazy(() =>
-  import('./sections/ModelSettings').then((module) => ({ default: module.ModelSettings }))
+  import('../ModelPanel').then((module) => ({ default: module.ModelPanel }))
 );
 
 interface SettingsModalProps {

@@ -1,5 +1,6 @@
+// @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, create } from 'react-test-renderer';
+import { act, render } from '@testing-library/react';
 import { useEffect } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
@@ -8,34 +9,22 @@ import { usePanelResize } from './usePanelResize';
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('usePanelResize', () => {
-  const originalWindow = globalThis.window;
-  const originalDocument = globalThis.document;
-
   let listeners: Record<string, EventListener> = {};
 
   beforeEach(() => {
     listeners = {};
-    globalThis.window = {
-      addEventListener: vi.fn((event, handler) => {
-        listeners[event] = handler as EventListener;
-      }),
-      removeEventListener: vi.fn((event) => {
-        delete listeners[event];
-      }),
-    } as unknown as Window & typeof globalThis;
-    globalThis.document = {
-      body: {
-        style: {
-          cursor: '',
-          userSelect: '',
-        },
-      },
-    } as Document;
+    vi.spyOn(window, 'addEventListener').mockImplementation((event, handler) => {
+      listeners[String(event)] = handler as EventListener;
+    });
+    vi.spyOn(window, 'removeEventListener').mockImplementation((event) => {
+      delete listeners[String(event)];
+    });
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
   });
 
   afterEach(() => {
-    globalThis.window = originalWindow;
-    globalThis.document = originalDocument;
+    vi.restoreAllMocks();
   });
 
   it('clamps and updates width while dragging', () => {
@@ -61,9 +50,7 @@ describe('usePanelResize', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onReady={handleReady} />);
-    });
+    render(<Test onReady={handleReady} />);
 
     const preventDefault = vi.fn();
     act(() => {
@@ -109,9 +96,7 @@ describe('usePanelResize', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onReady={handleReady} />);
-    });
+    render(<Test onReady={handleReady} />);
 
     const preventDefault = vi.fn();
     act(() => {
@@ -146,9 +131,7 @@ describe('usePanelResize', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onReady={handleReady} />);
-    });
+    render(<Test onReady={handleReady} />);
 
     const preventDefault = vi.fn();
     act(() => {

@@ -1,5 +1,6 @@
+// @vitest-environment happy-dom
 import { describe, it, expect, vi } from 'vitest';
-import { act, create } from 'react-test-renderer';
+import { act, render } from '@testing-library/react';
 import { useEffect, useState } from 'react';
 
 import { useSelectOptionsCache } from './useSelectOptionsCache';
@@ -46,9 +47,7 @@ describe('useSelectOptionsCache', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test items={sessions} onUpdate={handleUpdate} />);
-    });
+    render(<Test items={sessions} onUpdate={handleUpdate} />);
 
     expect(latest?.cache.options).toEqual(cachedOptions);
     expect(latest?.sessionOptions['1']).toEqual(cachedOptions);
@@ -92,9 +91,7 @@ describe('useSelectOptionsCache', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.cache.options).toBeNull();
     expect(latest?.cache.currentId).toBe('default');
@@ -139,9 +136,7 @@ describe('useSelectOptionsCache', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.sessionOptions['1']).toEqual(existingOptions);
 

@@ -1,5 +1,6 @@
 export { GeneralSettings } from './GeneralSettings';
-export { ModelSettings } from './ModelSettings';
+export { ModelPanel as ModelSettings } from '../../ModelPanel';
+export type { ModelPanelProps as ModelSettingsProps } from '../../ModelPanel';
 export { ApprovalSettings } from './ApprovalSettings';
 export { ShortcutSettings } from './ShortcutSettings';
 export { AdvancedSettings } from './AdvancedSettings';

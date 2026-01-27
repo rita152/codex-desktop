@@ -1,5 +1,6 @@
+// @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { act, create } from 'react-test-renderer';
+import { act, render } from '@testing-library/react';
 import { useEffect, useRef } from 'react';
 
 import { useSlashCommands } from './useSlashCommands';
@@ -51,9 +52,7 @@ describe('useSlashCommands', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.slashState.isActive).toBe(true);
     expect(latest?.slashState.suggestions).toEqual(['hello', 'help']);
@@ -88,9 +87,7 @@ describe('useSlashCommands', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.slashState.isActive).toBe(false);
     expect(latest?.slashState.suggestions).toEqual([]);
@@ -136,9 +133,7 @@ describe('useSlashCommands', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.leadingSlashToken).toEqual({ command: 'help', tail: ' rest' });
     expect(latest?.stripCommandSeparator(' rest')).toBe('rest');
@@ -170,9 +165,7 @@ describe('useSlashCommands', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     expect(latest?.slashState.isActive).toBe(false);
     expect(latest?.slashState.suggestions).toEqual([]);
@@ -210,9 +203,7 @@ describe('useSlashCommands', () => {
       return null;
     }
 
-    act(() => {
-      create(<Test onUpdate={handleUpdate} />);
-    });
+    render(<Test onUpdate={handleUpdate} />);
 
     act(() => {
       latest?.applySlashCommand('help');
