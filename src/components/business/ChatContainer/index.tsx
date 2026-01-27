@@ -139,7 +139,10 @@ export function ChatContainer({
           } as CSSProperties
         }
       >
-        {!sidePanelVisible && <ChatSideActions onAction={onSideAction} />}
+        <ChatSideActions
+          onAction={onSideAction}
+          className={sidePanelVisible ? 'chat-side-actions--hidden' : ''}
+        />
         <div
           className={cn(
             'chat-container__body',
