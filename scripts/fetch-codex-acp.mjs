@@ -56,7 +56,8 @@ ensureDir(outDir);
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'codex-acp-pack-'));
 try {
-  const tarball = sh('npm', ['pack', `${pkg}@${VERSION}`], { cwd: tmp });
+  const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+  const tarball = sh(npmCommand, ['pack', `${pkg}@${VERSION}`], { cwd: tmp });
   const tarballPath = path.join(tmp, tarball);
 
   try {
