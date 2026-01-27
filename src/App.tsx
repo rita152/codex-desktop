@@ -15,7 +15,7 @@ import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { usePanelResize } from './hooks/usePanelResize';
-import { useResponsiveSidebar } from './hooks/useResponsiveSidebar';
+import { useResponsiveVisibility } from './hooks/useResponsiveVisibility';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
@@ -89,15 +89,21 @@ export function App() {
     setSessionOptions: setSessionModeOptions,
   });
 
-  const { sidebarVisible, isNarrowLayout, toggleSidebar } = useResponsiveSidebar(
-    SIDEBAR_AUTO_HIDE_MAX_WIDTH
-  );
+  const {
+    visible: sidebarVisible,
+    isNarrowLayout,
+    toggle: toggleSidebar,
+  } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, true);
   const pickRemoteCwd = useRemoteCwdPicker();
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
 
   // Unified Side Panel State
-  const [sidePanelVisible, setSidePanelVisible] = useState(false);
+  const {
+    visible: sidePanelVisible,
+    setVisible: setSidePanelVisible,
+    toggle: toggleSidePanel,
+  } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, false);
   const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
   const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
   const {
