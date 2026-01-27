@@ -80,9 +80,9 @@ jobs:
           name: ${{ env.RELEASE_TAG }}
           target_commitish: ${{ github.sha }}
           files: |
-            artifacts/**/bundle/**/*.dmg
-            artifacts/**/bundle/**/*.exe
-            artifacts/**/bundle/**/*.msi
-            artifacts/**/bundle/**/*.deb
-            artifacts/**/bundle/**/*.rpm
-            artifacts/**/bundle/**/*.AppImage
+            artifacts/**/dmg/*.dmg
+            artifacts/**/nsis/*.exe
+            artifacts/**/msi/*.msi
+            artifacts/**/deb/*.deb
+            artifacts/**/rpm/*.rpm
+            artifacts/**/appimage/*.AppImage
