@@ -253,9 +253,7 @@
     right: var(--spacing-lg);
   }
 
-  .chat-container__body {
-    flex-direction: column;
-  }
+
 
   .chat-container__terminal-resizer {
     display: none;

@@ -8,6 +8,7 @@
   box-shadow: var(--shadow-lg);
   overflow: hidden;
   position: relative;
+  flex-shrink: 0;
 }
 
 .unified-side-panel__header {
