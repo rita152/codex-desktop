@@ -4,11 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useRemoteServers } from '../../../hooks/useRemoteServers';
 import { Button } from '../../ui/data-entry/Button';
 import { Card } from '../../ui/data-display/Card';
-import {
-  ServerIcon,
-  CheckIcon,
-  CloseIcon,
-} from '../../ui/data-display/Icon';
+import { ServerIcon, CheckIcon, CloseIcon } from '../../ui/data-display/Icon';
 import './RemoteServerManager.css';
 
 type RemoteServerManagerProps = {
@@ -105,7 +101,9 @@ export function RemoteServerManager({ hideTitle = false }: RemoteServerManagerPr
                   ) : (
                     <CloseIcon size={16} className="result-icon error" />
                   )}
-                  <span className={`result-message ${testResults[server.id].success ? 'success' : 'error'}`}>
+                  <span
+                    className={`result-message ${testResults[server.id].success ? 'success' : 'error'}`}
+                  >
                     {testResults[server.id].message}
                   </span>
                 </div>
