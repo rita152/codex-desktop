@@ -3,6 +3,12 @@ import { useTranslation } from 'react-i18next';
 
 import { useRemoteServers } from '../../../hooks/useRemoteServers';
 import { Button } from '../../ui/data-entry/Button';
+import { Card } from '../../ui/data-display/Card';
+import {
+  ServerIcon,
+  CheckIcon,
+  CloseIcon,
+} from '../../ui/data-display/Icon';
 import './RemoteServerManager.css';
 
 type RemoteServerManagerProps = {
@@ -55,41 +61,56 @@ export function RemoteServerManager({ hideTitle = false }: RemoteServerManagerPr
       ) : (
         <div className="servers-list">
           {servers.map((server) => (
-            <div key={server.id} className="server-card">
-              <div className="server-info">
-                <h3>{server.name}</h3>
-                <p className="server-details">
-                  {server.username}@{server.host}:{server.port}
-                </p>
-                <p className="auth-method">
-                  {t('settings.remoteServer.authType')}:{' '}
-                  {server.auth.type === 'agent'
-                    ? t('settings.remoteServer.sshAgent')
-                    : t('settings.remoteServer.sshKeyFile')}
-                </p>
-              </div>
-
-              <div className="server-actions">
-                <Button
-                  type="button"
-                  onClick={() => handleTestConnection(server.id)}
-                  disabled={testingServer === server.id}
-                  className="test-button"
-                >
-                  {testingServer === server.id
-                    ? t('settings.remoteServer.testing')
-                    : t('settings.remoteServer.testConnection')}
-                </Button>
+            <Card
+              key={server.id}
+              className="server-card-item"
+              radius="md"
+              shadow={false}
+              background="elevated"
+              bordered
+            >
+              <div className="server-info-row">
+                <div className="server-icon-wrapper">
+                  <ServerIcon size={20} className="server-icon-visual" />
+                </div>
+                <div className="server-details-wrapper">
+                  <h3 className="server-name">{server.name}</h3>
+                  <p className="server-address">
+                    {server.username}@{server.host}:{server.port}
+                  </p>
+                  <p className="server-auth-type">
+                    {server.auth.type === 'agent'
+                      ? t('settings.remoteServer.sshAgent')
+                      : t('settings.remoteServer.sshKeyFile')}
+                  </p>
+                </div>
+                <div className="server-actions-wrapper">
+                  <Button
+                    type="button"
+                    onClick={() => handleTestConnection(server.id)}
+                    disabled={testingServer === server.id}
+                    className="test-connection-btn"
+                  >
+                    {testingServer === server.id
+                      ? t('settings.remoteServer.testing')
+                      : t('settings.remoteServer.testConnection')}
+                  </Button>
+                </div>
               </div>
 
               {testResults[server.id] && (
-                <div
-                  className={`test-result ${testResults[server.id].success ? 'success' : 'error'}`}
-                >
-                  {testResults[server.id].message}
+                <div className="test-result-row">
+                  {testResults[server.id].success ? (
+                    <CheckIcon size={16} className="result-icon success" />
+                  ) : (
+                    <CloseIcon size={16} className="result-icon error" />
+                  )}
+                  <span className={`result-message ${testResults[server.id].success ? 'success' : 'error'}`}>
+                    {testResults[server.id].message}
+                  </span>
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}
