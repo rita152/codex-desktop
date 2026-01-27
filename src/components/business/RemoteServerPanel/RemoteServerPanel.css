@@ -37,10 +37,18 @@
 .remote-server-panel__body {
   flex: 1;
   display: flex;
+  flex-direction: column;
   padding: var(--spacing-xs) 0 var(--spacing-xs) var(--spacing-sm);
   background: var(--color-bg);
+  min-width: 0;
   min-height: 0;
   overflow-y: auto;
+}
+
+.remote-server-panel__body .remote-server-manager {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
 }
 
 @media (max-width: 900px) {
