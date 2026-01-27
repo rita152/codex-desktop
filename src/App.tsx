@@ -102,7 +102,6 @@ export function App() {
   const {
     visible: sidePanelVisible,
     setVisible: setSidePanelVisible,
-    toggle: toggleSidePanel,
   } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, false);
   const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
   const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
@@ -586,12 +585,12 @@ export function App() {
         setSidePanelVisible(true);
       }
     },
-    [sidePanelVisible, activeSidePanelTab]
+    [sidePanelVisible, activeSidePanelTab, setSidePanelVisible]
   );
 
   const handleSidePanelClose = useCallback(() => {
     setSidePanelVisible(false);
-  }, []);
+  }, [setSidePanelVisible]);
 
   const handleSidePanelTabChange = useCallback((tab: SidePanelTab) => {
     setActiveSidePanelTab(tab);
