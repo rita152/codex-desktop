@@ -99,10 +99,10 @@ export function App() {
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
 
   // Unified Side Panel State
-  const {
-    visible: sidePanelVisible,
-    setVisible: setSidePanelVisible,
-  } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, false);
+  const { visible: sidePanelVisible, setVisible: setSidePanelVisible } = useResponsiveVisibility(
+    SIDEBAR_AUTO_HIDE_MAX_WIDTH,
+    false
+  );
   const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
   const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
   const {
