@@ -68,8 +68,8 @@ function runStep({ name, cmd }) {
     return;
   }
   console.log(`[run] ${name}`);
-  const [command, ...args] = resolveCommand(cmd);
-  const result = spawnSync(command, args, { stdio: 'inherit' });
+  const [command, ...args] = cmd;
+  const result = spawnSync(command, args, { stdio: 'inherit', shell: IS_WINDOWS });
   if (result.error) {
     console.error(`[error] Failed to run ${command}: ${result.error.message}`);
   }
@@ -287,14 +287,6 @@ function checkAbstraction() {
     }
     process.exit(1);
   }
-}
-
-function resolveCommand(cmd) {
-  const [command, ...args] = cmd;
-  if (IS_WINDOWS && command === 'npm') {
-    return ['npm.cmd', ...args];
-  }
-  return [command, ...args];
 }
 
 function listFiles(dir) {
