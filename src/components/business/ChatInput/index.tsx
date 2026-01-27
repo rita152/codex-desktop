@@ -52,6 +52,9 @@ const resolveAgentIcon = (
   if (/agent[-\s]*full|full\s*access|full-access/.test(token)) {
     return <ForwardIcon size={18} />;
   }
+  if (token.includes('default')) {
+    return <RobotIcon size={18} />;
+  }
   if (token.includes('agent')) {
     return <RobotIcon size={18} />;
   }
