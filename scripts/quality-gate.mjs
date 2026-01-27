@@ -25,6 +25,8 @@ const COVERAGE_THRESHOLDS = {
   branches: getNumberEnv('QUALITY_GATE_COVERAGE_BRANCHES', 70),
 };
 
+const IS_WINDOWS = process.platform === 'win32';
+
 const steps = [
   { name: 'format', cmd: ['npm', 'run', 'format'] },
   { name: 'lint', cmd: ['npm', 'run', 'lint', '--', '--max-warnings=0'] },
@@ -66,7 +68,11 @@ function runStep({ name, cmd }) {
     return;
   }
   console.log(`[run] ${name}`);
-  const result = spawnSync(cmd[0], cmd.slice(1), { stdio: 'inherit' });
+  const [command, ...args] = resolveCommand(cmd);
+  const result = spawnSync(command, args, { stdio: 'inherit' });
+  if (result.error) {
+    console.error(`[error] Failed to run ${command}: ${result.error.message}`);
+  }
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
@@ -281,6 +287,14 @@ function checkAbstraction() {
     }
     process.exit(1);
   }
+}
+
+function resolveCommand(cmd) {
+  const [command, ...args] = cmd;
+  if (IS_WINDOWS && command === 'npm') {
+    return ['npm.cmd', ...args];
+  }
+  return [command, ...args];
 }
 
 function listFiles(dir) {
