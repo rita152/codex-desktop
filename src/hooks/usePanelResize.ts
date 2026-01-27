@@ -18,23 +18,20 @@ export function usePanelResize({
   minContentWidth,
   getContainerWidth,
 }: UsePanelResizeArgs) {
-  const clampWidth = useCallback(
-    (nextWidth: number) => {
-      const containerWidth = getContainerWidth();
-      const maxWidth = containerWidth
-        ? Math.max(minWidth, containerWidth - minContentWidth)
-        : nextWidth;
-      return Math.min(Math.max(nextWidth, minWidth), maxWidth);
-    },
-    [getContainerWidth, minContentWidth, minWidth]
-  );
-
   return useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       if (!isOpen) return;
       event.preventDefault();
       const startX = event.clientX;
       const startWidth = width;
+      const startContainerWidth = getContainerWidth();
+      const maxWidth = startContainerWidth
+        ? Math.max(minWidth, startContainerWidth - minContentWidth)
+        : null;
+      const clampWidth = (nextWidth: number) => {
+        if (maxWidth === null) return nextWidth;
+        return Math.min(Math.max(nextWidth, minWidth), maxWidth);
+      };
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
 
@@ -45,13 +42,15 @@ export function usePanelResize({
       const handlePointerUp = () => {
         window.removeEventListener('pointermove', handlePointerMove);
         window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerUp);
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       };
 
       window.addEventListener('pointermove', handlePointerMove);
       window.addEventListener('pointerup', handlePointerUp);
+      window.addEventListener('pointercancel', handlePointerUp);
     },
-    [clampWidth, isOpen, setWidth, width]
+    [getContainerWidth, isOpen, minContentWidth, minWidth, setWidth, width]
   );
 }

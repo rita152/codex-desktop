@@ -127,7 +127,11 @@ export function App() {
     setWidth: setSidePanelWidth,
     minWidth: MIN_SIDE_PANEL_WIDTH,
     minContentWidth: 240, // MIN_CONVERSATION_WIDTH
-    getContainerWidth: () => bodyRef.current?.getBoundingClientRect().width ?? 0,
+    getContainerWidth: () => {
+      const mainWidth = bodyRef.current?.getBoundingClientRect().width ?? 0;
+      if (!mainWidth) return 0;
+      return mainWidth + sidePanelWidth;
+    },
   });
 
   const { clearCodexSession, ensureCodexSession, getCodexSessionId, resolveChatSessionId } =
