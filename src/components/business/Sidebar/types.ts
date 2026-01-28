@@ -1,10 +1,6 @@
-export interface ChatSession {
-  id: string;
-  title: string;
-  cwd?: string;
-  model?: string;
-  mode?: string;
-}
+import type { ChatSession } from '../../../types/session';
+
+export type { ChatSession } from '../../../types/session';
 
 export interface SidebarProps {
   sessions: ChatSession[];

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { Dispatch, SetStateAction } from 'react';
-import type { ChatSession } from '../components/business/Sidebar/types';
+import type { ChatSession } from '../types/session';
 import type { SelectOption } from '../types/options';
 
 type OptionsCacheState = {

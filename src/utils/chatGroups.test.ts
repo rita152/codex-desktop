@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { buildChatGroups } from './chatGroups';
 
 import type { ApprovalProps } from '../components/ui/feedback/Approval';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
 
 describe('chatGroups', () => {

@@ -31,8 +31,8 @@ import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
 import { terminalKill } from './api/terminal';
 
-import type { Message } from './components/business/ChatMessageList/types';
-import type { ChatSession } from './components/business/Sidebar/types';
+import type { Message } from './types/message';
+import type { ChatSession } from './types/session';
 import type { SelectOption } from './types/options';
 import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';

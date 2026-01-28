@@ -7,10 +7,10 @@ import { useCodexEvents } from './useCodexEvents';
 import { formatError, resolveModelOptions, resolveModeOptions } from '../utils/codexParsing';
 import { resolveOptionId, shouldSyncOption } from '../utils/optionSelection';
 
-import type { ChatSession } from '../components/business/Sidebar/types';
+import type { ChatSession } from '../types/session';
 import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 import type { SessionNotice } from './useSessionMeta';
 
 type SessionMessages = Record<string, Message[]>;

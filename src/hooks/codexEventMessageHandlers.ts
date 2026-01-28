@@ -3,8 +3,8 @@ import { devDebug } from '../utils/logger';
 import { applyToolCallUpdate, getToolCallId, newMessageId } from '../utils/codexParsing';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import type { PlanStep } from '../components/ui/data-display/Plan/types';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { PlanStep } from '../types/plan';
+import type { Message } from '../types/message';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
 import type { ToolCall } from '../types/codex';
 

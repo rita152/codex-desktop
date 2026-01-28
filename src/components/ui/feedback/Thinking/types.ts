@@ -1,4 +1,6 @@
-export type ThinkingPhase = 'working' | 'thinking' | 'done';
+import type { ThinkingPhase } from '../../../../types/thinking';
+
+export type { ThinkingPhase } from '../../../../types/thinking';
 
 export interface ThinkingProps {
   /** 思考内容 */

@@ -4,8 +4,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 import i18n from '../i18n';
 
-import type { ChatSession } from '../components/business/Sidebar/types';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { ChatSession } from '../types/session';
+import type { Message } from '../types/message';
 
 export type SessionMessages = Record<string, Message[]>;
 export type SessionDrafts = Record<string, string>;

@@ -16,10 +16,10 @@ import { createCodexMessageHandlers } from './codexEventMessageHandlers';
 import { useLatest } from './useLatest';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
-import type { PlanStep } from '../components/ui/data-display/Plan/types';
+import type { PlanStep } from '../types/plan';
 
 type SessionMessages = Record<string, Message[]>;
 
