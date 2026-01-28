@@ -4,7 +4,7 @@ import { authCodex, createSession, loadCodexCliConfig, setCodexEnv } from '../ap
 import { formatError, resolveModelOptions } from '../utils/codexParsing';
 
 import type { CodexCliConfigInfo } from '../types/codex';
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 
 export type ModelFetchResult = {
   options: SelectOption[];

@@ -1,45 +1,88 @@
-# Repository Guidelines
+# PROJECT KNOWLEDGE BASE
 
-## Project Structure & Module Organization
+**Generated:** 2026-01-28
+**Commit:** 77a37dc
+**Branch:** main
 
-- `src/` holds the React + TypeScript frontend. Look in `src/components/ui` for reusable UI pieces and `src/components/business` for app-specific views.
-- `src-tauri/` is the Rust backend for Tauri. Core logic lives in `src-tauri/src`, with `tauri.conf.json` for app configuration.
-- `docs/` contains project documentation and assets (e.g., `docs/screenshot.png`).
-- `.storybook/` stores Storybook configuration and stories for UI development.
+Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript + Vite 7 frontend.
 
-## Build, Test, and Development Commands
+## STRUCTURE
 
-- `npm install`: install JS dependencies.
-- `npm run dev`: run the Vite frontend dev server only.
-- `npm run tauri dev`: run the full desktop app (Vite + Tauri).
-- `npm run storybook`: launch Storybook for component development.
-- `npm run build`: run the TypeScript build check.
-- `npm run tauri build`: produce a production desktop build.
-- `npm run test`: run the frontend test suite.
-- `cargo test` (from `src-tauri/`): run backend Rust tests.
+```
+./
+├── src/                # React app (UI + business + hooks + api)
+├── src-tauri/          # Tauri/Rust backend (commands + services)
+├── scripts/            # quality gate + sidecar fetch
+├── docs/               # design/usage docs ("current implementation")
+├── codex-acp/          # git submodule (upstream ACP + npm wrapper)
+├── .storybook/         # Storybook config
+└── (removed) .kiro/    # local engineering rules/checklists (deleted)
+```
 
-## Coding Style & Naming Conventions
+## WHERE TO LOOK
 
-- TypeScript follows standard React + Vite conventions; prefer clear, descriptive component names in PascalCase (e.g., `ChatPanel.tsx`).
-- Rust follows `snake_case` for functions/modules and `PascalCase` for types.
-- Use existing lint/format tooling where configured; do not reformat unrelated files.
+| Task                         | Location                                                          |
+| ---------------------------- | ----------------------------------------------------------------- |
+| Frontend entry               | `src/main.tsx` → `src/App.tsx`                                    |
+| Frontend architecture rules  | `src/AGENTS.md`                                                   |
+| Tauri command wiring         | `src-tauri/src/lib.rs` (`generate_handler![...]`)                 |
+| Frontend ↔ backend boundary  | `src/api/*` (invoke wrappers)                                     |
+| Codex events (codex:\*)      | `src-tauri/src/codex/events.rs` + `src/hooks/useCodexEvents.ts`   |
+| Remote servers & `remote://` | `docs/remote-servers.md` + `src/utils/remotePath.ts`              |
+| Git integration              | `docs/git.md` + `src-tauri/src/git/*` + `src/api/git.ts`          |
+| Settings                     | `docs/settings.md` + `src/hooks/useSettings.ts`                   |
+| CI/quality gate behavior     | `scripts/quality-gate.mjs` + `.github/workflows/quality-gate.yml` |
+| ACP sidecar fetch            | `scripts/fetch-codex-acp.mjs` + `src-tauri/src/codex/binary.rs`   |
 
-## Testing Guidelines
+## COMMANDS
 
-- Frontend tests run via `npm run test` (Vitest configuration lives in `vitest.unit.config.ts`).
-- Rust backend tests run with `cargo test` under `src-tauri/`.
-- Keep tests focused and name them after the behavior they validate (e.g., `renders_empty_state`).
+```bash
+# install
+npm install
 
-## Commit & Pull Request Guidelines
+# dev
+npm run dev            # frontend only
+npm run tauri dev      # desktop (Vite + Tauri)
 
-- Recent commits use short, imperative summaries (e.g., “Optimize chat rendering hot paths”). Keep messages concise and action-oriented.
-- For PRs, include: a clear description of changes, any linked issues, and screenshots for UI updates.
+# build
+npm run build          # tsc + vite build
+npm run tauri build    # triggers build:tauri (includes fetching codex-acp)
 
-## Configuration & Environment Notes
+# tests
+npm run test           # vitest browser (playwright)
+npm run test:unit      # vitest unit
 
-- Required versions: Node.js 18+ and Rust 1.70+ (MSRV is 1.70).
-- Platform-specific prerequisites follow the Tauri docs: https://tauri.app/start/prerequisites/.
+# local CI equivalent
+npm run quality:gate
 
-## Communication
+# backend (run inside src-tauri/)
+cargo fmt --all -- --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+```
 
-- Use English for internal reasoning; respond in Chinese.
+## GLOBAL CONVENTIONS (project-specific)
+
+- TypeScript is **strict** + `noUnusedLocals/noUnusedParameters` (build fails on unused).
+- CI treats **ESLint warnings as failures** (`--max-warnings=0`).
+- No TS import alias configured (expect deep **relative imports**).
+- Prettier ignores `src-tauri/`, `codex-acp/`, `docs/` (Rust side enforced by `cargo fmt`/`clippy`).
+
+## ANTI-PATTERNS (THIS REPO)
+
+- `src-tauri/src/main.rs`: **DO NOT REMOVE** the `windows_subsystem` cfg_attr.
+- Avoid adding new direct `invoke()`/`listen()` usage inside components; prefer `src/api/` + `src/hooks/` (see `src/AGENTS.md`).
+- Don’t reformat unrelated files.
+
+## GOTCHAS
+
+- Tauri sidecars: `bundle.externalBin: ["bin/codex-acp"]` expects a file named `src-tauri/bin/codex-acp-$TARGET_TRIPLE[.exe]`. Our fetch script writes `src-tauri/bin/codex-acp-<target>`; make sure `<target>` is the Rust target triple Tauri expects (see Tauri sidecar docs) or override via `CODEX_DESKTOP_ACP_*`.
+- Remote server list comes from `~/.ssh/config` (current implementation); add/remove commands are intentionally not persistent.
+
+## NESTED GUIDES (closest wins)
+
+- `src/AGENTS.md`
+- `src-tauri/AGENTS.md`
+- `scripts/AGENTS.md`
+- `docs/AGENTS.md`
+- `.storybook/AGENTS.md`

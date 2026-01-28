@@ -1,11 +1,6 @@
-export type PlanStatus = 'pending' | 'active' | 'completed' | 'error';
+import type { PlanStep } from '../../../../types/plan';
 
-export interface PlanStep {
-  id: string;
-  title: string;
-  description?: string;
-  status: PlanStatus;
-}
+export type { PlanStatus, PlanStep } from '../../../../types/plan';
 
 export interface PlanProps {
   className?: string;

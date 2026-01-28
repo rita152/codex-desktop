@@ -1,7 +1,7 @@
 import type { ApprovalProps } from '../components/ui/feedback/Approval';
 import type { ToolCallProps } from '../components/ui/feedback/ToolCall';
 import type { WorkingItem } from '../components/ui/feedback/Working';
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 
 export type ChatGroup =
   | { type: 'message'; id: string; message: Message }

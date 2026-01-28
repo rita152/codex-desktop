@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { open } from '@tauri-apps/plugin-dialog';
 
 import { ChatContainer } from './components/business/ChatContainer';
 import { SettingsModal } from './components/business/SettingsModal';
@@ -22,18 +21,18 @@ import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
 import { useSessionMeta } from './hooks/useSessionMeta';
 import { useSessionPersistence } from './hooks/useSessionPersistence';
 import { useSessionViewState } from './hooks/useSessionViewState';
+import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useMessageQueue } from './hooks/useMessageQueue';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
-import { isRemotePath } from './utils/remotePath';
 import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
 import { terminalKill } from './api/terminal';
 
-import type { Message } from './components/business/ChatMessageList/types';
-import type { ChatSession } from './components/business/Sidebar/types';
-import type { SelectOption } from './components/ui/data-entry/Select/types';
+import type { Message } from './types/message';
+import type { ChatSession } from './types/session';
+import type { SelectOption } from './types/options';
 import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';
 
@@ -248,23 +247,6 @@ export function App() {
     );
   }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
 
-  const pickFiles = useCallback(async (): Promise<string[]> => {
-    try {
-      const selection = await open({
-        directory: false,
-        multiple: true,
-      });
-      if (typeof selection === 'string') return [selection];
-      if (Array.isArray(selection)) {
-        return selection.filter((item): item is string => typeof item === 'string');
-      }
-      return [];
-    } catch (err) {
-      devDebug('[codex] Failed to open file picker', err);
-      return [];
-    }
-  }, []);
-
   const handleDraftChange = useCallback(
     (value: string) => {
       setSessionDrafts((prev) => ({ ...prev, [selectedSessionId]: value }));
@@ -291,17 +273,17 @@ export function App() {
 
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const handleCwdSelect = useCallback(
-    (cwd: string) => {
-      const sessionId = selectedSessionId;
-      if (!sessionId) return;
-      setSessions((prev) =>
-        prev.map((session) => (session.id === sessionId ? { ...session, cwd } : session))
-      );
-      clearSessionNotice(sessionId);
-    },
-    [clearSessionNotice, selectedSessionId, setSessions]
-  );
+  const { handleCwdSelect, handleSelectCwd, handleAddFile, handleFileSelect } =
+    useFileAndCwdActions({
+      t,
+      selectedSessionId,
+      selectedCwd,
+      pickRemoteCwd,
+      setSessions,
+      setSessionDrafts,
+      setSessionNotices,
+      clearSessionNotice,
+    });
 
   const handleNewChat = useCallback(() => {
     // 直接在当前工作目录下新建对话，不打开文件选择器
@@ -521,59 +503,6 @@ export function App() {
     ]
   );
 
-  const handleSelectCwd = useCallback(async () => {
-    const sessionId = selectedSessionId;
-    if (!sessionId) return;
-    try {
-      const remoteSelection = await pickRemoteCwd();
-      if (remoteSelection) {
-        handleCwdSelect(remoteSelection);
-        return;
-      }
-      const selection = await open({
-        directory: true,
-        multiple: false,
-        defaultPath:
-          selectedCwd && selectedCwd.trim() !== '' && !isRemotePath(selectedCwd)
-            ? selectedCwd
-            : undefined,
-      });
-      const nextCwd =
-        typeof selection === 'string'
-          ? selection
-          : Array.isArray(selection) && typeof selection[0] === 'string'
-            ? selection[0]
-            : null;
-      if (!nextCwd) return;
-      handleCwdSelect(nextCwd);
-    } catch (err) {
-      devDebug('[codex] Failed to select working directory', err);
-      setSessionNotices((prev) => ({
-        ...prev,
-        [sessionId]: {
-          kind: 'error',
-          message: t('errors.genericError', { error: formatError(err) }),
-        },
-      }));
-    }
-  }, [handleCwdSelect, pickRemoteCwd, selectedCwd, selectedSessionId, setSessionNotices, t]);
-
-  const handleAddFile = useCallback(async () => {
-    const sessionId = selectedSessionId;
-    if (!sessionId) return;
-    const files = await pickFiles();
-    if (files.length === 0) return;
-
-    setSessionDrafts((prev) => {
-      const current = prev[sessionId] ?? '';
-      const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : '';
-      const nextValue = `${current}${separator}${files
-        .map((file) => t('chat.filePrefix', { path: file }))
-        .join('\n')}`;
-      return { ...prev, [sessionId]: nextValue };
-    });
-  }, [pickFiles, selectedSessionId, setSessionDrafts, t]);
-
   const handleSideAction = useCallback(
     (actionId: string) => {
       // Map simple IDs to our strongly typed SidePanelTab
@@ -599,22 +528,6 @@ export function App() {
   const handleSidePanelTabChange = useCallback((tab: SidePanelTab) => {
     setActiveSidePanelTab(tab);
   }, []);
-
-  const handleFileSelect = useCallback(
-    (path: string) => {
-      // 当在文件浏览器中选择文件时，相当于添加文件到当前会话的草稿中
-      const sessionId = selectedSessionId;
-      if (!sessionId) return;
-
-      setSessionDrafts((prev) => {
-        const current = prev[sessionId] ?? '';
-        const separator = current.length > 0 && !current.endsWith('\n') ? '\n' : '';
-        const nextValue = `${current}${separator}${t('chat.filePrefix', { path })}`;
-        return { ...prev, [sessionId]: nextValue };
-      });
-    },
-    [selectedSessionId, setSessionDrafts, t]
-  );
 
   // 实际发送消息到后端的处理函数
   const doSendMessage = useCallback(

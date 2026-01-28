@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 
 export interface SessionNotice {
   kind: 'error' | 'info';

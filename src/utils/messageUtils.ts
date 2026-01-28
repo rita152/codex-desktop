@@ -1,4 +1,4 @@
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 
 function findLastIndex<T>(list: T[], predicate: (item: T) => boolean): number {
   for (let i = list.length - 1; i >= 0; i--) {

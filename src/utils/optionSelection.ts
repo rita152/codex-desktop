@@ -1,4 +1,4 @@
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 
 type ResolveOptionArgs = {
   preferredId?: string;

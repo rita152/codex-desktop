@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 
 import { closeActiveAssistantMessages, closeActiveThoughtMessages } from './messageUtils';
 
-import type { Message } from '../components/business/ChatMessageList/types';
+import type { Message } from '../types/message';
 
 describe('messageUtils', () => {
   it('closes streaming thought messages', () => {
