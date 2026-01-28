@@ -31,6 +31,8 @@ export interface ChatContainerProps {
   onClearQueue?: () => void;
   /** 从队列移除消息回调 */
   onRemoveFromQueue?: (messageId: string) => void;
+  /** 将消息移到队首回调 */
+  onMoveToTopInQueue?: (messageId: string) => void;
   /** 输入框内容 */
   inputValue: string;
   /** 输入框内容变更 */

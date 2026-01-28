@@ -668,12 +668,18 @@ export function App() {
   );
 
   // 消息队列 Hook
-  const { currentQueue, hasQueuedMessages, enqueueMessage, clearQueue, removeFromQueue } =
-    useMessageQueue({
-      selectedSessionId,
-      isGeneratingBySession,
-      onSendMessage: doSendMessage,
-    });
+  const {
+    currentQueue,
+    hasQueuedMessages,
+    enqueueMessage,
+    clearQueue,
+    removeFromQueue,
+    moveToTop
+  } = useMessageQueue({
+    selectedSessionId,
+    isGeneratingBySession,
+    onSendMessage: doSendMessage,
+  });
 
   // 对外暴露的发送消息处理：支持排队
   const handleSendMessage = useCallback(
@@ -694,6 +700,14 @@ export function App() {
       removeFromQueue(selectedSessionId, messageId);
     },
     [removeFromQueue, selectedSessionId]
+  );
+
+  // 将消息移到队首
+  const handleMoveToTopInQueue = useCallback(
+    (messageId: string) => {
+      moveToTop(selectedSessionId, messageId);
+    },
+    [moveToTop, selectedSessionId]
   );
 
   const approvalCards = useApprovalCards({
@@ -724,6 +738,7 @@ export function App() {
         hasQueuedMessages={hasQueuedMessages}
         onClearQueue={handleClearQueue}
         onRemoveFromQueue={handleRemoveFromQueue}
+        onMoveToTopInQueue={handleMoveToTopInQueue}
         inputValue={draftMessage}
         onInputChange={handleDraftChange}
         agentOptions={agentOptions}

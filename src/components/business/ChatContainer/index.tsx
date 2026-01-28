@@ -34,6 +34,7 @@ export function ChatContainer({
   hasQueuedMessages = false,
   onClearQueue,
   onRemoveFromQueue,
+  onMoveToTopInQueue,
   inputValue,
   onInputChange,
   agentOptions,
@@ -157,8 +158,8 @@ export function ChatContainer({
                 <DirectorySelector
                   currentCwd={displayCwd}
                   cwdLocked={cwdLocked}
-                  onPickLocalCwd={onPickLocalCwd || (() => {})}
-                  onCwdSelect={onSetCwd || (() => {})}
+                  onPickLocalCwd={onPickLocalCwd || (() => { })}
+                  onCwdSelect={onSetCwd || (() => { })}
                 />
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
@@ -190,6 +191,7 @@ export function ChatContainer({
                   <QueueIndicator
                     queue={messageQueue}
                     onRemove={onRemoveFromQueue}
+                    onMoveToTop={onMoveToTopInQueue}
                     onClearAll={onClearQueue}
                     className="chat-container__queue-indicator"
                   />
@@ -233,7 +235,7 @@ export function ChatContainer({
             onResizeStart={onSidePanelResizeStart}
             terminalId={terminalId || null}
             sessionCwd={sessionCwd || ''}
-            onFileSelect={onFileSelect || (() => {})}
+            onFileSelect={onFileSelect || (() => { })}
           />
         )}
       </div>
