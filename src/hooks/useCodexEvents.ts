@@ -17,7 +17,7 @@ import { useLatest } from './useLatest';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../components/business/ChatMessageList/types';
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
 import type { PlanStep } from '../components/ui/data-display/Plan/types';
 
@@ -44,7 +44,11 @@ const beginListeners = () => {
   const state = getListenerState();
   if (state.unlistenPromise) {
     state.unlistenPromise
-      .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
+      .then((unlisteners) =>
+        unlisteners.forEach((unlisten) => {
+          unlisten();
+        })
+      )
       .catch(() => {});
   }
   state.token += 1;
@@ -61,7 +65,11 @@ const removeListeners = (token: number) => {
   const state = getListenerState();
   if (token !== state.token || !state.unlistenPromise) return;
   state.unlistenPromise
-    .then((unlisteners) => unlisteners.forEach((unlisten) => unlisten()))
+    .then((unlisteners) =>
+      unlisteners.forEach((unlisten) => {
+        unlisten();
+      })
+    )
     .catch(() => {});
   state.unlistenPromise = null;
 };

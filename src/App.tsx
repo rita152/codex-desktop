@@ -33,7 +33,7 @@ import { terminalKill } from './api/terminal';
 
 import type { Message } from './components/business/ChatMessageList/types';
 import type { ChatSession } from './components/business/Sidebar/types';
-import type { SelectOption } from './components/ui/data-entry/Select/types';
+import type { SelectOption } from './types/options';
 import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';
 

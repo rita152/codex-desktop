@@ -1,4 +1,4 @@
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 import { devDebug } from '../utils/logger';
 
 const MODEL_CACHE_KEY = 'codex-desktop.model-options';

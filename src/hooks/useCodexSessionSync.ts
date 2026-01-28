@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { TFunction } from 'i18next';
-import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 
 import { createSession, setSessionMode, setSessionModel } from '../api/codex';
 import { useCodexEvents } from './useCodexEvents';
@@ -8,12 +8,16 @@ import { formatError, resolveModelOptions, resolveModeOptions } from '../utils/c
 import { resolveOptionId, shouldSyncOption } from '../utils/optionSelection';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
 import type { Message } from '../components/business/ChatMessageList/types';
 import type { SessionNotice } from './useSessionMeta';
 
 type SessionMessages = Record<string, Message[]>;
+
+type StringRef = {
+  current: string;
+};
 
 type OptionsPayload = {
   options: SelectOption[];
@@ -23,7 +27,7 @@ type OptionsPayload = {
 
 type UseCodexSessionSyncArgs = {
   sessions: ChatSession[];
-  activeSessionIdRef: MutableRefObject<string>;
+  activeSessionIdRef: StringRef;
   setSessions: Dispatch<SetStateAction<ChatSession[]>>;
   setSessionMessages: Dispatch<SetStateAction<SessionMessages>>;
   setIsGeneratingBySession: Dispatch<SetStateAction<Record<string, boolean>>>;

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
 import type { Message } from '../components/business/ChatMessageList/types';
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 import type { SessionNotice } from './useSessionMeta';
 
 type OptionsCache = {

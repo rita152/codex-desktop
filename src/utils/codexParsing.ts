@@ -1,6 +1,6 @@
 import { buildUnifiedDiff } from './diff';
 
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 import type {
   ApprovalDiff,
   ApprovalStatus,

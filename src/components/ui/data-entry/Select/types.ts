@@ -1,10 +1,8 @@
 import type { ReactNode } from 'react';
 
-export interface SelectOption {
-  /** 选项值 */
-  value: string;
-  /** 显示文本 */
-  label: string;
+import type { SelectOption as SelectOptionBase } from '../../../../types/options';
+
+export interface SelectOption extends SelectOptionBase {
   /** 选项图标 */
   icon?: ReactNode;
 }

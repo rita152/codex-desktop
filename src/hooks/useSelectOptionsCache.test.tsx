@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useSelectOptionsCache } from './useSelectOptionsCache';
 
 import type { ChatSession } from '../components/business/Sidebar/types';
-import type { SelectOption } from '../components/ui/data-entry/Select/types';
+import type { SelectOption } from '../types/options';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
