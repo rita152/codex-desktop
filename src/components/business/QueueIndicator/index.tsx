@@ -3,7 +3,7 @@ import {
   CornerDownRightIcon,
   ArrowUpIcon,
   TrashIcon,
-  MoreHorizontalIcon
+  PencilIcon
 } from '../../ui/data-display/Icon';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { cn } from '../../../utils/cn';
@@ -18,8 +18,8 @@ export interface QueueIndicatorProps {
   onRemove?: (messageId: string) => void;
   /** 将消息移到队首 */
   onMoveToTop?: (messageId: string) => void;
-  /** 更多操作 */
-  onMore?: (messageId: string) => void;
+  /** 编辑消息 */
+  onEdit?: (messageId: string) => void;
   /** 清空整个队列 */
   onClearAll?: () => void;
   /** 自定义类名 */
@@ -34,7 +34,7 @@ export function QueueIndicator({
   queue,
   onRemove,
   onMoveToTop,
-  onMore,
+  onEdit,
   className = '',
 }: QueueIndicatorProps) {
   const { t } = useTranslation();
@@ -74,9 +74,9 @@ export function QueueIndicator({
                 />
               )}
               <IconButton
-                icon={<MoreHorizontalIcon size={14} />}
-                onClick={() => onMore?.(message.id)}
-                aria-label={t('common.more', { defaultValue: 'More' })}
+                icon={<PencilIcon size={14} />}
+                onClick={() => onEdit?.(message.id)}
+                aria-label={t('common.edit', { defaultValue: 'Edit' })}
                 size="sm"
                 variant="ghost"
                 className="queue-indicator__action"

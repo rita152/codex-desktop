@@ -47,6 +47,7 @@ export function ChatContainer({
   inputPlaceholder,
   onAddClick,
   onSideAction,
+  onEditInQueue,
   /* Unified Panel Props */
   sidePanelVisible = false,
   activeSidePanelTab = 'explorer',
@@ -192,6 +193,7 @@ export function ChatContainer({
                     queue={messageQueue}
                     onRemove={onRemoveFromQueue}
                     onMoveToTop={onMoveToTopInQueue}
+                    onEdit={onEditInQueue}
                     onClearAll={onClearQueue}
                     className="chat-container__queue-indicator"
                   />

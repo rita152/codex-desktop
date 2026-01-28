@@ -57,6 +57,8 @@ export interface ChatContainerProps {
   onAddClick?: () => void;
   /** 侧边快捷操作 */
   onSideAction?: (actionId: string) => void;
+  /** 编辑队列消息回调 */
+  onEditInQueue?: (messageId: string) => void;
 
   /** 统一侧边栏可见性 */
   sidePanelVisible?: boolean;

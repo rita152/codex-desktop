@@ -710,6 +710,19 @@ export function App() {
     [moveToTop, selectedSessionId]
   );
 
+  // 编辑当前消息：从队列移除并放到输入框
+  const handleEditInQueue = useCallback(
+    (messageId: string) => {
+      const queue = currentQueue;
+      const message = queue.find((msg) => msg.id === messageId);
+      if (message) {
+        handleDraftChange(message.content);
+        removeFromQueue(selectedSessionId, messageId);
+      }
+    },
+    [currentQueue, handleDraftChange, removeFromQueue, selectedSessionId]
+  );
+
   const approvalCards = useApprovalCards({
     pendingApprovals,
     approvalStatuses,
@@ -739,6 +752,7 @@ export function App() {
         onClearQueue={handleClearQueue}
         onRemoveFromQueue={handleRemoveFromQueue}
         onMoveToTopInQueue={handleMoveToTopInQueue}
+        onEditInQueue={handleEditInQueue}
         inputValue={draftMessage}
         onInputChange={handleDraftChange}
         agentOptions={agentOptions}
