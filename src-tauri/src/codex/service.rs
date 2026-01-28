@@ -251,31 +251,35 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
 
     let conn = if let Some(remote) = &state.remote_config {
         // Remote mode: spawn codex-acp on remote server via SSH
-        let server = state.remote_servers.get(&remote.server_id)
+        let server = state
+            .remote_servers
+            .get(&remote.server_id)
             .context("Remote server configuration not found")?;
-        
+
         let api_key = state
             .api_key_env
             .as_ref()
             .map(|(key, value)| (key.as_str(), value.as_str()));
         let local_codex_home =
             crate::codex::binary::CodexAcpBinary::default_codex_home(Some(&state.app))?;
-        
+
         let process = crate::remote::RemoteSshProcess::spawn(
             server,
             &remote.remote_cwd,
             local_codex_home.as_path(),
             api_key,
-        ).await?;
-        
+        )
+        .await?;
+
         let unified_process = crate::codex::unified_process::UnifiedProcess::Remote(process);
-        
+
         AcpConnection::spawn_from_unified(
             state.app.clone(),
             state.approvals.clone(),
             state.debug.clone(),
             unified_process,
-        ).await?
+        )
+        .await?
     } else {
         // Local mode: spawn local codex-acp process
         let mut cfg = CodexProcessConfig::default();
@@ -287,15 +291,16 @@ async fn ensure_connection(state: &mut WorkerState) -> Result<()> {
         if let Some((key, value)) = state.api_key_env.as_ref() {
             cfg.set_env(key.as_str(), value.as_str());
         }
-        
+
         AcpConnection::spawn(
             state.app.clone(),
             state.approvals.clone(),
             state.debug.clone(),
             cfg,
-        ).await?
+        )
+        .await?
     };
-    
+
     state.conn = Some(Arc::new(conn));
     Ok(())
 }
@@ -367,22 +372,23 @@ async fn authenticate_inner(
 
 async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewSessionResult> {
     use crate::codex::remote_session::parse_remote_path;
-    
+
     // Parse the cwd to check if it's a remote path
     let cwd_str = cwd.to_string_lossy();
     let (is_remote, server_id, actual_path) = parse_remote_path(&cwd_str)?;
-    
+
     if is_remote {
         // Remote session: set up remote configuration
-        let server_id = server_id.ok_or_else(|| anyhow::anyhow!("Remote path missing server ID"))?;
+        let server_id =
+            server_id.ok_or_else(|| anyhow::anyhow!("Remote path missing server ID"))?;
         let remote_cwd = actual_path.to_string_lossy().into_owned();
-        
+
         // Set remote configuration
         state.remote_config = Some(crate::remote::RemoteSessionConfig {
             server_id,
             remote_cwd,
         });
-        
+
         // Clear any existing connection to force remote connection
         if let Some(existing) = state.conn.take() {
             existing.kill().await?;
@@ -400,7 +406,7 @@ async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewS
             state.last_init = None;
         }
     }
-    
+
     let _ = initialize_inner(state).await?;
     let conn = state.conn.as_ref().context("connection missing")?;
 
@@ -409,7 +415,7 @@ async fn new_session_inner(state: &mut WorkerState, cwd: PathBuf) -> Result<NewS
     } else {
         resolve_cwd(&actual_path)?
     };
-    
+
     let session = conn
         .conn
         .new_session(NewSessionRequest::new(resolved_cwd))

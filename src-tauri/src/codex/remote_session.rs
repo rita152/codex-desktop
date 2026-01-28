@@ -27,7 +27,9 @@ pub fn parse_remote_path(path_str: &str) -> Result<(bool, Option<String>, PathBu
 
         Ok((true, Some(server_id), remote_path))
     } else {
-        Err(anyhow!("Invalid remote path format, expected: remote://<server-id><path>"))
+        Err(anyhow!(
+            "Invalid remote path format, expected: remote://<server-id><path>"
+        ))
     }
 }
 
@@ -54,7 +56,8 @@ mod tests {
 
     #[test]
     fn test_parse_remote_path() {
-        let (is_remote, server_id, path) = parse_remote_path("remote://server1/home/user/project").unwrap();
+        let (is_remote, server_id, path) =
+            parse_remote_path("remote://server1/home/user/project").unwrap();
         assert!(is_remote);
         assert_eq!(server_id, Some("server1".to_string()));
         assert_eq!(path, PathBuf::from("/home/user/project"));

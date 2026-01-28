@@ -28,10 +28,10 @@ pub mod codex;
 pub mod codex_dev;
 /// Git integration helpers.
 pub mod git;
-/// Local terminal PTY integration.
-pub mod terminal;
 /// Remote server connection module.
 pub mod remote;
+/// Local terminal PTY integration.
+pub mod terminal;
 
 #[tauri::command]
 async fn codex_dev_prompt_once(

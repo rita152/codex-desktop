@@ -151,7 +151,11 @@ fn shell_escape(s: &str) -> String {
     out
 }
 
-fn apply_ssh_options(cmd: &mut Command, config: &RemoteServerConfig, port_flag: &str) -> Result<()> {
+fn apply_ssh_options(
+    cmd: &mut Command,
+    config: &RemoteServerConfig,
+    port_flag: &str,
+) -> Result<()> {
     cmd.arg("-o")
         .arg("StrictHostKeyChecking=accept-new")
         .arg("-o")
@@ -273,9 +277,6 @@ mod tests {
         assert_eq!(shell_escape("simple"), "'simple'");
         assert_eq!(shell_escape("with space"), "'with space'");
         assert_eq!(shell_escape("with'quote"), "'with'\\''quote'");
-        assert_eq!(
-            shell_escape("/path/to/dir"),
-            "'/path/to/dir'"
-        );
+        assert_eq!(shell_escape("/path/to/dir"), "'/path/to/dir'");
     }
 }

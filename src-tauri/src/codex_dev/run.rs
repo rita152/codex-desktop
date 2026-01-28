@@ -72,9 +72,7 @@ impl Client for DevClient {
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
         let SessionNotification {
-            session_id,
-            update,
-            ..
+            session_id, update, ..
         } = args;
         let session_id = session_id.0;
         match update {
@@ -109,9 +107,10 @@ impl Client for DevClient {
                 );
             }
             SessionUpdate::Plan(plan) => {
-                let _ = self
-                    .window
-                    .emit(EVENT_PLAN, json!({ "sessionId": session_id.as_ref(), "plan": plan }));
+                let _ = self.window.emit(
+                    EVENT_PLAN,
+                    json!({ "sessionId": session_id.as_ref(), "plan": plan }),
+                );
             }
             SessionUpdate::AvailableCommandsUpdate(update) => {
                 let _ = self.window.emit(

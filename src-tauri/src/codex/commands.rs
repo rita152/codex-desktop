@@ -17,9 +17,7 @@ pub struct CodexManager {
 
 impl CodexManager {
     fn get_or_create(&self, app: AppHandle) -> CodexService {
-        self.service
-            .get_or_init(|| CodexService::new(app))
-            .clone()
+        self.service.get_or_init(|| CodexService::new(app)).clone()
     }
 
     fn get(&self) -> Option<CodexService> {
@@ -223,7 +221,8 @@ pub async fn list_local_directory(path: String) -> Result<LocalDirectoryListing,
     }
 
     let mut entries = Vec::new();
-    let read_result = fs::read_dir(&dir_path).map_err(|e| format!("Failed to read directory: {}", e))?;
+    let read_result =
+        fs::read_dir(&dir_path).map_err(|e| format!("Failed to read directory: {}", e))?;
 
     for entry in read_result {
         let entry = match entry {
@@ -231,7 +230,7 @@ pub async fn list_local_directory(path: String) -> Result<LocalDirectoryListing,
             Err(_) => continue,
         };
         let file_name = entry.file_name().to_string_lossy().to_string();
-        
+
         // Skip hidden files (starting with .)
         if file_name.starts_with('.') {
             continue;
@@ -261,12 +260,10 @@ pub async fn list_local_directory(path: String) -> Result<LocalDirectoryListing,
     }
 
     // Sort: directories first, then by name
-    entries.sort_by(|a, b| {
-        match (a.is_dir, b.is_dir) {
-            (true, false) => std::cmp::Ordering::Less,
-            (false, true) => std::cmp::Ordering::Greater,
-            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
-        }
+    entries.sort_by(|a, b| match (a.is_dir, b.is_dir) {
+        (true, false) => std::cmp::Ordering::Less,
+        (false, true) => std::cmp::Ordering::Greater,
+        _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
     });
 
     Ok(LocalDirectoryListing { path, entries })

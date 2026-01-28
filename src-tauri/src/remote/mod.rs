@@ -4,10 +4,10 @@
 //! allowing codex-acp to run on remote servers while communicating
 //! via SSH tunnels.
 
-pub mod types;
-pub mod ssh_process;
 pub mod commands;
+pub mod ssh_process;
+pub mod types;
 
-pub use types::*;
-pub use ssh_process::RemoteSshProcess;
 pub use commands::RemoteServerManager;
+pub use ssh_process::RemoteSshProcess;
+pub use types::*;

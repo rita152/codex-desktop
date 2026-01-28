@@ -91,15 +91,11 @@ pub fn terminal_spawn(
         .master
         .try_clone_reader()
         .map_err(|err| err.to_string())?;
-    let writer = pair
-        .master
-        .take_writer()
-        .map_err(|err| err.to_string())?;
+    let writer = pair.master.take_writer().map_err(|err| err.to_string())?;
 
     let id = state.next_id();
     let writer = Arc::new(Mutex::new(writer));
-    let child: Arc<Mutex<Box<dyn portable_pty::Child + Send + Sync>>> =
-        Arc::new(Mutex::new(child));
+    let child: Arc<Mutex<Box<dyn portable_pty::Child + Send + Sync>>> = Arc::new(Mutex::new(child));
 
     {
         let mut terminals = state
@@ -170,7 +166,9 @@ pub fn terminal_write(
     let mut writer = writer
         .lock()
         .map_err(|_| "terminal writer poisoned".to_string())?;
-    writer.write_all(data.as_bytes()).map_err(|err| err.to_string())?;
+    writer
+        .write_all(data.as_bytes())
+        .map_err(|err| err.to_string())?;
     writer.flush().map_err(|err| err.to_string())?;
     Ok(())
 }
@@ -204,10 +202,7 @@ pub fn terminal_resize(
 }
 
 #[tauri::command]
-pub fn terminal_kill(
-    state: State<'_, TerminalManager>,
-    terminal_id: String,
-) -> Result<(), String> {
+pub fn terminal_kill(state: State<'_, TerminalManager>, terminal_id: String) -> Result<(), String> {
     let terminal = {
         let mut terminals = state
             .terminals

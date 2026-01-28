@@ -117,9 +117,7 @@ fn build_updates() -> Vec<SessionUpdate> {
         PlanEntryStatus::InProgress,
     )]));
     let current_mode =
-        SessionUpdate::CurrentModeUpdate(CurrentModeUpdate::new(SessionModeId::new(
-            "auto",
-        )));
+        SessionUpdate::CurrentModeUpdate(CurrentModeUpdate::new(SessionModeId::new("auto")));
 
     vec![message, thought, tool_call, tool_update, plan, current_mode]
 }

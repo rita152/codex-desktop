@@ -1,7 +1,7 @@
 //! Tauri commands for Git integration.
 
-use crate::git::{run_git, run_git_owned};
 use crate::git::types::{GitCommit, GitStatusEntry, GitStatusResult};
+use crate::git::{run_git, run_git_owned};
 use std::path::{Path, PathBuf};
 
 fn normalize_cwd(cwd: &str) -> Result<PathBuf, String> {
@@ -65,15 +65,18 @@ fn parse_branch_line(line: &str) -> (Option<String>, usize, usize) {
 }
 
 fn is_conflicted_status(status: &str) -> bool {
-    matches!(
-        status,
-        "DD" | "AU" | "UD" | "UA" | "DU" | "AA" | "UU"
-    )
+    matches!(status, "DD" | "AU" | "UD" | "UA" | "DU" | "AA" | "UU")
 }
 
 fn parse_status_output(
     output: &str,
-) -> (Option<String>, usize, usize, Vec<GitStatusEntry>, Vec<GitStatusEntry>) {
+) -> (
+    Option<String>,
+    usize,
+    usize,
+    Vec<GitStatusEntry>,
+    Vec<GitStatusEntry>,
+) {
     let mut branch_line: Option<String> = None;
     let mut changes = Vec::new();
     let mut staged_changes = Vec::new();
@@ -213,7 +216,10 @@ pub fn git_history(
         let parents = if fields[1].trim().is_empty() {
             Vec::new()
         } else {
-            fields[1].split_whitespace().map(|s| s.to_string()).collect()
+            fields[1]
+                .split_whitespace()
+                .map(|s| s.to_string())
+                .collect()
         };
         let refs = if fields[4].trim().is_empty() {
             Vec::new()

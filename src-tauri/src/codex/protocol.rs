@@ -196,7 +196,7 @@ impl Client for AcpClient {
             .iter()
             .map(|option| PermissionOptionChoice {
                 option_id: option.option_id.clone(),
-                kind: option.kind.clone(),
+                kind: option.kind,
             })
             .collect();
         self.approvals.insert(key, option_choices, tx);
@@ -230,9 +230,7 @@ impl Client for AcpClient {
         args: SessionNotification,
     ) -> agent_client_protocol::Result<()> {
         let SessionNotification {
-            session_id,
-            update,
-            ..
+            session_id, update, ..
         } = args;
         emit_session_update(&self.app, &self.debug, session_id.0.as_ref(), &update);
         Ok(())
@@ -265,13 +263,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
                     timing,
                     json!({ "textLen": text.len() }),
                 );
-                let _ = app.emit(
-                    EVENT_MESSAGE_CHUNK,
-                    TextChunkPayload {
-                        session_id,
-                        text,
-                    },
-                );
+                let _ = app.emit(EVENT_MESSAGE_CHUNK, TextChunkPayload { session_id, text });
             }
         }
         SessionUpdate::AgentThoughtChunk(chunk) => {
@@ -285,13 +277,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
                         timing,
                         json!({ "textLen": text.len() }),
                     );
-                    let _ = app.emit(
-                        EVENT_THOUGHT_CHUNK,
-                        TextChunkPayload {
-                            session_id,
-                            text,
-                        },
-                    );
+                    let _ = app.emit(EVENT_THOUGHT_CHUNK, TextChunkPayload { session_id, text });
                 }
             }
         }
@@ -328,10 +314,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
             );
             let _ = app.emit(
                 EVENT_TOOL_CALL_UPDATE,
-                ToolCallUpdatePayload {
-                    session_id,
-                    update,
-                },
+                ToolCallUpdatePayload { session_id, update },
             );
         }
         SessionUpdate::Plan(plan) => {
@@ -343,13 +326,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
                 timing,
                 json!({ "entries": plan.entries.len() }),
             );
-            let _ = app.emit(
-                EVENT_PLAN,
-                PlanPayload {
-                    session_id,
-                    plan,
-                },
-            );
+            let _ = app.emit(EVENT_PLAN, PlanPayload { session_id, plan });
         }
         SessionUpdate::AvailableCommandsUpdate(update) => {
             let timing = debug.mark_event(session_id);
@@ -362,10 +339,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
             );
             let _ = app.emit(
                 EVENT_AVAILABLE_COMMANDS,
-                AvailableCommandsPayload {
-                    session_id,
-                    update,
-                },
+                AvailableCommandsPayload { session_id, update },
             );
         }
         SessionUpdate::CurrentModeUpdate(update) => {
@@ -379,10 +353,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
             );
             let _ = app.emit(
                 EVENT_CURRENT_MODE,
-                CurrentModePayload {
-                    session_id,
-                    update,
-                },
+                CurrentModePayload { session_id, update },
             );
         }
         SessionUpdate::ConfigOptionUpdate(update) => {
@@ -396,10 +367,7 @@ pub fn emit_session_update<R: tauri::Runtime>(
             );
             let _ = app.emit(
                 EVENT_CONFIG_OPTION_UPDATE,
-                ConfigOptionPayload {
-                    session_id,
-                    update,
-                },
+                ConfigOptionPayload { session_id, update },
             );
         }
         _ => {}

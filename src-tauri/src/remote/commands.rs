@@ -5,8 +5,8 @@ use crate::git::types::GitCommit;
 use anyhow::anyhow;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
-use std::{env, fs};
 use std::sync::RwLock;
+use std::{env, fs};
 use tauri::State;
 use tracing::warn;
 
@@ -131,7 +131,12 @@ fn load_ssh_config() -> anyhow::Result<Vec<RemoteServerConfig>> {
     let mut blocks: Vec<SshHostBlock> = Vec::new();
     let mut pre_host_options = SshOptions::default();
     let mut visited = HashSet::new();
-    parse_ssh_config_file(&config_path, &mut pre_host_options, &mut blocks, &mut visited)?;
+    parse_ssh_config_file(
+        &config_path,
+        &mut pre_host_options,
+        &mut blocks,
+        &mut visited,
+    )?;
 
     let mut aliases: Vec<String> = Vec::new();
     for block in &blocks {
@@ -311,7 +316,11 @@ fn resolve_include_paths(base_dir: &Path, pattern: &str) -> Vec<PathBuf> {
     let path = expand_path(pattern, base_dir);
     let path_str = path.to_string_lossy();
     if !has_wildcards(&path_str) {
-        return if path.exists() { vec![path] } else { Vec::new() };
+        return if path.exists() {
+            vec![path]
+        } else {
+            Vec::new()
+        };
     }
 
     let parent = path.parent().unwrap_or(base_dir);
@@ -422,7 +431,9 @@ pub async fn remote_test_connection(
     server_id: String,
     manager: State<'_, RemoteServerManager>,
 ) -> Result<String, String> {
-    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let config = manager
+        .get(&server_id)
+        .ok_or("Server configuration not found")?;
 
     // Test connection using ssh
     let mut cmd = tokio::process::Command::new("ssh");
@@ -437,12 +448,16 @@ pub async fn remote_test_connection(
 
     // Add authentication
     match &config.auth {
-        SshAuth::KeyFile { private_key_path, .. } => {
+        SshAuth::KeyFile {
+            private_key_path, ..
+        } => {
             cmd.arg("-i").arg(private_key_path);
         }
         SshAuth::Agent => {}
         SshAuth::Password { .. } => {
-            return Err("Password authentication is not supported for connection testing".to_string());
+            return Err(
+                "Password authentication is not supported for connection testing".to_string(),
+            );
         }
     }
 
@@ -464,7 +479,9 @@ pub async fn remote_list_directory(
     path: String,
     manager: State<'_, RemoteServerManager>,
 ) -> Result<RemoteDirectoryListing, String> {
-    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let config = manager
+        .get(&server_id)
+        .ok_or("Server configuration not found")?;
     let trimmed = path.trim();
 
     // Use $HOME when empty or "~" is provided.
@@ -494,7 +511,9 @@ pub async fn remote_list_directory(
         .arg(config.port.to_string());
 
     match &config.auth {
-        SshAuth::KeyFile { private_key_path, .. } => {
+        SshAuth::KeyFile {
+            private_key_path, ..
+        } => {
             cmd.arg("-i").arg(private_key_path);
         }
         SshAuth::Agent => {}
@@ -605,7 +624,9 @@ pub async fn remote_list_entries(
     path: String,
     manager: State<'_, RemoteServerManager>,
 ) -> Result<RemoteFilesystemListing, String> {
-    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let config = manager
+        .get(&server_id)
+        .ok_or("Server configuration not found")?;
     let trimmed = path.trim();
 
     let (cd_target, use_home) = if trimmed.is_empty() || trimmed == "~" {
@@ -633,7 +654,9 @@ pub async fn remote_list_entries(
         .arg(config.port.to_string());
 
     match &config.auth {
-        SshAuth::KeyFile { private_key_path, .. } => {
+        SshAuth::KeyFile {
+            private_key_path, ..
+        } => {
             cmd.arg("-i").arg(private_key_path);
         }
         SshAuth::Agent => {}
@@ -654,8 +677,12 @@ pub async fn remote_list_entries(
     let stdout = String::from_utf8_lossy(&output.stdout);
     let mut lines = stdout.lines();
 
-    let resolved_path = lines.next().ok_or("Failed to resolve path")?.trim().to_string();
-    
+    let resolved_path = lines
+        .next()
+        .ok_or("Failed to resolve path")?
+        .trim()
+        .to_string();
+
     // Normalize prefix
     let prefix = if resolved_path == "/" {
         "/".to_string()
@@ -675,7 +702,7 @@ pub async fn remote_list_entries(
         } else {
             line
         };
-        
+
         // Skip . and .. just in case ls -A outputs them (BSD/GNU behavior varies on -A vs -a)
         if name == "." || name == ".." {
             continue;
@@ -760,7 +787,9 @@ pub async fn remote_git_history(
     all: Option<bool>,
     manager: State<'_, RemoteServerManager>,
 ) -> Result<RemoteGitHistoryResult, String> {
-    let config = manager.get(&server_id).ok_or("Server configuration not found")?;
+    let config = manager
+        .get(&server_id)
+        .ok_or("Server configuration not found")?;
     let trimmed = path.trim();
 
     let (cd_target, use_home) = if trimmed.is_empty() || trimmed == "~" {
@@ -819,7 +848,9 @@ pub async fn remote_git_history(
         .arg(config.port.to_string());
 
     match &config.auth {
-        SshAuth::KeyFile { private_key_path, .. } => {
+        SshAuth::KeyFile {
+            private_key_path, ..
+        } => {
             cmd.arg("-i").arg(private_key_path);
         }
         SshAuth::Agent => {}
@@ -835,8 +866,8 @@ pub async fn remote_git_history(
     let stdout = decode_output(output.stdout);
     let stderr = decode_output(output.stderr);
 
-    let is_no_commits = stderr.contains("does not have any commits yet")
-        || stderr.contains("No commits yet");
+    let is_no_commits =
+        stderr.contains("does not have any commits yet") || stderr.contains("No commits yet");
 
     if !output.status.success() && !is_no_commits {
         return Err(if stderr.trim().is_empty() {
