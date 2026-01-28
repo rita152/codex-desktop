@@ -9,7 +9,7 @@ const meta: Meta<typeof QueueIndicator> = {
   argTypes: {
     onRemove: { action: 'removed' },
     onMoveToTop: { action: 'moved to top' },
-    onMore: { action: 'more clicked' },
+    onEdit: { action: 'edit clicked' },
   },
 };
 
