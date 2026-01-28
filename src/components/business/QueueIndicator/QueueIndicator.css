@@ -32,11 +32,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 6px 4px;
+  padding: 4px 4px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.15s ease;
-  min-height: 36px;
+  min-height: 30px;
 }
 
 .queue-indicator__item:hover {
@@ -73,8 +73,8 @@
   color: var(--color-text-tertiary, #808080) !important;
   background: transparent !important;
   padding: 4px !important;
-  width: 28px !important;
-  height: 28px !important;
+  width: 24px !important;
+  height: 24px !important;
 }
 
 .queue-indicator__action:hover {
