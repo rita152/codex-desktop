@@ -68,9 +68,12 @@ export function useMessageQueue({
   /**
    * 获取指定会话的队列
    */
-  const getSessionQueue = useCallback((sessionId: string): QueuedMessage[] => {
-    return queueMap[sessionId] ?? [];
-  }, [queueMap]);
+  const getSessionQueue = useCallback(
+    (sessionId: string): QueuedMessage[] => {
+      return queueMap[sessionId] ?? [];
+    },
+    [queueMap]
+  );
 
   /**
    * 处理队列中的下一条消息

@@ -3,7 +3,7 @@ import {
   CornerDownRightIcon,
   ArrowUpIcon,
   TrashIcon,
-  PencilIcon
+  PencilIcon,
 } from '../../ui/data-display/Icon';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { cn } from '../../../utils/cn';
@@ -50,7 +50,9 @@ export function QueueIndicator({
           <div key={message.id} className="queue-indicator__item">
             <CornerDownRightIcon size={14} className="queue-indicator__prefix" />
             <span className="queue-indicator__content">
-              {message.content.length > 100 ? `${message.content.slice(0, 100)}...` : message.content}
+              {message.content.length > 100
+                ? `${message.content.slice(0, 100)}...`
+                : message.content}
             </span>
             <div className="queue-indicator__actions">
               {onMoveToTop && (

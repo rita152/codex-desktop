@@ -674,7 +674,7 @@ export function App() {
     enqueueMessage,
     clearQueue,
     removeFromQueue,
-    moveToTop
+    moveToTop,
   } = useMessageQueue({
     selectedSessionId,
     isGeneratingBySession,

@@ -159,8 +159,8 @@ export function ChatContainer({
                 <DirectorySelector
                   currentCwd={displayCwd}
                   cwdLocked={cwdLocked}
-                  onPickLocalCwd={onPickLocalCwd || (() => { })}
-                  onCwdSelect={onSetCwd || (() => { })}
+                  onPickLocalCwd={onPickLocalCwd || (() => {})}
+                  onCwdSelect={onSetCwd || (() => {})}
                 />
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
@@ -237,7 +237,7 @@ export function ChatContainer({
             onResizeStart={onSidePanelResizeStart}
             terminalId={terminalId || null}
             sessionCwd={sessionCwd || ''}
-            onFileSelect={onFileSelect || (() => { })}
+            onFileSelect={onFileSelect || (() => {})}
           />
         )}
       </div>
