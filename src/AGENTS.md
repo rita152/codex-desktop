@@ -35,7 +35,7 @@ Key impacts on frontend code:
 
 ## Styling
 
-- No hard-coded colors: use CSS variables from `src/styles/variables.css` (see `.kiro/steering/frontend-rules.md`).
+- No hard-coded colors: use CSS variables from `src/styles/variables.css`.
 
 ## Testing
 

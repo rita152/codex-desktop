@@ -16,7 +16,7 @@ Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript
 ├── docs/               # design/usage docs ("current implementation")
 ├── codex-acp/          # git submodule (upstream ACP + npm wrapper)
 ├── .storybook/         # Storybook config
-└── .kiro/steering/     # local engineering rules/checklists
+└── (removed) .kiro/    # local engineering rules/checklists (deleted)
 ```
 
 ## WHERE TO LOOK
@@ -24,7 +24,7 @@ Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript
 | Task                         | Location                                                          |
 | ---------------------------- | ----------------------------------------------------------------- |
 | Frontend entry               | `src/main.tsx` → `src/App.tsx`                                    |
-| Frontend architecture rules  | `src/AGENTS.md` + `.kiro/steering/frontend-rules.md`              |
+| Frontend architecture rules  | `src/AGENTS.md`                                                   |
 | Tauri command wiring         | `src-tauri/src/lib.rs` (`generate_handler![...]`)                 |
 | Frontend ↔ backend boundary  | `src/api/*` (invoke wrappers)                                     |
 | Codex events (codex:\*)      | `src-tauri/src/codex/events.rs` + `src/hooks/useCodexEvents.ts`   |
@@ -86,4 +86,3 @@ cargo test --locked
 - `scripts/AGENTS.md`
 - `docs/AGENTS.md`
 - `.storybook/AGENTS.md`
-- `.kiro/steering/AGENTS.md`

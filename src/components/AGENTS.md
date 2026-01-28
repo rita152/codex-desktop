@@ -22,4 +22,4 @@ Component/
 ## Rules
 
 - Tauri boundary rules (no new `invoke()` / `listen()` in components) live in `src/AGENTS.md`.
-- Styling rules (CSS variables, no hard-coded colors) live in `src/AGENTS.md` / `.kiro/steering/frontend-rules.md`.
+- Styling rules (CSS variables, no hard-coded colors) live in `src/AGENTS.md`.
