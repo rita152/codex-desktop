@@ -1,5 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { ClockIcon, CloseIcon } from '../../ui/data-display/Icon';
+import {
+  CornerDownRightIcon,
+  ArrowUpIcon,
+  TrashIcon,
+  MoreHorizontalIcon
+} from '../../ui/data-display/Icon';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { cn } from '../../../utils/cn';
 import type { QueuedMessage } from '../../../hooks/useMessageQueue';
@@ -11,6 +16,10 @@ export interface QueueIndicatorProps {
   queue: QueuedMessage[];
   /** 移除队列中的消息 */
   onRemove?: (messageId: string) => void;
+  /** 将消息移到队首 */
+  onMoveToTop?: (messageId: string) => void;
+  /** 更多操作 */
+  onMore?: (messageId: string) => void;
   /** 清空整个队列 */
   onClearAll?: () => void;
   /** 自定义类名 */
@@ -24,7 +33,8 @@ export interface QueueIndicatorProps {
 export function QueueIndicator({
   queue,
   onRemove,
-  onClearAll,
+  onMoveToTop,
+  onMore,
   className = '',
 }: QueueIndicatorProps) {
   const { t } = useTranslation();
@@ -35,34 +45,43 @@ export function QueueIndicator({
 
   return (
     <div className={cn('queue-indicator', className)}>
-      <div className="queue-indicator__header">
-        <div className="queue-indicator__title">
-          <ClockIcon size={14} />
-          <span>{t('queue.title', { count: queue.length })}</span>
-        </div>
-        {onClearAll && queue.length > 1 && (
-          <button className="queue-indicator__clear-all" onClick={onClearAll} type="button">
-            {t('queue.clearAll')}
-          </button>
-        )}
-      </div>
       <div className="queue-indicator__list">
-        {queue.map((message, index) => (
+        {queue.map((message) => (
           <div key={message.id} className="queue-indicator__item">
-            <span className="queue-indicator__index">{index + 1}</span>
+            <CornerDownRightIcon size={14} className="queue-indicator__prefix" />
             <span className="queue-indicator__content">
-              {message.content.length > 50 ? `${message.content.slice(0, 50)}...` : message.content}
+              {message.content.length > 100 ? `${message.content.slice(0, 100)}...` : message.content}
             </span>
-            {onRemove && (
+            <div className="queue-indicator__actions">
+              {onMoveToTop && (
+                <IconButton
+                  icon={<ArrowUpIcon size={14} />}
+                  onClick={() => onMoveToTop(message.id)}
+                  aria-label={t('queue.moveToTop', { defaultValue: 'Move to Top' })}
+                  size="sm"
+                  variant="ghost"
+                  className="queue-indicator__action"
+                />
+              )}
+              {onRemove && (
+                <IconButton
+                  icon={<TrashIcon size={14} />}
+                  onClick={() => onRemove(message.id)}
+                  aria-label={t('queue.remove')}
+                  size="sm"
+                  variant="ghost"
+                  className="queue-indicator__action"
+                />
+              )}
               <IconButton
-                icon={<CloseIcon size={12} />}
-                onClick={() => onRemove(message.id)}
-                aria-label={t('queue.remove')}
+                icon={<MoreHorizontalIcon size={14} />}
+                onClick={() => onMore?.(message.id)}
+                aria-label={t('common.more', { defaultValue: 'More' })}
                 size="sm"
                 variant="ghost"
-                className="queue-indicator__remove"
+                className="queue-indicator__action"
               />
-            )}
+            </div>
           </div>
         ))}
       </div>
