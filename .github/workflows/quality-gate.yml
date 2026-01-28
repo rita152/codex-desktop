@@ -62,6 +62,15 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12
+
+      - name: Fetch codex-acp sidecar
+        run: npm run fetch:codex-acp
+        working-directory: ${{ github.workspace }}
+
       - name: Cache cargo
         uses: actions/cache@v4
         with:
