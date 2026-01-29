@@ -25,7 +25,7 @@ interface DirectorySelectorProps {
   className?: string;
 }
 
-function ChevronLeftIcon({ size = 16, className = '' }: { size?: number; className?: string }) {
+function ChevronLeftIcon({ size = 14, className = '' }: { size?: number; className?: string }) {
   return (
     <svg
       aria-hidden="true"
@@ -158,11 +158,11 @@ export function DirectorySelector({
       return (
         <div className="directory-selector__list">
           <div className="directory-selector__item" onClick={handlePickLocal}>
-            <FolderIcon size={16} />
+            <FolderIcon size={14} />
             <span>{t('chat.localDirectory', 'Local Directory')}</span>
           </div>
           <div className="directory-selector__item" onClick={handleSelectRemoteServerView}>
-            <ServerIcon size={16} />
+            <ServerIcon size={14} />
             <span>{t('chat.remoteServer', 'Remote Server')}</span>
           </div>
         </div>
@@ -193,7 +193,7 @@ export function DirectorySelector({
                 className="directory-selector__item"
                 onClick={() => handleSelectServer(server)}
               >
-                <ServerIcon size={16} />
+                <ServerIcon size={14} />
                 <span>{server.name}</span>
               </div>
             ))
@@ -237,7 +237,7 @@ export function DirectorySelector({
                   className="directory-selector__item"
                   onClick={() => handleSelectDirectory(entry)}
                 >
-                  <FolderIcon size={16} />
+                  <FolderIcon size={14} />
                   <span>{entry.name}</span>
                 </div>
               ))
