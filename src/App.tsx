@@ -190,10 +190,17 @@ export function App() {
   });
 
   // Extract current active plan from messages (last message with planSteps)
+  // Hide plan when all steps are completed
   const currentPlan = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].planSteps && messages[i].planSteps!.length > 0) {
-        return messages[i].planSteps;
+      const planSteps = messages[i].planSteps;
+      if (planSteps && planSteps.length > 0) {
+        // Check if all steps are completed - if so, hide the plan
+        const allCompleted = planSteps.every((step) => step.status === 'completed');
+        if (allCompleted) {
+          return undefined;
+        }
+        return planSteps;
       }
     }
     return undefined;
