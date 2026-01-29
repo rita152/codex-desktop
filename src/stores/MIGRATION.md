@@ -2,19 +2,27 @@
 
 本文档说明如何将组件从 React Context 迁移到 Zustand stores。
 
+## 当前状态
+
+**迁移已完成！** 所有 Contexts 现在内部使用 Zustand stores：
+- `UIContext` → 委托给 `UIStore`
+- `SessionContext` → 同步状态到 `SessionStore`
+- `CodexContext` → 同步状态到 `CodexStore`
+
 ## 概述
 
-新的 Zustand stores 位于 `src/stores/` 目录：
+Zustand stores 位于 `src/stores/` 目录：
 - `uiStore.ts` - UI 状态（侧边栏、面板、设置）
 - `sessionStore.ts` - 会话状态（消息、草稿、选项）
 - `codexStore.ts` - Codex 交互状态（审批、队列、历史）
+- `useSessionStoreSync.ts` - Context → Store 同步
+- `useCodexStoreSync.ts` - Context → Store 同步
 
-## 迁移策略
+## 使用策略
 
-采用渐进式迁移，旧 Contexts 和新 Stores 可以共存：
-1. 新组件优先使用 Zustand stores
-2. 旧组件可以保持使用 Context
-3. 逐步将旧组件迁移到 stores
+**现有组件**：继续使用 `useXxxContext()` hooks，它们现在内部使用 stores
+
+**新组件或性能优化**：直接使用 store selectors 获得更细粒度的订阅
 
 ## 迁移示例
 
