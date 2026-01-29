@@ -9,3 +9,6 @@ export {
 
 export { SessionProvider, useSessionContext } from './SessionContext';
 export type { SessionContextValue } from './SessionContext';
+
+export { CodexProvider, useCodexContext } from './CodexContext';
+export type { CodexContextValue } from './CodexContext';
