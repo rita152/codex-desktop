@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { Thinking } from '../../ui/feedback/Thinking';
 import { Markdown } from '../../ui/data-display/Markdown';
 import { ToolCall } from '../../ui/feedback/ToolCall';
-import { Plan } from '../../ui/data-display/Plan';
 import { cn } from '../../../utils/cn';
 import { useTypewriterText } from '../../../hooks/useTypewriterText';
 
@@ -19,7 +18,7 @@ export const ChatMessage = memo(function ChatMessage({
   role,
   content,
   thinking,
-  planSteps,
+  // planSteps is no longer rendered here - it's displayed fixed above ChatInput
   toolCalls,
   isStreaming = false,
   timestamp,
@@ -95,11 +94,6 @@ export const ChatMessage = memo(function ChatMessage({
             startTime={thinking?.startTime}
             duration={thinking?.duration}
           />
-        </div>
-      )}
-      {planSteps && planSteps.length > 0 && (
-        <div className="chat-message__plan">
-          <Plan steps={planSteps} title={i18n.t('chat.planTitle')} />
         </div>
       )}
       {showBubble && <div className="chat-message__bubble">{renderContent()}</div>}
