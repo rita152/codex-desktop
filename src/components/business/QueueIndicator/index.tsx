@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   CornerDownRightIcon,
@@ -30,7 +31,7 @@ export interface QueueIndicatorProps {
  * 队列指示器组件
  * 显示排队等待的消息列表
  */
-export function QueueIndicator({
+export const QueueIndicator = memo(function QueueIndicator({
   queue,
   onRemove,
   onMoveToTop,
@@ -89,4 +90,6 @@ export function QueueIndicator({
       </div>
     </div>
   );
-}
+});
+
+QueueIndicator.displayName = 'QueueIndicator';

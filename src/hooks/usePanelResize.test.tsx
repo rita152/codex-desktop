@@ -19,6 +19,12 @@ describe('usePanelResize', () => {
     vi.spyOn(window, 'removeEventListener').mockImplementation((event) => {
       delete listeners[String(event)];
     });
+    // Mock requestAnimationFrame to execute immediately
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
+      cb(0);
+      return 0;
+    });
+    vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
   });

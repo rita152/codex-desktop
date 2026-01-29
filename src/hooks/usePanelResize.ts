@@ -35,14 +35,34 @@ export function usePanelResize({
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
 
+      // RAF throttling for smooth resize
+      let rafId: number | null = null;
+      let pendingWidth: number | null = null;
+
       const handlePointerMove = (moveEvent: PointerEvent) => {
         const delta = startX - moveEvent.clientX;
-        setWidth(clampWidth(startWidth + delta));
+        pendingWidth = clampWidth(startWidth + delta);
+
+        if (rafId === null) {
+          rafId = requestAnimationFrame(() => {
+            rafId = null;
+            if (pendingWidth !== null) {
+              setWidth(pendingWidth);
+            }
+          });
+        }
       };
       const handlePointerUp = () => {
         window.removeEventListener('pointermove', handlePointerMove);
         window.removeEventListener('pointerup', handlePointerUp);
         window.removeEventListener('pointercancel', handlePointerUp);
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+        // Apply final width if pending
+        if (pendingWidth !== null) {
+          setWidth(pendingWidth);
+        }
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       };

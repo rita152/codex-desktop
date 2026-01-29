@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -64,7 +64,7 @@ const resolveAgentIcon = (
   return undefined;
 };
 
-export const ChatInput = memo(function ChatInput({
+export function ChatInput({
   value,
   onChange,
   onSend,
@@ -345,8 +345,6 @@ export const ChatInput = memo(function ChatInput({
       </div>
     </div>
   );
-});
-
-ChatInput.displayName = 'ChatInput';
+}
 
 export type { ChatInputProps } from './types';

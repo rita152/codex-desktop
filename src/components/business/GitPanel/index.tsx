@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -27,7 +27,11 @@ function formatCommitDate(value: string): string {
   return parsed.toLocaleDateString();
 }
 
-export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps) {
+export const GitPanel = memo(function GitPanel({
+  visible = false,
+  cwd,
+  onResizeStart,
+}: GitPanelProps) {
   const { t } = useTranslation();
   const [commitMenu, setCommitMenu] = useState<CommitMenuState>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -196,6 +200,8 @@ export function GitPanel({ visible = false, cwd, onResizeStart }: GitPanelProps)
       )}
     </aside>
   );
-}
+});
+
+GitPanel.displayName = 'GitPanel';
 
 export type { GitPanelProps };

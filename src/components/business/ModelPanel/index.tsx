@@ -2,6 +2,7 @@
  * Model Panel
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -27,7 +28,7 @@ export interface ModelPanelProps {
   fetchStatus?: FetchStatus;
 }
 
-export function ModelPanel({
+export const ModelPanel = memo(function ModelPanel({
   settings,
   onUpdate,
   availableModels = [],
@@ -144,4 +145,6 @@ export function ModelPanel({
       </div>
     </div>
   );
-}
+});
+
+ModelPanel.displayName = 'ModelPanel';

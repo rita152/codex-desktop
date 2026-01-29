@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -12,7 +13,10 @@ type RemoteServerPanelProps = {
   onResizeStart?: (event: ReactPointerEvent<HTMLDivElement>) => void;
 };
 
-export function RemoteServerPanel({ visible = false, onResizeStart }: RemoteServerPanelProps) {
+export const RemoteServerPanel = memo(function RemoteServerPanel({
+  visible = false,
+  onResizeStart,
+}: RemoteServerPanelProps) {
   const { t } = useTranslation();
 
   return (
@@ -36,6 +40,8 @@ export function RemoteServerPanel({ visible = false, onResizeStart }: RemoteServ
       </div>
     </aside>
   );
-}
+});
+
+RemoteServerPanel.displayName = 'RemoteServerPanel';
 
 export type { RemoteServerPanelProps };

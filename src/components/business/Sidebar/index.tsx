@@ -1,4 +1,4 @@
-import { useState, useCallback, useId } from 'react';
+import { memo, useState, useCallback, useId } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { List } from '../../ui/data-display/List';
@@ -26,7 +26,7 @@ const MIN_WIDTH = 200;
 const MAX_WIDTH = 400;
 const DEFAULT_WIDTH = 200;
 
-export function Sidebar({
+export const Sidebar = memo(function Sidebar({
   sessions,
   selectedSessionId,
   onSessionSelect,
@@ -180,6 +180,8 @@ export function Sidebar({
       />
     </aside>
   );
-}
+});
+
+Sidebar.displayName = 'Sidebar';
 
 export type { SidebarProps, ChatSession } from './types';

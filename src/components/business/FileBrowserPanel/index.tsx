@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
@@ -56,7 +56,7 @@ type VisibleItem =
       depth: number;
     };
 
-export function FileBrowserPanel({
+export const FileBrowserPanel = memo(function FileBrowserPanel({
   visible = false,
   cwd,
   onResizeStart,
@@ -357,6 +357,8 @@ export function FileBrowserPanel({
       </div>
     </aside>
   );
-}
+});
+
+FileBrowserPanel.displayName = 'FileBrowserPanel';
 
 export type { FileBrowserPanelProps };

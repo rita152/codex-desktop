@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { listen } from '@tauri-apps/api/event';
@@ -23,7 +23,11 @@ type TerminalOutputEvent = {
   data: string;
 };
 
-export function TerminalPanel({ terminalId, visible = false, onResizeStart }: TerminalPanelProps) {
+export const TerminalPanel = memo(function TerminalPanel({
+  terminalId,
+  visible = false,
+  onResizeStart,
+}: TerminalPanelProps) {
   const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const termRef = useRef<Terminal | null>(null);
@@ -199,6 +203,8 @@ export function TerminalPanel({ terminalId, visible = false, onResizeStart }: Te
       </div>
     </aside>
   );
-}
+});
+
+TerminalPanel.displayName = 'TerminalPanel';
 
 export type { TerminalPanelProps };

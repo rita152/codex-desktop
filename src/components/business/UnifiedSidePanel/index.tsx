@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, lazy, Suspense } from 'react';
+import { memo, useEffect, useMemo, useState, lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../../ui/data-entry/IconButton';
@@ -42,7 +42,7 @@ interface UnifiedSidePanelProps {
   onFileSelect: (path: string) => void;
 }
 
-export function UnifiedSidePanel({
+export const UnifiedSidePanel = memo(function UnifiedSidePanel({
   activeTab,
   onTabChange,
   onClose,
@@ -139,4 +139,6 @@ export function UnifiedSidePanel({
       </div>
     </div>
   );
-}
+});
+
+UnifiedSidePanel.displayName = 'UnifiedSidePanel';

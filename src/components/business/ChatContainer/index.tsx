@@ -1,4 +1,4 @@
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -23,7 +23,7 @@ const QueueIndicator = lazy(() =>
   import('../QueueIndicator').then((module) => ({ default: module.QueueIndicator }))
 );
 
-export function ChatContainer({
+export const ChatContainer = memo(function ChatContainer({
   sessions,
   selectedSessionId,
   sessionCwd,
@@ -258,6 +258,8 @@ export function ChatContainer({
       </div>
     </div>
   );
-}
+});
+
+ChatContainer.displayName = 'ChatContainer';
 
 export type { ChatContainerProps } from './types';

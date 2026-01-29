@@ -39,19 +39,40 @@ export function useSidebarResize({
     setIsDragging(true);
   }, []);
 
+  // RAF throttling for smooth resize
+  const rafIdRef = useRef<number | null>(null);
+  const pendingWidthRef = useRef<number | null>(null);
+
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!isDragging || !sidebarRef.current) return;
       const sidebarRect = sidebarRef.current.getBoundingClientRect();
-      const newWidth = e.clientX - sidebarRect.left;
-      setWidth(newWidth);
+      pendingWidthRef.current = e.clientX - sidebarRect.left;
+
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(() => {
+          rafIdRef.current = null;
+          if (pendingWidthRef.current !== null) {
+            setWidth(pendingWidthRef.current);
+          }
+        });
+      }
     },
     [isDragging, setWidth]
   );
 
   const handleMouseUp = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    // Apply final width if pending
+    if (pendingWidthRef.current !== null) {
+      setWidth(pendingWidthRef.current);
+      pendingWidthRef.current = null;
+    }
     setIsDragging(false);
-  }, []);
+  }, [setWidth]);
 
   const handleResizeKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLDivElement>) => {

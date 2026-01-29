@@ -64,6 +64,13 @@ export function useMessageQueue({
   const prevGeneratingRef = useRef<Record<string, boolean>>({});
   // 标记是否正在处理队列，防止重复处理
   const processingRef = useRef<Set<string>>(new Set());
+  // 使用 ref 存储回调和状态，避免频繁重新创建依赖
+  const onSendMessageRef = useRef(onSendMessage);
+  const isGeneratingBySessionRef = useRef(isGeneratingBySession);
+
+  // 保持 ref 同步
+  onSendMessageRef.current = onSendMessage;
+  isGeneratingBySessionRef.current = isGeneratingBySession;
 
   /**
    * 获取指定会话的队列
@@ -78,43 +85,40 @@ export function useMessageQueue({
   /**
    * 处理队列中的下一条消息
    */
-  const processNextInQueue = useCallback(
-    (sessionId: string) => {
-      // 防止重复处理
-      if (processingRef.current.has(sessionId)) return;
+  const processNextInQueue = useCallback((sessionId: string) => {
+    // 防止重复处理
+    if (processingRef.current.has(sessionId)) return;
 
-      setQueueMap((prev) => {
-        const queue = prev[sessionId];
-        if (!queue || queue.length === 0) return prev;
+    setQueueMap((prev) => {
+      const queue = prev[sessionId];
+      if (!queue || queue.length === 0) return prev;
 
-        // 检查是否正在生成
-        if (isGeneratingBySession[sessionId]) return prev;
+      // 检查是否正在生成（使用 ref 获取最新状态）
+      if (isGeneratingBySessionRef.current[sessionId]) return prev;
 
-        // 取出队列中的第一条消息
-        const nextMessage = queue[0];
-        if (!nextMessage) return prev;
+      // 取出队列中的第一条消息
+      const nextMessage = queue[0];
+      if (!nextMessage) return prev;
 
-        // 标记正在处理
-        processingRef.current.add(sessionId);
+      // 标记正在处理
+      processingRef.current.add(sessionId);
 
-        // 发送消息
-        onSendMessage(sessionId, nextMessage.content);
+      // 发送消息（使用 ref 获取最新回调）
+      onSendMessageRef.current(sessionId, nextMessage.content);
 
-        // 处理完成后移除标记
-        // 使用 setTimeout 确保状态更新后再移除
-        setTimeout(() => {
-          processingRef.current.delete(sessionId);
-        }, 100);
+      // 处理完成后移除标记
+      // 使用 setTimeout 确保状态更新后再移除
+      setTimeout(() => {
+        processingRef.current.delete(sessionId);
+      }, 100);
 
-        // 返回移除第一条消息后的新队列
-        return {
-          ...prev,
-          [sessionId]: queue.slice(1),
-        };
-      });
-    },
-    [isGeneratingBySession, onSendMessage]
-  );
+      // 返回移除第一条消息后的新队列
+      return {
+        ...prev,
+        [sessionId]: queue.slice(1),
+      };
+    });
+  }, []);
 
   /**
    * 监听生成状态变化，当任务完成时自动处理队列
@@ -144,7 +148,7 @@ export function useMessageQueue({
   const enqueueMessage = useCallback(
     (content: string) => {
       const sessionId = selectedSessionId;
-      const isGenerating = isGeneratingBySession[sessionId] ?? false;
+      const isGenerating = isGeneratingBySessionRef.current[sessionId] ?? false;
 
       if (isGenerating) {
         // 正在生成，添加到队列
@@ -159,11 +163,11 @@ export function useMessageQueue({
           [sessionId]: [...(prev[sessionId] ?? []), newMessage],
         }));
       } else {
-        // 没有在生成，直接发送
-        onSendMessage(sessionId, content);
+        // 没有在生成，直接发送（使用 ref 获取最新回调）
+        onSendMessageRef.current(sessionId, content);
       }
     },
-    [selectedSessionId, isGeneratingBySession, onSendMessage]
+    [selectedSessionId]
   );
 
   /**

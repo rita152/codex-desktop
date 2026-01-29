@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -19,7 +19,10 @@ type ChatSideActionsProps = {
   onAction?: (id: string) => void;
 };
 
-export function ChatSideActions({ className = '', onAction }: ChatSideActionsProps) {
+export const ChatSideActions = memo(function ChatSideActions({
+  className = '',
+  onAction,
+}: ChatSideActionsProps) {
   const { t } = useTranslation();
   const actions = useMemo<ChatSideAction[]>(
     () => [
@@ -50,6 +53,8 @@ export function ChatSideActions({ className = '', onAction }: ChatSideActionsPro
       ))}
     </div>
   );
-}
+});
+
+ChatSideActions.displayName = 'ChatSideActions';
 
 export type { ChatSideActionsProps };

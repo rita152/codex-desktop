@@ -107,7 +107,7 @@ export const ToolCall = memo(function ToolCall({
     return formatJson(rawOutput);
   }, [isOpen, rawOutput]);
 
-  // 实时计时
+  // 实时计时 - 使用 500ms 间隔减少不必要的更新
   useEffect(() => {
     if (!isActive || !startTime) {
       return;
@@ -118,7 +118,7 @@ export const ToolCall = memo(function ToolCall({
     };
 
     updateElapsed();
-    const timer = setInterval(updateElapsed, 100);
+    const timer = setInterval(updateElapsed, 500);
 
     return () => clearInterval(timer);
   }, [isActive, startTime]);

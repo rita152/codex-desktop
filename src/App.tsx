@@ -1,8 +1,11 @@
-import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
-import { SettingsModal } from './components/business/SettingsModal';
+
+const SettingsModal = lazy(() =>
+  import('./components/business/SettingsModal').then((module) => ({ default: module.SettingsModal }))
+);
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
 import {
   loadModeOptionsCache,
@@ -730,12 +733,16 @@ export function App() {
         onNavigateNextPrompt={navigateToNextPrompt}
         onResetPromptNavigation={resetPromptNavigation}
       />
-      <SettingsModal
-        isOpen={settingsOpen}
-        onClose={handleSettingsClose}
-        availableModels={modelOptions}
-        onModelOptionsResolved={handleModelOptionsFetched}
-      />
+      {settingsOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            isOpen={settingsOpen}
+            onClose={handleSettingsClose}
+            availableModels={modelOptions}
+            onModelOptionsResolved={handleModelOptionsFetched}
+          />
+        </Suspense>
+      )}
     </>
   );
 }
