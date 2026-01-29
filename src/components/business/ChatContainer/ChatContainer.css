@@ -230,6 +230,7 @@
 }
 
 .chat-container__input-wrapper {
+  position: relative;
   padding: var(--spacing-lg);
   padding-top: var(--spacing-md);
   padding-bottom: var(--spacing-sm);
@@ -318,17 +319,39 @@
   margin: 0 auto var(--spacing-sm);
 }
 
-/* Plan Component (fixed above ChatInput) */
+/* Plan Component (floating above ChatInput) */
 .chat-container__plan {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - var(--spacing-lg) * 2);
   max-width: 768px;
   min-width: 200px;
-  margin: 0 auto var(--spacing-sm);
-  background-color: var(--color-bg-subtle);
+  margin-bottom: var(--spacing-sm);
+  background-color: color-mix(in srgb, var(--color-bg-secondary) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: var(--radius-lg);
   border: 1px solid var(--color-border);
   padding: var(--spacing-sm);
-  max-height: 200px;
+  max-height: 240px;
   overflow-y: auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  animation: plan-slide-up 0.2s ease-out;
+}
+
+@keyframes plan-slide-up {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 .chat-container__plan .plan__header {
