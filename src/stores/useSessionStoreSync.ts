@@ -54,55 +54,66 @@ export function useSessionStoreSync({
   // Sync sessions
   useEffect(() => {
     store.setState({ sessions });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessions]);
 
   // Sync selected session ID
   useEffect(() => {
     store.setState({ selectedSessionId });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [selectedSessionId]);
 
   // Sync messages
   useEffect(() => {
     store.setState({ sessionMessages });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionMessages]);
 
   // Sync drafts
   useEffect(() => {
     store.setState({ sessionDrafts });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionDrafts]);
 
   // Sync notices
   useEffect(() => {
     store.setState({ sessionNotices });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionNotices]);
 
   // Sync slash commands
   useEffect(() => {
     store.setState({ sessionSlashCommands });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionSlashCommands]);
 
   // Sync model options
   useEffect(() => {
     store.setState({ sessionModelOptions });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionModelOptions]);
 
   // Sync mode options
   useEffect(() => {
     store.setState({ sessionModeOptions });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [sessionModeOptions]);
 
   // Sync model cache
   useEffect(() => {
     store.setState({ modelCache });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [modelCache]);
 
   // Sync generating state
   useEffect(() => {
     store.setState({ isGeneratingBySession });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [isGeneratingBySession]);
 
   // Sync terminal state
   useEffect(() => {
     store.setState({ terminalBySession });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [terminalBySession]);
 }

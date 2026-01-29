@@ -268,6 +268,7 @@ export function CodexProvider({ children }: CodexProviderProps) {
         }
       })();
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSessionIdRef is a stable ref
     [
       ensureCodexSession,
       sessionMessages,
@@ -346,6 +347,7 @@ export function CodexProvider({ children }: CodexProviderProps) {
         }
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- activeSessionIdRef is a stable ref
     [
       clearCodexSession,
       clearSessionNotice,

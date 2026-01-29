@@ -46,16 +46,19 @@ export function useCodexStoreSync({
       approvalsRecord[approval.requestId] = approval;
     }
     store.setState({ pendingApprovals: approvalsRecord });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [pendingApprovals]);
 
   // Sync approval statuses
   useEffect(() => {
     store.setState({ approvalStatuses });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [approvalStatuses]);
 
   // Sync approval loading
   useEffect(() => {
     store.setState({ approvalLoading });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [approvalLoading]);
 
   // Sync message queue for current session - convert timestamp to number
@@ -71,5 +74,6 @@ export function useCodexStoreSync({
         [selectedSessionId]: convertedQueue,
       },
     }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store is a stable zustand reference
   }, [currentQueue, selectedSessionId]);
 }
