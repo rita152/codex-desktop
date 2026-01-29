@@ -7,7 +7,7 @@ import { Thinking } from '../Thinking';
 import { ToolCall } from '../ToolCall';
 import { Approval } from '../Approval';
 import { formatDurationLong } from '../../../../i18n/format';
-import { PERFORMANCE } from '../../../../constants/performance';
+import { useGlobalTimer } from '../../../../hooks/useGlobalTimer';
 
 import type { WorkingItem, WorkingProps } from './types';
 
@@ -96,7 +96,6 @@ export function Working({
   const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(isOpen ?? false);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [now, setNow] = useState(() => Date.now());
   const finishedAtRef = useRef<number | null>(null);
   const open = isOpen ?? internalOpen;
   const canToggle = items.length > 0;
@@ -109,11 +108,8 @@ export function Working({
   const hasIncompleteItem = useMemo(() => items.some(hasIncompleteWorkingItem), [items]);
   const shouldTimerRun = isActive || hasIncompleteItem;
 
-  useEffect(() => {
-    if (!shouldTimerRun) return;
-    const timer = setInterval(() => setNow(Date.now()), PERFORMANCE.WORKING_TIMER_INTERVAL_MS);
-    return () => clearInterval(timer);
-  }, [shouldTimerRun]);
+  // Use global timer instead of individual setInterval per component
+  const now = useGlobalTimer(shouldTimerRun);
 
   useEffect(() => {
     if (shouldTimerRun) {
