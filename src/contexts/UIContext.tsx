@@ -1,24 +1,35 @@
 /**
- * UI Context - Manages UI-related state
+ * UI Context - Bridge layer for UIStore
  *
- * This context handles:
- * - Sidebar visibility
- * - Side panel state (visibility, active tab, width)
- * - Settings modal state
- * - Layout responsiveness
+ * This context now delegates to the Zustand UIStore for state management.
+ * It maintains the same interface for backward compatibility while
+ * benefiting from Zustand's optimized subscriptions.
+ *
+ * New code should prefer importing directly from '../stores':
+ *   import { useUIStore, useSidebarVisible } from '../stores';
  */
 
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
-import { useResponsiveVisibility } from '../hooks/useResponsiveVisibility';
+import { useEffect, type ReactNode } from 'react';
+
+import {
+  useUIStore,
+  SIDEBAR_AUTO_HIDE_MAX_WIDTH,
+  DEFAULT_SIDE_PANEL_WIDTH,
+  MIN_SIDE_PANEL_WIDTH,
+  MIN_CONVERSATION_WIDTH,
+} from '../stores';
+
 import type { SidePanelTab } from '../components/business/UnifiedSidePanel';
 
-// Constants
-export const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
-export const DEFAULT_SIDE_PANEL_WIDTH = 260;
-export const MIN_SIDE_PANEL_WIDTH = 260;
-export const MIN_CONVERSATION_WIDTH = 240;
+// Re-export constants for backward compatibility
+export {
+  SIDEBAR_AUTO_HIDE_MAX_WIDTH,
+  DEFAULT_SIDE_PANEL_WIDTH,
+  MIN_SIDE_PANEL_WIDTH,
+  MIN_CONVERSATION_WIDTH,
+};
 
-// Types
+// Types - maintained for backward compatibility
 interface UIContextValue {
   // Sidebar
   sidebarVisible: boolean;
@@ -44,117 +55,81 @@ interface UIContextValue {
   handleSidePanelTabChange: (tab: SidePanelTab) => void;
 }
 
-const UIContext = createContext<UIContextValue | null>(null);
-
-// Provider Component
+// Provider Component - now just initializes the store
 interface UIProviderProps {
   children: ReactNode;
 }
 
 export function UIProvider({ children }: UIProviderProps) {
-  // Sidebar state
-  const {
-    visible: sidebarVisible,
-    isNarrowLayout,
-    toggle: toggleSidebar,
-  } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, true);
+  const setIsNarrowLayout = useUIStore((state) => state.setIsNarrowLayout);
+  const setSidebarVisible = useUIStore((state) => state.setSidebarVisible);
+  const setSidePanelVisible = useUIStore((state) => state.setSidePanelVisible);
 
-  // Side Panel state
-  const { visible: sidePanelVisible, setVisible: setSidePanelVisible } = useResponsiveVisibility(
-    SIDEBAR_AUTO_HIDE_MAX_WIDTH,
-    false
-  );
-  const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
-  const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
+  // Handle responsive layout changes
+  useEffect(() => {
+    const checkLayout = () => {
+      const isNarrow = window.innerWidth < SIDEBAR_AUTO_HIDE_MAX_WIDTH;
+      const wasNarrow = useUIStore.getState().isNarrowLayout;
 
-  // Settings Modal state
-  const [settingsOpen, setSettingsOpen] = useState(false);
+      setIsNarrowLayout(isNarrow);
 
-  const openSettings = useCallback(() => {
-    setSettingsOpen(true);
-  }, []);
-
-  const closeSettings = useCallback(() => {
-    setSettingsOpen(false);
-  }, []);
-
-  // Side action handler
-  const handleSideAction = useCallback(
-    (actionId: string) => {
-      const tabId = actionId as SidePanelTab;
-
-      if (sidePanelVisible && activeSidePanelTab === tabId) {
-        // Toggle off if clicking the same active tab
+      // Auto-hide on transition to narrow layout
+      if (isNarrow && !wasNarrow) {
+        setSidebarVisible(false);
         setSidePanelVisible(false);
-      } else {
-        // Switch tab and ensure open
-        setActiveSidePanelTab(tabId);
-        setSidePanelVisible(true);
       }
-    },
-    [sidePanelVisible, activeSidePanelTab, setSidePanelVisible]
-  );
+      // Auto-show sidebar on transition to wide layout
+      if (!isNarrow && wasNarrow) {
+        setSidebarVisible(true);
+      }
+    };
 
-  const handleSidePanelClose = useCallback(() => {
-    setSidePanelVisible(false);
-  }, [setSidePanelVisible]);
+    // Initial check
+    checkLayout();
 
-  const handleSidePanelTabChange = useCallback((tab: SidePanelTab) => {
-    setActiveSidePanelTab(tab);
-  }, []);
+    // Listen for resize
+    window.addEventListener('resize', checkLayout);
+    return () => window.removeEventListener('resize', checkLayout);
+  }, [setIsNarrowLayout, setSidebarVisible, setSidePanelVisible]);
 
-  const value = useMemo<UIContextValue>(
-    () => ({
-      // Sidebar
-      sidebarVisible,
-      isNarrowLayout,
-      toggleSidebar,
-
-      // Side Panel
-      sidePanelVisible,
-      setSidePanelVisible,
-      activeSidePanelTab,
-      setActiveSidePanelTab,
-      sidePanelWidth,
-      setSidePanelWidth,
-
-      // Settings
-      settingsOpen,
-      openSettings,
-      closeSettings,
-
-      // Handlers
-      handleSideAction,
-      handleSidePanelClose,
-      handleSidePanelTabChange,
-    }),
-    [
-      sidebarVisible,
-      isNarrowLayout,
-      toggleSidebar,
-      sidePanelVisible,
-      setSidePanelVisible,
-      activeSidePanelTab,
-      sidePanelWidth,
-      settingsOpen,
-      openSettings,
-      closeSettings,
-      handleSideAction,
-      handleSidePanelClose,
-      handleSidePanelTabChange,
-    ]
-  );
-
-  return <UIContext.Provider value={value}>{children}</UIContext.Provider>;
+  return <>{children}</>;
 }
 
-// Hook to use UI Context
+/**
+ * Hook to use UI state - now delegates to UIStore
+ *
+ * @deprecated Prefer using selectors from '../stores' for better performance:
+ *   - useSidebarVisible()
+ *   - useSidePanelState()
+ *   - useSettingsModalState()
+ */
 export function useUIContext(): UIContextValue {
-  const context = useContext(UIContext);
-  if (!context) {
-    throw new Error('useUIContext must be used within a UIProvider');
-  }
-  return context;
+  const store = useUIStore();
+
+  return {
+    // Sidebar
+    sidebarVisible: store.sidebarVisible,
+    isNarrowLayout: store.isNarrowLayout,
+    toggleSidebar: store.toggleSidebar,
+
+    // Side Panel
+    sidePanelVisible: store.sidePanelVisible,
+    setSidePanelVisible: store.setSidePanelVisible,
+    activeSidePanelTab: store.activeSidePanelTab,
+    setActiveSidePanelTab: store.setActiveSidePanelTab,
+    sidePanelWidth: store.sidePanelWidth,
+    setSidePanelWidth: store.setSidePanelWidth,
+
+    // Settings
+    settingsOpen: store.settingsOpen,
+    openSettings: store.openSettings,
+    closeSettings: store.closeSettings,
+
+    // Handlers
+    handleSideAction: store.handleSideAction,
+    handleSidePanelClose: store.handleSidePanelClose,
+    handleSidePanelTabChange: store.handleSidePanelTabChange,
+  };
 }
 
 // Export types

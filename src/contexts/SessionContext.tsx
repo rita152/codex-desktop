@@ -6,6 +6,10 @@
  * - Session messages and drafts
  * - Session metadata (notices, options, etc.)
  * - Generation and terminal state
+ *
+ * State is synchronized to SessionStore for fine-grained subscriptions.
+ * New code should prefer using selectors from '../stores':
+ *   import { useCurrentMessages, useIsGenerating } from '../stores';
  */
 
 import {
@@ -27,6 +31,7 @@ import { useSelectOptionsCache } from '../hooks/useSelectOptionsCache';
 import { useSessionViewState } from '../hooks/useSessionViewState';
 import { useFileAndCwdActions } from '../hooks/useFileAndCwdActions';
 import { useRemoteCwdPicker } from '../hooks/useRemoteCwdPicker';
+import { useSessionStoreSync } from '../stores/useSessionStoreSync';
 import {
   loadModeOptionsCache,
   loadModelOptionsCache,
@@ -311,6 +316,21 @@ export function SessionProvider({ children }: SessionProviderProps) {
     }
     return undefined;
   }, [messages]);
+
+  // Sync state to SessionStore for fine-grained subscriptions
+  useSessionStoreSync({
+    sessions,
+    selectedSessionId,
+    sessionMessages,
+    sessionDrafts,
+    sessionNotices,
+    sessionSlashCommands,
+    sessionModelOptions,
+    sessionModeOptions,
+    modelCache,
+    isGeneratingBySession,
+    terminalBySession,
+  });
 
   // Auto-select available model when current is unavailable
   useEffect(() => {

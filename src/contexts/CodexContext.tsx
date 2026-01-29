@@ -6,6 +6,10 @@
  * - Model/Mode changes via Codex API
  * - Message sending to Codex backend
  * - Session deletion with Codex cleanup
+ *
+ * State is synchronized to CodexStore for fine-grained subscriptions.
+ * New code should prefer using selectors from '../stores':
+ *   import { useMessageQueueForSession, usePendingApprovals } from '../stores';
  */
 
 import { createContext, useContext, useCallback, useMemo, useEffect, type ReactNode } from 'react';
@@ -16,6 +20,7 @@ import { useApprovalState } from '../hooks/useApprovalState';
 import { useApprovalCards } from '../hooks/useApprovalCards';
 import { useMessageQueue } from '../hooks/useMessageQueue';
 import { usePromptHistory } from '../hooks/usePromptHistory';
+import { useCodexStoreSync } from '../stores/useCodexStoreSync';
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from '../api/codex';
 import { terminalKill } from '../api/terminal';
 import { useSessionContext } from './SessionContext';
@@ -394,6 +399,15 @@ export function CodexProvider({ children }: CodexProviderProps) {
     goToNext: navigateToNextPrompt,
     resetNavigation: resetPromptNavigation,
   } = usePromptHistory();
+
+  // Sync state to CodexStore for fine-grained subscriptions
+  useCodexStoreSync({
+    pendingApprovals,
+    approvalStatuses,
+    approvalLoading,
+    currentQueue,
+    selectedSessionId,
+  });
 
   // Message queue handlers
   const handleSendMessage = useCallback(

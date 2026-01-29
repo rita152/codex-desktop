@@ -41,6 +41,9 @@ export {
 } from './sessionStore';
 export type { SessionStore, SessionNotice, OptionsCache } from './sessionStore';
 
+// Session Store Sync
+export { useSessionStoreSync } from './useSessionStoreSync';
+
 // Codex Store
 export {
   useCodexStore,
@@ -50,3 +53,6 @@ export {
   usePromptHistory,
 } from './codexStore';
 export type { CodexStore, QueuedMessage } from './codexStore';
+
+// Codex Store Sync
+export { useCodexStoreSync } from './useCodexStoreSync';
