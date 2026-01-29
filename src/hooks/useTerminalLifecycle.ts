@@ -20,7 +20,7 @@ type UseTerminalLifecycleArgs = {
   selectedCwd?: string;
   setTerminalBySession: Dispatch<SetStateAction<Record<string, string>>>;
   setTerminalVisible: Dispatch<SetStateAction<boolean>>;
-  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice>>>;
+  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice | undefined>>>;
   t: TFunction;
 };
 

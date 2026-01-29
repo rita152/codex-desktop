@@ -38,9 +38,12 @@ import { resolveOptionId } from '../utils/optionSelection';
 
 import type { ChatSession } from '../types/session';
 import type { Message } from '../types/message';
-import type { PlanStep } from '../types/message';
+import type { PlanStep } from '../types/plan';
 import type { SelectOption } from '../types/options';
-import type { SessionNotice, SlashCommand } from '../types/chat';
+import type { SessionNotice } from '../hooks/useSessionMeta';
+
+// SlashCommand is just a string (command name)
+type SlashCommand = string;
 
 // Types
 interface SessionContextValue {
@@ -71,7 +74,7 @@ interface SessionContextValue {
   setSessionModelOptions: React.Dispatch<React.SetStateAction<Record<string, SelectOption[]>>>;
   sessionModeOptions: Record<string, SelectOption[]>;
   setSessionModeOptions: React.Dispatch<React.SetStateAction<Record<string, SelectOption[]>>>;
-  modelCache: { options: SelectOption[]; currentId: string };
+  modelCache: { options: SelectOption[] | null; currentId?: string };
   applyModelOptions: (params: {
     options: SelectOption[];
     currentId?: string;
@@ -100,9 +103,9 @@ interface SessionContextValue {
   draftMessage: string;
   selectedModel: string;
   selectedMode: string;
-  selectedCwd: string;
-  sessionNotice: SessionNotice | undefined;
-  agentOptions: SelectOption[];
+  selectedCwd: string | undefined;
+  sessionNotice: SessionNotice | null;
+  agentOptions: SelectOption[] | undefined;
   modelOptions: SelectOption[];
   slashCommands: SlashCommand[];
   isGenerating: boolean;
@@ -117,7 +120,7 @@ interface SessionContextValue {
   handleSessionRename: (sessionId: string, newTitle: string) => void;
 
   // File and CWD Actions
-  handleCwdSelect: (cwd: string | null) => void;
+  handleCwdSelect: (cwd: string) => void;
   handleSelectCwd: () => Promise<void>;
   handleAddFile: () => Promise<void>;
   handleFileSelect: (filePath: string) => void;

@@ -15,7 +15,7 @@ type UseSessionViewStateArgs = {
   selectedSessionId: string;
   sessionMessages: Record<string, Message[]>;
   sessionDrafts: Record<string, string>;
-  sessionNotices: Record<string, SessionNotice>;
+  sessionNotices: Record<string, SessionNotice | undefined>;
   sessionModeOptions: Record<string, SelectOption[]>;
   sessionModelOptions: Record<string, SelectOption[]>;
   sessionSlashCommands: Record<string, string[]>;

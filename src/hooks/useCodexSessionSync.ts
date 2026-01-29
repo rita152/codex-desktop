@@ -34,7 +34,7 @@ type UseCodexSessionSyncArgs = {
   setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
   setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
   setSessionModelOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
-  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice>>>;
+  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice | undefined>>>;
   clearSessionNotice: (sessionId: string) => void;
   applyModeOptions: (payload: OptionsPayload) => void;
   applyModelOptions: (payload: OptionsPayload) => void;

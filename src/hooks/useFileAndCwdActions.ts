@@ -18,7 +18,7 @@ type UseFileAndCwdActionsArgs = {
   pickRemoteCwd: () => Promise<string | null>;
   setSessions: Dispatch<SetStateAction<ChatSession[]>>;
   setSessionDrafts: Dispatch<SetStateAction<Record<string, string>>>;
-  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice>>>;
+  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice | undefined>>>;
   clearSessionNotice: (sessionId: string) => void;
 };
 

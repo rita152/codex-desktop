@@ -23,7 +23,9 @@ function omitSessionKeys<T extends Record<string, unknown>>(
 }
 
 export function useSessionMeta() {
-  const [sessionNotices, setSessionNotices] = useState<Record<string, SessionNotice>>({});
+  const [sessionNotices, setSessionNotices] = useState<
+    Record<string, SessionNotice | undefined>
+  >({});
   const [sessionSlashCommands, setSessionSlashCommands] = useState<Record<string, string[]>>({});
   const [sessionModelOptions, setSessionModelOptions] = useState<Record<string, SelectOption[]>>(
     {}

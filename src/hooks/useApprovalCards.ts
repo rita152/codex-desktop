@@ -29,7 +29,7 @@ type UseApprovalCardsArgs = {
   clearApproval: (key: string) => void;
   resolveChatSessionId: (codexSessionId?: string) => string | null;
   selectedSessionId: string;
-  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice>>>;
+  setSessionNotices: Dispatch<SetStateAction<Record<string, SessionNotice | undefined>>>;
   t: TFunction;
 };
 

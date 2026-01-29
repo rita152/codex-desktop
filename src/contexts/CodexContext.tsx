@@ -25,8 +25,7 @@ import { devDebug } from '../utils/logger';
 
 import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
-import type { ApprovalRequest } from '../types/codex';
-import type { ApprovalProps, ApprovalStatus } from '../components/ui/feedback/Approval';
+import type { ApprovalProps } from '../components/ui/feedback/Approval';
 import type { QueuedMessage } from '../hooks/useMessageQueue';
 
 // Types
