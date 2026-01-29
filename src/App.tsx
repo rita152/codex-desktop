@@ -38,7 +38,7 @@ import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';
 
 const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
-const DEFAULT_SIDE_PANEL_WIDTH = 360;
+const DEFAULT_SIDE_PANEL_WIDTH = 260;
 const MIN_SIDE_PANEL_WIDTH = 260;
 
 export function App() {
