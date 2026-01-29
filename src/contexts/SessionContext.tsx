@@ -102,6 +102,12 @@ interface SessionContextValue {
   isGenerating: boolean;
   cwdLocked: boolean;
   activeTerminalId: string | undefined;
+
+  // Session Actions
+  handleDraftChange: (value: string) => void;
+  handleNewChat: () => void;
+  handleSessionSelect: (sessionId: string) => void;
+  handleSessionRename: (sessionId: string, newTitle: string) => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -210,6 +216,56 @@ export function SessionProvider({ children }: SessionProviderProps) {
     defaultSlashCommands: DEFAULT_SLASH_COMMANDS,
   });
 
+  // Session Actions
+  const handleDraftChange = useCallback(
+    (value: string) => {
+      setSessionDrafts((prev) => ({ ...prev, [selectedSessionId]: value }));
+    },
+    [selectedSessionId, setSessionDrafts]
+  );
+
+  const handleNewChat = useCallback(() => {
+    // Create new session in current working directory
+    const newId = String(Date.now());
+    const newSession: ChatSession = {
+      id: newId,
+      title: t('chat.newSessionTitle'),
+      cwd: selectedCwd, // Inherit current session's cwd
+      model: DEFAULT_MODEL_ID,
+      mode: DEFAULT_MODE_ID,
+    };
+    setSessions((prev) => [newSession, ...prev]);
+    setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
+    setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
+    setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
+    setSelectedSessionId(newId);
+    clearSessionNotice(newId);
+    activeSessionIdRef.current = newId;
+  }, [
+    clearSessionNotice,
+    selectedCwd,
+    setSelectedSessionId,
+    setSessionDrafts,
+    setSessionMessages,
+    setSessions,
+    t,
+  ]);
+
+  const handleSessionSelect = useCallback(
+    (sessionId: string) => {
+      setSelectedSessionId(sessionId);
+      activeSessionIdRef.current = sessionId;
+    },
+    [setSelectedSessionId]
+  );
+
+  const handleSessionRename = useCallback(
+    (sessionId: string, newTitle: string) => {
+      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)));
+    },
+    [setSessions]
+  );
+
   const value = useMemo<SessionContextValue>(
     () => ({
       // Session list
@@ -266,6 +322,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
       isGenerating,
       cwdLocked,
       activeTerminalId,
+
+      // Session Actions
+      handleDraftChange,
+      handleNewChat,
+      handleSessionSelect,
+      handleSessionRename,
     }),
     [
       sessions,
@@ -304,6 +366,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
       isGenerating,
       cwdLocked,
       activeTerminalId,
+      handleDraftChange,
+      handleNewChat,
+      handleSessionSelect,
+      handleSessionRename,
     ]
   );
 

@@ -56,7 +56,7 @@ function AppContent() {
     handleSidePanelTabChange,
   } = useUIContext();
 
-  // Session Context - session state and derived data
+  // Session Context - session state, derived data, and actions
   const {
     sessions,
     setSessions,
@@ -92,6 +92,11 @@ function AppContent() {
     isGenerating,
     cwdLocked,
     activeTerminalId,
+    // Session Actions
+    handleDraftChange,
+    handleNewChat,
+    handleSessionSelect,
+    handleSessionRename,
   } = useSessionContext();
 
   const pickRemoteCwd = useRemoteCwdPicker();
@@ -220,13 +225,6 @@ function AppContent() {
     );
   }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
 
-  const handleDraftChange = useCallback(
-    (value: string) => {
-      setSessionDrafts((prev) => ({ ...prev, [selectedSessionId]: value }));
-    },
-    [selectedSessionId, setSessionDrafts]
-  );
-
   useEffect(() => {
     void initCodex().catch((err) => {
       devDebug('[codex] init failed', err);
@@ -255,42 +253,6 @@ function AppContent() {
       setSessionNotices,
       clearSessionNotice,
     });
-
-  const handleNewChat = useCallback(() => {
-    // 直接在当前工作目录下新建对话，不打开文件选择器
-    // 如果需要切换工作目录，用户应使用顶部的文件夹按钮
-    const newId = String(Date.now());
-    const newSession: ChatSession = {
-      id: newId,
-      title: t('chat.newSessionTitle'),
-      cwd: selectedCwd, // 继承当前会话的工作目录
-      model: DEFAULT_MODEL_ID,
-      mode: DEFAULT_MODE_ID,
-    };
-    setSessions((prev) => [newSession, ...prev]);
-    setSessionMessages((prev) => ({ ...prev, [newId]: [] }));
-    setSessionDrafts((prev) => ({ ...prev, [newId]: '' }));
-    setIsGeneratingBySession((prev) => ({ ...prev, [newId]: false }));
-    setSelectedSessionId(newId);
-    clearSessionNotice(newId);
-    activeSessionIdRef.current = newId;
-  }, [
-    clearSessionNotice,
-    selectedCwd,
-    setSelectedSessionId,
-    setSessionDrafts,
-    setSessionMessages,
-    setSessions,
-    t,
-  ]);
-
-  const handleSessionSelect = useCallback(
-    (sessionId: string) => {
-      setSelectedSessionId(sessionId);
-      activeSessionIdRef.current = sessionId;
-    },
-    [setSelectedSessionId]
-  );
 
   const handleSessionDelete = useCallback(
     (sessionId: string) => {
@@ -373,13 +335,6 @@ function AppContent() {
       terminalBySession,
       t,
     ]
-  );
-
-  const handleSessionRename = useCallback(
-    (sessionId: string, newTitle: string) => {
-      setSessions((prev) => prev.map((s) => (s.id === sessionId ? { ...s, title: newTitle } : s)));
-    },
-    [setSessions]
   );
 
   const handleModelChange = useCallback(
