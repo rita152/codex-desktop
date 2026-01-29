@@ -6,21 +6,8 @@ import { useTranslation } from 'react-i18next';
 
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
-import {
-  CheckIcon,
-  EditIcon,
-  RobotIcon,
-  ServerIcon,
-  SettingsIcon,
-  SlidersIcon,
-} from '../../ui/data-display/Icon';
-import {
-  AdvancedSettings,
-  ApprovalSettings,
-  GeneralSettings,
-  RemoteSettings,
-  ShortcutSettings,
-} from './sections';
+import { EditIcon, RobotIcon, ServerIcon, SettingsIcon } from '../../ui/data-display/Icon';
+import { GeneralSettings, RemoteSettings, ShortcutSettings } from './sections';
 import { ModelPanel as ModelSettings } from '../ModelPanel';
 import type { AppSettings, SettingsSection } from '../../../types/settings';
 import { DEFAULT_SETTINGS } from '../../../types/settings';
@@ -63,10 +50,8 @@ function SettingsPanelStory() {
     () => [
       { id: 'general', labelKey: 'settings.sections.general', icon: <SettingsIcon size={16} /> },
       { id: 'model', labelKey: 'settings.sections.model', icon: <RobotIcon size={16} /> },
-      { id: 'approval', labelKey: 'settings.sections.approval', icon: <CheckIcon size={16} /> },
       { id: 'remote', labelKey: 'settings.sections.remote', icon: <ServerIcon size={16} /> },
       { id: 'shortcuts', labelKey: 'settings.sections.shortcuts', icon: <EditIcon size={16} /> },
-      { id: 'advanced', labelKey: 'settings.sections.advanced', icon: <SlidersIcon size={16} /> },
     ],
     []
   );
@@ -98,18 +83,6 @@ function SettingsPanelStory() {
             }
           />
         );
-      case 'approval':
-        return (
-          <ApprovalSettings
-            settings={settings.approval}
-            onUpdate={(values) =>
-              setSettings((prev) => ({
-                ...prev,
-                approval: { ...prev.approval, ...values },
-              }))
-            }
-          />
-        );
       case 'remote':
         return <RemoteSettings />;
       case 'shortcuts':
@@ -122,23 +95,6 @@ function SettingsPanelStory() {
                 shortcuts: { ...prev.shortcuts, ...values },
               }))
             }
-          />
-        );
-      case 'advanced':
-        return (
-          <AdvancedSettings
-            settings={settings.advanced}
-            onUpdate={(values) =>
-              setSettings((prev) => ({
-                ...prev,
-                advanced: { ...prev.advanced, ...values },
-              }))
-            }
-            onReset={async () => {
-              setSettings(DEFAULT_SETTINGS);
-            }}
-            onExportSettings={() => settings}
-            onImportSettings={(next) => setSettings(next)}
           />
         );
       default:

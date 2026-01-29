@@ -230,10 +230,8 @@
     "sections": {
       "general": "通用",
       "model": "模型",
-      "approval": "审批策略",
       "remote": "远程服务器",
-      "shortcuts": "快捷键",
-      "advanced": "高级"
+      "shortcuts": "快捷键"
     },
     "remote": {
       "description": "远程服务器从 ~/.ssh/config 读取，请在该文件中管理配置"
@@ -278,12 +276,6 @@
         "passphrase": "如无需密码请留空"
       }
     },
-    "logLevel": {
-      "error": "错误",
-      "warn": "警告",
-      "info": "信息",
-      "debug": "调试"
-    },
     "general": {
       "language": "语言",
       "languageDescription": "选择界面显示语言",
@@ -326,27 +318,6 @@
       "apiKey": "API 密钥",
       "apiKeyDescription": "用于身份验证的 API 密钥"
     },
-    "approval": {
-      "defaultMode": "默认审批模式",
-      "defaultModeDescription": "设置 AI 操作的默认审批策略",
-      "modeAll": "全部审批",
-      "modeDangerous": "仅危险操作",
-      "modeAuto": "自动同意",
-      "operationSettings": "操作设置",
-      "requireFileWrite": "文件写入需要审批",
-      "requireFileWriteDescription": "AI 写入文件前需要您的确认",
-      "requireCommand": "命令执行需要审批",
-      "requireCommandDescription": "AI 执行 shell 命令前需要您的确认",
-      "requireDelete": "删除操作需要审批",
-      "requireDeleteDescription": "AI 删除文件或目录前需要您的确认",
-      "requireNetwork": "网络请求需要审批",
-      "requireNetworkDescription": "AI 发起网络请求前需要您的确认",
-      "trustedCommands": "信任的命令列表",
-      "trustedCommandsDescription": "这些命令将自动获得批准执行",
-      "addCommand": "添加",
-      "addCommandPlaceholder": "输入命令...",
-      "removeCommand": "移除命令"
-    },
     "shortcuts": {
       "description": "点击快捷键按钮后，按下新的组合键来修改快捷键",
       "pressKeys": "按下按键...",
@@ -356,38 +327,6 @@
       "openSettings": "打开设置",
       "toggleSidebar": "切换侧边栏",
       "toggleTerminal": "切换终端"
-    },
-    "advanced": {
-      "developerMode": "开发者模式",
-      "developerModeDescription": "启用额外的调试信息和开发工具",
-      "logLevel": "日志级别",
-      "logLevelDescription": "设置应用程序的日志详细程度",
-      "maxSessionHistory": "会话历史限制",
-      "maxSessionHistoryDescription": "保留的最大会话数量",
-      "dataManagement": "数据管理",
-      "exportSettings": "导出设置",
-      "exportSettingsDescription": "将当前设置导出为 JSON 文件，可用于备份或迁移到其他设备",
-      "exportSettingsButton": "导出设置",
-      "exportSuccess": "导出成功",
-      "exportError": "导出失败",
-      "importSettings": "导入设置",
-      "importSettingsDescription": "从 JSON 文件导入设置，将覆盖当前配置",
-      "importSettingsButton": "导入设置",
-      "importSuccess": "设置导入成功，即将生效",
-      "importError": "导入失败：文件格式无效",
-      "actions": "操作",
-      "clearCache": "清除缓存",
-      "clearCacheDescription": "清除本地缓存数据，包括设置和会话历史",
-      "clearCacheButton": "清除缓存",
-      "cacheClearedSuccess": "缓存已清除",
-      "cacheClearedError": "清除缓存失败",
-      "resetSettings": "重置设置",
-      "resetSettingsDescription": "将所有设置恢复为默认值",
-      "resetSettingsButton": "重置所有设置",
-      "resetConfirmMessage": "确定要重置所有设置吗？",
-      "confirmReset": "确认重置",
-      "cancelReset": "取消",
-      "resetting": "重置中..."
     }
   }
 }

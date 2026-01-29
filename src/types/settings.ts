@@ -5,13 +5,7 @@
 import { DEFAULT_MODEL_ID } from '../constants/chat';
 
 // Settings section types
-export type SettingsSection =
-  | 'general'
-  | 'model'
-  | 'approval'
-  | 'remote'
-  | 'shortcuts'
-  | 'advanced';
+export type SettingsSection = 'general' | 'model' | 'remote' | 'shortcuts';
 
 // Theme options
 export type ThemeOption = 'light' | 'dark' | 'system';
@@ -36,19 +30,6 @@ export interface ModelSettings {
   apiKey: string;
 }
 
-// Approval mode options
-export type ApprovalMode = 'all' | 'dangerous' | 'auto';
-
-// Approval settings
-export interface ApprovalSettings {
-  defaultMode: ApprovalMode;
-  requireFileWrite: boolean;
-  requireCommand: boolean;
-  requireDelete: boolean;
-  requireNetwork: boolean;
-  trustedCommands: string[];
-}
-
 // Shortcut settings
 export interface ShortcutSettings {
   newSession: string;
@@ -59,23 +40,11 @@ export interface ShortcutSettings {
   toggleTerminal: string;
 }
 
-// Log level options
-export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
-
-// Advanced settings
-export interface AdvancedSettings {
-  developerMode: boolean;
-  logLevel: LogLevel;
-  maxSessionHistory: number;
-}
-
 // Complete settings structure
 export interface AppSettings {
   general: GeneralSettings;
   model: ModelSettings;
-  approval: ApprovalSettings;
   shortcuts: ShortcutSettings;
-  advanced: AdvancedSettings;
   version: number;
 }
 
@@ -91,14 +60,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
     apiBaseUrl: '',
     apiKey: '',
   },
-  approval: {
-    defaultMode: 'dangerous',
-    requireFileWrite: true,
-    requireCommand: true,
-    requireDelete: true,
-    requireNetwork: false,
-    trustedCommands: ['git status', 'git diff', 'npm install', 'cargo build'],
-  },
   shortcuts: {
     newSession: 'CmdOrCtrl+N',
     sendMessage: 'Enter',
@@ -106,11 +67,6 @@ export const DEFAULT_SETTINGS: AppSettings = {
     openSettings: 'CmdOrCtrl+,',
     toggleSidebar: 'CmdOrCtrl+B',
     toggleTerminal: 'CmdOrCtrl+`',
-  },
-  advanced: {
-    developerMode: false,
-    logLevel: 'info',
-    maxSessionHistory: 100,
   },
   version: 1,
 };

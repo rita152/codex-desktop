@@ -230,10 +230,8 @@
     "sections": {
       "general": "General",
       "model": "Model",
-      "approval": "Approval",
       "remote": "Remote Servers",
-      "shortcuts": "Shortcuts",
-      "advanced": "Advanced"
+      "shortcuts": "Shortcuts"
     },
     "remote": {
       "description": "Remote servers are loaded from ~/.ssh/config. Edit that file to manage entries."
@@ -278,12 +276,6 @@
         "passphrase": "Leave empty if not required"
       }
     },
-    "logLevel": {
-      "error": "Error",
-      "warn": "Warning",
-      "info": "Info",
-      "debug": "Debug"
-    },
     "general": {
       "language": "Language",
       "languageDescription": "Choose the interface language",
@@ -326,27 +318,6 @@
       "apiKey": "API Key",
       "apiKeyDescription": "API key for authentication"
     },
-    "approval": {
-      "defaultMode": "Default approval mode",
-      "defaultModeDescription": "Set the default approval policy for AI operations",
-      "modeAll": "Approve all",
-      "modeDangerous": "Dangerous only",
-      "modeAuto": "Auto approve",
-      "operationSettings": "Operation settings",
-      "requireFileWrite": "Require approval for file writes",
-      "requireFileWriteDescription": "Request your confirmation before AI writes to files",
-      "requireCommand": "Require approval for commands",
-      "requireCommandDescription": "Request your confirmation before AI executes shell commands",
-      "requireDelete": "Require approval for deletions",
-      "requireDeleteDescription": "Request your confirmation before AI deletes files or directories",
-      "requireNetwork": "Require approval for network requests",
-      "requireNetworkDescription": "Request your confirmation before AI makes network requests",
-      "trustedCommands": "Trusted commands",
-      "trustedCommandsDescription": "These commands will be automatically approved",
-      "addCommand": "Add",
-      "addCommandPlaceholder": "Enter command...",
-      "removeCommand": "Remove command"
-    },
     "shortcuts": {
       "description": "Click a shortcut button, then press a new key combination to change it",
       "pressKeys": "Press keys...",
@@ -356,38 +327,6 @@
       "openSettings": "Open settings",
       "toggleSidebar": "Toggle sidebar",
       "toggleTerminal": "Toggle terminal"
-    },
-    "advanced": {
-      "developerMode": "Developer mode",
-      "developerModeDescription": "Enable additional debugging information and developer tools",
-      "logLevel": "Log level",
-      "logLevelDescription": "Set the application log verbosity",
-      "maxSessionHistory": "Session history limit",
-      "maxSessionHistoryDescription": "Maximum number of sessions to keep",
-      "dataManagement": "Data Management",
-      "exportSettings": "Export Settings",
-      "exportSettingsDescription": "Export current settings to a JSON file for backup or migration to another device",
-      "exportSettingsButton": "Export Settings",
-      "exportSuccess": "Export successful",
-      "exportError": "Export failed",
-      "importSettings": "Import Settings",
-      "importSettingsDescription": "Import settings from a JSON file. This will overwrite current configuration",
-      "importSettingsButton": "Import Settings",
-      "importSuccess": "Settings imported successfully. Changes will take effect shortly",
-      "importError": "Import failed: Invalid file format",
-      "actions": "Actions",
-      "clearCache": "Clear cache",
-      "clearCacheDescription": "Clear local cache data including settings and session history",
-      "clearCacheButton": "Clear cache",
-      "cacheClearedSuccess": "Cache cleared successfully",
-      "cacheClearedError": "Failed to clear cache",
-      "resetSettings": "Reset settings",
-      "resetSettingsDescription": "Reset all settings to their default values",
-      "resetSettingsButton": "Reset all settings",
-      "resetConfirmMessage": "Are you sure you want to reset all settings?",
-      "confirmReset": "Confirm reset",
-      "cancelReset": "Cancel",
-      "resetting": "Resetting..."
     }
   }
 }

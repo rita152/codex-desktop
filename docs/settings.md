@@ -43,11 +43,5 @@
   - 切换终端：``CmdOrCtrl+` ``
 - 当前仅保存配置，尚未绑定到全局快捷键系统。
 
-## 未在设置入口显示（预留）
-- `approval` 与 `advanced` 的数据结构和组件已存在，但当前未加入导航入口。
-- 相关实现位置：
-  - `src/components/business/SettingsModal/sections/ApprovalSettings.tsx`
-  - `src/components/business/SettingsModal/sections/AdvancedSettings.tsx`
-
 ## 兼容性说明
 - Web 预览环境下：文件读写、远程服务器列表等 Tauri 能力不可用。
