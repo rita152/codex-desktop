@@ -2,7 +2,7 @@
 
 基于 Tauri 2 构建的跨平台 AI 对话桌面应用。
 
-![Screenshot](docs/screenshot.png)
+![Screenshot](docs/screen_shoot.png)
 
 > 本 README 侧重“如何跑起来 / 如何贡献 / 架构入口在哪里”。
 > 具体用户可见功能的**当前实现**文档见 `docs/`（每篇都含限制、步骤、排障与实现指针）。
