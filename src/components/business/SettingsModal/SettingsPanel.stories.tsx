@@ -18,10 +18,10 @@ import {
   AdvancedSettings,
   ApprovalSettings,
   GeneralSettings,
-  ModelSettings,
   RemoteSettings,
   ShortcutSettings,
 } from './sections';
+import { ModelPanel as ModelSettings } from '../ModelPanel';
 import type { AppSettings, SettingsSection } from '../../../types/settings';
 import { DEFAULT_SETTINGS } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';

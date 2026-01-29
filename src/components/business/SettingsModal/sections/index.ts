@@ -1,6 +1,5 @@
 export { GeneralSettings } from './GeneralSettings';
-export { ModelPanel as ModelSettings } from '../../ModelPanel';
-export type { ModelPanelProps as ModelSettingsProps } from '../../ModelPanel';
+// ModelPanel is dynamically imported in SettingsModal.tsx - do not re-export here
 export { ApprovalSettings } from './ApprovalSettings';
 export { ShortcutSettings } from './ShortcutSettings';
 export { AdvancedSettings } from './AdvancedSettings';
