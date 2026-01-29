@@ -19,7 +19,29 @@ import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { Message } from '../types/message';
 import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
-import type { PlanStep } from '../types/plan';
+import type { PlanStep, PlanStatus } from '../types/plan';
+
+/**
+ * Maps backend PlanEntry status strings to frontend PlanStatus values.
+ * Backend uses: pending, in_progress, completed
+ * Frontend uses: pending, active, completed, error
+ */
+function mapPlanStatus(backendStatus: string): PlanStatus {
+  switch (backendStatus.toLowerCase()) {
+    case 'pending':
+      return 'pending';
+    case 'in_progress':
+    case 'inprogress':
+      return 'active';
+    case 'completed':
+      return 'completed';
+    case 'error':
+    case 'failed':
+      return 'error';
+    default:
+      return 'pending';
+  }
+}
 
 type SessionMessages = Record<string, Message[]>;
 
@@ -49,7 +71,7 @@ const beginListeners = () => {
           unlisten();
         })
       )
-      .catch(() => {});
+      .catch(() => { });
   }
   state.token += 1;
   return state.token;
@@ -70,7 +92,7 @@ const removeListeners = (token: number) => {
         unlisten();
       })
     )
-    .catch(() => {});
+    .catch(() => { });
   state.unlistenPromise = null;
 };
 
@@ -242,14 +264,24 @@ export function useCodexEvents({
         if (!update) return;
         applyToolCallUpdateMessage(sessionId, update);
       }),
-      listen<{ sessionId: string; steps: PlanStep[] }>('codex:plan', (event) => {
+      listen<{
+        sessionId: string;
+        plan: { entries: Array<{ content: string; status: string; priority: string }> };
+      }>('codex:plan', (event) => {
         if (!isListenerActive()) return;
         const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
         if (!sessionId) return;
-        const steps = event.payload.steps;
-        if (steps && Array.isArray(steps)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          messageHandlers.updatePlan(sessionId, steps as any);
+        const entries = event.payload.plan?.entries;
+        if (entries && Array.isArray(entries)) {
+          // Convert backend PlanEntry format to frontend PlanStep format
+          // Backend uses 'content' for the step description, not 'title'
+          const steps: PlanStep[] = entries.map((entry, index) => ({
+            id: `plan-step-${index}`,
+            title: entry.content, // Backend field is 'content', frontend uses 'title'
+            // Map backend status (pending, inProgress, completed) to frontend status
+            status: mapPlanStatus(entry.status),
+          }));
+          messageHandlers.updatePlan(sessionId, steps);
         }
       }),
     ];
