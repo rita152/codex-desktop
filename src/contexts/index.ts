@@ -12,3 +12,25 @@ export type { SessionContextValue } from './SessionContext';
 
 export { CodexProvider, useCodexContext } from './CodexContext';
 export type { CodexContextValue } from './CodexContext';
+
+// Selective context access hooks
+export {
+  // UI selectors
+  useSidebarVisible,
+  useSidePanelVisible,
+  useSidePanelControls,
+  useSettingsModal,
+  // Session selectors
+  useSelectedSessionId,
+  useCurrentMessages,
+  useCurrentDraft,
+  useCurrentModelAndMode,
+  useIsGenerating,
+  useCurrentCwd,
+  useSessionList,
+  // Codex selectors
+  useMessageQueue,
+  usePromptNavigation,
+  useApprovalCards,
+  useModelModeHandlers,
+} from './selectors';
