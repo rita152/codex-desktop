@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useCodexSessionSync } from '../hooks/useCodexSessionSync';
 import { useApprovalState } from '../hooks/useApprovalState';
+import { useApprovalCards } from '../hooks/useApprovalCards';
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from '../api/codex';
 import { terminalKill } from '../api/terminal';
 import { useSessionContext } from './SessionContext';
@@ -30,7 +31,7 @@ import { devDebug } from '../utils/logger';
 import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
 import type { ApprovalRequest } from '../types/codex';
-import type { ApprovalStatus } from '../components/ui/feedback/Approval';
+import type { ApprovalProps, ApprovalStatus } from '../components/ui/feedback/Approval';
 
 // Types
 interface CodexContextValue {
@@ -46,13 +47,8 @@ interface CodexContextValue {
   doSendMessage: (sessionId: string, content: string) => void;
   handleSessionDelete: (sessionId: string) => void;
 
-  // Approval state
-  pendingApprovals: ApprovalRequest[];
-  approvalStatuses: Record<string, ApprovalStatus>;
-  approvalLoading: Record<string, boolean>;
-  setApprovalStatuses: React.Dispatch<React.SetStateAction<Record<string, ApprovalStatus>>>;
-  setApprovalLoading: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  clearApproval: (key: string) => void;
+  // Approval state and cards
+  approvalCards: ApprovalProps[];
 }
 
 const CodexContext = createContext<CodexContextValue | null>(null);
@@ -352,6 +348,20 @@ export function CodexProvider({ children }: CodexProviderProps) {
     ]
   );
 
+  // Approval cards - computed from approval state
+  const approvalCards = useApprovalCards({
+    pendingApprovals,
+    approvalStatuses,
+    approvalLoading,
+    setApprovalStatuses,
+    setApprovalLoading,
+    clearApproval,
+    resolveChatSessionId,
+    selectedSessionId,
+    setSessionNotices,
+    t,
+  });
+
   const value = useMemo<CodexContextValue>(
     () => ({
       // Codex session functions
@@ -366,13 +376,8 @@ export function CodexProvider({ children }: CodexProviderProps) {
       doSendMessage,
       handleSessionDelete,
 
-      // Approval state
-      pendingApprovals,
-      approvalStatuses,
-      approvalLoading,
-      setApprovalStatuses,
-      setApprovalLoading,
-      clearApproval,
+      // Approval cards
+      approvalCards,
     }),
     [
       clearCodexSession,
@@ -383,12 +388,7 @@ export function CodexProvider({ children }: CodexProviderProps) {
       handleModeChange,
       doSendMessage,
       handleSessionDelete,
-      pendingApprovals,
-      approvalStatuses,
-      approvalLoading,
-      setApprovalStatuses,
-      setApprovalLoading,
-      clearApproval,
+      approvalCards,
     ]
   );
 

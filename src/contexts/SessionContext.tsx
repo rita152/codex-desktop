@@ -32,9 +32,11 @@ import {
   saveModelOptionsCache,
 } from '../api/storage';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from '../constants/chat';
+import { resolveOptionId } from '../utils/optionSelection';
 
 import type { ChatSession } from '../types/session';
 import type { Message } from '../types/message';
+import type { PlanStep } from '../types/message';
 import type { SelectOption } from '../types/options';
 import type { SessionNotice, SlashCommand } from '../types/chat';
 
@@ -102,6 +104,7 @@ interface SessionContextValue {
   isGenerating: boolean;
   cwdLocked: boolean;
   activeTerminalId: string | undefined;
+  currentPlan: PlanStep[] | undefined;
 
   // Session Actions
   handleDraftChange: (value: string) => void;
@@ -266,6 +269,62 @@ export function SessionProvider({ children }: SessionProviderProps) {
     [setSessions]
   );
 
+  // Derived: current active plan from messages
+  const currentPlan = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const planSteps = messages[i].planSteps;
+      if (planSteps && planSteps.length > 0) {
+        // Hide plan when all steps are completed
+        const allCompleted = planSteps.every((step) => step.status === 'completed');
+        if (allCompleted) {
+          return undefined;
+        }
+        return planSteps;
+      }
+    }
+    return undefined;
+  }, [messages]);
+
+  // Auto-select available model when current is unavailable
+  useEffect(() => {
+    if (!modelOptions || modelOptions.length === 0) return;
+    const available = new Set(modelOptions.map((option) => option.value));
+    if (available.has(selectedModel)) return;
+
+    const preferred = resolveOptionId({
+      availableOptions: modelOptions,
+      fallbackIds: [DEFAULT_MODEL_ID, modelCache.currentId],
+      defaultId: DEFAULT_MODEL_ID,
+    });
+
+    if (!preferred || preferred === selectedModel) return;
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === selectedSessionId ? { ...session, model: preferred } : session
+      )
+    );
+  }, [modelCache.currentId, modelOptions, selectedModel, selectedSessionId, setSessions]);
+
+  // Auto-select available mode when current is unavailable
+  useEffect(() => {
+    if (!agentOptions || agentOptions.length === 0) return;
+    const available = new Set(agentOptions.map((option) => option.value));
+    if (available.has(selectedMode)) return;
+
+    const preferred = resolveOptionId({
+      availableOptions: agentOptions,
+      fallbackIds: [DEFAULT_MODE_ID],
+      defaultId: DEFAULT_MODE_ID,
+    });
+
+    if (!preferred || preferred === selectedMode) return;
+    setSessions((prev) =>
+      prev.map((session) =>
+        session.id === selectedSessionId ? { ...session, mode: preferred } : session
+      )
+    );
+  }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
+
   const value = useMemo<SessionContextValue>(
     () => ({
       // Session list
@@ -322,6 +381,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       isGenerating,
       cwdLocked,
       activeTerminalId,
+      currentPlan,
 
       // Session Actions
       handleDraftChange,
@@ -366,6 +426,7 @@ export function SessionProvider({ children }: SessionProviderProps) {
       isGenerating,
       cwdLocked,
       activeTerminalId,
+      currentPlan,
       handleDraftChange,
       handleNewChat,
       handleSessionSelect,

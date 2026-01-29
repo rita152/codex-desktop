@@ -1,4 +1,4 @@
-import { useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useRef, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -6,7 +6,6 @@ import { ChatContainer } from './components/business/ChatContainer';
 const SettingsModal = lazy(() =>
   import('./components/business/SettingsModal').then((module) => ({ default: module.SettingsModal }))
 );
-import { useApprovalCards } from './hooks/useApprovalCards';
 import { usePanelResize } from './hooks/usePanelResize';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
@@ -22,8 +21,7 @@ import {
   useCodexContext,
   MIN_SIDE_PANEL_WIDTH,
 } from './contexts';
-import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from './constants/chat';
-import { resolveOptionId } from './utils/optionSelection';
+import { DEFAULT_MODEL_ID } from './constants/chat';
 
 import type { SelectOption } from './types/options';
 import './App.css';
@@ -58,7 +56,6 @@ function AppContent() {
     setSessionDrafts,
     setSessionNotices,
     clearSessionNotice,
-    modelCache,
     applyModelOptions,
     setTerminalBySession,
     messages,
@@ -74,6 +71,7 @@ function AppContent() {
     cwdLocked,
     activeTerminalId,
     isGeneratingBySession,
+    currentPlan,
     // Session Actions
     handleDraftChange,
     handleNewChat,
@@ -83,17 +81,11 @@ function AppContent() {
 
   // Codex Context - backend communication and actions
   const {
-    resolveChatSessionId,
     handleModelChange,
     handleModeChange,
     doSendMessage,
     handleSessionDelete,
-    pendingApprovals,
-    approvalStatuses,
-    approvalLoading,
-    setApprovalStatuses,
-    setApprovalLoading,
-    clearApproval,
+    approvalCards,
   } = useCodexContext();
 
   const pickRemoteCwd = useRemoteCwdPicker();
@@ -112,23 +104,6 @@ function AppContent() {
       return mainWidth + sidePanelWidth;
     },
   });
-
-  // Extract current active plan from messages (last message with planSteps)
-  // Hide plan when all steps are completed
-  const currentPlan = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const planSteps = messages[i].planSteps;
-      if (planSteps && planSteps.length > 0) {
-        // Check if all steps are completed - if so, hide the plan
-        const allCompleted = planSteps.every((step) => step.status === 'completed');
-        if (allCompleted) {
-          return undefined;
-        }
-        return planSteps;
-      }
-    }
-    return undefined;
-  }, [messages]);
 
   useTerminalLifecycle({
     terminalVisible: sidePanelVisible && activeSidePanelTab === 'terminal', // Sync lifecycle with unified state
@@ -150,45 +125,6 @@ function AppContent() {
     setSessionNotices,
     t,
   });
-
-  // Auto-select available model/mode when current is unavailable
-  useEffect(() => {
-    if (!modelOptions || modelOptions.length === 0) return;
-    const available = new Set(modelOptions.map((option) => option.value));
-    if (available.has(selectedModel)) return;
-
-    const preferred = resolveOptionId({
-      availableOptions: modelOptions,
-      fallbackIds: [DEFAULT_MODEL_ID, modelCache.currentId],
-      defaultId: DEFAULT_MODEL_ID,
-    });
-
-    if (!preferred || preferred === selectedModel) return;
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === selectedSessionId ? { ...session, model: preferred } : session
-      )
-    );
-  }, [modelCache.currentId, modelOptions, selectedModel, selectedSessionId, setSessions]);
-
-  useEffect(() => {
-    if (!agentOptions || agentOptions.length === 0) return;
-    const available = new Set(agentOptions.map((option) => option.value));
-    if (available.has(selectedMode)) return;
-
-    const preferred = resolveOptionId({
-      availableOptions: agentOptions,
-      fallbackIds: [DEFAULT_MODE_ID],
-      defaultId: DEFAULT_MODE_ID,
-    });
-
-    if (!preferred || preferred === selectedMode) return;
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === selectedSessionId ? { ...session, mode: preferred } : session
-      )
-    );
-  }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
 
   const handleModelOptionsFetched = useCallback(
     ({ options, currentId }: { options: SelectOption[]; currentId?: string }) => {
@@ -277,19 +213,6 @@ function AppContent() {
     },
     [currentQueue, handleDraftChange, removeFromQueue, selectedSessionId]
   );
-
-  const approvalCards = useApprovalCards({
-    pendingApprovals,
-    approvalStatuses,
-    approvalLoading,
-    setApprovalStatuses,
-    setApprovalLoading,
-    clearApproval,
-    resolveChatSessionId,
-    selectedSessionId,
-    setSessionNotices,
-    t,
-  });
 
   return (
     <>
