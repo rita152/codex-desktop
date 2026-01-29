@@ -7,3 +7,7 @@
   border-radius: 8px;
   overflow: hidden;
 }
+
+.chat-container-story__container .chat-container {
+  height: 100%;
+}
