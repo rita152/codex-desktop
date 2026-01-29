@@ -6,12 +6,62 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChatMessage } from '../ChatMessage';
 import { Working } from '../../ui/feedback/Working';
 import { cn } from '../../../utils/cn';
-import { buildChatGroups } from '../../../utils/chatGroups';
+import { buildChatGroups, type ChatGroup } from '../../../utils/chatGroups';
 import { PERFORMANCE } from '../../../constants/performance';
 
 import type { ChatMessageListProps } from './types';
 
 import './ChatMessageList.css';
+
+/**
+ * Estimate row height based on message type and content length.
+ * This improves scroll behavior by reducing layout jumps.
+ */
+const estimateGroupHeight = (group: ChatGroup | undefined): number => {
+  if (!group) return PERFORMANCE.MESSAGE_ESTIMATE_HEIGHT;
+
+  if (group.type === 'working') {
+    // Working groups: base height + per-item estimate
+    // Collapsed: ~48px, Open: ~48px + items * 60px
+    const baseHeight = 48;
+    const itemHeight = 60;
+    return baseHeight + group.items.length * itemHeight;
+  }
+
+  const message = group.message;
+
+  // User messages: typically shorter, single line to few lines
+  if (message.role === 'user') {
+    const contentLength = message.content?.length ?? 0;
+    const estimatedLines = Math.ceil(contentLength / 60); // ~60 chars per line
+    return Math.max(60, Math.min(200, 40 + estimatedLines * 24));
+  }
+
+  // Tool messages: usually compact
+  if (message.role === 'tool') {
+    const toolCallCount = message.toolCalls?.length ?? 0;
+    return 60 + toolCallCount * 80;
+  }
+
+  // Thought messages: variable based on thinking content
+  if (message.role === 'thought') {
+    const thinkingLength = message.thinking?.content?.length ?? message.content?.length ?? 0;
+    if (thinkingLength < 200) return 80;
+    if (thinkingLength < 500) return 120;
+    return 180;
+  }
+
+  // Assistant messages: estimate based on content length
+  const contentLength = message.content?.length ?? 0;
+  const hasThinking = message.thinking !== undefined;
+  const baseHeight = hasThinking ? 80 : 0; // Add height for thinking block
+
+  if (contentLength < 100) return baseHeight + 80;
+  if (contentLength < 300) return baseHeight + 120;
+  if (contentLength < 800) return baseHeight + 200;
+  if (contentLength < 1500) return baseHeight + 350;
+  return baseHeight + 500;
+};
 
 export const ChatMessageList = memo(function ChatMessageList({
   messages,
@@ -44,11 +94,17 @@ export const ChatMessageList = memo(function ChatMessageList({
       ),
     [messages]
   );
+  // Memoize estimateSize function to use dynamic height estimation
+  const estimateSize = useCallback(
+    (index: number) => estimateGroupHeight(groups[index]),
+    [groups]
+  );
+
   // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer follows hooks rules but is not recognized by this eslint rule.
   const virtualizer = useVirtualizer({
     count: groups.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => PERFORMANCE.MESSAGE_ESTIMATE_HEIGHT,
+    estimateSize,
     overscan: PERFORMANCE.MESSAGE_OVERSCAN,
     getItemKey: (index) => groups[index]?.id ?? index,
   });
