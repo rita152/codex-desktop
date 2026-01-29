@@ -11,12 +11,18 @@
 .chat-container__sidebar {
   flex-shrink: 0;
   height: 100%;
+  /* Transition is disabled by default to prevent first-interaction flicker in Tauri WebView */
+  /* The --ready class is added after mount to enable smooth animations */
+}
+
+/* Enable transition only after initial render to prevent flicker */
+.chat-container__sidebar--ready {
   transition:
     margin-left 0.2s ease,
     opacity 0.2s ease;
 }
 
-/* .chat-container__sidebar--hidden: margin-left 由内联样式动态设置，基于实际 sidebar 宽度 */
+/* Hidden state */
 .chat-container__sidebar--hidden {
   opacity: 0;
   pointer-events: none;
@@ -25,6 +31,11 @@
 .chat-container__side-panel {
   flex-shrink: 0;
   height: 100%;
+  /* Transition is disabled by default to prevent first-interaction flicker */
+}
+
+/* Enable transition only after initial render */
+.chat-container__side-panel--ready {
   transition:
     margin-right 0.2s ease,
     opacity 0.2s ease;

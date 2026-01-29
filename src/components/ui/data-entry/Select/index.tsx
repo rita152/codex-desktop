@@ -166,55 +166,56 @@ export function Select({
     width: typeof width === 'number' ? `${width}px` : width,
   };
 
-  const dropdown = isOpen
-    ? createPortal(
-        <div
-          ref={dropdownRef}
-          className={cn(
-            'select__dropdown',
-            `select__dropdown--${size}`,
-            variant === 'glass' && 'select__dropdown--glass'
-          )}
-          role="listbox"
-          id={listboxId}
-          aria-labelledby={triggerId}
-          style={{
-            bottom: dropdownPosition.bottom,
-            left: dropdownPosition.left,
-            minWidth: dropdownPosition.width,
-          }}
-        >
-          {dropdownTitle && <div className="select__dropdown-title">{dropdownTitle}</div>}
-          {options.map((option, index) => {
-            const optionClasses = cn(
-              'select__option',
-              option.value === value && 'select__option--selected',
-              index === highlightedIndex && 'select__option--highlighted'
-            );
+  // Always render Portal to avoid layout recalculation on first open (prevents Sidebar flicker)
+  const dropdown = createPortal(
+    <div
+      ref={dropdownRef}
+      className={cn(
+        'select__dropdown',
+        `select__dropdown--${size}`,
+        variant === 'glass' && 'select__dropdown--glass',
+        !isOpen && 'select__dropdown--hidden'
+      )}
+      role="listbox"
+      id={listboxId}
+      aria-labelledby={triggerId}
+      aria-hidden={!isOpen}
+      style={{
+        bottom: dropdownPosition.bottom,
+        left: dropdownPosition.left,
+        minWidth: dropdownPosition.width,
+      }}
+    >
+      {dropdownTitle && <div className="select__dropdown-title">{dropdownTitle}</div>}
+      {options.map((option, index) => {
+        const optionClasses = cn(
+          'select__option',
+          option.value === value && 'select__option--selected',
+          index === highlightedIndex && 'select__option--highlighted'
+        );
 
-            return (
-              <div
-                key={option.value}
-                id={`${listboxId}-option-${index}`}
-                className={optionClasses}
-                onClick={() => handleSelect(option.value)}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                role="option"
-                aria-selected={option.value === value}
-                ref={(el) => {
-                  optionRefs.current[index] = el;
-                }}
-              >
-                {option.icon && <span className="select__option-icon">{option.icon}</span>}
-                <span className="select__option-label">{option.label}</span>
-                {option.value === value && <CheckIcon size={16} className="select__option-check" />}
-              </div>
-            );
-          })}
-        </div>,
-        document.body
-      )
-    : null;
+        return (
+          <div
+            key={option.value}
+            id={`${listboxId}-option-${index}`}
+            className={optionClasses}
+            onClick={() => handleSelect(option.value)}
+            onMouseEnter={() => setHighlightedIndex(index)}
+            role="option"
+            aria-selected={option.value === value}
+            ref={(el) => {
+              optionRefs.current[index] = el;
+            }}
+          >
+            {option.icon && <span className="select__option-icon">{option.icon}</span>}
+            <span className="select__option-label">{option.label}</span>
+            {option.value === value && <CheckIcon size={16} className="select__option-check" />}
+          </div>
+        );
+      })}
+    </div>,
+    document.body
+  );
 
   return (
     <div className={containerClasses} ref={containerRef} style={containerStyle}>
@@ -229,7 +230,7 @@ export function Select({
         role="combobox"
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        aria-controls={isOpen ? listboxId : undefined}
+        aria-controls={listboxId}
         aria-activedescendant={
           isOpen && highlightedIndex >= 0 ? `${listboxId}-option-${highlightedIndex}` : undefined
         }

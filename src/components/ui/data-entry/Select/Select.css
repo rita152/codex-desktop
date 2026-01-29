@@ -130,6 +130,13 @@
   overflow-y: auto;
 }
 
+/* Hidden state - always rendered but invisible to prevent layout recalculation on first open */
+.select__dropdown--hidden {
+  visibility: hidden;
+  pointer-events: none;
+  opacity: 0;
+}
+
 /* Glass 变体 - 透明背景 */
 .select__dropdown--glass {
   background-color: transparent;

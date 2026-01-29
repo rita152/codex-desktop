@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useRef, useState, useEffect } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -83,9 +83,23 @@ export const ChatContainer = memo(function ChatContainer({
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
+  // Delay enabling sidebar transition to prevent first-interaction flicker in Tauri WebView
+  const [sidebarTransitionReady, setSidebarTransitionReady] = useState(false);
   // Remove local state for terminal width since it's unified now
   const internalBodyRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = bodyRefProp ?? internalBodyRef;
+
+  // Enable sidebar transition after initial render to prevent flicker
+  useEffect(() => {
+    // Use double RAF to ensure the browser has completed initial layout
+    const raf1 = requestAnimationFrame(() => {
+      const raf2 = requestAnimationFrame(() => {
+        setSidebarTransitionReady(true);
+      });
+      return () => cancelAnimationFrame(raf2);
+    });
+    return () => cancelAnimationFrame(raf1);
+  }, []);
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
@@ -113,6 +127,7 @@ export const ChatContainer = memo(function ChatContainer({
       <div
         className={cn(
           'chat-container__sidebar',
+          sidebarTransitionReady && 'chat-container__sidebar--ready',
           !sidebarVisible && 'chat-container__sidebar--hidden'
         )}
         style={{
@@ -235,7 +250,10 @@ export const ChatContainer = memo(function ChatContainer({
         </div>
       </div>
       <div
-        className="chat-container__side-panel"
+        className={cn(
+          'chat-container__side-panel',
+          sidebarTransitionReady && 'chat-container__side-panel--ready'
+        )}
         style={{
           width: sidePanelWidth,
           marginRight: sidePanelVisible ? 0 : -sidePanelWidth,
