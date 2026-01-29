@@ -282,6 +282,8 @@ export function createCodexMessageHandlers(
       const list = prev[sessionId] ?? [];
       const lastMessage = list[list.length - 1];
 
+      // Only attach planSteps to existing assistant messages
+      // Don't create new messages with empty content - Plan is displayed fixed above ChatInput
       if (lastMessage?.role === 'assistant') {
         const nextList = [...list];
         nextList[nextList.length - 1] = {
@@ -291,15 +293,20 @@ export function createCodexMessageHandlers(
         return { ...prev, [sessionId]: nextList };
       }
 
-      const nextMessage: Message = {
-        id: newMessageId(),
-        role: 'assistant',
-        content: '',
-        planSteps: steps,
-        isStreaming: true,
-        timestamp: new Date(),
-      };
-      return { ...prev, [sessionId]: [...list, nextMessage] };
+      // If no assistant message exists, just store planSteps in any streaming message
+      // This allows the fixed Plan component in App.tsx to extract it
+      if (lastMessage?.isStreaming) {
+        const nextList = [...list];
+        nextList[nextList.length - 1] = {
+          ...lastMessage,
+          planSteps: steps,
+        };
+        return { ...prev, [sessionId]: nextList };
+      }
+
+      // No suitable message to attach to - Plan will still be displayed via App.tsx
+      // which extracts planSteps from any message in the list
+      return prev;
     });
   };
 
