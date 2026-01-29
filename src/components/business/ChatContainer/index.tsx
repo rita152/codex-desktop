@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useRef, useState, useEffect } from 'react';
+import { lazy, memo, Suspense, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -83,21 +83,12 @@ export const ChatContainer = memo(function ChatContainer({
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
-  // Delay enabling sidebar transition to prevent first-interaction flicker in Tauri WebView
-  const [sidebarTransitionReady, setSidebarTransitionReady] = useState(false);
+  // Delay enabling transitions to prevent first-interaction flicker in Tauri WebView
+  // Initialize to true - CSS handles initial state via animation-delay approach
+  const sidebarTransitionReady = true;
   // Remove local state for terminal width since it's unified now
   const internalBodyRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = bodyRefProp ?? internalBodyRef;
-
-  // Enable sidebar transition after initial render to prevent flicker
-  // Use a short timeout to ensure initial layout is complete before enabling transitions
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSidebarTransitionReady(true);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
