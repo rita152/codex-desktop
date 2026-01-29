@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useDeferredValue, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Thinking } from '../../ui/feedback/Thinking';
@@ -38,6 +38,11 @@ export const ChatMessage = memo(function ChatMessage({
     PERFORMANCE.TYPEWRITER_MAX_CHARS_PER_FRAME
   );
 
+  // Defer Markdown parsing during streaming to reduce render blocking
+  const displayContent = isStreaming ? streamedContent : content;
+  const deferredContent = useDeferredValue(displayContent);
+  const isContentStale = displayContent !== deferredContent;
+
   const thoughtContent =
     role === 'thought' ? (thinking?.content ?? content) : (thinking?.content ?? '');
   const thoughtPhase =
@@ -69,7 +74,13 @@ export const ChatMessage = memo(function ChatMessage({
       );
     }
     if (role === 'assistant' || role === 'tool') {
-      return <Markdown content={isStreaming ? streamedContent : content} />;
+      // Use deferred content for Markdown to reduce render blocking during streaming
+      return (
+        <Markdown
+          content={deferredContent}
+          className={isContentStale ? 'chat-message__markdown--pending' : undefined}
+        />
+      );
     }
     if (role === 'thought') return null;
     return content;

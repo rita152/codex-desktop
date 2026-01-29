@@ -103,3 +103,8 @@
     opacity: 0;
   }
 }
+
+/* Subtle visual feedback when Markdown is catching up during streaming */
+.chat-message__markdown--pending {
+  opacity: 0.85;
+}
