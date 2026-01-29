@@ -59,6 +59,20 @@ export const ChatMessageList = memo(function ChatMessageList({
     return null;
   }, [groups]);
 
+  // Extract toggle handler to avoid creating new functions inside renderRow
+  const handleWorkingToggle = useCallback(
+    (groupId: string) => {
+      setWorkingOpenMap((prev) => {
+        const fallbackOpen = groupId === lastWorkingId;
+        return {
+          ...prev,
+          [groupId]: !(prev[groupId] ?? fallbackOpen),
+        };
+      });
+    },
+    [lastWorkingId]
+  );
+
   // 检测用户是否在滚动
   useEffect(() => {
     const container = containerRef.current;
@@ -142,13 +156,6 @@ export const ChatMessageList = memo(function ChatMessageList({
         );
       } else {
         const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
-        const handleToggle = () => {
-          const fallbackOpen = group.id === lastWorkingId;
-          setWorkingOpenMap((prev) => ({
-            ...prev,
-            [group.id]: !(prev[group.id] ?? fallbackOpen),
-          }));
-        };
 
         content = (
           <Working
@@ -157,7 +164,7 @@ export const ChatMessageList = memo(function ChatMessageList({
             startTime={group.startTime}
             isOpen={isOpen}
             isActive={group.isActive}
-            onToggle={handleToggle}
+            onToggle={() => handleWorkingToggle(group.id)}
           />
         );
       }
@@ -183,7 +190,7 @@ export const ChatMessageList = memo(function ChatMessageList({
         </div>
       );
     },
-    [groups, lastWorkingId, virtualizer, workingOpenMap]
+    [groups, handleWorkingToggle, lastWorkingId, virtualizer, workingOpenMap]
   );
 
   if (!isGenerating && messages.length === 0 && approvalCount === 0) {
