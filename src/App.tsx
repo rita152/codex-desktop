@@ -24,6 +24,7 @@ import { useSessionViewState } from './hooks/useSessionViewState';
 import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useMessageQueue } from './hooks/useMessageQueue';
+import { usePromptHistory } from './hooks/usePromptHistory';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
 import { resolveOptionId } from './utils/optionSelection';
@@ -594,12 +595,21 @@ export function App() {
     onSendMessage: doSendMessage,
   });
 
+  // Prompt history hook for arrow key navigation
+  const {
+    addToHistory,
+    goToPrevious: navigateToPreviousPrompt,
+    goToNext: navigateToNextPrompt,
+    resetNavigation: resetPromptNavigation,
+  } = usePromptHistory();
+
   // 对外暴露的发送消息处理：支持排队
   const handleSendMessage = useCallback(
     (content: string) => {
+      addToHistory(content);
       enqueueMessage(content);
     },
-    [enqueueMessage]
+    [addToHistory, enqueueMessage]
   );
 
   // 清空当前会话的队列
@@ -698,6 +708,9 @@ export function App() {
         onSettingsClick={handleSettingsClick}
         bodyRef={bodyRef}
         onFileSelect={handleFileSelect}
+        onNavigatePreviousPrompt={navigateToPreviousPrompt}
+        onNavigateNextPrompt={navigateToNextPrompt}
+        onResetPromptNavigation={resetPromptNavigation}
       />
       <SettingsModal
         isOpen={settingsOpen}

@@ -80,6 +80,9 @@ export function ChatInput({
   slashCommands = [],
   width,
   className = '',
+  onNavigatePrevious,
+  onNavigateNext,
+  onResetNavigation,
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -116,6 +119,7 @@ export function ChatInput({
     if (disabled) return;
     if (!trimmedValue) return;
     if (trimmedValue === '/') return;
+    onResetNavigation?.();
     onSend(trimmedValue);
   };
 
@@ -146,6 +150,39 @@ export function ChatInput({
         e.preventDefault();
         const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
         if (command) applySlashCommand(command);
+        return;
+      }
+    }
+
+    // Prompt history navigation (only when not in slash command mode)
+    // ArrowUp: Navigate to previous (older) prompt when cursor is at the start
+    if (e.key === 'ArrowUp' && onNavigatePrevious) {
+      const target = e.currentTarget;
+      const isAtStart = target.selectionStart === 0 && target.selectionEnd === 0;
+      // Only navigate if cursor is at the very beginning or input is empty
+      if (isAtStart || value.trim() === '') {
+        e.preventDefault();
+        const previousPrompt = onNavigatePrevious(value);
+        if (previousPrompt !== null) {
+          onChange(previousPrompt);
+        }
+        return;
+      }
+    }
+
+    // ArrowDown: Navigate to next (newer) prompt when cursor is at the end
+    if (e.key === 'ArrowDown' && onNavigateNext) {
+      const target = e.currentTarget;
+      const isAtEnd =
+        target.selectionStart === target.value.length &&
+        target.selectionEnd === target.value.length;
+      // Only navigate if cursor is at the very end or input is empty
+      if (isAtEnd || value.trim() === '') {
+        e.preventDefault();
+        const nextPrompt = onNavigateNext();
+        if (nextPrompt !== null) {
+          onChange(nextPrompt);
+        }
         return;
       }
     }

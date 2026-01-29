@@ -75,6 +75,9 @@ export function ChatContainer({
   welcomeContent,
   bodyRef: bodyRefProp,
   className = '',
+  onNavigatePreviousPrompt,
+  onNavigateNextPrompt,
+  onResetPromptNavigation,
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -159,8 +162,8 @@ export function ChatContainer({
                 <DirectorySelector
                   currentCwd={displayCwd}
                   cwdLocked={cwdLocked}
-                  onPickLocalCwd={onPickLocalCwd || (() => {})}
-                  onCwdSelect={onSetCwd || (() => {})}
+                  onPickLocalCwd={onPickLocalCwd || (() => { })}
+                  onCwdSelect={onSetCwd || (() => { })}
                 />
                 <div className="chat-container__drag-spacer" data-tauri-drag-region />
               </div>
@@ -214,6 +217,9 @@ export function ChatContainer({
                 onModelChange={onModelChange}
                 slashCommands={slashCommands}
                 className="chat-container__input"
+                onNavigatePrevious={onNavigatePreviousPrompt}
+                onNavigateNext={onNavigateNextPrompt}
+                onResetNavigation={onResetPromptNavigation}
               />
             </div>
           </div>
@@ -237,7 +243,7 @@ export function ChatContainer({
             onResizeStart={onSidePanelResizeStart}
             terminalId={terminalId || null}
             sessionCwd={sessionCwd || ''}
-            onFileSelect={onFileSelect || (() => {})}
+            onFileSelect={onFileSelect || (() => { })}
           />
         )}
       </div>

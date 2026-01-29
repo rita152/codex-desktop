@@ -107,4 +107,18 @@ export interface ChatContainerProps {
   bodyRef?: RefObject<HTMLDivElement | null>;
   /** 自定义类名 */
   className?: string;
+  /**
+   * Navigate to previous prompt in history (older).
+   * Returns the prompt string or null.
+   */
+  onNavigatePreviousPrompt?: (currentValue: string) => string | null;
+  /**
+   * Navigate to next prompt in history (newer).
+   * Returns the prompt string or null.
+   */
+  onNavigateNextPrompt?: () => string | null;
+  /**
+   * Reset prompt history navigation.
+   */
+  onResetPromptNavigation?: () => void;
 }

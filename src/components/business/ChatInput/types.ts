@@ -16,4 +16,18 @@ export interface ChatInputProps {
   slashCommands?: string[];
   width?: string | number;
   className?: string;
+  /**
+   * Called when user presses ArrowUp to navigate to previous prompt.
+   * Should return the previous prompt or null if none available.
+   */
+  onNavigatePrevious?: (currentValue: string) => string | null;
+  /**
+   * Called when user presses ArrowDown to navigate to next prompt.
+   * Should return the next prompt or null if none available.
+   */
+  onNavigateNext?: () => string | null;
+  /**
+   * Called when navigation should be reset (e.g., on send).
+   */
+  onResetNavigation?: () => void;
 }
