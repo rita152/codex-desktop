@@ -1,6 +1,13 @@
 import { memo, useState, useMemo } from 'react';
 import { cn } from '../../../../utils/cn';
-import { CheckIcon, ClockIcon, CloseIcon, TerminalIcon, ChevronDownIcon, ChevronUpIcon } from '../Icon';
+import {
+  CheckIcon,
+  ClockIcon,
+  CloseIcon,
+  TerminalIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+} from '../Icon';
 import type { PlanProps, PlanStep, PlanStatus } from './types';
 import './Plan.css';
 
@@ -23,11 +30,7 @@ StepIcon.displayName = 'StepIcon';
 const PlanStepItem = memo(({ step, className }: { step: PlanStep; className?: string }) => {
   return (
     <div
-      className={cn(
-        'plan__step',
-        step.status === 'active' && 'plan__step--active',
-        className
-      )}
+      className={cn('plan__step', step.status === 'active' && 'plan__step--active', className)}
       role="listitem"
       aria-current={step.status === 'active' ? 'step' : undefined}
     >
@@ -61,13 +64,7 @@ export function Plan({ steps = [], title, className = '' }: PlanProps) {
   if (!steps || steps.length === 0) return null;
 
   return (
-    <div
-      className={cn(
-        'plan',
-        isCollapsed && 'plan--collapsed',
-        className
-      )}
-    >
+    <div className={cn('plan', isCollapsed && 'plan--collapsed', className)}>
       <div className="plan__controls">
         <button
           className="plan__toggle-btn"

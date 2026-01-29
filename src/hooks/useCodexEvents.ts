@@ -71,7 +71,7 @@ const beginListeners = () => {
           unlisten();
         })
       )
-      .catch(() => { });
+      .catch(() => {});
   }
   state.token += 1;
   return state.token;
@@ -92,7 +92,7 @@ const removeListeners = (token: number) => {
         unlisten();
       })
     )
-    .catch(() => { });
+    .catch(() => {});
   state.unlistenPromise = null;
 };
 
