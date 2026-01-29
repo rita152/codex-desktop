@@ -7,6 +7,7 @@ import { Thinking } from '../Thinking';
 import { ToolCall } from '../ToolCall';
 import { Approval } from '../Approval';
 import { formatDurationLong } from '../../../../i18n/format';
+import { PERFORMANCE } from '../../../../constants/performance';
 
 import type { WorkingItem, WorkingProps } from './types';
 
@@ -110,7 +111,7 @@ export function Working({
 
   useEffect(() => {
     if (!shouldTimerRun) return;
-    const timer = setInterval(() => setNow(Date.now()), 200);
+    const timer = setInterval(() => setNow(Date.now()), PERFORMANCE.WORKING_TIMER_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [shouldTimerRun]);
 

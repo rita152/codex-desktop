@@ -7,6 +7,7 @@ import { ChatMessage } from '../ChatMessage';
 import { Working } from '../../ui/feedback/Working';
 import { cn } from '../../../utils/cn';
 import { buildChatGroups } from '../../../utils/chatGroups';
+import { PERFORMANCE } from '../../../constants/performance';
 
 import type { ChatMessageListProps } from './types';
 
@@ -47,8 +48,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   const virtualizer = useVirtualizer({
     count: groups.length,
     getScrollElement: () => containerRef.current,
-    estimateSize: () => 120,
-    overscan: 6,
+    estimateSize: () => PERFORMANCE.MESSAGE_ESTIMATE_HEIGHT,
+    overscan: PERFORMANCE.MESSAGE_OVERSCAN,
     getItemKey: (index) => groups[index]?.id ?? index,
   });
   const lastWorkingId = useMemo(() => {
@@ -66,7 +67,8 @@ export const ChatMessageList = memo(function ChatMessageList({
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      const isAtBottom =
+        scrollHeight - scrollTop - clientHeight < PERFORMANCE.SCROLL_BOTTOM_THRESHOLD;
       isUserScrollingRef.current = !isAtBottom;
     };
 

@@ -1,6 +1,7 @@
 import { closeActiveAssistantMessages, closeActiveThoughtMessages } from '../utils/messageUtils';
 import { devDebug } from '../utils/logger';
 import { applyToolCallUpdate, getToolCallId, newMessageId } from '../utils/codexParsing';
+import { PERFORMANCE } from '../constants/performance';
 
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { PlanStep } from '../types/plan';
@@ -13,8 +14,6 @@ type SessionMessages = Record<string, Message[]>;
 type SetSessionMessagesRef = RefObject<Dispatch<SetStateAction<SessionMessages>>>;
 
 type UpdateMessages = (updater: SetStateAction<SessionMessages>) => void;
-
-const ASSISTANT_APPEND_GRACE_MS = 1500;
 
 export type CodexMessageHandlers = {
   appendThoughtChunk: (sessionId: string, text: string) => void;
@@ -105,7 +104,7 @@ export function createCodexMessageHandlers(
         lastMessage?.role === 'assistant' &&
         lastMessage.isStreaming === false &&
         timeSinceCloseMs !== undefined &&
-        timeSinceCloseMs <= ASSISTANT_APPEND_GRACE_MS;
+        timeSinceCloseMs <= PERFORMANCE.ASSISTANT_APPEND_GRACE_MS;
 
       devDebug('[appendAssistantChunk]', {
         sessionId,

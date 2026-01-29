@@ -6,13 +6,11 @@ import { Markdown } from '../../ui/data-display/Markdown';
 import { ToolCall } from '../../ui/feedback/ToolCall';
 import { cn } from '../../../utils/cn';
 import { useTypewriterText } from '../../../hooks/useTypewriterText';
+import { PERFORMANCE } from '../../../constants/performance';
 
 import type { ChatMessageProps } from './types';
 
 import './ChatMessage.css';
-
-const TYPEWRITER_SPEED = 120;
-const TYPEWRITER_MAX_CHARS = 12;
 
 export const ChatMessage = memo(function ChatMessage({
   role,
@@ -36,8 +34,8 @@ export const ChatMessage = memo(function ChatMessage({
   const streamedContent = useTypewriterText(
     content,
     role === 'assistant' && isStreaming,
-    TYPEWRITER_SPEED,
-    TYPEWRITER_MAX_CHARS
+    PERFORMANCE.TYPEWRITER_SPEED_CHARS_PER_SEC,
+    PERFORMANCE.TYPEWRITER_MAX_CHARS_PER_FRAME
   );
 
   const thoughtContent =
