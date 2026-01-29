@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { memo, useCallback, useMemo, useRef } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
@@ -23,18 +23,27 @@ import type { SelectOption } from '../../ui/data-entry/Select/types';
 
 import './ChatInput.css';
 
+// Pre-created icon elements to avoid recreating on each render
+const ICON_CHAT_18 = <ChatIcon size={18} />;
+const ICON_ROBOT_18 = <RobotIcon size={18} />;
+const ICON_FORWARD_18 = <ForwardIcon size={18} />;
+const ICON_NOTEBOOK_18 = <NotebookIcon size={18} />;
+const ICON_CHAT_16 = <ChatIcon size={16} />;
+const ICON_PLUS_20 = <PlusIcon size={20} />;
+const ICON_SEND_20 = <SendIcon size={20} />;
+
 const buildAgentOptions = (t: TFunction): SelectOption[] => [
-  { value: 'chat', label: t('chatInput.agentOptions.chat'), icon: <ChatIcon size={18} /> },
-  { value: 'agent', label: t('chatInput.agentOptions.agent'), icon: <RobotIcon size={18} /> },
+  { value: 'chat', label: t('chatInput.agentOptions.chat'), icon: ICON_CHAT_18 },
+  { value: 'agent', label: t('chatInput.agentOptions.agent'), icon: ICON_ROBOT_18 },
   {
     value: 'agent-full',
     label: t('chatInput.agentOptions.agentFull'),
-    icon: <ForwardIcon size={18} />,
+    icon: ICON_FORWARD_18,
   },
   {
     value: 'custom',
     label: t('chatInput.agentOptions.custom'),
-    icon: <NotebookIcon size={18} />,
+    icon: ICON_NOTEBOOK_18,
   },
 ];
 
@@ -47,24 +56,24 @@ const resolveAgentIcon = (
   if (mapped) return mapped;
   const token = `${option.value ?? ''} ${option.label ?? ''}`.toLowerCase().replace(/_/g, ' ');
   if (/read\s*only|readonly|read-only/.test(token) || token.includes('chat')) {
-    return <ChatIcon size={18} />;
+    return ICON_CHAT_18;
   }
   if (/agent[-\s]*full|full\s*access|full-access/.test(token)) {
-    return <ForwardIcon size={18} />;
+    return ICON_FORWARD_18;
   }
   if (token.includes('default')) {
-    return <RobotIcon size={18} />;
+    return ICON_ROBOT_18;
   }
   if (token.includes('agent')) {
-    return <RobotIcon size={18} />;
+    return ICON_ROBOT_18;
   }
   if (token.includes('custom') || token.includes('config')) {
-    return <NotebookIcon size={18} />;
+    return ICON_NOTEBOOK_18;
   }
   return undefined;
 };
 
-export function ChatInput({
+export const ChatInput = memo(function ChatInput({
   value,
   onChange,
   onSend,
@@ -115,95 +124,112 @@ export function ChatInput({
     textareaRef,
   });
 
-  const trySend = () => {
+  const trySend = useCallback(() => {
     if (disabled) return;
     if (!trimmedValue) return;
     if (trimmedValue === '/') return;
     onResetNavigation?.();
     onSend(trimmedValue);
-  };
+  }, [disabled, trimmedValue, onResetNavigation, onSend]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (disabled) return;
-    const nativeEvent = e.nativeEvent as unknown as { isComposing?: boolean; keyCode?: number };
-    const isComposing = nativeEvent.isComposing || nativeEvent.keyCode === 229;
-    if (isComposing) return;
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (disabled) return;
+      const nativeEvent = e.nativeEvent as unknown as { isComposing?: boolean; keyCode?: number };
+      const isComposing = nativeEvent.isComposing || nativeEvent.keyCode === 229;
+      if (isComposing) return;
 
-    if (slashState.isActive && slashState.suggestions.length > 0) {
-      if (e.key === 'ArrowDown') {
+      if (slashState.isActive && slashState.suggestions.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setActiveIndex((prev) => Math.min(prev + 1, slashState.suggestions.length - 1));
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setActiveIndex((prev) => Math.max(prev - 1, 0));
+          return;
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
+          if (command) applySlashCommand(command);
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
+          if (command) applySlashCommand(command);
+          return;
+        }
+      }
+
+      // Prompt history navigation (only when not in slash command mode)
+      // ArrowUp: Navigate to previous (older) prompt when cursor is at the start
+      if (e.key === 'ArrowUp' && onNavigatePrevious) {
+        const target = e.currentTarget;
+        const isAtStart = target.selectionStart === 0 && target.selectionEnd === 0;
+        // Only navigate if cursor is at the very beginning or input is empty
+        if (isAtStart || value.trim() === '') {
+          e.preventDefault();
+          const previousPrompt = onNavigatePrevious(value);
+          if (previousPrompt !== null) {
+            onChange(previousPrompt);
+          }
+          return;
+        }
+      }
+
+      // ArrowDown: Navigate to next (newer) prompt when cursor is at the end
+      if (e.key === 'ArrowDown' && onNavigateNext) {
+        const target = e.currentTarget;
+        const isAtEnd =
+          target.selectionStart === target.value.length &&
+          target.selectionEnd === target.value.length;
+        // Only navigate if cursor is at the very end or input is empty
+        if (isAtEnd || value.trim() === '') {
+          e.preventDefault();
+          const nextPrompt = onNavigateNext();
+          if (nextPrompt !== null) {
+            onChange(nextPrompt);
+          }
+          return;
+        }
+      }
+
+      if (
+        leadingSlashToken &&
+        e.key === 'Backspace' &&
+        e.currentTarget.selectionStart === 0 &&
+        e.currentTarget.selectionEnd === 0
+      ) {
         e.preventDefault();
-        setActiveIndex((prev) => Math.min(prev + 1, slashState.suggestions.length - 1));
+        onChange(stripCommandSeparator(leadingSlashToken.tail));
+        requestAnimationFrame(() => textareaRef.current?.focus());
         return;
       }
-      if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        setActiveIndex((prev) => Math.max(prev - 1, 0));
-        return;
-      }
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
-        if (command) applySlashCommand(command);
-        return;
-      }
+
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        const command = slashState.suggestions[activeIndex] ?? slashState.suggestions[0];
-        if (command) applySlashCommand(command);
-        return;
+        trySend();
       }
-    }
-
-    // Prompt history navigation (only when not in slash command mode)
-    // ArrowUp: Navigate to previous (older) prompt when cursor is at the start
-    if (e.key === 'ArrowUp' && onNavigatePrevious) {
-      const target = e.currentTarget;
-      const isAtStart = target.selectionStart === 0 && target.selectionEnd === 0;
-      // Only navigate if cursor is at the very beginning or input is empty
-      if (isAtStart || value.trim() === '') {
-        e.preventDefault();
-        const previousPrompt = onNavigatePrevious(value);
-        if (previousPrompt !== null) {
-          onChange(previousPrompt);
-        }
-        return;
-      }
-    }
-
-    // ArrowDown: Navigate to next (newer) prompt when cursor is at the end
-    if (e.key === 'ArrowDown' && onNavigateNext) {
-      const target = e.currentTarget;
-      const isAtEnd =
-        target.selectionStart === target.value.length &&
-        target.selectionEnd === target.value.length;
-      // Only navigate if cursor is at the very end or input is empty
-      if (isAtEnd || value.trim() === '') {
-        e.preventDefault();
-        const nextPrompt = onNavigateNext();
-        if (nextPrompt !== null) {
-          onChange(nextPrompt);
-        }
-        return;
-      }
-    }
-
-    if (
-      leadingSlashToken &&
-      e.key === 'Backspace' &&
-      e.currentTarget.selectionStart === 0 &&
-      e.currentTarget.selectionEnd === 0
-    ) {
-      e.preventDefault();
-      onChange(stripCommandSeparator(leadingSlashToken.tail));
-      requestAnimationFrame(() => textareaRef.current?.focus());
-      return;
-    }
-
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      trySend();
-    }
-  };
+    },
+    [
+      disabled,
+      slashState.isActive,
+      slashState.suggestions,
+      activeIndex,
+      setActiveIndex,
+      applySlashCommand,
+      onNavigatePrevious,
+      onNavigateNext,
+      value,
+      onChange,
+      leadingSlashToken,
+      stripCommandSeparator,
+      trySend,
+    ]
+  );
 
   const hasContent = trimmedValue.length > 0 && trimmedValue !== '/';
 
@@ -215,7 +241,7 @@ export function ChatInput({
     if (!leadingSlashToken) return null;
     const match = resolvedAgentOptions.find((opt) => opt.value === leadingSlashToken.command);
     if (match) return match.icon;
-    return <ChatIcon size={16} />;
+    return ICON_CHAT_16;
   }, [leadingSlashToken, resolvedAgentOptions]);
 
   const textAreaValue = leadingSlashToken ? stripCommandSeparator(leadingSlashToken.tail) : value;
@@ -223,13 +249,16 @@ export function ChatInput({
     'chat-input__textarea',
     leadingSlashToken && 'chat-input__textarea--with-pill'
   );
-  const handleTextAreaChange = (nextValue: string) => {
-    if (leadingSlashToken) {
-      onChange(buildSlashCommandValue(leadingSlashToken.command, nextValue));
-      return;
-    }
-    onChange(nextValue);
-  };
+  const handleTextAreaChange = useCallback(
+    (nextValue: string) => {
+      if (leadingSlashToken) {
+        onChange(buildSlashCommandValue(leadingSlashToken.command, nextValue));
+        return;
+      }
+      onChange(nextValue);
+    },
+    [leadingSlashToken, onChange, buildSlashCommandValue]
+  );
 
   const textArea = (
     <TextArea
@@ -298,7 +327,7 @@ export function ChatInput({
       <div className="chat-input__toolbar">
         <div className="chat-input__toolbar-left">
           <IconButton
-            icon={<PlusIcon size={20} />}
+            icon={ICON_PLUS_20}
             onClick={onAddClick}
             aria-label={t('common.add')}
             size="sm"
@@ -309,7 +338,7 @@ export function ChatInput({
             options={resolvedAgentOptions}
             value={selectedAgent}
             onChange={onAgentChange}
-            icon={<RobotIcon size={18} />}
+            icon={ICON_ROBOT_18}
             borderless
             size="sm"
             disabled={disabled}
@@ -330,7 +359,7 @@ export function ChatInput({
             aria-label={t('chatInput.selectModel')}
           />
           <IconButton
-            icon={<SendIcon size={20} />}
+            icon={ICON_SEND_20}
             onClick={trySend}
             aria-label={t('common.send')}
             size="sm"
@@ -345,6 +374,8 @@ export function ChatInput({
       </div>
     </div>
   );
-}
+});
+
+ChatInput.displayName = 'ChatInput';
 
 export type { ChatInputProps } from './types';
