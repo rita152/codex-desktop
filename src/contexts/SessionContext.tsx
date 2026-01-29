@@ -25,6 +25,8 @@ import { useSessionPersistence } from '../hooks/useSessionPersistence';
 import { useSessionMeta } from '../hooks/useSessionMeta';
 import { useSelectOptionsCache } from '../hooks/useSelectOptionsCache';
 import { useSessionViewState } from '../hooks/useSessionViewState';
+import { useFileAndCwdActions } from '../hooks/useFileAndCwdActions';
+import { useRemoteCwdPicker } from '../hooks/useRemoteCwdPicker';
 import {
   loadModeOptionsCache,
   loadModelOptionsCache,
@@ -111,6 +113,12 @@ interface SessionContextValue {
   handleNewChat: () => void;
   handleSessionSelect: (sessionId: string) => void;
   handleSessionRename: (sessionId: string, newTitle: string) => void;
+
+  // File and CWD Actions
+  handleCwdSelect: (cwd: string | null) => void;
+  handleSelectCwd: () => Promise<void>;
+  handleAddFile: () => Promise<void>;
+  handleFileSelect: (filePath: string) => void;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -269,6 +277,20 @@ export function SessionProvider({ children }: SessionProviderProps) {
     [setSessions]
   );
 
+  // File and CWD actions
+  const pickRemoteCwd = useRemoteCwdPicker();
+  const { handleCwdSelect, handleSelectCwd, handleAddFile, handleFileSelect } =
+    useFileAndCwdActions({
+      t,
+      selectedSessionId,
+      selectedCwd,
+      pickRemoteCwd,
+      setSessions,
+      setSessionDrafts,
+      setSessionNotices,
+      clearSessionNotice,
+    });
+
   // Derived: current active plan from messages
   const currentPlan = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
@@ -388,6 +410,12 @@ export function SessionProvider({ children }: SessionProviderProps) {
       handleNewChat,
       handleSessionSelect,
       handleSessionRename,
+
+      // File and CWD Actions
+      handleCwdSelect,
+      handleSelectCwd,
+      handleAddFile,
+      handleFileSelect,
     }),
     [
       sessions,
@@ -431,6 +459,10 @@ export function SessionProvider({ children }: SessionProviderProps) {
       handleNewChat,
       handleSessionSelect,
       handleSessionRename,
+      handleCwdSelect,
+      handleSelectCwd,
+      handleAddFile,
+      handleFileSelect,
     ]
   );
 

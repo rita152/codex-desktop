@@ -21,6 +21,8 @@ import { useTranslation } from 'react-i18next';
 import { useCodexSessionSync } from '../hooks/useCodexSessionSync';
 import { useApprovalState } from '../hooks/useApprovalState';
 import { useApprovalCards } from '../hooks/useApprovalCards';
+import { useMessageQueue } from '../hooks/useMessageQueue';
+import { usePromptHistory } from '../hooks/usePromptHistory';
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from '../api/codex';
 import { terminalKill } from '../api/terminal';
 import { useSessionContext } from './SessionContext';
@@ -32,22 +34,30 @@ import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
 import type { ApprovalRequest } from '../types/codex';
 import type { ApprovalProps, ApprovalStatus } from '../components/ui/feedback/Approval';
+import type { QueuedMessage } from '../hooks/useMessageQueue';
 
 // Types
 interface CodexContextValue {
-  // Codex session functions
-  clearCodexSession: (chatSessionId: string) => void;
-  ensureCodexSession: (chatSessionId: string) => Promise<string>;
-  getCodexSessionId: (chatSessionId: string) => string | undefined;
-  resolveChatSessionId: (codexSessionId?: string) => string | null;
-
   // Codex actions
   handleModelChange: (modelId: string) => Promise<void>;
   handleModeChange: (modeId: string) => Promise<void>;
-  doSendMessage: (sessionId: string, content: string) => void;
   handleSessionDelete: (sessionId: string) => void;
 
-  // Approval state and cards
+  // Message queue
+  currentQueue: QueuedMessage[];
+  hasQueuedMessages: boolean;
+  handleSendMessage: (content: string) => void;
+  handleClearQueue: () => void;
+  handleRemoveFromQueue: (messageId: string) => void;
+  handleMoveToTopInQueue: (messageId: string) => void;
+  handleEditInQueue: (messageId: string) => void;
+
+  // Prompt history
+  navigateToPreviousPrompt: (currentDraft: string) => string | null;
+  navigateToNextPrompt: () => string | null;
+  resetPromptNavigation: () => void;
+
+  // Approval cards
   approvalCards: ApprovalProps[];
 }
 
@@ -78,12 +88,14 @@ export function CodexProvider({ children }: CodexProviderProps) {
     setSessionModelOptions,
     applyModelOptions,
     applyModeOptions,
+    isGeneratingBySession,
     setIsGeneratingBySession,
     terminalBySession,
     setTerminalBySession,
     activeSessionIdRef,
     activeSession,
     selectedCwd,
+    handleDraftChange,
   } = useSessionContext();
 
   // Approval state
@@ -362,32 +374,104 @@ export function CodexProvider({ children }: CodexProviderProps) {
     t,
   });
 
+  // Message queue
+  const {
+    currentQueue,
+    hasQueuedMessages,
+    enqueueMessage,
+    clearQueue,
+    removeFromQueue,
+    moveToTop,
+  } = useMessageQueue({
+    selectedSessionId,
+    isGeneratingBySession,
+    onSendMessage: doSendMessage,
+  });
+
+  // Prompt history for arrow key navigation
+  const {
+    addToHistory,
+    goToPrevious: navigateToPreviousPrompt,
+    goToNext: navigateToNextPrompt,
+    resetNavigation: resetPromptNavigation,
+  } = usePromptHistory();
+
+  // Message queue handlers
+  const handleSendMessage = useCallback(
+    (content: string) => {
+      addToHistory(content);
+      enqueueMessage(content);
+    },
+    [addToHistory, enqueueMessage]
+  );
+
+  const handleClearQueue = useCallback(() => {
+    clearQueue(selectedSessionId);
+  }, [clearQueue, selectedSessionId]);
+
+  const handleRemoveFromQueue = useCallback(
+    (messageId: string) => {
+      removeFromQueue(selectedSessionId, messageId);
+    },
+    [removeFromQueue, selectedSessionId]
+  );
+
+  const handleMoveToTopInQueue = useCallback(
+    (messageId: string) => {
+      moveToTop(selectedSessionId, messageId);
+    },
+    [moveToTop, selectedSessionId]
+  );
+
+  const handleEditInQueue = useCallback(
+    (messageId: string) => {
+      const message = currentQueue.find((msg) => msg.id === messageId);
+      if (message) {
+        handleDraftChange(message.content);
+        removeFromQueue(selectedSessionId, messageId);
+      }
+    },
+    [currentQueue, handleDraftChange, removeFromQueue, selectedSessionId]
+  );
+
   const value = useMemo<CodexContextValue>(
     () => ({
-      // Codex session functions
-      clearCodexSession,
-      ensureCodexSession,
-      getCodexSessionId,
-      resolveChatSessionId,
-
       // Codex actions
       handleModelChange,
       handleModeChange,
-      doSendMessage,
       handleSessionDelete,
+
+      // Message queue
+      currentQueue,
+      hasQueuedMessages,
+      handleSendMessage,
+      handleClearQueue,
+      handleRemoveFromQueue,
+      handleMoveToTopInQueue,
+      handleEditInQueue,
+
+      // Prompt history
+      navigateToPreviousPrompt,
+      navigateToNextPrompt,
+      resetPromptNavigation,
 
       // Approval cards
       approvalCards,
     }),
     [
-      clearCodexSession,
-      ensureCodexSession,
-      getCodexSessionId,
-      resolveChatSessionId,
       handleModelChange,
       handleModeChange,
-      doSendMessage,
       handleSessionDelete,
+      currentQueue,
+      hasQueuedMessages,
+      handleSendMessage,
+      handleClearQueue,
+      handleRemoveFromQueue,
+      handleMoveToTopInQueue,
+      handleEditInQueue,
+      navigateToPreviousPrompt,
+      navigateToNextPrompt,
+      resetPromptNavigation,
       approvalCards,
     ]
   );

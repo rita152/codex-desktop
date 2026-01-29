@@ -7,11 +7,7 @@ const SettingsModal = lazy(() =>
   import('./components/business/SettingsModal').then((module) => ({ default: module.SettingsModal }))
 );
 import { usePanelResize } from './hooks/usePanelResize';
-import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
-import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
-import { useMessageQueue } from './hooks/useMessageQueue';
-import { usePromptHistory } from './hooks/usePromptHistory';
 import {
   UIProvider,
   useUIContext,
@@ -51,11 +47,8 @@ function AppContent() {
   // Session Context - session state, derived data, and actions
   const {
     sessions,
-    setSessions,
     selectedSessionId,
-    setSessionDrafts,
     setSessionNotices,
-    clearSessionNotice,
     applyModelOptions,
     setTerminalBySession,
     messages,
@@ -70,25 +63,39 @@ function AppContent() {
     isGenerating,
     cwdLocked,
     activeTerminalId,
-    isGeneratingBySession,
     currentPlan,
     // Session Actions
     handleDraftChange,
     handleNewChat,
     handleSessionSelect,
     handleSessionRename,
+    // File and CWD Actions
+    handleCwdSelect,
+    handleSelectCwd,
+    handleAddFile,
+    handleFileSelect,
   } = useSessionContext();
 
-  // Codex Context - backend communication and actions
+  // Codex Context - backend communication, queue, and actions
   const {
     handleModelChange,
     handleModeChange,
-    doSendMessage,
     handleSessionDelete,
+    // Message queue
+    currentQueue,
+    hasQueuedMessages,
+    handleSendMessage,
+    handleClearQueue,
+    handleRemoveFromQueue,
+    handleMoveToTopInQueue,
+    handleEditInQueue,
+    // Prompt history
+    navigateToPreviousPrompt,
+    navigateToNextPrompt,
+    resetPromptNavigation,
+    // Approvals
     approvalCards,
   } = useCodexContext();
-
-  const pickRemoteCwd = useRemoteCwdPicker();
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
 
@@ -135,83 +142,6 @@ function AppContent() {
       });
     },
     [applyModelOptions]
-  );
-
-  const { handleCwdSelect, handleSelectCwd, handleAddFile, handleFileSelect } =
-    useFileAndCwdActions({
-      t,
-      selectedSessionId,
-      selectedCwd,
-      pickRemoteCwd,
-      setSessions,
-      setSessionDrafts,
-      setSessionNotices,
-      clearSessionNotice,
-    });
-
-  // 消息队列 Hook
-  const {
-    currentQueue,
-    hasQueuedMessages,
-    enqueueMessage,
-    clearQueue,
-    removeFromQueue,
-    moveToTop,
-  } = useMessageQueue({
-    selectedSessionId,
-    isGeneratingBySession,
-    onSendMessage: doSendMessage,
-  });
-
-  // Prompt history hook for arrow key navigation
-  const {
-    addToHistory,
-    goToPrevious: navigateToPreviousPrompt,
-    goToNext: navigateToNextPrompt,
-    resetNavigation: resetPromptNavigation,
-  } = usePromptHistory();
-
-  // 对外暴露的发送消息处理：支持排队
-  const handleSendMessage = useCallback(
-    (content: string) => {
-      addToHistory(content);
-      enqueueMessage(content);
-    },
-    [addToHistory, enqueueMessage]
-  );
-
-  // 清空当前会话的队列
-  const handleClearQueue = useCallback(() => {
-    clearQueue(selectedSessionId);
-  }, [clearQueue, selectedSessionId]);
-
-  // 从队列中移除消息
-  const handleRemoveFromQueue = useCallback(
-    (messageId: string) => {
-      removeFromQueue(selectedSessionId, messageId);
-    },
-    [removeFromQueue, selectedSessionId]
-  );
-
-  // 将消息移到队首
-  const handleMoveToTopInQueue = useCallback(
-    (messageId: string) => {
-      moveToTop(selectedSessionId, messageId);
-    },
-    [moveToTop, selectedSessionId]
-  );
-
-  // 编辑当前消息：从队列移除并放到输入框
-  const handleEditInQueue = useCallback(
-    (messageId: string) => {
-      const queue = currentQueue;
-      const message = queue.find((msg) => msg.id === messageId);
-      if (message) {
-        handleDraftChange(message.content);
-        removeFromQueue(selectedSessionId, messageId);
-      }
-    },
-    [currentQueue, handleDraftChange, removeFromQueue, selectedSessionId]
   );
 
   return (
@@ -264,9 +194,9 @@ function AppContent() {
         onSettingsClick={openSettings}
         bodyRef={bodyRef}
         onFileSelect={handleFileSelect}
-        onNavigatePreviousPrompt={navigateToPreviousPrompt}
-        onNavigateNextPrompt={navigateToNextPrompt}
-        onResetPromptNavigation={resetPromptNavigation}
+        onNavigatePreviousPrompt={(currentDraft) => navigateToPreviousPrompt(currentDraft)}
+        onNavigateNextPrompt={() => navigateToNextPrompt()}
+        onResetPromptNavigation={() => resetPromptNavigation()}
       />
       {settingsOpen && (
         <Suspense fallback={null}>
