@@ -1,4 +1,5 @@
 .plan {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
@@ -6,6 +7,63 @@
   background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
   border: var(--border-width-thin) solid var(--color-border);
+  transition: all 0.2s ease-in-out;
+}
+
+.plan__controls {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 5;
+}
+
+.plan__toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plan__toggle-btn:hover {
+  background-color: var(--color-bg-hover);
+  color: var(--color-text);
+}
+
+/* Collapsed State */
+.plan--collapsed {
+  gap: 0;
+  padding: var(--spacing-sm);
+  min-height: auto;
+}
+
+.plan__collapsed-content {
+  width: 100%;
+}
+
+.plan__step--collapsed-view {
+  margin: 0;
+  padding: 2px 4px;
+  /* tighter padding */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  animation: none;
+  /* No slide in for switch */
+  padding-right: 28px;
+  /* Space for toggle button */
+}
+
+/* Ensure active indicator still visible or adjusted in simplified view */
+.plan__step--collapsed-view .plan__step-icon-wrapper {
+  margin-top: 2px;
 }
 
 .plan__header {
