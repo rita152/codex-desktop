@@ -6,9 +6,10 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { ChatMessage } from '../ChatMessage';
 import { Working } from '../../ui/feedback/Working';
 import { cn } from '../../../utils/cn';
-import { buildChatGroups, type ChatGroup } from '../../../utils/chatGroups';
+import { useChatGroups } from '../../../hooks/useChatGroups';
 import { PERFORMANCE } from '../../../constants/performance';
 
+import type { ChatGroup } from '../../../utils/chatGroups';
 import type { ChatMessageListProps } from './types';
 
 import './ChatMessageList.css';
@@ -79,10 +80,14 @@ export const ChatMessageList = memo(function ChatMessageList({
     () => (approvals ? approvals.map((approval) => approval.callId).join('|') : ''),
     [approvals]
   );
-  const groups = useMemo(
-    () => buildChatGroups(messages, approvals, isGenerating),
-    [messages, approvals, isGenerating]
-  );
+
+  // Use the useChatGroups hook for building and managing groups
+  const { groups, lastWorkingGroupId } = useChatGroups({
+    messages,
+    approvals,
+    isGenerating,
+  });
+
   const hasStreaming = useMemo(
     () =>
       messages.some(
@@ -108,13 +113,6 @@ export const ChatMessageList = memo(function ChatMessageList({
     overscan: PERFORMANCE.MESSAGE_OVERSCAN,
     getItemKey: (index) => groups[index]?.id ?? index,
   });
-  const lastWorkingId = useMemo(() => {
-    for (let i = groups.length - 1; i >= 0; i -= 1) {
-      const group = groups[i];
-      if (group.type === 'working') return group.id;
-    }
-    return null;
-  }, [groups]);
 
   // 检测用户是否在滚动
   useEffect(() => {
@@ -199,9 +197,9 @@ export const ChatMessageList = memo(function ChatMessageList({
           />
         );
       } else {
-        const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingId;
+        const isOpen = workingOpenMap[group.id] ?? group.id === lastWorkingGroupId;
         const handleToggle = () => {
-          const fallbackOpen = group.id === lastWorkingId;
+          const fallbackOpen = group.id === lastWorkingGroupId;
           setWorkingOpenMap((prev) => ({
             ...prev,
             [group.id]: !(prev[group.id] ?? fallbackOpen),
@@ -241,7 +239,7 @@ export const ChatMessageList = memo(function ChatMessageList({
         </div>
       );
     },
-    [groups, lastWorkingId, virtualizer, workingOpenMap]
+    [groups, lastWorkingGroupId, virtualizer, workingOpenMap]
   );
 
   if (!isGenerating && messages.length === 0 && approvalCount === 0) {
