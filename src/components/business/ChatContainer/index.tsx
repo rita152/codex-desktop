@@ -8,6 +8,7 @@ import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarRightIcon } from '../../ui/data-display/Icon';
+import { Plan } from '../../ui/data-display/Plan';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -30,6 +31,7 @@ export function ChatContainer({
   messages,
   approvals,
   isGenerating = false,
+  currentPlan,
   messageQueue = [],
   hasQueuedMessages = false,
   onClearQueue,
@@ -201,6 +203,13 @@ export function ChatContainer({
                     className="chat-container__queue-indicator"
                   />
                 </Suspense>
+              )}
+              {currentPlan && currentPlan.length > 0 && (
+                <Plan
+                  steps={currentPlan}
+                  title={t('chat.planTitle')}
+                  className="chat-container__plan"
+                />
               )}
               <ChatInput
                 value={inputValue}

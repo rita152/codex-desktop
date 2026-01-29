@@ -7,6 +7,7 @@ import type { SelectOption } from '../../ui/data-entry/Select/types';
 import type { SessionNotice } from '../../../hooks/useSessionMeta';
 import type { QueuedMessage } from '../../../hooks/useMessageQueue';
 import type { SidePanelTab } from '../UnifiedSidePanel';
+import type { PlanStep } from '../../../types/plan';
 
 export interface ChatContainerProps {
   /** 会话列表 */
@@ -23,6 +24,8 @@ export interface ChatContainerProps {
   approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
+  /** 当前执行计划步骤（固定显示在 ChatInput 上方） */
+  currentPlan?: PlanStep[];
   /** 消息队列 */
   messageQueue?: QueuedMessage[];
   /** 是否有排队中的消息 */

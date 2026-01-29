@@ -318,6 +318,36 @@
   margin: 0 auto var(--spacing-sm);
 }
 
+/* Plan Component (fixed above ChatInput) */
+.chat-container__plan {
+  max-width: 768px;
+  min-width: 200px;
+  margin: 0 auto var(--spacing-sm);
+  background-color: var(--color-bg-subtle);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  padding: var(--spacing-sm);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.chat-container__plan .plan__header {
+  font-size: 12px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.chat-container__plan .plan__step {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.chat-container__plan .plan__step-title {
+  font-size: 12px;
+}
+
+.chat-container__plan .plan__step-description {
+  font-size: 11px;
+}
+
 /* File Browser Panel Integration */
 .chat-container__main--file-browser-open {
   margin-right: 0;

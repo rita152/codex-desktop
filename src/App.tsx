@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -188,6 +188,16 @@ export function App() {
     defaultModeId: DEFAULT_MODE_ID,
     defaultSlashCommands: DEFAULT_SLASH_COMMANDS,
   });
+
+  // Extract current active plan from messages (last message with planSteps)
+  const currentPlan = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].planSteps && messages[i].planSteps!.length > 0) {
+        return messages[i].planSteps;
+      }
+    }
+    return undefined;
+  }, [messages]);
 
   useTerminalLifecycle({
     terminalVisible: sidePanelVisible && activeSidePanelTab === 'terminal', // Sync lifecycle with unified state
@@ -670,6 +680,7 @@ export function App() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
+        currentPlan={currentPlan}
         messageQueue={currentQueue}
         hasQueuedMessages={hasQueuedMessages}
         onClearQueue={handleClearQueue}
