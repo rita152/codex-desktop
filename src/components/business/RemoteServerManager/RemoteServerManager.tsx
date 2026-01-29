@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useRemoteServers } from '../../../hooks/useRemoteServers';
@@ -11,7 +11,9 @@ type RemoteServerManagerProps = {
   hideTitle?: boolean;
 };
 
-export function RemoteServerManager({ hideTitle = false }: RemoteServerManagerProps) {
+export const RemoteServerManager = memo(function RemoteServerManager({
+  hideTitle = false,
+}: RemoteServerManagerProps) {
   const { t } = useTranslation();
   const { servers, loading, error, testConnection } = useRemoteServers();
   const [testingServer, setTestingServer] = useState<string | null>(null);
@@ -114,4 +116,6 @@ export function RemoteServerManager({ hideTitle = false }: RemoteServerManagerPr
       )}
     </div>
   );
-}
+});
+
+RemoteServerManager.displayName = 'RemoteServerManager';

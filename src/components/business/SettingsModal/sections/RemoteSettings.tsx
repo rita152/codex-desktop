@@ -3,10 +3,11 @@
  * Integrates existing RemoteServerManager component
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { RemoteServerManager } from '../../RemoteServerManager';
 
-export function RemoteSettings() {
+export const RemoteSettings = memo(function RemoteSettings() {
   const { t } = useTranslation();
 
   return (
@@ -23,4 +24,6 @@ export function RemoteSettings() {
       </div>
     </div>
   );
-}
+});
+
+RemoteSettings.displayName = 'RemoteSettings';

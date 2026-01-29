@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -45,7 +45,7 @@ function ChevronLeftIcon({ size = 14, className = '' }: { size?: number; classNa
   );
 }
 
-export function DirectorySelector({
+export const DirectorySelector = memo(function DirectorySelector({
   currentCwd,
   cwdLocked,
   onPickLocalCwd,
@@ -284,4 +284,6 @@ export function DirectorySelector({
       )}
     </div>
   );
-}
+});
+
+DirectorySelector.displayName = 'DirectorySelector';

@@ -2,6 +2,7 @@
  * General Settings Section
  */
 
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   GeneralSettings as GeneralSettingsType,
@@ -16,7 +17,10 @@ interface GeneralSettingsProps {
   onUpdate: (values: Partial<GeneralSettingsType>) => void;
 }
 
-export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
+export const GeneralSettings = memo(function GeneralSettings({
+  settings,
+  onUpdate,
+}: GeneralSettingsProps) {
   const { t, i18n } = useTranslation();
 
   const handleLanguageChange = (value: LanguageOption) => {
@@ -70,4 +74,6 @@ export function GeneralSettings({ settings, onUpdate }: GeneralSettingsProps) {
       </div>
     </div>
   );
-}
+});
+
+GeneralSettings.displayName = 'GeneralSettings';

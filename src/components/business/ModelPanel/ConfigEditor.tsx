@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useTranslation } from 'react-i18next';
 import { readTextFile, writeTextFile } from '@tauri-apps/plugin-fs';
@@ -21,7 +21,10 @@ type MonacoEditorInstance = {
   ) => { dispose?: () => void } | void;
 };
 
-export function ConfigEditor({ filename, language }: ConfigEditorProps) {
+export const ConfigEditor = memo(function ConfigEditor({
+  filename,
+  language,
+}: ConfigEditorProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [configPath, setConfigPath] = useState('');
@@ -225,4 +228,6 @@ export function ConfigEditor({ filename, language }: ConfigEditorProps) {
       </div>
     </div>
   );
-}
+});
+
+ConfigEditor.displayName = 'ConfigEditor';

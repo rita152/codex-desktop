@@ -2,7 +2,7 @@
  * Shortcut Settings Section
  */
 
-import { useState, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ShortcutSettings as ShortcutSettingsType } from '../../../../types/settings';
 import { Button } from '../../../ui/data-entry/Button';
@@ -19,7 +19,12 @@ interface ShortcutItemProps {
   onChange: (value: string) => void;
 }
 
-function ShortcutItem({ label, description, value, onChange }: ShortcutItemProps) {
+const ShortcutItem = memo(function ShortcutItem({
+  label,
+  description,
+  value,
+  onChange,
+}: ShortcutItemProps) {
   const { t } = useTranslation();
   const [isRecording, setIsRecording] = useState(false);
   const [recordedKeys, setRecordedKeys] = useState<string[]>([]);
@@ -108,9 +113,14 @@ function ShortcutItem({ label, description, value, onChange }: ShortcutItemProps
       </div>
     </div>
   );
-}
+});
 
-export function ShortcutSettings({ settings, onUpdate }: ShortcutSettingsProps) {
+ShortcutItem.displayName = 'ShortcutItem';
+
+export const ShortcutSettings = memo(function ShortcutSettings({
+  settings,
+  onUpdate,
+}: ShortcutSettingsProps) {
   const { t } = useTranslation();
 
   const shortcuts: { key: keyof ShortcutSettingsType; labelKey: string; descKey?: string }[] = [
@@ -141,4 +151,6 @@ export function ShortcutSettings({ settings, onUpdate }: ShortcutSettingsProps) 
       ))}
     </div>
   );
-}
+});
+
+ShortcutSettings.displayName = 'ShortcutSettings';

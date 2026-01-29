@@ -2,7 +2,7 @@
  * Approval Settings Section
  */
 
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   ApprovalSettings as ApprovalSettingsType,
@@ -18,7 +18,10 @@ interface ApprovalSettingsProps {
   onUpdate: (values: Partial<ApprovalSettingsType>) => void;
 }
 
-export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) {
+export const ApprovalSettings = memo(function ApprovalSettings({
+  settings,
+  onUpdate,
+}: ApprovalSettingsProps) {
   const { t } = useTranslation();
   const [newCommand, setNewCommand] = useState('');
 
@@ -180,4 +183,6 @@ export function ApprovalSettings({ settings, onUpdate }: ApprovalSettingsProps) 
       </div>
     </div>
   );
-}
+});
+
+ApprovalSettings.displayName = 'ApprovalSettings';

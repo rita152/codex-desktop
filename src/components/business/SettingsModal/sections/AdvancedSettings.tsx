@@ -2,7 +2,7 @@
  * Advanced Settings Section
  */
 
-import { useState, useRef } from 'react';
+import { memo, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   AdvancedSettings as AdvancedSettingsType,
@@ -23,7 +23,7 @@ interface AdvancedSettingsProps {
   onExportSettings?: () => AppSettings | null;
 }
 
-export function AdvancedSettings({
+export const AdvancedSettings = memo(function AdvancedSettings({
   settings,
   onUpdate,
   onReset,
@@ -319,4 +319,6 @@ export function AdvancedSettings({
       </div>
     </div>
   );
-}
+});
+
+AdvancedSettings.displayName = 'AdvancedSettings';
