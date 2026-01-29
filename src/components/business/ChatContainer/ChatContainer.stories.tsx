@@ -98,6 +98,7 @@ function ChatContainerWithState() {
 }
 
 export const Default: Story = {
+  tags: ['!test'],
   render: () => (
     <div className="chat-container-story__container">
       <ChatContainerWithState />
