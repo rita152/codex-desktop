@@ -17,7 +17,6 @@ import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { usePanelResize } from './hooks/usePanelResize';
-import { useResponsiveVisibility } from './hooks/useResponsiveVisibility';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
 
 import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
@@ -28,6 +27,12 @@ import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useMessageQueue } from './hooks/useMessageQueue';
 import { usePromptHistory } from './hooks/usePromptHistory';
+import {
+  UIProvider,
+  useUIContext,
+  MIN_SIDE_PANEL_WIDTH,
+  MIN_CONVERSATION_WIDTH,
+} from './contexts';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
 import { resolveOptionId } from './utils/optionSelection';
@@ -37,15 +42,30 @@ import { terminalKill } from './api/terminal';
 import type { Message } from './types/message';
 import type { ChatSession } from './types/session';
 import type { SelectOption } from './types/options';
-import type { SidePanelTab } from './components/business/UnifiedSidePanel';
 import './App.css';
 
-const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
-const DEFAULT_SIDE_PANEL_WIDTH = 260;
-const MIN_SIDE_PANEL_WIDTH = 260;
-
-export function App() {
+function AppContent() {
   const { t } = useTranslation();
+
+  // UI Context - sidebar, side panel, settings
+  const {
+    sidebarVisible,
+    isNarrowLayout,
+    toggleSidebar,
+    sidePanelVisible,
+    setSidePanelVisible,
+    activeSidePanelTab,
+    setActiveSidePanelTab,
+    sidePanelWidth,
+    setSidePanelWidth,
+    settingsOpen,
+    openSettings,
+    closeSettings,
+    handleSideAction,
+    handleSidePanelClose,
+    handleSidePanelTabChange,
+  } = useUIContext();
+
   const {
     sessions,
     setSessions,
@@ -92,22 +112,10 @@ export function App() {
     setSessionOptions: setSessionModeOptions,
   });
 
-  const {
-    visible: sidebarVisible,
-    isNarrowLayout,
-    toggle: toggleSidebar,
-  } = useResponsiveVisibility(SIDEBAR_AUTO_HIDE_MAX_WIDTH, true);
   const pickRemoteCwd = useRemoteCwdPicker();
   const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
   const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
 
-  // Unified Side Panel State
-  const { visible: sidePanelVisible, setVisible: setSidePanelVisible } = useResponsiveVisibility(
-    SIDEBAR_AUTO_HIDE_MAX_WIDTH,
-    false
-  );
-  const [activeSidePanelTab, setActiveSidePanelTab] = useState<SidePanelTab>('explorer');
-  const [sidePanelWidth, setSidePanelWidth] = useState(DEFAULT_SIDE_PANEL_WIDTH);
   const {
     pendingApprovals,
     approvalStatuses,
@@ -292,8 +300,6 @@ export function App() {
     [applyModelOptions]
   );
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
-
   const { handleCwdSelect, handleSelectCwd, handleAddFile, handleFileSelect } =
     useFileAndCwdActions({
       t,
@@ -432,14 +438,6 @@ export function App() {
     [setSessions]
   );
 
-  const handleSettingsClick = useCallback(() => {
-    setSettingsOpen(true);
-  }, []);
-
-  const handleSettingsClose = useCallback(() => {
-    setSettingsOpen(false);
-  }, []);
-
   const handleModelChange = useCallback(
     async (modelId: string) => {
       const sessionId = selectedSessionId;
@@ -523,32 +521,6 @@ export function App() {
       t,
     ]
   );
-
-  const handleSideAction = useCallback(
-    (actionId: string) => {
-      // Map simple IDs to our strongly typed SidePanelTab
-      // 'explorer' | 'git' | 'terminal' | 'remote'
-      const tabId = actionId as SidePanelTab;
-
-      if (sidePanelVisible && activeSidePanelTab === tabId) {
-        // Toggle off if clicking the same active tab
-        setSidePanelVisible(false);
-      } else {
-        // Switch tab and ensure open
-        setActiveSidePanelTab(tabId);
-        setSidePanelVisible(true);
-      }
-    },
-    [sidePanelVisible, activeSidePanelTab, setSidePanelVisible]
-  );
-
-  const handleSidePanelClose = useCallback(() => {
-    setSidePanelVisible(false);
-  }, [setSidePanelVisible]);
-
-  const handleSidePanelTabChange = useCallback((tab: SidePanelTab) => {
-    setActiveSidePanelTab(tab);
-  }, []);
 
   // 实际发送消息到后端的处理函数
   const doSendMessage = useCallback(
@@ -726,7 +698,7 @@ export function App() {
         onSessionDelete={handleSessionDelete}
         onSessionRename={handleSessionRename}
         onSidebarToggle={isNarrowLayout ? undefined : toggleSidebar}
-        onSettingsClick={handleSettingsClick}
+        onSettingsClick={openSettings}
         bodyRef={bodyRef}
         onFileSelect={handleFileSelect}
         onNavigatePreviousPrompt={navigateToPreviousPrompt}
@@ -737,12 +709,21 @@ export function App() {
         <Suspense fallback={null}>
           <SettingsModal
             isOpen={settingsOpen}
-            onClose={handleSettingsClose}
+            onClose={closeSettings}
             availableModels={modelOptions}
             onModelOptionsResolved={handleModelOptionsFetched}
           />
         </Suspense>
       )}
     </>
+  );
+}
+
+// App component with UIProvider wrapper
+export function App() {
+  return (
+    <UIProvider>
+      <AppContent />
+    </UIProvider>
   );
 }
