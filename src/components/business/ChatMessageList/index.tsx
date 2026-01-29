@@ -100,10 +100,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     [messages]
   );
   // Memoize estimateSize function to use dynamic height estimation
-  const estimateSize = useCallback(
-    (index: number) => estimateGroupHeight(groups[index]),
-    [groups]
-  );
+  const estimateSize = useCallback((index: number) => estimateGroupHeight(groups[index]), [groups]);
 
   // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer follows hooks rules but is not recognized by this eslint rule.
   const virtualizer = useVirtualizer({

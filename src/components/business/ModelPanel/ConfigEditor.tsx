@@ -21,10 +21,7 @@ type MonacoEditorInstance = {
   ) => { dispose?: () => void } | void;
 };
 
-export const ConfigEditor = memo(function ConfigEditor({
-  filename,
-  language,
-}: ConfigEditorProps) {
+export const ConfigEditor = memo(function ConfigEditor({ filename, language }: ConfigEditorProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
   const [configPath, setConfigPath] = useState('');

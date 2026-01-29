@@ -103,13 +103,8 @@ export function useCurrentCwd() {
 
 /** Get session list and actions */
 export function useSessionList() {
-  const {
-    sessions,
-    selectedSessionId,
-    handleSessionSelect,
-    handleNewChat,
-    handleSessionRename,
-  } = useSessionContext();
+  const { sessions, selectedSessionId, handleSessionSelect, handleNewChat, handleSessionRename } =
+    useSessionContext();
 
   return {
     sessions,

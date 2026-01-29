@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { ChatContainer } from './components/business/ChatContainer';
 
 const SettingsModal = lazy(() =>
-  import('./components/business/SettingsModal').then((module) => ({ default: module.SettingsModal }))
+  import('./components/business/SettingsModal').then((module) => ({
+    default: module.SettingsModal,
+  }))
 );
 import { usePanelResize } from './hooks/usePanelResize';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';

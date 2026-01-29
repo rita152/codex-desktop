@@ -58,7 +58,9 @@ interface SessionContextValue {
 
   // Session metadata
   sessionNotices: Record<string, SessionNotice | undefined>;
-  setSessionNotices: React.Dispatch<React.SetStateAction<Record<string, SessionNotice | undefined>>>;
+  setSessionNotices: React.Dispatch<
+    React.SetStateAction<Record<string, SessionNotice | undefined>>
+  >;
   clearSessionNotice: (sessionId: string) => void;
   removeSessionMeta: (sessionId: string, newSessionId?: string) => void;
 

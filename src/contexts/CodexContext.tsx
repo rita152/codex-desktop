@@ -8,14 +8,7 @@
  * - Session deletion with Codex cleanup
  */
 
-import {
-  createContext,
-  useContext,
-  useCallback,
-  useMemo,
-  useEffect,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useCallback, useMemo, useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useCodexSessionSync } from '../hooks/useCodexSessionSync';
@@ -271,7 +264,14 @@ export function CodexProvider({ children }: CodexProviderProps) {
         }
       })();
     },
-    [ensureCodexSession, sessionMessages, setSessions, setSessionMessages, setIsGeneratingBySession, t]
+    [
+      ensureCodexSession,
+      sessionMessages,
+      setSessions,
+      setSessionMessages,
+      setIsGeneratingBySession,
+      t,
+    ]
   );
 
   // Session delete handler with Codex cleanup

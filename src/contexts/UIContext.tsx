@@ -8,14 +8,7 @@
  * - Layout responsiveness
  */
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from 'react';
 import { useResponsiveVisibility } from '../hooks/useResponsiveVisibility';
 import type { SidePanelTab } from '../components/business/UnifiedSidePanel';
 
