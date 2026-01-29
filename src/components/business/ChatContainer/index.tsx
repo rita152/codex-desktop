@@ -91,13 +91,12 @@ export const ChatContainer = memo(function ChatContainer({
 
   // Enable sidebar transition after initial render to prevent flicker
   useEffect(() => {
-    let raf1: number;
-    let raf2: number;
     let cancelled = false;
+    const cleanup = { raf2: 0 };
 
     // Use double RAF to ensure the browser has completed initial layout
-    raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => {
+    const raf1 = requestAnimationFrame(() => {
+      cleanup.raf2 = requestAnimationFrame(() => {
         if (!cancelled) {
           setSidebarTransitionReady(true);
         }
@@ -107,7 +106,7 @@ export const ChatContainer = memo(function ChatContainer({
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
+      cancelAnimationFrame(cleanup.raf2);
     };
   }, []);
 
