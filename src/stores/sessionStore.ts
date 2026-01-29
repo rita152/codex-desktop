@@ -67,7 +67,9 @@ interface SessionActions {
 
   // Messages actions
   setSessionMessages: (
-    messages: Record<string, Message[]> | ((prev: Record<string, Message[]>) => Record<string, Message[]>)
+    messages:
+      | Record<string, Message[]>
+      | ((prev: Record<string, Message[]>) => Record<string, Message[]>)
   ) => void;
   addMessage: (sessionId: string, message: Message) => void;
   updateMessage: (sessionId: string, messageId: string, updates: Partial<Message>) => void;
@@ -83,31 +85,49 @@ interface SessionActions {
   setSessionNotices: (
     notices:
       | Record<string, SessionNotice | undefined>
-      | ((prev: Record<string, SessionNotice | undefined>) => Record<string, SessionNotice | undefined>)
+      | ((
+          prev: Record<string, SessionNotice | undefined>
+        ) => Record<string, SessionNotice | undefined>)
   ) => void;
   setNotice: (sessionId: string, notice: SessionNotice | undefined) => void;
   clearSessionNotice: (sessionId: string) => void;
 
   // Slash commands actions
   setSessionSlashCommands: (
-    commands: Record<string, string[]> | ((prev: Record<string, string[]>) => Record<string, string[]>)
+    commands:
+      | Record<string, string[]>
+      | ((prev: Record<string, string[]>) => Record<string, string[]>)
   ) => void;
 
   // Model options actions
   setSessionModelOptions: (
-    options: Record<string, SelectOption[]> | ((prev: Record<string, SelectOption[]>) => Record<string, SelectOption[]>)
+    options:
+      | Record<string, SelectOption[]>
+      | ((prev: Record<string, SelectOption[]>) => Record<string, SelectOption[]>)
   ) => void;
-  applyModelOptions: (payload: { options: SelectOption[]; currentId?: string; fallbackCurrentId?: string }) => void;
+  applyModelOptions: (payload: {
+    options: SelectOption[];
+    currentId?: string;
+    fallbackCurrentId?: string;
+  }) => void;
 
   // Mode options actions
   setSessionModeOptions: (
-    options: Record<string, SelectOption[]> | ((prev: Record<string, SelectOption[]>) => Record<string, SelectOption[]>)
+    options:
+      | Record<string, SelectOption[]>
+      | ((prev: Record<string, SelectOption[]>) => Record<string, SelectOption[]>)
   ) => void;
-  applyModeOptions: (payload: { options: SelectOption[]; currentId?: string; fallbackCurrentId?: string }) => void;
+  applyModeOptions: (payload: {
+    options: SelectOption[];
+    currentId?: string;
+    fallbackCurrentId?: string;
+  }) => void;
 
   // Generation state actions
   setIsGeneratingBySession: (
-    generating: Record<string, boolean> | ((prev: Record<string, boolean>) => Record<string, boolean>)
+    generating:
+      | Record<string, boolean>
+      | ((prev: Record<string, boolean>) => Record<string, boolean>)
   ) => void;
   setIsGenerating: (sessionId: string, isGenerating: boolean) => void;
 
@@ -180,9 +200,7 @@ export const useSessionStore = create<SessionStore>()(
 
         updateSession: (sessionId, updates) =>
           set((state) => ({
-            sessions: state.sessions.map((s) =>
-              s.id === sessionId ? { ...s, ...updates } : s
-            ),
+            sessions: state.sessions.map((s) => (s.id === sessionId ? { ...s, ...updates } : s)),
           })),
 
         removeSession: (sessionId) =>
@@ -329,7 +347,9 @@ export const useSessionStore = create<SessionStore>()(
           const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
 
           const updates: Partial<SessionState> = {
-            sessionNotices: newSessionId ? { ...restNotices, [newSessionId]: undefined } : restNotices,
+            sessionNotices: newSessionId
+              ? { ...restNotices, [newSessionId]: undefined }
+              : restNotices,
             sessionSlashCommands: restSlash,
             sessionModelOptions: restModel,
             sessionModeOptions: restMode,
@@ -381,9 +401,7 @@ export const useSessionStore = create<SessionStore>()(
  * Get active session
  */
 export const useActiveSession = () =>
-  useSessionStore((state) =>
-    state.sessions.find((s) => s.id === state.selectedSessionId)
-  );
+  useSessionStore((state) => state.sessions.find((s) => s.id === state.selectedSessionId));
 
 /**
  * Get current session's messages
@@ -521,7 +539,7 @@ export const useSessionViewState = () =>
       selectedCwd: activeSession?.cwd,
       sessionNotice: state.sessionNotices[state.selectedSessionId] ?? null,
       agentOptions: fromModeOptions?.length ? fromModeOptions : undefined,
-      modelOptions: fromModelOptions?.length ? fromModelOptions : state.modelCache.options ?? [],
+      modelOptions: fromModelOptions?.length ? fromModelOptions : (state.modelCache.options ?? []),
       slashCommands: Array.from(new Set([...DEFAULT_SLASH_COMMANDS, ...fromSlashCommands])).sort(),
       isGenerating: state.isGeneratingBySession[state.selectedSessionId] ?? false,
       cwdLocked: messages.length > 0,
