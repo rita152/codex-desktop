@@ -174,6 +174,13 @@ export function ChatInput({
     ? { width: typeof width === 'number' ? `${width}px` : width }
     : {};
   const containerClasses = cn('chat-input', className);
+  const activeSlashIcon = useMemo(() => {
+    if (!leadingSlashToken) return null;
+    const match = resolvedAgentOptions.find((opt) => opt.value === leadingSlashToken.command);
+    if (match) return match.icon;
+    return <ChatIcon size={16} />;
+  }, [leadingSlashToken, resolvedAgentOptions]);
+
   const textAreaValue = leadingSlashToken ? stripCommandSeparator(leadingSlashToken.tail) : value;
   const textAreaClassName = cn(
     'chat-input__textarea',
@@ -186,6 +193,7 @@ export function ChatInput({
     }
     onChange(nextValue);
   };
+
   const textArea = (
     <TextArea
       value={textAreaValue}
@@ -205,14 +213,14 @@ export function ChatInput({
       {leadingSlashToken ? (
         <div className="chat-input__textarea-row">
           <Card
-            radius="full"
-            background="secondary"
-            bordered
-            borderWidth="thin"
+            radius="sm"
+            background="default"
+            bordered={false}
             padding="none"
             className="chat-input__slash-pill"
           >
-            <span className="chat-input__slash-pill-text">/{leadingSlashToken.command}</span>
+            {activeSlashIcon && <span className="chat-input__slash-icon">{activeSlashIcon}</span>}
+            <span className="chat-input__slash-pill-text">{leadingSlashToken.command}</span>
           </Card>
           {textArea}
         </div>

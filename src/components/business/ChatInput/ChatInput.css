@@ -36,19 +36,35 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 6px;
+  padding: 2px 8px;
+  /* Compact padding */
   margin-top: 0;
-  min-width: 60px;
-  color: var(--color-text);
+  min-width: auto;
+  color: var(--color-brand-pro);
+  background-color: color-mix(in srgb, var(--color-brand-pro), transparent 85%) !important;
+  border: 1px solid color-mix(in srgb, var(--color-brand-pro), transparent 80%) !important;
   flex: 0 0 auto;
+  height: 24px;
+  /* Fix height to match line-height approx */
+  box-sizing: border-box;
+  border-radius: 8px;
 }
 
 .chat-input__slash-pill-text {
   font-size: 15px;
-  line-height: 1.5;
-  font-weight: 600;
+  /* Match TextArea font size */
+  line-height: 1;
+  font-weight: 500;
   white-space: nowrap;
+  transform: translateY(1px);
+  /* Optical alignment */
+}
+
+.chat-input__slash-icon {
+  display: flex;
+  align-items: center;
+  color: inherit;
 }
 
 .chat-input__toolbar {
