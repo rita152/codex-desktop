@@ -1,0 +1,9 @@
+.chat-container-story__container {
+  width: 1100px;
+  height: 720px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  overflow: hidden;
+}

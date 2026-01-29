@@ -4,6 +4,8 @@ import type { Meta, StoryObj } from '@storybook/react';
 
 import { ChatContainer } from './index';
 
+import './ChatContainer.stories.css';
+
 import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
 
@@ -96,5 +98,9 @@ function ChatContainerWithState() {
 }
 
 export const Default: Story = {
-  render: () => <ChatContainerWithState />,
+  render: () => (
+    <div className="chat-container-story__container">
+      <ChatContainerWithState />
+    </div>
+  ),
 };
