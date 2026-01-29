@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { useCallback, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -7,22 +7,11 @@ const SettingsModal = lazy(() =>
   import('./components/business/SettingsModal').then((module) => ({ default: module.SettingsModal }))
 );
 import { initCodex, sendPrompt, setSessionMode, setSessionModel } from './api/codex';
-import {
-  loadModeOptionsCache,
-  loadModelOptionsCache,
-  saveModeOptionsCache,
-  saveModelOptionsCache,
-} from './api/storage';
 import { useApprovalCards } from './hooks/useApprovalCards';
 import { useApprovalState } from './hooks/useApprovalState';
 import { useCodexSessionSync } from './hooks/useCodexSessionSync';
 import { usePanelResize } from './hooks/usePanelResize';
 import { useRemoteCwdPicker } from './hooks/useRemoteCwdPicker';
-
-import { useSelectOptionsCache } from './hooks/useSelectOptionsCache';
-import { useSessionMeta } from './hooks/useSessionMeta';
-import { useSessionPersistence } from './hooks/useSessionPersistence';
-import { useSessionViewState } from './hooks/useSessionViewState';
 import { useFileAndCwdActions } from './hooks/useFileAndCwdActions';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useMessageQueue } from './hooks/useMessageQueue';
@@ -30,10 +19,11 @@ import { usePromptHistory } from './hooks/usePromptHistory';
 import {
   UIProvider,
   useUIContext,
+  SessionProvider,
+  useSessionContext,
   MIN_SIDE_PANEL_WIDTH,
-  MIN_CONVERSATION_WIDTH,
 } from './contexts';
-import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
+import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from './constants/chat';
 import { formatError, newMessageId } from './utils/codexParsing';
 import { resolveOptionId } from './utils/optionSelection';
 import { devDebug } from './utils/logger';
@@ -66,6 +56,7 @@ function AppContent() {
     handleSidePanelTabChange,
   } = useUIContext();
 
+  // Session Context - session state and derived data
   const {
     sessions,
     setSessions,
@@ -73,48 +64,37 @@ function AppContent() {
     setSelectedSessionId,
     sessionMessages,
     setSessionMessages,
-    sessionDrafts,
     setSessionDrafts,
-  } = useSessionPersistence();
-
-  const {
-    sessionNotices,
-    sessionSlashCommands,
-    sessionModelOptions,
-    sessionModeOptions,
     setSessionNotices,
-    setSessionSlashCommands,
-    setSessionModelOptions,
-    setSessionModeOptions,
     clearSessionNotice,
     removeSessionMeta,
-  } = useSessionMeta();
-  const { cache: modelCache, applyOptions: applyModelOptions } = useSelectOptionsCache({
-    sessions,
-    defaultId: DEFAULT_MODEL_ID,
-    loadCache: () => {
-      const cached = loadModelOptionsCache();
-      return cached ? { options: cached.options, currentId: cached.currentModelId } : null;
-    },
-    saveCache: ({ options, currentId }) =>
-      saveModelOptionsCache({ options, currentModelId: currentId }),
-    setSessionOptions: setSessionModelOptions,
-  });
-  const { applyOptions: applyModeOptions } = useSelectOptionsCache({
-    sessions,
-    defaultId: DEFAULT_MODE_ID,
-    loadCache: () => {
-      const cached = loadModeOptionsCache();
-      return cached ? { options: cached.options, currentId: cached.currentModeId } : null;
-    },
-    saveCache: ({ options, currentId }) =>
-      saveModeOptionsCache({ options, currentModeId: currentId }),
-    setSessionOptions: setSessionModeOptions,
-  });
+    setSessionSlashCommands,
+    setSessionModeOptions,
+    setSessionModelOptions,
+    modelCache,
+    applyModelOptions,
+    applyModeOptions,
+    isGeneratingBySession,
+    setIsGeneratingBySession,
+    terminalBySession,
+    setTerminalBySession,
+    activeSessionIdRef,
+    activeSession,
+    messages,
+    draftMessage,
+    selectedModel,
+    selectedMode,
+    selectedCwd,
+    sessionNotice,
+    agentOptions,
+    modelOptions,
+    slashCommands,
+    isGenerating,
+    cwdLocked,
+    activeTerminalId,
+  } = useSessionContext();
 
   const pickRemoteCwd = useRemoteCwdPicker();
-  const [terminalBySession, setTerminalBySession] = useState<Record<string, string>>({});
-  const [isGeneratingBySession, setIsGeneratingBySession] = useState<Record<string, boolean>>({});
 
   const {
     pendingApprovals,
@@ -126,7 +106,6 @@ function AppContent() {
     clearApproval,
   } = useApprovalState();
 
-  const activeSessionIdRef = useRef<string>(selectedSessionId);
   const bodyRef = useRef<HTMLDivElement | null>(null);
   // We can keep these hooks if they provide other utility, but we will ignore their visibility state for UI rendering
   // Ideally we should refactor them later to remove the UI state from them entirely if unused.
@@ -164,41 +143,6 @@ function AppContent() {
       defaultModelId: DEFAULT_MODEL_ID,
       t,
     });
-
-  useEffect(() => {
-    activeSessionIdRef.current = selectedSessionId;
-  }, [selectedSessionId]);
-
-  const {
-    activeSession,
-    messages,
-    draftMessage,
-    selectedModel,
-    selectedMode,
-    selectedCwd,
-    sessionNotice,
-    agentOptions,
-    modelOptions,
-    slashCommands,
-    isGenerating,
-    cwdLocked,
-    activeTerminalId,
-  } = useSessionViewState({
-    sessions,
-    selectedSessionId,
-    sessionMessages,
-    sessionDrafts,
-    sessionNotices,
-    sessionModeOptions,
-    sessionModelOptions,
-    sessionSlashCommands,
-    modelCache,
-    isGeneratingBySession,
-    terminalBySession,
-    defaultModelId: DEFAULT_MODEL_ID,
-    defaultModeId: DEFAULT_MODE_ID,
-    defaultSlashCommands: DEFAULT_SLASH_COMMANDS,
-  });
 
   // Extract current active plan from messages (last message with planSteps)
   // Hide plan when all steps are completed
@@ -719,11 +663,13 @@ function AppContent() {
   );
 }
 
-// App component with UIProvider wrapper
+// App component with Context Providers
 export function App() {
   return (
     <UIProvider>
-      <AppContent />
+      <SessionProvider>
+        <AppContent />
+      </SessionProvider>
     </UIProvider>
   );
 }
