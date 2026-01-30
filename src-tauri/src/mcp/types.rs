@@ -112,33 +112,6 @@ impl McpServer {
             McpServer::Sse { base, .. } => &base.id,
         }
     }
-
-    /// Get whether the server is enabled.
-    pub fn enabled(&self) -> bool {
-        match self {
-            McpServer::Stdio { base, .. } => base.enabled,
-            McpServer::Http { base, .. } => base.enabled,
-            McpServer::Sse { base, .. } => base.enabled,
-        }
-    }
-
-    /// Set the enabled status.
-    pub fn set_enabled(&mut self, enabled: bool) {
-        match self {
-            McpServer::Stdio { base, .. } => base.enabled = enabled,
-            McpServer::Http { base, .. } => base.enabled = enabled,
-            McpServer::Sse { base, .. } => base.enabled = enabled,
-        }
-    }
-
-    /// Get the server type string.
-    pub fn type_str(&self) -> &'static str {
-        match self {
-            McpServer::Stdio { .. } => "stdio",
-            McpServer::Http { .. } => "http",
-            McpServer::Sse { .. } => "sse",
-        }
-    }
 }
 
 /// Request payload for adding a new MCP server.

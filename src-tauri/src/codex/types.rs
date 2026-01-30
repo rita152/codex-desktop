@@ -1,9 +1,7 @@
 //! Serde-friendly data types used between backend and frontend.
 
 use agent_client_protocol::{
-    AuthMethod, AvailableCommandsUpdate, ConfigOptionUpdate, CurrentModeUpdate, InitializeResponse,
-    Plan, SessionConfigOption, SessionModeState, SessionModelState, SessionUpdate, ToolCall,
-    ToolCallUpdate,
+    AuthMethod, InitializeResponse, SessionConfigOption, SessionModeState, SessionModelState,
 };
 use serde::{Deserialize, Serialize};
 
@@ -85,46 +83,4 @@ pub struct CodexCliConfigInfo {
     pub env_key: Option<String>,
     /// Whether auth.json exists.
     pub auth_file_found: bool,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "kebab-case")]
-/// Union of frontend event payloads emitted by the backend.
-pub enum CodexEventPayload {
-    /// Assistant/user message chunk update.
-    MessageChunk { session_id: String, text: String },
-    /// Assistant thought chunk update.
-    ThoughtChunk { session_id: String, text: String },
-    /// New tool call information.
-    ToolCall {
-        session_id: String,
-        tool_call: ToolCall,
-    },
-    /// Tool call progress update.
-    ToolCallUpdate {
-        session_id: String,
-        update: ToolCallUpdate,
-    },
-    /// Plan update emitted by the agent.
-    Plan { session_id: String, plan: Plan },
-    /// Available command list update.
-    AvailableCommandsUpdate {
-        session_id: String,
-        update: AvailableCommandsUpdate,
-    },
-    /// Current mode update.
-    CurrentModeUpdate {
-        session_id: String,
-        update: CurrentModeUpdate,
-    },
-    /// Config option update.
-    ConfigOptionUpdate {
-        session_id: String,
-        update: ConfigOptionUpdate,
-    },
-    /// Session update that does not match known variants.
-    UnknownSessionUpdate {
-        session_id: String,
-        update: SessionUpdate,
-    },
 }

@@ -112,17 +112,6 @@ impl CodexProcess {
         let _ = self.child.wait().await;
         Ok(())
     }
-
-    /// Wait for the child process to exit.
-    pub async fn wait(&mut self) -> Result<()> {
-        let _ = self.child.wait().await?;
-        Ok(())
-    }
-
-    /// Return the OS process id of the child process.
-    pub fn pid(&self) -> Option<u32> {
-        self.child.id()
-    }
 }
 
 /// Resolve a working directory, accepting absolute or relative paths.

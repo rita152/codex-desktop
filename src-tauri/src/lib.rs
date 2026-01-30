@@ -16,12 +16,6 @@ fn init_tracing() {
     });
 }
 
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
-}
-
 /// Codex backend implementation and commands.
 pub mod codex;
 /// Development-only helpers for Codex ACP.
@@ -34,18 +28,6 @@ pub mod mcp;
 pub mod remote;
 /// Local terminal PTY integration.
 pub mod terminal;
-
-#[tauri::command]
-async fn codex_dev_prompt_once(
-    window: tauri::Window,
-    cwd: String,
-    content: String,
-) -> Result<(), String> {
-    let cwd = std::path::PathBuf::from(cwd);
-    codex_dev::run::prompt_once(window, cwd, content)
-        .await
-        .map_err(|e| e.to_string())
-}
 
 /// Start the Tauri application and register Codex commands.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -66,8 +48,6 @@ pub fn run() {
         .manage(terminal::TerminalManager::default())
         .manage(remote::RemoteServerManager::new(remote_config_path))
         .invoke_handler(tauri::generate_handler![
-            greet,
-            codex_dev_prompt_once,
             codex::commands::codex_init,
             codex::commands::codex_auth,
             codex::commands::codex_load_cli_config,

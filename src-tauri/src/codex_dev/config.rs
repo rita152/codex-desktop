@@ -113,15 +113,3 @@ fn get_string_by_path(doc: &toml::Value, path: &[&str]) -> Option<String> {
     }
     current.as_str().map(|s| s.to_string())
 }
-
-/// Redact an API key while keeping a tiny prefix/suffix for debugging.
-pub fn redact_api_key(api_key: &str) -> String {
-    // Keep a tiny prefix/suffix to help debugging without leaking secrets.
-    let trimmed = api_key.trim();
-    if trimmed.len() <= 8 {
-        return "***".to_string();
-    }
-    let prefix = &trimmed[..4];
-    let suffix = &trimmed[trimmed.len() - 4..];
-    format!("{prefix}***{suffix}")
-}

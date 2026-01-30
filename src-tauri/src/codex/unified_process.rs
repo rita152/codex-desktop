@@ -20,14 +20,6 @@ impl UnifiedProcess {
         }
     }
 
-    /// Check if the process is alive
-    pub fn is_alive(&mut self) -> bool {
-        match self {
-            UnifiedProcess::Local(process) => process.is_alive(),
-            UnifiedProcess::Remote(process) => process.is_alive(),
-        }
-    }
-
     /// Terminate the process
     pub async fn kill(&mut self) -> Result<()> {
         match self {

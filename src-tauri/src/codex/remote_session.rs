@@ -33,15 +33,6 @@ pub fn parse_remote_path(path_str: &str) -> Result<(bool, Option<String>, PathBu
     }
 }
 
-/// Build a remote path string from server ID and path
-pub fn build_remote_path(server_id: &str, remote_path: &str) -> String {
-    let mut out = String::with_capacity(REMOTE_PREFIX.len() + server_id.len() + remote_path.len());
-    out.push_str(REMOTE_PREFIX);
-    out.push_str(server_id);
-    out.push_str(remote_path);
-    out
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -61,12 +52,6 @@ mod tests {
         assert!(is_remote);
         assert_eq!(server_id, Some("server1".to_string()));
         assert_eq!(path, PathBuf::from("/home/user/project"));
-    }
-
-    #[test]
-    fn test_build_remote_path() {
-        let path = build_remote_path("server1", "/home/user/project");
-        assert_eq!(path, "remote://server1/home/user/project");
     }
 
     #[test]
