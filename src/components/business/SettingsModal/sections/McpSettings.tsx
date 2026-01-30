@@ -176,7 +176,13 @@ export const McpSettings = memo(function McpSettings() {
   };
 
   const renderAddForm = () => (
-    <Card className="mcp-add-form" radius="lg" shadow={false} background="elevated" bordered={false}>
+    <Card
+      className="mcp-add-form"
+      radius="lg"
+      shadow={false}
+      background="elevated"
+      bordered={false}
+    >
       <form onSubmit={handleSubmit}>
         <div className="mcp-add-form__header">
           <div className="mcp-add-form__icon">+</div>

@@ -1,11 +1,14 @@
 /**
  * Settings state management hook
+ *
+ * This hook provides a bridge to the settingsStore for components that
+ * need to manage application settings. It maintains backward compatibility
+ * with the existing interface while using the centralized store.
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import type { AppSettings, SettingsSection, ThemeOption } from '../types/settings';
-import { DEFAULT_SETTINGS } from '../types/settings';
+import { useSettingsStore } from '../stores';
+import type { AppSettings, SettingsSection } from '../types/settings';
 
 interface UseSettingsReturn {
   settings: AppSettings;
@@ -21,147 +24,37 @@ interface UseSettingsReturn {
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
 }
 
-// Local storage key for settings (fallback)
-const SETTINGS_STORAGE_KEY = 'codex-desktop-settings';
-const THEME_ATTRIBUTE = 'data-theme';
-
-function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'dark';
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function applyTheme(themeOption: ThemeOption) {
-  const resolvedTheme = themeOption === 'system' ? getSystemTheme() : themeOption;
-  document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedTheme);
-}
-
-// Apply theme on initial load before React hydration
-function initializeTheme() {
-  try {
-    const localSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (localSettings) {
-      const parsed = JSON.parse(localSettings) as AppSettings;
-      if (parsed.general?.theme) {
-        applyTheme(parsed.general.theme);
-        return;
-      }
-    }
-  } catch {
-    // Fall through to default
-  }
-  // Default to system theme
-  applyTheme('system');
-}
-
-// Initialize theme immediately when module loads
-initializeTheme();
-
 export function useSettings(): UseSettingsReturn {
-  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Get state and actions from the store
+  const settings = useSettingsStore((state) => state.settings);
+  const loading = useSettingsStore((state) => state.loading);
+  const error = useSettingsStore((state) => state.error);
+  const saveStatus = useSettingsStore((state) => state.saveStatus);
+  const storeUpdateSettings = useSettingsStore((state) => state.updateSettings);
+  const storeResetSettings = useSettingsStore((state) => state.resetSettings);
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+
+  // Local state for active section (UI-only, doesn't need to be in store)
   const [activeSection, setActiveSection] = useState<SettingsSection>('general');
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
-  // Load settings on mount
+  // Load settings on mount if not already loaded
   useEffect(() => {
-    loadSettings();
-  }, []);
-
-  // Apply theme when settings change
-  useEffect(() => {
-    if (!loading) {
-      applyTheme(settings.general.theme);
+    if (loading) {
+      loadSettings();
     }
-  }, [settings.general.theme, loading]);
+  }, [loading, loadSettings]);
 
-  // Listen for system theme changes when using 'system' option
-  useEffect(() => {
-    if (settings.general.theme !== 'system') return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      applyTheme('system');
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, [settings.general.theme]);
-
-  const loadSettings = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Try to load from Tauri backend first
-      const savedSettings = await invoke<AppSettings | null>('get_settings').catch(() => null);
-
-      if (savedSettings) {
-        setSettings({ ...DEFAULT_SETTINGS, ...savedSettings });
-      } else {
-        // Fallback to localStorage
-        const localSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (localSettings) {
-          const parsed = JSON.parse(localSettings) as AppSettings;
-          setSettings({ ...DEFAULT_SETTINGS, ...parsed });
-        }
-      }
-    } catch (err) {
-      console.error('Failed to load settings:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load settings');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const saveSettings = async (newSettings: AppSettings) => {
-    setSaveStatus('saving');
-
-    try {
-      // Try to save to Tauri backend
-      await invoke('save_settings', { settings: newSettings }).catch(() => {
-        // Fallback to localStorage
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
-      });
-
-      setSaveStatus('saved');
-
-      // Reset status after a delay
-      setTimeout(() => {
-        setSaveStatus('idle');
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to save settings:', err);
-      setSaveStatus('error');
-      setError(err instanceof Error ? err.message : 'Failed to save settings');
-    }
-  };
-
+  // Wrap store actions to maintain the same interface
   const updateSettings = useCallback(
     async <K extends keyof AppSettings>(section: K, values: Partial<AppSettings[K]>) => {
-      const currentSectionValue = settings[section];
-      const newSectionValue =
-        typeof currentSectionValue === 'object' && currentSectionValue !== null
-          ? { ...currentSectionValue, ...values }
-          : values;
-
-      const newSettings: AppSettings = {
-        ...settings,
-        [section]: newSectionValue,
-      };
-
-      setSettings(newSettings);
-      await saveSettings(newSettings);
+      await storeUpdateSettings(section, values);
     },
-    [settings]
+    [storeUpdateSettings]
   );
 
   const resetSettings = useCallback(async () => {
-    setSettings(DEFAULT_SETTINGS);
-    await saveSettings(DEFAULT_SETTINGS);
-  }, []);
+    await storeResetSettings();
+  }, [storeResetSettings]);
 
   return {
     settings,

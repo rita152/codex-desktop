@@ -54,127 +54,112 @@ export function useMcpServers() {
     }
   }, []);
 
-  const addServer = useCallback(
-    async (request: AddMcpServerRequest) => {
-      if (!hasTauriInvokeAvailable()) {
-        const message = 'Tauri runtime not available';
-        setError(message);
-        throw new Error(message);
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const newServer = await mcpApi.addMcpServer(request);
-        setServers((prev) => [...prev, newServer].sort((a, b) => a.base.id.localeCompare(b.base.id)));
-        return newServer;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const addServer = useCallback(async (request: AddMcpServerRequest) => {
+    if (!hasTauriInvokeAvailable()) {
+      const message = 'Tauri runtime not available';
+      setError(message);
+      throw new Error(message);
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const newServer = await mcpApi.addMcpServer(request);
+      setServers((prev) => [...prev, newServer].sort((a, b) => a.base.id.localeCompare(b.base.id)));
+      return newServer;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const addServerFromToml = useCallback(
-    async (tomlText: string) => {
-      if (!hasTauriInvokeAvailable()) {
-        const message = 'Tauri runtime not available';
-        setError(message);
-        throw new Error(message);
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const newServers = await mcpApi.addMcpServerFromToml(tomlText);
-        setServers((prev) => [...prev, ...newServers].sort((a, b) => a.base.id.localeCompare(b.base.id)));
-        return newServers;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const addServerFromToml = useCallback(async (tomlText: string) => {
+    if (!hasTauriInvokeAvailable()) {
+      const message = 'Tauri runtime not available';
+      setError(message);
+      throw new Error(message);
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const newServers = await mcpApi.addMcpServerFromToml(tomlText);
+      setServers((prev) =>
+        [...prev, ...newServers].sort((a, b) => a.base.id.localeCompare(b.base.id))
+      );
+      return newServers;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const updateServer = useCallback(
-    async (request: UpdateMcpServerRequest) => {
-      if (!hasTauriInvokeAvailable()) {
-        const message = 'Tauri runtime not available';
-        setError(message);
-        throw new Error(message);
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        const updatedServer = await mcpApi.updateMcpServer(request);
-        setServers((prev) =>
-          prev
-            .map((s) => (s.base.id === request.id ? updatedServer : s))
-            .sort((a, b) => a.base.id.localeCompare(b.base.id))
-        );
-        return updatedServer;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const updateServer = useCallback(async (request: UpdateMcpServerRequest) => {
+    if (!hasTauriInvokeAvailable()) {
+      const message = 'Tauri runtime not available';
+      setError(message);
+      throw new Error(message);
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedServer = await mcpApi.updateMcpServer(request);
+      setServers((prev) =>
+        prev
+          .map((s) => (s.base.id === request.id ? updatedServer : s))
+          .sort((a, b) => a.base.id.localeCompare(b.base.id))
+      );
+      return updatedServer;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const deleteServer = useCallback(
-    async (id: string) => {
-      if (!hasTauriInvokeAvailable()) {
-        const message = 'Tauri runtime not available';
-        setError(message);
-        throw new Error(message);
-      }
-      try {
-        setLoading(true);
-        setError(null);
-        await mcpApi.deleteMcpServer(id);
-        setServers((prev) => prev.filter((s) => s.base.id !== id));
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+  const deleteServer = useCallback(async (id: string) => {
+    if (!hasTauriInvokeAvailable()) {
+      const message = 'Tauri runtime not available';
+      setError(message);
+      throw new Error(message);
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      await mcpApi.deleteMcpServer(id);
+      setServers((prev) => prev.filter((s) => s.base.id !== id));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      throw new Error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const toggleServer = useCallback(
-    async (id: string, enabled: boolean) => {
-      if (!hasTauriInvokeAvailable()) {
-        const message = 'Tauri runtime not available';
-        setError(message);
-        throw new Error(message);
-      }
-      try {
-        setError(null);
-        const updatedServer = await mcpApi.toggleMcpServer(id, enabled);
-        setServers((prev) =>
-          prev.map((s) => (s.base.id === id ? updatedServer : s))
-        );
-        return updatedServer;
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        throw new Error(message);
-      }
-    },
-    []
-  );
+  const toggleServer = useCallback(async (id: string, enabled: boolean) => {
+    if (!hasTauriInvokeAvailable()) {
+      const message = 'Tauri runtime not available';
+      setError(message);
+      throw new Error(message);
+    }
+    try {
+      setError(null);
+      const updatedServer = await mcpApi.toggleMcpServer(id, enabled);
+      setServers((prev) => prev.map((s) => (s.base.id === id ? updatedServer : s)));
+      return updatedServer;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      throw new Error(message);
+    }
+  }, []);
 
   useEffect(() => {
     loadServers();

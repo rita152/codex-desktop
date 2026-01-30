@@ -56,3 +56,13 @@ export type { CodexStore, QueuedMessage } from './codexStore';
 
 // Codex Store Sync
 export { useCodexStoreSync } from './useCodexStoreSync';
+
+// Settings Store
+export {
+  useSettingsStore,
+  useShortcuts,
+  useTheme,
+  useSettingsLoading,
+  useSettingsError,
+} from './settingsStore';
+export type { SettingsStore } from './settingsStore';

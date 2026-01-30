@@ -1,4 +1,4 @@
-import { useCallback, useRef, lazy, Suspense } from 'react';
+import { useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -10,6 +10,7 @@ const SettingsModal = lazy(() =>
 );
 import { usePanelResize } from './hooks/usePanelResize';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
+import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import {
   UIProvider,
   useUIContext,
@@ -19,6 +20,7 @@ import {
   useCodexContext,
   MIN_SIDE_PANEL_WIDTH,
 } from './contexts';
+import { useSettingsStore, useShortcuts } from './stores';
 import { DEFAULT_MODEL_ID } from './constants/chat';
 
 import type { SelectOption } from './types/options';
@@ -26,6 +28,15 @@ import './App.css';
 
 function AppContent() {
   const { t } = useTranslation();
+
+  // Load settings on mount
+  const loadSettings = useSettingsStore((state) => state.loadSettings);
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  // Get shortcuts from settings
+  const shortcuts = useShortcuts();
 
   // UI Context - sidebar, side panel, settings
   const {
@@ -133,6 +144,46 @@ function AppContent() {
     },
     setSessionNotices,
     t,
+  });
+
+  // Toggle terminal panel
+  const handleToggleTerminal = useCallback(() => {
+    if (sidePanelVisible && activeSidePanelTab === 'terminal') {
+      setSidePanelVisible(false);
+    } else {
+      setSidePanelVisible(true);
+      setActiveSidePanelTab('terminal');
+    }
+  }, [sidePanelVisible, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
+
+  // Stop generation (placeholder - needs backend implementation)
+  const handleStopGeneration = useCallback(() => {
+    // TODO: Implement stop generation when backend supports it
+    // For now, this is a no-op
+    console.log('Stop generation requested');
+  }, []);
+
+  // Global shortcut actions
+  const shortcutActions = useMemo(
+    () => ({
+      newSession: handleNewChat,
+      sendMessage: () => {
+        // Send message is handled by the input component
+        // This is a fallback that won't be triggered in normal usage
+      },
+      stopGeneration: handleStopGeneration,
+      openSettings,
+      toggleSidebar,
+      toggleTerminal: handleToggleTerminal,
+    }),
+    [handleNewChat, handleStopGeneration, openSettings, toggleSidebar, handleToggleTerminal]
+  );
+
+  // Register global shortcuts
+  useGlobalShortcuts({
+    shortcuts,
+    actions: shortcutActions,
+    enabled: !settingsOpen, // Disable shortcuts when settings modal is open
   });
 
   const handleModelOptionsFetched = useCallback(
