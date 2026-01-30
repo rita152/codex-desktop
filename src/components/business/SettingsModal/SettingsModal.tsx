@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
 import { useModelFetch } from '../../../hooks/useModelFetch';
-import { GeneralSettings, ShortcutSettings, RemoteSettings } from './sections';
+import { GeneralSettings, ShortcutSettings, RemoteSettings, McpSettings } from './sections';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { Button } from '../../ui/data-entry/Button';
@@ -43,7 +43,12 @@ const NAV_ITEMS: { id: SettingsSection; icon: string; labelKey: string; keywords
     labelKey: 'settings.sections.model',
     keywords: ['api', 'token', 'openai', '模型'],
   },
-
+  {
+    id: 'mcp',
+    icon: '🔌',
+    labelKey: 'settings.sections.mcp',
+    keywords: ['mcp', 'server', 'tool', 'context', 'protocol', '工具', '服务器', '协议'],
+  },
   {
     id: 'remote',
     icon: '🌐',
@@ -213,7 +218,8 @@ export function SettingsModal({
             />
           </Suspense>
         );
-
+      case 'mcp':
+        return <McpSettings />;
       case 'remote':
         return <RemoteSettings />;
       case 'shortcuts':

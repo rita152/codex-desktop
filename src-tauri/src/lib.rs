@@ -28,6 +28,8 @@ pub mod codex;
 pub mod codex_dev;
 /// Git integration helpers.
 pub mod git;
+/// MCP (Model Context Protocol) server management.
+pub mod mcp;
 /// Remote server connection module.
 pub mod remote;
 /// Local terminal PTY integration.
@@ -92,7 +94,14 @@ pub fn run() {
             remote::commands::remote_list_directory,
             remote::commands::remote_list_entries,
             remote::commands::remote_git_history,
-            codex::commands::list_local_directory
+            codex::commands::list_local_directory,
+            mcp::commands::mcp_list_servers,
+            mcp::commands::mcp_add_server,
+            mcp::commands::mcp_add_from_toml,
+            mcp::commands::mcp_update_server,
+            mcp::commands::mcp_delete_server,
+            mcp::commands::mcp_toggle_server,
+            mcp::commands::mcp_config_exists
         ])
         .run(tauri::generate_context!())
         .unwrap_or_else(|err| {

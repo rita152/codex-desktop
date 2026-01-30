@@ -230,8 +230,35 @@
     "sections": {
       "general": "General",
       "model": "Model",
+      "mcp": "MCP Servers",
       "remote": "Remote Servers",
       "shortcuts": "Shortcuts"
+    },
+    "mcp": {
+      "description": "Manage Model Context Protocol (MCP) servers to provide additional tools and context to Codex",
+      "addServer": "Add Server",
+      "add": "Add",
+      "adding": "Adding...",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete",
+      "enable": "Enable",
+      "disable": "Disable",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "refresh": "Refresh",
+      "loading": "Loading...",
+      "tomlConfig": "TOML Configuration",
+      "pasteTomlHint": "Paste the TOML configuration of your MCP server to add it",
+      "example": "Example",
+      "copy": "Copy",
+      "empty": "No MCP Servers",
+      "emptyHint": "Click the \"Add Server\" button above to configure your first MCP server",
+      "noConfigDir": "~/.codex directory does not exist. Please initialize Codex CLI first.",
+      "confirmDelete": "Are you sure you want to delete server \"{{id}}\"?",
+      "errors": {
+        "tomlRequired": "TOML configuration is required"
+      }
     },
     "remote": {
       "description": "Remote servers are loaded from ~/.ssh/config. Edit that file to manage entries."

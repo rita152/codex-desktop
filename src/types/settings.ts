@@ -5,7 +5,7 @@
 import { DEFAULT_MODEL_ID } from '../constants/chat';
 
 // Settings section types
-export type SettingsSection = 'general' | 'model' | 'remote' | 'shortcuts';
+export type SettingsSection = 'general' | 'model' | 'mcp' | 'remote' | 'shortcuts';
 
 // Theme options
 export type ThemeOption = 'light' | 'dark' | 'system';

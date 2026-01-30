@@ -230,8 +230,35 @@
     "sections": {
       "general": "通用",
       "model": "模型",
+      "mcp": "MCP 服务器",
       "remote": "远程服务器",
       "shortcuts": "快捷键"
+    },
+    "mcp": {
+      "description": "管理 Model Context Protocol (MCP) 服务器，为 Codex 提供额外的工具和上下文能力",
+      "addServer": "添加服务器",
+      "add": "添加",
+      "adding": "添加中...",
+      "cancel": "取消",
+      "edit": "编辑",
+      "delete": "删除",
+      "enable": "启用",
+      "disable": "禁用",
+      "enabled": "已启用",
+      "disabled": "已禁用",
+      "refresh": "刷新",
+      "loading": "加载中...",
+      "tomlConfig": "TOML 配置",
+      "pasteTomlHint": "直接粘贴 MCP 服务器的 TOML 配置即可添加",
+      "example": "示例",
+      "copy": "复制",
+      "empty": "暂无 MCP 服务器",
+      "emptyHint": "点击上方「添加服务器」按钮来配置您的第一个 MCP 服务器",
+      "noConfigDir": "~/.codex 目录不存在，请先初始化 Codex CLI",
+      "confirmDelete": "确定要删除服务器「{{id}}」吗？",
+      "errors": {
+        "tomlRequired": "请输入 TOML 配置"
+      }
     },
     "remote": {
       "description": "远程服务器从 ~/.ssh/config 读取，请在该文件中管理配置"
