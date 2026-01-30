@@ -1,3 +1,17 @@
+/**
+ * App Component
+ *
+ * Main application entry point with state management setup.
+ *
+ * Migration Status (Context → Store):
+ * - UIContext: ✅ Migrated - Using UIStore directly
+ * - SessionContext: 🔄 Deprecated - Use SessionStore selectors
+ * - CodexContext: 🔄 Deprecated - Use CodexStore + useCodexActions
+ *
+ * Providers are kept for backward compatibility during migration.
+ * They will be removed in the final cleanup phase.
+ */
+
 import { useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -13,6 +27,8 @@ import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useSessionEffects } from './hooks/useSessionEffects';
 import { useCodexEffects } from './hooks/useCodexEffects';
+// Note: Context imports are deprecated. Prefer using stores directly.
+// These will be removed in the final cleanup phase.
 import { SessionProvider, useSessionContext, CodexProvider, useCodexContext } from './contexts';
 import {
   useUIStore,
@@ -55,7 +71,8 @@ function AppContent() {
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
-  // Session Context - session state, derived data, and actions
+  // Session Context - DEPRECATED: Use SessionStore selectors instead
+  // TODO: Replace with direct SessionStore usage in final cleanup
   const {
     sessions,
     selectedSessionId,
@@ -87,7 +104,8 @@ function AppContent() {
     handleFileSelect,
   } = useSessionContext();
 
-  // Codex Context - backend communication, queue, and actions
+  // Codex Context - DEPRECATED: Use CodexStore + useCodexActions instead
+  // TODO: Replace with direct CodexStore usage in final cleanup
   const {
     handleModelChange,
     handleModeChange,
@@ -263,7 +281,19 @@ function AppContent() {
   );
 }
 
-// App component with Context Providers
+/**
+ * App component with Context Providers
+ *
+ * Note: SessionProvider and CodexProvider are kept for backward compatibility.
+ * They contain complex event handling logic (useCodexSessionSync, useApprovalState)
+ * that will be refactored in the final cleanup phase.
+ *
+ * Current architecture:
+ * - UIStore: Direct usage (migrated)
+ * - SessionStore: Direct effects via useSessionEffects
+ * - CodexStore: Direct effects via useCodexEffects
+ * - Context Providers: Kept for Tauri event handling
+ */
 export function App() {
   // Initialize UI store (handles responsive layout)
   useUIStoreInit();
@@ -275,6 +305,8 @@ export function App() {
   useCodexEffects();
 
   return (
+    // Providers are deprecated but kept for complex event handling logic
+    // They will be removed when event handling is fully migrated to stores
     <SessionProvider>
       <CodexProvider>
         <AppContent />

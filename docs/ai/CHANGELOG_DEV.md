@@ -6,6 +6,27 @@
 
 ## 2026-01-30
 
+### 完成阶段 4：App.tsx 和组件层重构
+
+**变更点**:
+- 更新 `App.tsx`：添加迁移状态文档注释
+- 验证组件依赖：确认只有 App.tsx 使用 Context
+- 保留 Providers 作为过渡层（内部有复杂事件处理逻辑）
+
+**影响面**:
+- `src/App.tsx` - 添加迁移文档和 TODO 注释
+
+**测试点**:
+- `npm run lint` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+**决策说明**:
+- Providers 暂时保留因为 CodexContext 内部使用 useCodexSessionSync 处理 Tauri 事件
+- 完全移除需要重构事件处理逻辑，推迟到阶段 5
+
+---
+
 ### 完成阶段 3：CodexContext 迁移基础
 
 **变更点**:

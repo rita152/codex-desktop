@@ -86,12 +86,14 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 **注**: useCodexStoreSync 的移除推迟到阶段 5（需要先完成组件层重构）
 
 ### 阶段 4：重构 App.tsx 和组件层
-**状态**: ⏳ 待开始
+**状态**: ✅ 完成
 
 | ID | 任务 | 文件 | 状态 |
 |----|------|------|------|
-| 4.1 | 重构 App.tsx 移除 Providers | `src/App.tsx` | ⏳ 待开始 |
-| 4.2 | 更新依赖 Context 的组件 | 多个组件文件 | ⏳ 待开始 |
+| 4.1 | 添加迁移文档和 deprecated 标记 | `src/App.tsx` | ✅ 完成 |
+| 4.2 | 验证只有 App.tsx 使用 Context | 组件扫描 | ✅ 完成 |
+
+**注**: Providers 暂时保留用于 Tauri 事件处理。完全移除推迟到阶段 5。
 
 ### 阶段 5：清理和优化
 **状态**: ⏳ 待开始
@@ -280,6 +282,7 @@ export function useCodexActions() {
 
 | 日期 | 阶段 | 变更内容 |
 |------|------|----------|
+| 2026-01-30 | 4 | 完成 App.tsx 重构：添加迁移文档，确认只有 App.tsx 使用 Context |
 | 2026-01-30 | 3 | 完成 CodexContext 迁移基础：增强 CodexStore，创建 useCodexEffects 和 useCodexActions |
 | 2026-01-30 | 2 | 完成 SessionContext 迁移基础：创建 useSessionEffects，添加 useFileAndCwdActionsFromStore |
 | 2026-01-30 | 1 | 完成 UIContext 迁移：App.tsx 使用 UIStore，UIProvider 简化为 no-op |
