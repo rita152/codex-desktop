@@ -9,9 +9,11 @@
  * - Prompt history navigation
  *
  * This hook uses SessionStore and CodexStore directly.
+ *
+ * @migration Now can work without explicit ensureCodexSession parameter
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { useSessionStore } from '../stores/sessionStore';
@@ -24,23 +26,52 @@ import { formatError, newMessageId } from '../utils/codexParsing';
 import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
 
+// Global reference to ensureCodexSession (set by useCodexEffects)
+let globalEnsureCodexSession: ((chatSessionId: string) => Promise<string>) | null = null;
+
+/**
+ * Set the global ensureCodexSession function.
+ * Called by useCodexEffects during initialization.
+ */
+export function setGlobalEnsureCodexSession(
+  fn: ((chatSessionId: string) => Promise<string>) | null
+): void {
+  globalEnsureCodexSession = fn;
+}
+
 interface UseCodexActionsOptions {
   /**
    * Function to ensure a Codex session exists for a chat session.
-   * Returns the Codex session ID.
+   * If not provided, uses the global function set by useCodexEffects.
    */
-  ensureCodexSession: (chatSessionId: string) => Promise<string>;
+  ensureCodexSession?: (chatSessionId: string) => Promise<string>;
 }
 
 /**
  * Hook providing Codex-related business actions.
  *
- * @param options - Configuration options including ensureCodexSession function
+ * @param options - Optional configuration including ensureCodexSession function
  */
-export function useCodexActions({ ensureCodexSession }: UseCodexActionsOptions) {
+export function useCodexActions(options?: UseCodexActionsOptions) {
   const { t } = useTranslation();
 
-  // Get store actions
+  // Get ensureCodexSession - from options or global
+  const ensureCodexSessionRef = useRef(options?.ensureCodexSession ?? globalEnsureCodexSession);
+  useEffect(() => {
+    ensureCodexSessionRef.current = options?.ensureCodexSession ?? globalEnsureCodexSession;
+  }, [options?.ensureCodexSession]);
+
+  const getEnsureCodexSession = useCallback(() => {
+    const fn = ensureCodexSessionRef.current ?? globalEnsureCodexSession;
+    if (!fn) {
+      throw new Error(
+        'ensureCodexSession not available. Make sure useCodexEffects is initialized first.'
+      );
+    }
+    return fn;
+  }, []);
+
+  // Get store references
   const sessionStore = useSessionStore;
   const codexStore = useCodexStore;
 
@@ -115,6 +146,7 @@ export function useCodexActions({ ensureCodexSession }: UseCodexActionsOptions) 
     (sessionId: string, content: string) => {
       const { setSessions, setSessionMessages, setIsGenerating, sessionMessages } =
         sessionStore.getState();
+      const ensureCodexSession = getEnsureCodexSession();
 
       const now = Date.now();
       const userMessage: Message = {
@@ -161,7 +193,7 @@ export function useCodexActions({ ensureCodexSession }: UseCodexActionsOptions) 
       })();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionStore is a stable zustand reference
-    [ensureCodexSession, t]
+    [getEnsureCodexSession, t]
   );
 
   // Session delete handler with Codex cleanup

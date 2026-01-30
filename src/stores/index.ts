@@ -65,8 +65,7 @@ export {
 } from './sessionStore';
 export type { SessionStore, SessionNotice, OptionsCache } from './sessionStore';
 
-// Session Store Sync Hook (to be removed after migration)
-export { useSessionStoreSync } from './useSessionStoreSync';
+// Session Store Sync Hook - REMOVED (migration complete)
 
 // =============================================================================
 // Codex Store
@@ -78,11 +77,10 @@ export {
   useMessageQueueForSession,
   useHasQueuedMessages,
   usePromptHistory,
+  useCodexSessionId,
+  useIsPendingSessionInit,
 } from './codexStore';
 export type { CodexStore, QueuedMessage } from './codexStore';
-
-// Codex Store Sync Hook (to be removed after migration)
-export { useCodexStoreSync } from './useCodexStoreSync';
 
 // =============================================================================
 // Settings Store

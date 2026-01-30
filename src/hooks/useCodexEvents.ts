@@ -1,4 +1,13 @@
-import { useEffect, useMemo } from 'react';
+/**
+ * Codex Events Hook
+ *
+ * Subscribes to Tauri Codex events and updates stores directly.
+ * This is a singleton listener - uses globalThis to prevent duplicate subscriptions.
+ *
+ * @migration This hook now uses Stores directly instead of receiving setState functions.
+ */
+
+import { useEffect, useMemo, useRef } from 'react';
 import { listen } from '@tauri-apps/api/event';
 
 import { devDebug } from '../utils/logger';
@@ -13,11 +22,12 @@ import {
 } from '../utils/codexParsing';
 import i18n from '../i18n';
 import { createCodexMessageHandlers } from './codexEventMessageHandlers';
-import { useLatest } from './useLatest';
+import { useSessionStore } from '../stores/sessionStore';
+import { useCodexStore } from '../stores/codexStore';
+import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { MutableRefObject } from 'react';
 import type { Message } from '../types/message';
-import type { SelectOption } from '../types/options';
 import type { ApprovalRequest } from '../types/codex';
 import type { PlanStep, PlanStatus } from '../types/plan';
 
@@ -42,8 +52,6 @@ function mapPlanStatus(backendStatus: string): PlanStatus {
       return 'pending';
   }
 }
-
-type SessionMessages = Record<string, Message[]>;
 
 type UnlistenFn = () => void;
 
@@ -96,52 +104,61 @@ const removeListeners = (token: number) => {
   state.unlistenPromise = null;
 };
 
-export interface UseCodexEventsParams {
-  resolveChatSessionId: (codexSessionId?: string) => string | null;
-  activeSessionIdRef: RefObject<string>;
-  setSessionMessages: Dispatch<SetStateAction<SessionMessages>>;
-  setIsGeneratingBySession: Dispatch<SetStateAction<Record<string, boolean>>>;
-  setSessionSlashCommands: Dispatch<SetStateAction<Record<string, string[]>>>;
-  setSessionModeOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
-  setSessionModelOptions: Dispatch<SetStateAction<Record<string, SelectOption[]>>>;
-  setSessionMode: (sessionId: string, modeId: string) => void;
-  setSessionModel: (sessionId: string, modelId: string) => void;
-  onModeOptionsResolved?: (modeState: { options: SelectOption[]; currentModeId?: string }) => void;
+/**
+ * Options for mode/model resolution callbacks
+ */
+export interface CodexEventsCallbacks {
+  onModeOptionsResolved?: (modeState: {
+    options: { value: string; label: string }[];
+    currentModeId?: string;
+  }) => void;
   onModelOptionsResolved?: (modelState: {
-    options: SelectOption[];
+    options: { value: string; label: string }[];
     currentModelId?: string;
   }) => void;
-  registerApprovalRequest: (request: ApprovalRequest) => void;
 }
 
-export function useCodexEvents({
-  resolveChatSessionId,
-  activeSessionIdRef,
-  setSessionMessages,
-  setIsGeneratingBySession,
-  setSessionSlashCommands,
-  setSessionModeOptions,
-  setSessionModelOptions,
-  setSessionMode,
-  setSessionModel,
-  onModeOptionsResolved,
-  onModelOptionsResolved,
-  registerApprovalRequest,
-}: UseCodexEventsParams) {
-  const resolveChatSessionIdRef = useLatest(resolveChatSessionId);
-  const setSessionMessagesRef = useLatest(setSessionMessages);
-  const setIsGeneratingBySessionRef = useLatest(setIsGeneratingBySession);
-  const setSessionSlashCommandsRef = useLatest(setSessionSlashCommands);
-  const setSessionModeOptionsRef = useLatest(setSessionModeOptions);
-  const setSessionModelOptionsRef = useLatest(setSessionModelOptions);
-  const setSessionModeRef = useLatest(setSessionMode);
-  const setSessionModelRef = useLatest(setSessionModel);
-  const onModeOptionsResolvedRef = useLatest(onModeOptionsResolved);
-  const onModelOptionsResolvedRef = useLatest(onModelOptionsResolved);
-  const registerApprovalRequestRef = useLatest(registerApprovalRequest);
+/**
+ * Initialize Codex event listeners.
+ * This hook sets up all Tauri event subscriptions and updates stores directly.
+ *
+ * @param callbacks - Optional callbacks for mode/model options resolution
+ */
+export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
+  // Refs for callbacks to avoid re-subscribing on callback changes
+  const onModeOptionsResolvedRef = useRef(callbacks?.onModeOptionsResolved);
+  const onModelOptionsResolvedRef = useRef(callbacks?.onModelOptionsResolved);
+  onModeOptionsResolvedRef.current = callbacks?.onModeOptionsResolved;
+  onModelOptionsResolvedRef.current = callbacks?.onModelOptionsResolved;
+
+  // Ref to track active session ID (updated from store subscription)
+  const activeSessionIdRef = useRef<string>('');
+
+  // Subscribe to selectedSessionId changes to keep ref in sync
+  useEffect(() => {
+    // Initialize from current state
+    activeSessionIdRef.current = useSessionStore.getState().selectedSessionId;
+
+    // Subscribe to changes
+    const unsubscribe = useSessionStore.subscribe((state) => {
+      activeSessionIdRef.current = state.selectedSessionId;
+    });
+    return unsubscribe;
+  }, []);
+
+  // Create message handlers with a ref-based setter
+  const setSessionMessagesRef = useRef(useSessionStore.getState().setSessionMessages);
+  // Keep ref in sync
+  useEffect(() => {
+    setSessionMessagesRef.current = useSessionStore.getState().setSessionMessages;
+  }, []);
+
   const messageHandlers = useMemo(
-    () => createCodexMessageHandlers(setSessionMessagesRef),
-    [setSessionMessagesRef]
+    () =>
+      createCodexMessageHandlers(
+        setSessionMessagesRef as MutableRefObject<typeof setSessionMessagesRef.current>
+      ),
+    []
   );
 
   useEffect(() => {
@@ -155,11 +172,17 @@ export function useCodexEvents({
       upsertToolCallMessage,
     } = messageHandlers;
 
+    // Helper to resolve chat session ID from codex session ID
+    const resolveChatSessionId = (codexSessionId?: string): string | null => {
+      if (!codexSessionId) return null;
+      return useCodexStore.getState().resolveChatSessionId(codexSessionId) ?? null;
+    };
+
     const listenerToken = beginListeners();
     const unlistenPromises = [
       listen<{ sessionId: string; text: string }>('codex:message', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         appendAssistantChunk(sessionId, event.payload.text);
       }),
@@ -169,16 +192,16 @@ export function useCodexEvents({
           sessionId: event.payload.sessionId,
           textLen: event.payload.text.length,
         });
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         appendThoughtChunk(sessionId, event.payload.text);
       }),
       listen<{ sessionId: string; stopReason: unknown }>('codex:turn-complete', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         finalizeStreamingMessages(sessionId);
-        setIsGeneratingBySessionRef.current((prev) => ({ ...prev, [sessionId]: false }));
+        useSessionStore.getState().setIsGenerating(sessionId, false);
       }),
       listen<{ error: string }>('codex:error', (event) => {
         if (!isListenerActive()) return;
@@ -191,65 +214,76 @@ export function useCodexEvents({
           timestamp: new Date(),
         };
 
-        setSessionMessagesRef.current((prev) => ({
-          ...prev,
-          [sessionId]: [...(prev[sessionId] ?? []), errMsg],
-        }));
-
-        setIsGeneratingBySessionRef.current((prev) => ({ ...prev, [sessionId]: false }));
+        useSessionStore.getState().addMessage(sessionId, errMsg);
+        useSessionStore.getState().setIsGenerating(sessionId, false);
       }),
       listen<ApprovalRequest>('codex:approval-request', (event) => {
         if (!isListenerActive()) return;
-        registerApprovalRequestRef.current(event.payload);
+        useCodexStore.getState().registerApprovalRequest(event.payload);
       }),
       listen<{ sessionId: string; update: unknown }>('codex:available-commands', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const commands = extractSlashCommands(event.payload.update);
         if (commands.length === 0) return;
-        setSessionSlashCommandsRef.current((prev) => ({ ...prev, [sessionId]: commands }));
+        useSessionStore
+          .getState()
+          .setSessionSlashCommands((prev) => ({ ...prev, [sessionId]: commands }));
       }),
       listen<{ sessionId: string; update: unknown }>('codex:current-mode', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
         const modeId = getString(update.currentModeId ?? update.current_mode_id);
         if (!modeId) return;
-        setSessionModeRef.current(sessionId, modeId);
+        useSessionStore.getState().updateSession(sessionId, { mode: modeId });
       }),
       listen<{ sessionId: string; update: unknown }>('codex:config-option-update', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
         const configOptions = update.configOptions ?? update.config_options ?? update.configOption;
+
         const modeState = resolveModeOptions(undefined, configOptions);
         if (modeState?.options.length) {
-          setSessionModeOptionsRef.current((prev) => ({ ...prev, [sessionId]: modeState.options }));
+          useSessionStore
+            .getState()
+            .setSessionModeOptions((prev) => ({ ...prev, [sessionId]: modeState.options }));
           onModeOptionsResolvedRef.current?.(modeState);
+          useSessionStore.getState().applyModeOptions({
+            options: modeState.options,
+            currentId: modeState.currentModeId,
+            fallbackCurrentId: DEFAULT_MODE_ID,
+          });
         }
         if (modeState?.currentModeId) {
-          setSessionModeRef.current(sessionId, modeState.currentModeId);
+          useSessionStore.getState().updateSession(sessionId, { mode: modeState.currentModeId });
         }
+
         const modelState = resolveModelOptions(undefined, configOptions);
         if (modelState?.options.length) {
-          setSessionModelOptionsRef.current((prev) => ({
-            ...prev,
-            [sessionId]: modelState.options,
-          }));
+          useSessionStore
+            .getState()
+            .setSessionModelOptions((prev) => ({ ...prev, [sessionId]: modelState.options }));
           onModelOptionsResolvedRef.current?.(modelState);
+          useSessionStore.getState().applyModelOptions({
+            options: modelState.options,
+            currentId: modelState.currentModelId,
+            fallbackCurrentId: DEFAULT_MODEL_ID,
+          });
         }
         if (modelState?.currentModelId) {
-          setSessionModelRef.current(sessionId, modelState.currentModelId);
+          useSessionStore.getState().updateSession(sessionId, { model: modelState.currentModelId });
         }
       }),
       listen<{ sessionId: string; toolCall: unknown }>('codex:tool-call', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const toolCall = asRecord(event.payload.toolCall);
         if (!toolCall) return;
@@ -258,7 +292,7 @@ export function useCodexEvents({
       }),
       listen<{ sessionId: string; update: unknown }>('codex:tool-call-update', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const update = asRecord(event.payload.update);
         if (!update) return;
@@ -269,16 +303,13 @@ export function useCodexEvents({
         plan: { entries: Array<{ content: string; status: string; priority: string }> };
       }>('codex:plan', (event) => {
         if (!isListenerActive()) return;
-        const sessionId = resolveChatSessionIdRef.current(event.payload.sessionId);
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         const entries = event.payload.plan?.entries;
         if (entries && Array.isArray(entries)) {
-          // Convert backend PlanEntry format to frontend PlanStep format
-          // Backend uses 'content' for the step description, not 'title'
           const steps: PlanStep[] = entries.map((entry, index) => ({
             id: `plan-step-${index}`,
-            title: entry.content, // Backend field is 'content', frontend uses 'title'
-            // Map backend status (pending, inProgress, completed) to frontend status
+            title: entry.content,
             status: mapPlanStatus(entry.status),
           }));
           messageHandlers.updatePlan(sessionId, steps);
@@ -291,19 +322,5 @@ export function useCodexEvents({
       isActive = false;
       removeListeners(listenerToken);
     };
-  }, [
-    activeSessionIdRef,
-    messageHandlers,
-    onModeOptionsResolvedRef,
-    onModelOptionsResolvedRef,
-    registerApprovalRequestRef,
-    resolveChatSessionIdRef,
-    setIsGeneratingBySessionRef,
-    setSessionMessagesRef,
-    setSessionModeOptionsRef,
-    setSessionModeRef,
-    setSessionModelOptionsRef,
-    setSessionModelRef,
-    setSessionSlashCommandsRef,
-  ]);
+  }, [messageHandlers]);
 }

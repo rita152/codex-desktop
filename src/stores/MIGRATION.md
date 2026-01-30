@@ -4,27 +4,27 @@
 
 ## 当前状态
 
-**迁移进行中 (Phase 5)！**
+**迁移已完成！ ✅**
 
 ### Store 作为 SSOT（单一真实来源）
 
-- `UIStore` - ✅ 完全迁移，App.tsx 直接使用
-- `SessionStore` - ✅ 作为 SSOT，Context 标记为 deprecated
-- `CodexStore` - ✅ 作为 SSOT，Context 标记为 deprecated
+- `UIStore` - ✅ 完全迁移
+- `SessionStore` - ✅ 完全迁移
+- `CodexStore` - ✅ 完全迁移
 
 ### Context 状态
 
-所有 Context 已被标记为 `@deprecated`：
-
-- `UIContext` → 使用 `useUIStore` + `useUIStoreInit`
-- `SessionContext` → 使用 `useSessionStore` + `useSessionEffects`
-- `CodexContext` → 使用 `useCodexStore` + `useCodexEffects` + `useCodexActions`
+所有 Context 已删除：
+- `src/contexts/` 目录已删除
+- `useSessionStoreSync.ts` 已删除
+- `useCodexStoreSync.ts` 已删除
+- `useCodexSessionSync.ts` 已删除
 
 ### Effect Hooks（副作用处理）
 
 - `useUIStoreInit` - 响应式布局检测
 - `useSessionEffects` - 自动选择 model/mode
-- `useCodexEffects` - Codex 初始化
+- `useCodexEffects` - Codex 初始化、事件监听、ensureCodexSession
 - `useCodexActions` - 业务操作（model/mode 变更、消息发送等）
 
 ## 概述
@@ -35,36 +35,14 @@ Zustand stores 位于 `src/stores/` 目录：
 - `sessionStore.ts` - 会话状态（消息、草稿、选项）
 - `codexStore.ts` - Codex 交互状态（审批、队列、历史、会话映射）
 - `useUIStoreInit.ts` - UI 副作用初始化
-- ~~`useSessionStoreSync.ts`~~ - (deprecated) Context → Store 同步
-- ~~`useCodexStoreSync.ts`~~ - (deprecated) Context → Store 同步
 
 ## 使用策略
 
-**新组件**：直接使用 store selectors + effect hooks
+**所有组件**：直接使用 store selectors + effect hooks
 
-**现有组件**：可以继续使用 `useXxxContext()` hooks（已 deprecated，将在清理阶段移除）
+## 代码示例
 
-## 迁移示例
-
-### 从 UIContext 迁移
-
-**旧代码（使用 Context）：**
-
-```tsx
-import { useUIContext } from '../contexts';
-
-function MyComponent() {
-  const { sidebarVisible, toggleSidebar, settingsOpen } = useUIContext();
-
-  return (
-    <div>
-      <button onClick={toggleSidebar}>{sidebarVisible ? 'Hide' : 'Show'}</button>
-    </div>
-  );
-}
-```
-
-**新代码（使用 Zustand）：**
+### UI 状态
 
 ```tsx
 import { useUIStore, useSidebarVisible } from '../stores';
@@ -85,21 +63,7 @@ function MyComponent() {
 }
 ```
 
-### 从 SessionContext 迁移
-
-**旧代码：**
-
-```tsx
-import { useSessionContext } from '../contexts';
-
-function MessageList() {
-  const { messages, isGenerating, selectedSessionId } = useSessionContext();
-
-  return <div>{messages.map(...)}</div>;
-}
-```
-
-**新代码：**
+### Session 状态
 
 ```tsx
 import { useCurrentMessages, useIsGenerating, useSessionStore } from '../stores';
@@ -114,22 +78,22 @@ function MessageList() {
 }
 ```
 
-### 从 CodexContext 迁移
-
-**旧代码：**
+### Codex Actions
 
 ```tsx
-import { useCodexContext } from '../contexts';
+import { useCodexActions } from '../hooks/useCodexActions';
+import { useSessionStore, useModelOptions, useSelectedModel } from '../stores';
 
-function QueueIndicator() {
-  const { currentQueue, hasQueuedMessages, handleClearQueue } = useCodexContext();
-
-  if (!hasQueuedMessages) return null;
-  return <button onClick={handleClearQueue}>Clear ({currentQueue.length})</button>;
+function ModelSelector() {
+  // useCodexActions 自动获取 ensureCodexSession
+  const { handleModelChange } = useCodexActions();
+  const selectedModel = useSelectedModel();
+  const modelOptions = useModelOptions();
+  // ...
 }
 ```
 
-**新代码：**
+### Message Queue
 
 ```tsx
 import { useCodexStore, useMessageQueueForSession } from '../stores';
@@ -142,33 +106,6 @@ function QueueIndicator() {
 
   if (queue.length === 0) return null;
   return <button onClick={() => clearQueue(sessionId)}>Clear ({queue.length})</button>;
-}
-```
-
-### 使用 Actions Hooks
-
-**旧代码（使用 Context actions）：**
-
-```tsx
-import { useCodexContext } from '../contexts';
-
-function ModelSelector() {
-  const { handleModelChange, selectedModel, modelOptions } = useCodexContext();
-  // ...
-}
-```
-
-**新代码（使用 useCodexActions）：**
-
-```tsx
-import { useCodexActions } from '../hooks/useCodexActions';
-import { useSessionStore, useModelOptions, useSelectedModel } from '../stores';
-
-function ModelSelector() {
-  const { handleModelChange } = useCodexActions({ ensureCodexSession });
-  const selectedModel = useSelectedModel();
-  const modelOptions = useModelOptions();
-  // ...
 }
 ```
 
@@ -219,6 +156,8 @@ usePendingApprovals(sessionId); // ApprovalRequest[]
 useMessageQueueForSession(sessionId); // QueuedMessage[]
 useHasQueuedMessages(sessionId); // boolean
 usePromptHistory(); // string[]
+useCodexSessionId(chatId); // string | undefined
+useIsPendingSessionInit(chatId); // boolean
 ```
 
 ## 最佳实践
@@ -253,6 +192,7 @@ usePromptHistory(); // string[]
 
 ## 注意事项
 
-1. **副作用处理**：复杂的副作用（如 Tauri 事件监听）仍保留在 hooks 中
+1. **副作用处理**：复杂的副作用（如 Tauri 事件监听）在 Effect Hooks 中处理
 2. **持久化**：SessionStore 使用 `persist` middleware 自动持久化到 localStorage
 3. **类型安全**：所有 stores 和 selectors 都有完整的 TypeScript 类型
+4. **DevTools**：开发模式下可使用 Redux DevTools 查看 store 状态

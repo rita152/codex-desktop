@@ -6,6 +6,56 @@
 
 ## 2026-01-30
 
+### ✅ 完成 Context → Store 迁移（阶段 5 完成）
+
+**变更点**:
+- 重构 `useCodexEvents.ts`：改为直接使用 Store actions，不再接收 setState 参数
+- 重构 `useCodexEffects.ts`：整合 useCodexSessionSync 逻辑，提供 ensureCodexSession
+- 重写 `App.tsx`：完全移除 Context Providers，直接使用 Store selectors
+- 删除 `src/contexts/` 目录：UIContext、SessionContext、CodexContext 全部移除
+- 删除同步 hooks：useSessionStoreSync.ts、useCodexStoreSync.ts
+- 删除 `useCodexSessionSync.ts`：逻辑已整合到 useCodexEffects
+- 更新 `useApprovalCards.ts`：添加 Store-based 版本 `useApprovalCardsFromStore`
+- 创建 `scripts/benchmark.mjs`：性能测试脚本
+
+**影响面**:
+- `src/contexts/` - 整个目录删除
+- `src/stores/useSessionStoreSync.ts` - 删除
+- `src/stores/useCodexStoreSync.ts` - 删除
+- `src/hooks/useCodexSessionSync.ts` - 删除
+- `src/hooks/useCodexEvents.ts` - 重构
+- `src/hooks/useCodexEffects.ts` - 重构
+- `src/hooks/useCodexActions.ts` - 更新
+- `src/hooks/useApprovalCards.ts` - 添加 Store-based 版本
+- `src/App.tsx` - 完全重写
+- `src/stores/index.ts` - 移除已删除文件导出
+
+**性能测试结果**:
+```json
+{
+  "storeCount": 7,
+  "contextCount": 0,
+  "hookCount": 29,
+  "totalJsSize": "1.18 MB",
+  "totalCssSize": "119 KB",
+  "buildTime": "4.24s",
+  "testTime": "1.02s"
+}
+```
+
+**测试点**:
+- `npm run build` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+**回滚要点**:
+- 恢复 `src/contexts/` 目录中的所有文件
+- 恢复同步 hooks
+- 恢复 `useCodexSessionSync.ts`
+- 恢复 App.tsx 使用 Context Providers
+
+---
+
 ### 部分完成阶段 5：清理和优化
 
 **变更点**:

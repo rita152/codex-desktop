@@ -1,21 +1,58 @@
 /**
  * App Component
  *
- * Main application entry point with state management setup.
+ * Main application entry point with Store-based state management.
  *
- * Migration Status (Context → Store):
- * - UIContext: ✅ Migrated - Using UIStore directly
- * - SessionContext: 🔄 Deprecated - Use SessionStore selectors
- * - CodexContext: 🔄 Deprecated - Use CodexStore + useCodexActions
+ * Architecture:
+ * - UIStore: UI state (sidebar, panels, settings modal)
+ * - SessionStore: Session state (sessions, messages, drafts, options)
+ * - CodexStore: Codex state (approvals, queue, history, session mapping)
+ * - SettingsStore: App settings (theme, shortcuts)
  *
- * Providers are kept for backward compatibility during migration.
- * They will be removed in the final cleanup phase.
+ * Effects:
+ * - useUIStoreInit: Responsive layout handling
+ * - useSessionEffects: Auto-select model/mode
+ * - useCodexEffects: Codex initialization and event handling
  */
 
-import { useCallback, useRef, useMemo, useEffect, lazy, Suspense } from 'react';
+import { useCallback, useRef, useMemo, useEffect, lazy, Suspense, Component, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
+
+// Error Boundary for debugging
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('App Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 20, color: 'red' }}>
+          <h1>Something went wrong</h1>
+          <pre>{this.state.error?.message}</pre>
+          <pre>{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const SettingsModal = lazy(() =>
   import('./components/business/SettingsModal').then((module) => ({
@@ -27,23 +64,30 @@ import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useSessionEffects } from './hooks/useSessionEffects';
 import { useCodexEffects } from './hooks/useCodexEffects';
-// Note: Context imports are deprecated. Prefer using stores directly.
-// These will be removed in the final cleanup phase.
-import { SessionProvider, useSessionContext, CodexProvider, useCodexContext } from './contexts';
+import { useCodexActions } from './hooks/useCodexActions';
+import { useFileAndCwdActionsFromStore } from './hooks/useFileAndCwdActions';
+import { useApprovalCardsFromStore } from './hooks/useApprovalCards';
 import {
   useUIStore,
   useUIStoreInit,
   useSettingsStore,
   useShortcuts,
+  useSessionStore,
+  useCodexStore,
   MIN_SIDE_PANEL_WIDTH,
 } from './stores';
-import { DEFAULT_MODEL_ID } from './constants/chat';
+import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from './constants/chat';
 
 import type { SelectOption } from './types/options';
 import './App.css';
 
 function AppContent() {
   const { t } = useTranslation();
+
+  // Initialize stores and effects
+  useUIStoreInit();
+  useSessionEffects();
+  useCodexEffects();
 
   // Load settings on mount
   const loadSettings = useSettingsStore((state) => state.loadSettings);
@@ -54,7 +98,7 @@ function AppContent() {
   // Get shortcuts from settings
   const shortcuts = useShortcuts();
 
-  // UI Store - sidebar, side panel, settings (migrated from UIContext)
+  // UI Store - sidebar, side panel, settings
   const sidebarVisible = useUIStore((s) => s.sidebarVisible);
   const isNarrowLayout = useUIStore((s) => s.isNarrowLayout);
   const toggleSidebar = useUIStore((s) => s.toggleSidebar);
@@ -71,60 +115,122 @@ function AppContent() {
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
-  // Session Context - DEPRECATED: Use SessionStore selectors instead
-  // TODO: Replace with direct SessionStore usage in final cleanup
-  const {
-    sessions,
-    selectedSessionId,
-    setSessionNotices,
-    applyModelOptions,
-    setTerminalBySession,
-    messages,
-    draftMessage,
-    selectedModel,
-    selectedMode,
-    selectedCwd,
-    sessionNotice,
-    agentOptions,
-    modelOptions,
-    slashCommands,
-    isGenerating,
-    cwdLocked,
-    activeTerminalId,
-    currentPlan,
-    // Session Actions
-    handleDraftChange,
-    handleNewChat,
-    handleSessionSelect,
-    handleSessionRename,
-    // File and CWD Actions
-    handleCwdSelect,
-    handleSelectCwd,
-    handleAddFile,
-    handleFileSelect,
-  } = useSessionContext();
+  // Session Store - sessions, messages, options
+  // Use primitive selectors to avoid infinite loops from derived values
+  const sessions = useSessionStore((s) => s.sessions);
+  const selectedSessionId = useSessionStore((s) => s.selectedSessionId);
+  const setSelectedSessionId = useSessionStore((s) => s.setSelectedSessionId);
+  const sessionMessagesMap = useSessionStore((s) => s.sessionMessages);
+  const sessionDraftsMap = useSessionStore((s) => s.sessionDrafts);
+  const sessionNoticesMap = useSessionStore((s) => s.sessionNotices);
+  const isGeneratingMap = useSessionStore((s) => s.isGeneratingBySession);
+  const setDraft = useSessionStore((s) => s.setDraft);
 
-  // Codex Context - DEPRECATED: Use CodexStore + useCodexActions instead
-  // TODO: Replace with direct CodexStore usage in final cleanup
+  // Derive values outside of selectors to avoid reference issues
+  const activeSession = sessions.find((sess) => sess.id === selectedSessionId);
+  const messages = sessionMessagesMap[selectedSessionId] ?? [];
+  const draftMessage = sessionDraftsMap[selectedSessionId] ?? '';
+  const sessionNotice = sessionNoticesMap[selectedSessionId] ?? null;
+  const isGenerating = isGeneratingMap[selectedSessionId] ?? false;
+  const terminalBySession = useSessionStore((s) => s.terminalBySession);
+  const setTerminalBySession = useSessionStore((s) => s.setTerminalBySession);
+  const setSessionNotices = useSessionStore((s) => s.setSessionNotices);
+  const updateSession = useSessionStore((s) => s.updateSession);
+  const createNewChat = useSessionStore((s) => s.createNewChat);
+  const applyModelOptions = useSessionStore((s) => s.applyModelOptions);
+
+  // Derived state
+  const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
+  const selectedMode = activeSession?.mode ?? DEFAULT_MODE_ID;
+  const selectedCwd = activeSession?.cwd;
+  const cwdLocked = messages.length > 0;
+  const activeTerminalId = terminalBySession[selectedSessionId];
+
+  // Model/Mode options
+  const sessionModelOptionsMap = useSessionStore((s) => s.sessionModelOptions);
+  const sessionModelOptions = sessionModelOptionsMap[selectedSessionId];
+  const modelCache = useSessionStore((s) => s.modelCache);
+  const modelOptions = sessionModelOptions?.length
+    ? sessionModelOptions
+    : (modelCache.options ?? []);
+
+  const sessionModeOptionsMap = useSessionStore((s) => s.sessionModeOptions);
+  const sessionModeOptions = sessionModeOptionsMap[selectedSessionId];
+  const agentOptions = sessionModeOptions?.length ? sessionModeOptions : undefined;
+
+  // Slash commands
+  const sessionSlashCommandsMap = useSessionStore((s) => s.sessionSlashCommands);
+  const sessionSlashCommands = sessionSlashCommandsMap[selectedSessionId] ?? [];
+  const slashCommands = useMemo(() => {
+    const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...sessionSlashCommands]);
+    return Array.from(merged).sort();
+  }, [sessionSlashCommands]);
+
+  // Current plan from messages
+  const currentPlan = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const planSteps = messages[i].planSteps;
+      if (planSteps && planSteps.length > 0) {
+        const allCompleted = planSteps.every((step) => step.status === 'completed');
+        if (allCompleted) return undefined;
+        return planSteps;
+      }
+    }
+    return undefined;
+  }, [messages]);
+
+  // Codex Store - queue
+  const messageQueuesMap = useCodexStore((s) => s.messageQueues);
+  const currentQueue = messageQueuesMap[selectedSessionId] ?? [];
+  const hasQueuedMessages = currentQueue.length > 0;
+
+  // Codex Actions
   const {
     handleModelChange,
     handleModeChange,
     handleSessionDelete,
-    // Message queue
-    currentQueue,
-    hasQueuedMessages,
     handleSendMessage,
     handleClearQueue,
     handleRemoveFromQueue,
     handleMoveToTopInQueue,
     handleEditInQueue,
-    // Prompt history
     navigateToPreviousPrompt,
     navigateToNextPrompt,
     resetPromptNavigation,
-    // Approvals
-    approvalCards,
-  } = useCodexContext();
+  } = useCodexActions();
+
+  // File and CWD Actions
+  const { handleCwdSelect, handleSelectCwd, handleAddFile, handleFileSelect } =
+    useFileAndCwdActionsFromStore();
+
+  // Approval Cards
+  const approvalCards = useApprovalCardsFromStore();
+
+  // Session Actions
+  const handleDraftChange = useCallback(
+    (value: string) => {
+      setDraft(selectedSessionId, value);
+    },
+    [selectedSessionId, setDraft]
+  );
+
+  const handleNewChat = useCallback(() => {
+    createNewChat(selectedCwd, t('chat.newSessionTitle'));
+  }, [createNewChat, selectedCwd, t]);
+
+  const handleSessionSelect = useCallback(
+    (sessionId: string) => {
+      setSelectedSessionId(sessionId);
+    },
+    [setSelectedSessionId]
+  );
+
+  const handleSessionRename = useCallback(
+    (sessionId: string, newTitle: string) => {
+      updateSession(sessionId, { title: newTitle });
+    },
+    [updateSession]
+  );
 
   const bodyRef = useRef<HTMLDivElement | null>(null);
 
@@ -133,7 +239,7 @@ function AppContent() {
     width: sidePanelWidth,
     setWidth: setSidePanelWidth,
     minWidth: MIN_SIDE_PANEL_WIDTH,
-    minContentWidth: 240, // MIN_CONVERSATION_WIDTH
+    minContentWidth: 240,
     getContainerWidth: () => {
       const mainWidth = bodyRef.current?.getBoundingClientRect().width ?? 0;
       if (!mainWidth) return 0;
@@ -142,17 +248,15 @@ function AppContent() {
   });
 
   useTerminalLifecycle({
-    terminalVisible: sidePanelVisible && activeSidePanelTab === 'terminal', // Sync lifecycle with unified state
+    terminalVisible: sidePanelVisible && activeSidePanelTab === 'terminal',
     selectedSessionId,
     activeTerminalId,
     selectedCwd,
     setTerminalBySession,
     setTerminalVisible: (visible) => {
-      // If the lifecycle wants to close the terminal, we close the panel if it's the terminal tab
       if (!visible && activeSidePanelTab === 'terminal') {
         setSidePanelVisible(false);
       }
-      // If it wants to open, we open the panel
       if (visible) {
         setSidePanelVisible(true);
         setActiveSidePanelTab('terminal');
@@ -172,10 +276,8 @@ function AppContent() {
     }
   }, [sidePanelVisible, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
 
-  // Stop generation (placeholder - needs backend implementation)
+  // Stop generation (placeholder)
   const handleStopGeneration = useCallback(() => {
-    // TODO: Implement stop generation when backend supports it
-    // For now, this is a no-op
     console.log('Stop generation requested');
   }, []);
 
@@ -183,10 +285,7 @@ function AppContent() {
   const shortcutActions = useMemo(
     () => ({
       newSession: handleNewChat,
-      sendMessage: () => {
-        // Send message is handled by the input component
-        // This is a fallback that won't be triggered in normal usage
-      },
+      sendMessage: () => {},
       stopGeneration: handleStopGeneration,
       openSettings,
       toggleSidebar,
@@ -199,7 +298,7 @@ function AppContent() {
   useGlobalShortcuts({
     shortcuts,
     actions: shortcutActions,
-    enabled: !settingsOpen, // Disable shortcuts when settings modal is open
+    enabled: !settingsOpen,
   });
 
   const handleModelOptionsFetched = useCallback(
@@ -211,6 +310,17 @@ function AppContent() {
       });
     },
     [applyModelOptions]
+  );
+
+  // Convert queue to expected format
+  const formattedQueue = useMemo(
+    () =>
+      currentQueue.map((msg) => ({
+        id: msg.id,
+        content: msg.content,
+        timestamp: new Date(msg.timestamp),
+      })),
+    [currentQueue]
   );
 
   return (
@@ -225,7 +335,7 @@ function AppContent() {
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
         currentPlan={currentPlan}
-        messageQueue={currentQueue}
+        messageQueue={formattedQueue}
         hasQueuedMessages={hasQueuedMessages}
         onClearQueue={handleClearQueue}
         onRemoveFromQueue={handleRemoveFromQueue}
@@ -245,14 +355,12 @@ function AppContent() {
         onSendMessage={handleSendMessage}
         onAddClick={handleAddFile}
         onSideAction={handleSideAction}
-        // Unified Side Panel Props
         sidePanelVisible={sidePanelVisible}
         activeSidePanelTab={activeSidePanelTab}
         sidePanelWidth={sidePanelWidth}
         onSidePanelClose={handleSidePanelClose}
         onSidePanelResizeStart={handleSidePanelResize}
         onSidePanelTabChange={handleSidePanelTabChange}
-        // Feature specific props needed inside the panel
         terminalId={activeTerminalId ?? null}
         onPickLocalCwd={handleSelectCwd}
         onSetCwd={handleCwdSelect}
@@ -281,36 +389,10 @@ function AppContent() {
   );
 }
 
-/**
- * App component with Context Providers
- *
- * Note: SessionProvider and CodexProvider are kept for backward compatibility.
- * They contain complex event handling logic (useCodexSessionSync, useApprovalState)
- * that will be refactored in the final cleanup phase.
- *
- * Current architecture:
- * - UIStore: Direct usage (migrated)
- * - SessionStore: Direct effects via useSessionEffects
- * - CodexStore: Direct effects via useCodexEffects
- * - Context Providers: Kept for Tauri event handling
- */
 export function App() {
-  // Initialize UI store (handles responsive layout)
-  useUIStoreInit();
-
-  // Initialize session effects (handles auto-select model/mode)
-  useSessionEffects();
-
-  // Initialize Codex effects (handles Codex initialization)
-  useCodexEffects();
-
   return (
-    // Providers are deprecated but kept for complex event handling logic
-    // They will be removed when event handling is fully migrated to stores
-    <SessionProvider>
-      <CodexProvider>
-        <AppContent />
-      </CodexProvider>
-    </SessionProvider>
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
   );
 }
