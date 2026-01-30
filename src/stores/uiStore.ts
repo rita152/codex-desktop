@@ -9,7 +9,7 @@
  */
 
 import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
+import { subscribeWithSelector, devtools } from 'zustand/middleware';
 
 import type { SidePanelTab } from '../components/business/UnifiedSidePanel';
 
@@ -67,45 +67,48 @@ const initialState: UIState = {
 
 // Create the store
 export const useUIStore = create<UIStore>()(
-  subscribeWithSelector((set, get) => ({
-    ...initialState,
+  devtools(
+    subscribeWithSelector((set, get) => ({
+      ...initialState,
 
-    // Sidebar actions
-    toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
+      // Sidebar actions
+      toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
 
-    setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
+      setSidebarVisible: (visible) => set({ sidebarVisible: visible }),
 
-    setIsNarrowLayout: (isNarrow) => set({ isNarrowLayout: isNarrow }),
+      setIsNarrowLayout: (isNarrow) => set({ isNarrowLayout: isNarrow }),
 
-    // Side Panel actions
-    setSidePanelVisible: (visible) => set({ sidePanelVisible: visible }),
+      // Side Panel actions
+      setSidePanelVisible: (visible) => set({ sidePanelVisible: visible }),
 
-    setActiveSidePanelTab: (tab) => set({ activeSidePanelTab: tab }),
+      setActiveSidePanelTab: (tab) => set({ activeSidePanelTab: tab }),
 
-    setSidePanelWidth: (width) => set({ sidePanelWidth: width }),
+      setSidePanelWidth: (width) => set({ sidePanelWidth: width }),
 
-    handleSideAction: (actionId) => {
-      const { sidePanelVisible, activeSidePanelTab } = get();
-      const tabId = actionId as SidePanelTab;
+      handleSideAction: (actionId) => {
+        const { sidePanelVisible, activeSidePanelTab } = get();
+        const tabId = actionId as SidePanelTab;
 
-      if (sidePanelVisible && activeSidePanelTab === tabId) {
-        // Toggle off if clicking the same active tab
-        set({ sidePanelVisible: false });
-      } else {
-        // Switch tab and ensure open
-        set({ activeSidePanelTab: tabId, sidePanelVisible: true });
-      }
-    },
+        if (sidePanelVisible && activeSidePanelTab === tabId) {
+          // Toggle off if clicking the same active tab
+          set({ sidePanelVisible: false });
+        } else {
+          // Switch tab and ensure open
+          set({ activeSidePanelTab: tabId, sidePanelVisible: true });
+        }
+      },
 
-    handleSidePanelClose: () => set({ sidePanelVisible: false }),
+      handleSidePanelClose: () => set({ sidePanelVisible: false }),
 
-    handleSidePanelTabChange: (tab) => set({ activeSidePanelTab: tab }),
+      handleSidePanelTabChange: (tab) => set({ activeSidePanelTab: tab }),
 
-    // Settings Modal actions
-    openSettings: () => set({ settingsOpen: true }),
+      // Settings Modal actions
+      openSettings: () => set({ settingsOpen: true }),
 
-    closeSettings: () => set({ settingsOpen: false }),
-  }))
+      closeSettings: () => set({ settingsOpen: false }),
+    })),
+    { name: 'UIStore', enabled: import.meta.env.DEV }
+  )
 );
 
 // Selectors for optimized subscriptions
