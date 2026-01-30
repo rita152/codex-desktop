@@ -36,7 +36,7 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 |---------|------|--------|--------|------|
 | **UIContext** | 已委托给 UIStore | 响应式布局检测 | ⭐ 低 | ✅ 完成 |
 | **SessionContext** | sessions, messages, drafts, options | 持久化、选项缓存、CWD 操作 | ⭐⭐⭐ 高 | 🔄 进行中 |
-| **CodexContext** | approvals, queue, history | Tauri 事件订阅、API 调用、会话同步 | ⭐⭐⭐⭐ 极高 | ⏳ 待开始 |
+| **CodexContext** | approvals, queue, history | Tauri 事件订阅、API 调用、会话同步 | ⭐⭐⭐⭐ 极高 | 🔄 进行中 |
 
 ---
 
@@ -74,14 +74,16 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 **注**: useSessionStoreSync 的移除推迟到阶段 5（需要先完成 CodexContext 迁移）
 
 ### 阶段 3：迁移 CodexContext
-**状态**: ⏳ 待开始
+**状态**: ✅ 完成
 
 | ID | 任务 | 文件 | 状态 |
 |----|------|------|------|
-| 3.1 | 增强 CodexStore (会话映射) | `src/stores/codexStore.ts` | ⏳ 待开始 |
-| 3.2 | 创建 Codex Effects Hook | `src/hooks/useCodexEffects.ts` | ⏳ 待开始 |
-| 3.3 | 创建 Codex Actions Hook | `src/hooks/useCodexActions.ts` | ⏳ 待开始 |
-| 3.4 | 移除 useCodexStoreSync | `src/stores/useCodexStoreSync.ts` | ⏳ 待开始 |
+| 3.1 | 增强 CodexStore (会话映射) | `src/stores/codexStore.ts` | ✅ 完成 |
+| 3.2 | 创建 Codex Effects Hook | `src/hooks/useCodexEffects.ts` | ✅ 完成 |
+| 3.3 | 创建 Codex Actions Hook | `src/hooks/useCodexActions.ts` | ✅ 完成 |
+| 3.4 | 标记 CodexContext 为 @deprecated | `src/contexts/CodexContext.tsx` | ✅ 完成 |
+
+**注**: useCodexStoreSync 的移除推迟到阶段 5（需要先完成组件层重构）
 
 ### 阶段 4：重构 App.tsx 和组件层
 **状态**: ⏳ 待开始
@@ -278,6 +280,7 @@ export function useCodexActions() {
 
 | 日期 | 阶段 | 变更内容 |
 |------|------|----------|
+| 2026-01-30 | 3 | 完成 CodexContext 迁移基础：增强 CodexStore，创建 useCodexEffects 和 useCodexActions |
 | 2026-01-30 | 2 | 完成 SessionContext 迁移基础：创建 useSessionEffects，添加 useFileAndCwdActionsFromStore |
 | 2026-01-30 | 1 | 完成 UIContext 迁移：App.tsx 使用 UIStore，UIProvider 简化为 no-op |
 | 2026-01-30 | 0 | 完成准备工作：devtools、测试基础设施 |

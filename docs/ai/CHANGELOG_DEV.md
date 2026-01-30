@@ -6,6 +6,35 @@
 
 ## 2026-01-30
 
+### 完成阶段 3：CodexContext 迁移基础
+
+**变更点**:
+- 增强 `CodexStore`：添加会话映射 (codexSessionByChat/chatSessionByCodex)
+- 创建 `useCodexEffects.ts`：处理 Codex 初始化副作用
+- 创建 `useCodexActions.ts`：提供 model/mode 变更、消息发送、会话删除等操作
+- 更新 `CodexContext.tsx`：标记为 @deprecated
+- 更新 `App.tsx`：添加 `useCodexEffects()` 初始化调用
+
+**影响面**:
+- `src/stores/codexStore.ts` - 添加会话映射 state 和 actions
+- `src/hooks/useCodexEffects.ts` - 新增
+- `src/hooks/useCodexActions.ts` - 新增
+- `src/contexts/CodexContext.tsx` - 标记 deprecated
+- `src/App.tsx` - 添加 useCodexEffects 调用
+
+**测试点**:
+- `npm run lint` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+**回滚要点**:
+- 删除 `useCodexEffects.ts` 和 `useCodexActions.ts`
+- 恢复 `CodexStore` 中的会话映射相关代码
+- 恢复 `CodexContext.tsx` 注释
+- 移除 `App.tsx` 中的 useCodexEffects 调用
+
+---
+
 ### 完成阶段 2：SessionContext 迁移基础
 
 **变更点**:

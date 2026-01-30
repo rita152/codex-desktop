@@ -24,6 +24,11 @@ export interface QueuedMessage {
 
 // State types
 interface CodexState {
+  // Session mapping (chat session id <-> codex session id)
+  codexSessionByChat: Record<string, string>;
+  chatSessionByCodex: Record<string, string>;
+  pendingSessionInit: Record<string, boolean>;
+
   // Approval state
   pendingApprovals: Record<string, ApprovalRequest>;
   approvalStatuses: Record<string, ApprovalStatus>;
@@ -39,6 +44,14 @@ interface CodexState {
 }
 
 interface CodexActions {
+  // Session mapping actions
+  registerCodexSession: (chatId: string, codexId: string) => void;
+  clearCodexSession: (chatId: string) => void;
+  getCodexSessionId: (chatId: string) => string | undefined;
+  resolveChatSessionId: (codexId: string) => string | undefined;
+  setPendingSessionInit: (chatId: string, pending: boolean) => void;
+  isPendingSessionInit: (chatId: string) => boolean;
+
   // Approval actions
   registerApprovalRequest: (request: ApprovalRequest) => void;
   setApprovalStatus: (callId: string, status: ApprovalStatus) => void;
@@ -69,6 +82,9 @@ const MAX_HISTORY_SIZE = 100;
 
 // Initial state
 const initialState: CodexState = {
+  codexSessionByChat: {},
+  chatSessionByCodex: {},
+  pendingSessionInit: {},
   pendingApprovals: {},
   approvalStatuses: {},
   approvalLoading: {},
@@ -83,6 +99,51 @@ export const useCodexStore = create<CodexStore>()(
   devtools(
     subscribeWithSelector((set, get) => ({
       ...initialState,
+
+      // Session mapping actions
+      registerCodexSession: (chatId, codexId) =>
+        set((state) => ({
+          codexSessionByChat: { ...state.codexSessionByChat, [chatId]: codexId },
+          chatSessionByCodex: { ...state.chatSessionByCodex, [codexId]: chatId },
+        })),
+
+      clearCodexSession: (chatId) =>
+        set((state) => {
+          const codexId = state.codexSessionByChat[chatId];
+          const { [chatId]: _chat, ...restChatToCodex } = state.codexSessionByChat;
+          const restCodexToChat = codexId
+            ? Object.fromEntries(
+                Object.entries(state.chatSessionByCodex).filter(([k]) => k !== codexId)
+              )
+            : state.chatSessionByCodex;
+          const { [chatId]: _pending, ...restPending } = state.pendingSessionInit;
+          return {
+            codexSessionByChat: restChatToCodex,
+            chatSessionByCodex: restCodexToChat,
+            pendingSessionInit: restPending,
+          };
+        }),
+
+      getCodexSessionId: (chatId) => {
+        return get().codexSessionByChat[chatId];
+      },
+
+      resolveChatSessionId: (codexId) => {
+        return get().chatSessionByCodex[codexId];
+      },
+
+      setPendingSessionInit: (chatId, pending) =>
+        set((state) => {
+          if (pending) {
+            return { pendingSessionInit: { ...state.pendingSessionInit, [chatId]: true } };
+          }
+          const { [chatId]: _, ...rest } = state.pendingSessionInit;
+          return { pendingSessionInit: rest };
+        }),
+
+      isPendingSessionInit: (chatId) => {
+        return !!get().pendingSessionInit[chatId];
+      },
 
       // Approval actions
       registerApprovalRequest: (request) =>
@@ -289,3 +350,15 @@ export const useHasQueuedMessages = (sessionId: string) =>
  * Get prompt history
  */
 export const usePromptHistory = () => useCodexStore((state) => state.promptHistory);
+
+/**
+ * Get codex session id for a chat session
+ */
+export const useCodexSessionId = (chatId: string) =>
+  useCodexStore((state) => state.codexSessionByChat[chatId]);
+
+/**
+ * Check if session init is pending
+ */
+export const useIsPendingSessionInit = (chatId: string) =>
+  useCodexStore((state) => !!state.pendingSessionInit[chatId]);

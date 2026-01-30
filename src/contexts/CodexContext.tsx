@@ -1,5 +1,14 @@
 /**
- * Codex Context - Manages Codex backend communication
+ * Codex Context - DEPRECATED Bridge layer for CodexStore
+ *
+ * @deprecated This module is deprecated. Use stores and hooks directly:
+ *   - State: import { useCodexStore, usePendingApprovals, useMessageQueueForSession } from '../stores';
+ *   - Effects: import { useCodexEffects } from '../hooks/useCodexEffects';
+ *   - Actions: import { useCodexActions } from '../hooks/useCodexActions';
+ *
+ * Migration guide:
+ * - Replace CodexProvider with useCodexEffects() hook call in App component
+ * - Replace useCodexContext() with CodexStore selectors and useCodexActions()
  *
  * This context handles:
  * - Codex session synchronization
@@ -8,8 +17,6 @@
  * - Session deletion with Codex cleanup
  *
  * State is synchronized to CodexStore for fine-grained subscriptions.
- * New code should prefer using selectors from '../stores':
- *   import { useMessageQueueForSession, usePendingApprovals } from '../stores';
  */
 
 import { createContext, useContext, useCallback, useMemo, useEffect, type ReactNode } from 'react';
@@ -494,7 +501,15 @@ export function CodexProvider({ children }: CodexProviderProps) {
   return <CodexContext.Provider value={value}>{children}</CodexContext.Provider>;
 }
 
-// Hook to use Codex Context
+/**
+ * Hook to use Codex Context
+ *
+ * @deprecated Prefer using CodexStore selectors and useCodexActions directly:
+ *   - useCodexStore() - full store access
+ *   - usePendingApprovals(sessionId) - approval requests
+ *   - useMessageQueueForSession(sessionId) - message queue
+ *   - useCodexActions({ ensureCodexSession }) - business operations
+ */
 export function useCodexContext(): CodexContextValue {
   const context = useContext(CodexContext);
   if (!context) {

@@ -21,12 +21,13 @@
 | 阶段 0: 准备工作 | ✅ 全部完成 |
 | 阶段 1: UIContext 迁移 | ✅ 全部完成 |
 | 阶段 2: SessionContext 迁移 | ✅ 全部完成 |
+| 阶段 3: CodexContext 迁移 | ✅ 全部完成 |
 
 ### 待开始
 
 | 任务 | 优先级 | 依赖 |
 |------|--------|------|
-| 阶段 3: CodexContext 迁移 | P0 | ✅ 阶段 2 已完成 |
+| 阶段 4: 重构 App.tsx 和组件层 | P1 | ✅ 阶段 3 已完成 |
 | 阶段 2: SessionContext 迁移 | P0 | 阶段 1 |
 | 阶段 3: CodexContext 迁移 | P0 | 阶段 2 |
 | 阶段 4: 重构 App.tsx | P1 | 阶段 3 |
@@ -53,4 +54,5 @@
 1. ~~完成阶段 0 准备工作~~ ✅
 2. ~~完成阶段 1 UIContext 迁移~~ ✅
 3. ~~完成阶段 2 SessionContext 迁移~~ ✅
-4. 开始阶段 3 CodexContext 迁移
+4. ~~完成阶段 3 CodexContext 迁移~~ ✅
+5. 开始阶段 4 重构 App.tsx 和组件层

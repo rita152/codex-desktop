@@ -12,6 +12,7 @@ import { usePanelResize } from './hooks/usePanelResize';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
 import { useSessionEffects } from './hooks/useSessionEffects';
+import { useCodexEffects } from './hooks/useCodexEffects';
 import { SessionProvider, useSessionContext, CodexProvider, useCodexContext } from './contexts';
 import {
   useUIStore,
@@ -269,6 +270,9 @@ export function App() {
 
   // Initialize session effects (handles auto-select model/mode)
   useSessionEffects();
+
+  // Initialize Codex effects (handles Codex initialization)
+  useCodexEffects();
 
   return (
     <SessionProvider>
