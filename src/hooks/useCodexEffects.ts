@@ -238,4 +238,21 @@ export function useCodexEffects(): void {
       setGlobalEnsureCodexSession(null);
     };
   }, [ensureCodexSession]);
+
+  // Auto-initialize Codex session when a chat session is selected
+  // This ensures model/mode options are available before sending the first message
+  useEffect(() => {
+    const sessionStore = useSessionStore.getState();
+    const { selectedSessionId, modelCache } = sessionStore;
+
+    // Only initialize if model options are not yet available
+    if (modelCache.options && modelCache.options.length > 0) {
+      return;
+    }
+
+    // Initialize Codex session to fetch model/mode options
+    void ensureCodexSession(selectedSessionId).catch((err) => {
+      devDebug('[useCodexEffects] Auto-init session failed', err);
+    });
+  }, [ensureCodexSession]);
 }
