@@ -6,6 +6,33 @@
 
 ## 2026-01-30
 
+### 完成阶段 2：SessionContext 迁移基础
+
+**变更点**:
+- 创建 `useSessionEffects.ts`：处理自动选择 model/mode 的副作用
+- 重构 `useFileAndCwdActions.ts`：添加 `useFileAndCwdActionsFromStore()` (Store-based)
+- 更新 `SessionContext.tsx`：标记为 @deprecated，移除重复的 auto-select 逻辑
+- 更新 `App.tsx`：添加 `useSessionEffects()` 初始化调用
+
+**影响面**:
+- `src/hooks/useSessionEffects.ts` - 新增
+- `src/hooks/useFileAndCwdActions.ts` - 添加 Store-based 版本
+- `src/contexts/SessionContext.tsx` - 标记 deprecated
+- `src/App.tsx` - 添加 useSessionEffects 调用
+
+**测试点**:
+- `npm run lint` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+**回滚要点**:
+- 删除 `useSessionEffects.ts`
+- 恢复 `useFileAndCwdActions.ts` 中的旧代码
+- 恢复 `SessionContext.tsx` 中的 auto-select useEffect
+- 移除 `App.tsx` 中的 useSessionEffects 调用
+
+---
+
 ### 完成阶段 1：UIContext 迁移
 
 **变更点**:

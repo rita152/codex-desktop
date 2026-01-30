@@ -1,5 +1,15 @@
 /**
- * Session Context - Manages session-related state
+ * Session Context - DEPRECATED Bridge layer for SessionStore
+ *
+ * @deprecated This module is deprecated. Use stores and hooks directly:
+ *   - State: import { useSessionStore, useCurrentMessages, useIsGenerating } from '../stores';
+ *   - Effects: import { useSessionEffects } from '../hooks/useSessionEffects';
+ *   - Actions: import { useFileAndCwdActionsFromStore } from '../hooks/useFileAndCwdActions';
+ *
+ * Migration guide:
+ * - Replace SessionProvider with useSessionEffects() hook call in App component
+ * - Replace useSessionContext() with SessionStore selectors
+ * - Replace file/cwd actions with useFileAndCwdActionsFromStore()
  *
  * This context handles:
  * - Session list and selection
@@ -8,8 +18,6 @@
  * - Generation and terminal state
  *
  * State is synchronized to SessionStore for fine-grained subscriptions.
- * New code should prefer using selectors from '../stores':
- *   import { useCurrentMessages, useIsGenerating } from '../stores';
  */
 
 import {
@@ -39,7 +47,6 @@ import {
   saveModelOptionsCache,
 } from '../api/storage';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from '../constants/chat';
-import { resolveOptionId } from '../utils/optionSelection';
 
 import type { ChatSession } from '../types/session';
 import type { Message } from '../types/message';
@@ -332,45 +339,8 @@ export function SessionProvider({ children }: SessionProviderProps) {
     terminalBySession,
   });
 
-  // Auto-select available model when current is unavailable
-  useEffect(() => {
-    if (!modelOptions || modelOptions.length === 0) return;
-    const available = new Set(modelOptions.map((option) => option.value));
-    if (available.has(selectedModel)) return;
-
-    const preferred = resolveOptionId({
-      availableOptions: modelOptions,
-      fallbackIds: [DEFAULT_MODEL_ID, modelCache.currentId],
-      defaultId: DEFAULT_MODEL_ID,
-    });
-
-    if (!preferred || preferred === selectedModel) return;
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === selectedSessionId ? { ...session, model: preferred } : session
-      )
-    );
-  }, [modelCache.currentId, modelOptions, selectedModel, selectedSessionId, setSessions]);
-
-  // Auto-select available mode when current is unavailable
-  useEffect(() => {
-    if (!agentOptions || agentOptions.length === 0) return;
-    const available = new Set(agentOptions.map((option) => option.value));
-    if (available.has(selectedMode)) return;
-
-    const preferred = resolveOptionId({
-      availableOptions: agentOptions,
-      fallbackIds: [DEFAULT_MODE_ID],
-      defaultId: DEFAULT_MODE_ID,
-    });
-
-    if (!preferred || preferred === selectedMode) return;
-    setSessions((prev) =>
-      prev.map((session) =>
-        session.id === selectedSessionId ? { ...session, mode: preferred } : session
-      )
-    );
-  }, [agentOptions, selectedMode, selectedSessionId, setSessions]);
+  // Note: Auto-select model/mode logic has been moved to useSessionEffects hook.
+  // The effects are now triggered by SessionStore subscriptions instead of Context state changes.
 
   const value = useMemo<SessionContextValue>(
     () => ({
@@ -494,7 +464,16 @@ export function SessionProvider({ children }: SessionProviderProps) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
-// Hook to use Session Context
+/**
+ * Hook to use Session Context
+ *
+ * @deprecated Prefer using SessionStore selectors directly:
+ *   - useSessionStore() - full store access
+ *   - useCurrentMessages() - current session's messages
+ *   - useIsGenerating() - current session's generation state
+ *   - useSelectedModel() / useSelectedMode() - current session's model/mode
+ *   - useSelectedCwd() - current session's working directory
+ */
 export function useSessionContext(): SessionContextValue {
   const context = useContext(SessionContext);
   if (!context) {

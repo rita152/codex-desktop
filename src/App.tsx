@@ -11,6 +11,7 @@ const SettingsModal = lazy(() =>
 import { usePanelResize } from './hooks/usePanelResize';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
+import { useSessionEffects } from './hooks/useSessionEffects';
 import { SessionProvider, useSessionContext, CodexProvider, useCodexContext } from './contexts';
 import {
   useUIStore,
@@ -265,6 +266,9 @@ function AppContent() {
 export function App() {
   // Initialize UI store (handles responsive layout)
   useUIStoreInit();
+
+  // Initialize session effects (handles auto-select model/mode)
+  useSessionEffects();
 
   return (
     <SessionProvider>
