@@ -59,6 +59,7 @@ pub fn run() {
             codex::commands::codex_set_mode,
             codex::commands::codex_set_model,
             codex::commands::codex_set_config_option,
+            codex::commands::codex_warmup,
             terminal::terminal_spawn,
             terminal::terminal_write,
             terminal::terminal_resize,

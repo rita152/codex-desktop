@@ -193,6 +193,19 @@ impl CodexService {
         let key = ApprovalKey::new(session_id, request_id);
         self.approvals.respond(key, decision, option_id)
     }
+
+    /// Warmup the ACP connection without creating a session.
+    /// This pre-spawns the codex-acp process and initializes the protocol,
+    /// reducing latency for the first actual session creation.
+    pub async fn warmup(&self) -> Result<()> {
+        let (reply_tx, reply_rx) = oneshot::channel();
+        self.tx
+            .send(ServiceCommand::Warmup { reply: reply_tx })
+            .map_err(|_| anyhow!("codex service worker stopped"))?;
+        reply_rx
+            .await
+            .map_err(|_| anyhow!("codex service worker dropped response"))?
+    }
 }
 
 enum ServiceCommand {
@@ -226,6 +239,9 @@ enum ServiceCommand {
     SetEnv {
         key: String,
         value: String,
+        reply: oneshot::Sender<Result<()>>,
+    },
+    Warmup {
         reply: oneshot::Sender<Result<()>>,
     },
 }
@@ -706,6 +722,32 @@ async fn worker_loop(
                     state.last_init = None;
                 }
                 let _ = reply.send(Ok(()));
+            }
+            ServiceCommand::Warmup { reply } => {
+                let timing = state.debug.mark_global();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "warmup_start",
+                    timing,
+                    serde_json::json!({}),
+                );
+
+                let start = Instant::now();
+                // Warmup just ensures connection is established and initialized
+                let result = initialize_inner(&mut state).await.map(|_| ());
+                let duration_ms = start.elapsed().as_millis().try_into().unwrap_or(u64::MAX);
+
+                let timing = state.debug.mark_global();
+                state.debug.emit(
+                    &state.app,
+                    None,
+                    "warmup_end",
+                    timing,
+                    serde_json::json!({ "ok": result.is_ok(), "durationMs": duration_ms }),
+                );
+
+                let _ = reply.send(result);
             }
         }
     }

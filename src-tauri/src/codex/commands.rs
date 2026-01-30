@@ -182,6 +182,18 @@ pub async fn codex_set_model(
     codex_set_config_option(state, session_id, "model".to_string(), model_id).await
 }
 
+/// Warmup the Codex ACP connection.
+/// This pre-spawns the codex-acp process and initializes the protocol,
+/// reducing latency for the first actual session creation.
+#[tauri::command]
+pub async fn codex_warmup(
+    app: AppHandle,
+    state: State<'_, CodexManager>,
+) -> Result<(), String> {
+    let svc = state.get_or_create(app);
+    svc.warmup().await.map_err(|e| e.to_string())
+}
+
 /// Entry in a local directory listing.
 #[derive(serde::Serialize)]
 pub struct LocalDirectoryEntry {

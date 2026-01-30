@@ -73,3 +73,12 @@ export async function loadCodexCliConfig(): Promise<CodexCliConfigInfo> {
 export async function setCodexEnv(key: string, value: string): Promise<void> {
   await invoke<void>('codex_set_env', { key, value });
 }
+
+/**
+ * Warmup the Codex ACP connection.
+ * This pre-spawns the codex-acp process and initializes the protocol,
+ * reducing latency for the first actual session creation.
+ */
+export async function warmupCodex(): Promise<void> {
+  await invoke<void>('codex_warmup');
+}

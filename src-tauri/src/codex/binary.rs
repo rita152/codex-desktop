@@ -33,12 +33,40 @@ impl CodexAcpLaunchMode {
     }
 
     /// Pick a default launch mode based on build type.
+    /// In debug mode, prefers local sidecar binary if available for faster startup.
     pub fn default_for_build() -> Self {
         if cfg!(debug_assertions) {
-            Self::Npx
+            // In debug mode, check if local sidecar binary exists for faster startup
+            if Self::has_local_sidecar() {
+                Self::Sidecar
+            } else {
+                Self::Npx
+            }
         } else {
             Self::Sidecar
         }
+    }
+
+    /// Check if a local sidecar binary exists (for debug mode optimization)
+    fn has_local_sidecar() -> bool {
+        // Check explicit path first
+        if let Ok(path) = std::env::var("CODEX_DESKTOP_ACP_PATH") {
+            return std::path::Path::new(&path).exists();
+        }
+
+        // Check common local development paths
+        let local_paths = [
+            "codex-acp/target/release/codex-acp",
+            "../codex-acp/target/release/codex-acp",
+        ];
+
+        for path in &local_paths {
+            if std::path::Path::new(path).exists() {
+                return true;
+            }
+        }
+
+        false
     }
 }
 
@@ -118,6 +146,7 @@ impl CodexAcpBinary {
     }
 
     fn sidecar(app: Option<&tauri::AppHandle>) -> Result<Self> {
+        // 1. Check explicit path override
         if let Some(explicit) = std::env::var_os("CODEX_DESKTOP_ACP_PATH") {
             return Ok(Self {
                 mode: CodexAcpLaunchMode::Sidecar,
@@ -126,6 +155,26 @@ impl CodexAcpBinary {
             });
         }
 
+        // 2. In debug mode, check local development paths first
+        if cfg!(debug_assertions) {
+            let local_paths = [
+                PathBuf::from("codex-acp/target/release/codex-acp"),
+                PathBuf::from("../codex-acp/target/release/codex-acp"),
+            ];
+
+            for path in &local_paths {
+                if path.exists() {
+                    tracing::info!("Using local codex-acp binary: {}", path.display());
+                    return Ok(Self {
+                        mode: CodexAcpLaunchMode::Sidecar,
+                        program: path.clone().into_os_string(),
+                        args: Vec::new(),
+                    });
+                }
+            }
+        }
+
+        // 3. Use bundled sidecar (requires AppHandle)
         let app =
             app.context("sidecar mode requires a Tauri AppHandle (or set CODEX_DESKTOP_ACP_PATH)")?;
         let resource_dir = app
