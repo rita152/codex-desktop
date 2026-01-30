@@ -389,6 +389,36 @@ export const useSessionStore = create<SessionStore>()(
             sessionMessages: state.sessionMessages,
             sessionDrafts: state.sessionDrafts,
           }),
+          // Custom storage to handle Date serialization/deserialization
+          storage: {
+            getItem: (name) => {
+              const str = localStorage.getItem(name);
+              if (!str) return null;
+              const parsed = JSON.parse(str);
+              // Rehydrate timestamp strings back to Date objects
+              if (parsed?.state?.sessionMessages) {
+                for (const sessionId of Object.keys(parsed.state.sessionMessages)) {
+                  const messages = parsed.state.sessionMessages[sessionId];
+                  if (Array.isArray(messages)) {
+                    for (const msg of messages) {
+                      if (msg.timestamp && typeof msg.timestamp === 'string') {
+                        const date = new Date(msg.timestamp);
+                        // Only convert if valid date
+                        msg.timestamp = isNaN(date.getTime()) ? undefined : date;
+                      }
+                    }
+                  }
+                }
+              }
+              return parsed;
+            },
+            setItem: (name, value) => {
+              localStorage.setItem(name, JSON.stringify(value));
+            },
+            removeItem: (name) => {
+              localStorage.removeItem(name);
+            },
+          },
         }
       )
     ),
