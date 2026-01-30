@@ -34,7 +34,7 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 
 | Context | 状态 | 副作用 | 复杂度 | 状态 |
 |---------|------|--------|--------|------|
-| **UIContext** | 已委托给 UIStore | 响应式布局检测 | ⭐ 低 | 🔄 进行中 |
+| **UIContext** | 已委托给 UIStore | 响应式布局检测 | ⭐ 低 | ✅ 完成 |
 | **SessionContext** | sessions, messages, drafts, options | 持久化、选项缓存、CWD 操作 | ⭐⭐⭐ 高 | ⏳ 待开始 |
 | **CodexContext** | approvals, queue, history | Tauri 事件订阅、API 调用、会话同步 | ⭐⭐⭐⭐ 极高 | ⏳ 待开始 |
 
@@ -53,13 +53,13 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 | 0.4 | 创建测试基础设施 | `src/stores/*.test.ts` | ✅ 完成 |
 
 ### 阶段 1：完成 UIContext 迁移
-**状态**: ⏳ 待开始
+**状态**: ✅ 完成
 
 | ID | 任务 | 文件 | 状态 |
 |----|------|------|------|
-| 1.1 | 将响应式布局逻辑移到 useUIStoreInit | `src/stores/useUIStoreInit.ts` | ⏳ 待开始 |
-| 1.2 | 标记 useUIContext 为 @deprecated | `src/contexts/UIContext.tsx` | ⏳ 待开始 |
-| 1.3 | 更新 App.tsx 使用 Store | `src/App.tsx` | ⏳ 待开始 |
+| 1.1 | 将响应式布局逻辑移到 useUIStoreInit | `src/stores/useUIStoreInit.ts` | ✅ 完成 (已有) |
+| 1.2 | 标记 useUIContext 为 @deprecated | `src/contexts/UIContext.tsx` | ✅ 完成 |
+| 1.3 | 更新 App.tsx 使用 Store | `src/App.tsx` | ✅ 完成 |
 
 ### 阶段 2：迁移 SessionContext 核心状态
 **状态**: ⏳ 待开始
@@ -276,6 +276,8 @@ export function useCodexActions() {
 
 | 日期 | 阶段 | 变更内容 |
 |------|------|----------|
+| 2026-01-30 | 1 | 完成 UIContext 迁移：App.tsx 使用 UIStore，UIProvider 简化为 no-op |
+| 2026-01-30 | 0 | 完成准备工作：devtools、测试基础设施 |
 | 2026-01-30 | 0.1 | 创建迁移计划文档 |
 
 ---

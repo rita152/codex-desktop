@@ -6,6 +6,29 @@
 
 ## 2026-01-30
 
+### 完成阶段 1：UIContext 迁移
+
+**变更点**:
+- 修改 App.tsx：移除 UIProvider，使用 useUIStoreInit()
+- 修改 App.tsx：将 useUIContext() 替换为 UIStore 直接订阅
+- 简化 UIContext.tsx：UIProvider 变为 no-op pass-through
+- 增强 UIContext.tsx：添加完整的 @deprecated 文档
+
+**影响面**:
+- `src/App.tsx` - 移除 UIProvider，直接使用 UIStore
+- `src/contexts/UIContext.tsx` - 简化为向后兼容层
+
+**测试点**:
+- `npm run lint` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+**回滚要点**:
+- 恢复 App.tsx 使用 UIProvider 和 useUIContext
+- 恢复 UIContext.tsx 中的响应式布局逻辑
+
+---
+
 ### 完成阶段 0：迁移准备工作
 
 **变更点**:

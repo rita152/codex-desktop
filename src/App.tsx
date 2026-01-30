@@ -11,16 +11,14 @@ const SettingsModal = lazy(() =>
 import { usePanelResize } from './hooks/usePanelResize';
 import { useTerminalLifecycle } from './hooks/useTerminalLifecycle';
 import { useGlobalShortcuts } from './hooks/useGlobalShortcuts';
+import { SessionProvider, useSessionContext, CodexProvider, useCodexContext } from './contexts';
 import {
-  UIProvider,
-  useUIContext,
-  SessionProvider,
-  useSessionContext,
-  CodexProvider,
-  useCodexContext,
+  useUIStore,
+  useUIStoreInit,
+  useSettingsStore,
+  useShortcuts,
   MIN_SIDE_PANEL_WIDTH,
-} from './contexts';
-import { useSettingsStore, useShortcuts } from './stores';
+} from './stores';
 import { DEFAULT_MODEL_ID } from './constants/chat';
 
 import type { SelectOption } from './types/options';
@@ -38,24 +36,22 @@ function AppContent() {
   // Get shortcuts from settings
   const shortcuts = useShortcuts();
 
-  // UI Context - sidebar, side panel, settings
-  const {
-    sidebarVisible,
-    isNarrowLayout,
-    toggleSidebar,
-    sidePanelVisible,
-    setSidePanelVisible,
-    activeSidePanelTab,
-    setActiveSidePanelTab,
-    sidePanelWidth,
-    setSidePanelWidth,
-    settingsOpen,
-    openSettings,
-    closeSettings,
-    handleSideAction,
-    handleSidePanelClose,
-    handleSidePanelTabChange,
-  } = useUIContext();
+  // UI Store - sidebar, side panel, settings (migrated from UIContext)
+  const sidebarVisible = useUIStore((s) => s.sidebarVisible);
+  const isNarrowLayout = useUIStore((s) => s.isNarrowLayout);
+  const toggleSidebar = useUIStore((s) => s.toggleSidebar);
+  const sidePanelVisible = useUIStore((s) => s.sidePanelVisible);
+  const setSidePanelVisible = useUIStore((s) => s.setSidePanelVisible);
+  const activeSidePanelTab = useUIStore((s) => s.activeSidePanelTab);
+  const setActiveSidePanelTab = useUIStore((s) => s.setActiveSidePanelTab);
+  const sidePanelWidth = useUIStore((s) => s.sidePanelWidth);
+  const setSidePanelWidth = useUIStore((s) => s.setSidePanelWidth);
+  const settingsOpen = useUIStore((s) => s.settingsOpen);
+  const openSettings = useUIStore((s) => s.openSettings);
+  const closeSettings = useUIStore((s) => s.closeSettings);
+  const handleSideAction = useUIStore((s) => s.handleSideAction);
+  const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
+  const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
   // Session Context - session state, derived data, and actions
   const {
@@ -267,13 +263,14 @@ function AppContent() {
 
 // App component with Context Providers
 export function App() {
+  // Initialize UI store (handles responsive layout)
+  useUIStoreInit();
+
   return (
-    <UIProvider>
-      <SessionProvider>
-        <CodexProvider>
-          <AppContent />
-        </CodexProvider>
-      </SessionProvider>
-    </UIProvider>
+    <SessionProvider>
+      <CodexProvider>
+        <AppContent />
+      </CodexProvider>
+    </SessionProvider>
   );
 }

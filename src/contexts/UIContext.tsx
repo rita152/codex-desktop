@@ -1,15 +1,17 @@
 /**
- * UI Context - Bridge layer for UIStore
+ * UI Context - DEPRECATED Bridge layer for UIStore
  *
- * This context now delegates to the Zustand UIStore for state management.
- * It maintains the same interface for backward compatibility while
- * benefiting from Zustand's optimized subscriptions.
+ * @deprecated This entire module is deprecated. Use stores directly:
+ *   import { useUIStore, useSidebarVisible, useUIStoreInit } from '../stores';
  *
- * New code should prefer importing directly from '../stores':
- *   import { useUIStore, useSidebarVisible } from '../stores';
+ * Migration guide:
+ * - Replace UIProvider with useUIStoreInit() hook call in App component
+ * - Replace useUIContext() with individual UIStore selectors
+ *
+ * This file will be removed in a future version.
  */
 
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import {
   useUIStore,
@@ -55,43 +57,18 @@ interface UIContextValue {
   handleSidePanelTabChange: (tab: SidePanelTab) => void;
 }
 
-// Provider Component - now just initializes the store
+// Provider Component
 interface UIProviderProps {
   children: ReactNode;
 }
 
+/**
+ * @deprecated Use useUIStoreInit() hook instead.
+ * This provider is now a no-op pass-through.
+ */
 export function UIProvider({ children }: UIProviderProps) {
-  const setIsNarrowLayout = useUIStore((state) => state.setIsNarrowLayout);
-  const setSidebarVisible = useUIStore((state) => state.setSidebarVisible);
-  const setSidePanelVisible = useUIStore((state) => state.setSidePanelVisible);
-
-  // Handle responsive layout changes
-  useEffect(() => {
-    const checkLayout = () => {
-      const isNarrow = window.innerWidth < SIDEBAR_AUTO_HIDE_MAX_WIDTH;
-      const wasNarrow = useUIStore.getState().isNarrowLayout;
-
-      setIsNarrowLayout(isNarrow);
-
-      // Auto-hide on transition to narrow layout
-      if (isNarrow && !wasNarrow) {
-        setSidebarVisible(false);
-        setSidePanelVisible(false);
-      }
-      // Auto-show sidebar on transition to wide layout
-      if (!isNarrow && wasNarrow) {
-        setSidebarVisible(true);
-      }
-    };
-
-    // Initial check
-    checkLayout();
-
-    // Listen for resize
-    window.addEventListener('resize', checkLayout);
-    return () => window.removeEventListener('resize', checkLayout);
-  }, [setIsNarrowLayout, setSidebarVisible, setSidePanelVisible]);
-
+  // No-op: responsive layout is now handled by useUIStoreInit()
+  // This provider exists only for backward compatibility
   return <>{children}</>;
 }
 
