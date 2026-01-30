@@ -10,6 +10,7 @@
 
 import { create } from 'zustand';
 import { subscribeWithSelector, persist, devtools } from 'zustand/middleware';
+import { useMemo } from 'react';
 
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from '../constants/chat';
 
@@ -17,6 +18,10 @@ import type { ChatSession } from '../types/session';
 import type { Message } from '../types/message';
 import type { PlanStep } from '../types/plan';
 import type { SelectOption } from '../types/options';
+
+const EMPTY_MESSAGES: Message[] = [];
+const EMPTY_SLASH_COMMANDS: string[] = [];
+const EMPTY_SELECT_OPTIONS: SelectOption[] = [];
 
 // Session Notice type
 export interface SessionNotice {
@@ -440,7 +445,7 @@ export const useActiveSession = () =>
  * Get current session's messages
  */
 export const useCurrentMessages = () =>
-  useSessionStore((state) => state.sessionMessages[state.selectedSessionId] ?? []);
+  useSessionStore((state) => state.sessionMessages[state.selectedSessionId] ?? EMPTY_MESSAGES);
 
 /**
  * Get current session's draft
@@ -490,38 +495,45 @@ export const useSessionNotice = () =>
 /**
  * Get model options for current session
  */
-export const useModelOptions = () =>
-  useSessionStore((state) => {
-    const fromSession = state.sessionModelOptions[state.selectedSessionId];
+export const useModelOptions = () => {
+  const fromSession = useSessionStore(
+    (state) => state.sessionModelOptions[state.selectedSessionId]
+  );
+  const cached = useSessionStore((state) => state.modelCache.options);
+
+  return useMemo(() => {
     if (fromSession?.length) return fromSession;
-    return state.modelCache.options ?? [];
-  });
+    return cached ?? EMPTY_SELECT_OPTIONS;
+  }, [cached, fromSession]);
+};
 
 /**
  * Get agent (mode) options for current session
  */
-export const useAgentOptions = () =>
-  useSessionStore((state) => {
-    const fromSession = state.sessionModeOptions[state.selectedSessionId];
-    return fromSession?.length ? fromSession : undefined;
-  });
+export const useAgentOptions = () => {
+  const fromSession = useSessionStore((state) => state.sessionModeOptions[state.selectedSessionId]);
+  return useMemo(() => (fromSession?.length ? fromSession : undefined), [fromSession]);
+};
 
 /**
  * Get slash commands for current session
  */
-export const useSlashCommands = () =>
-  useSessionStore((state) => {
-    const fromSession = state.sessionSlashCommands[state.selectedSessionId] ?? [];
+export const useSlashCommands = () => {
+  const fromSession = useSessionStore(
+    (state) => state.sessionSlashCommands[state.selectedSessionId] ?? EMPTY_SLASH_COMMANDS
+  );
+  return useMemo(() => {
     const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSession]);
     return Array.from(merged).sort();
-  });
+  }, [fromSession]);
+};
 
 /**
  * Check if cwd is locked (has messages)
  */
 export const useCwdLocked = () =>
   useSessionStore((state) => {
-    const messages = state.sessionMessages[state.selectedSessionId] ?? [];
+    const messages = state.sessionMessages[state.selectedSessionId] ?? EMPTY_MESSAGES;
     return messages.length > 0;
   });
 
@@ -536,7 +548,7 @@ export const useActiveTerminalId = () =>
  */
 export const useCurrentPlan = (): PlanStep[] | undefined =>
   useSessionStore((state) => {
-    const messages = state.sessionMessages[state.selectedSessionId] ?? [];
+    const messages = state.sessionMessages[state.selectedSessionId] ?? EMPTY_MESSAGES;
     for (let i = messages.length - 1; i >= 0; i--) {
       const planSteps = messages[i].planSteps;
       if (planSteps && planSteps.length > 0) {
@@ -555,27 +567,80 @@ export const useCurrentPlan = (): PlanStep[] | undefined =>
 /**
  * Get all session view state (for components that need multiple values)
  */
-export const useSessionViewState = () =>
-  useSessionStore((state) => {
-    const activeSession = state.sessions.find((s) => s.id === state.selectedSessionId);
-    const messages = state.sessionMessages[state.selectedSessionId] ?? [];
-    const fromModelOptions = state.sessionModelOptions[state.selectedSessionId];
-    const fromModeOptions = state.sessionModeOptions[state.selectedSessionId];
-    const fromSlashCommands = state.sessionSlashCommands[state.selectedSessionId] ?? [];
+export const useSessionViewState = () => {
+  const selectedSessionId = useSessionStore((state) => state.selectedSessionId);
+  const sessions = useSessionStore((state) => state.sessions);
+  const messages = useSessionStore(
+    (state) => state.sessionMessages[state.selectedSessionId] ?? EMPTY_MESSAGES
+  );
+  const draftMessage = useSessionStore(
+    (state) => state.sessionDrafts[state.selectedSessionId] ?? ''
+  );
+  const sessionNotice = useSessionStore(
+    (state) => state.sessionNotices[state.selectedSessionId] ?? null
+  );
+  const fromModelOptions = useSessionStore(
+    (state) => state.sessionModelOptions[state.selectedSessionId]
+  );
+  const fromModeOptions = useSessionStore(
+    (state) => state.sessionModeOptions[state.selectedSessionId]
+  );
+  const cachedModelOptions = useSessionStore((state) => state.modelCache.options);
+  const fromSlashCommands = useSessionStore(
+    (state) => state.sessionSlashCommands[state.selectedSessionId] ?? EMPTY_SLASH_COMMANDS
+  );
+  const isGenerating = useSessionStore(
+    (state) => state.isGeneratingBySession[state.selectedSessionId] ?? false
+  );
+  const activeTerminalId = useSessionStore(
+    (state) => state.terminalBySession[state.selectedSessionId]
+  );
 
-    return {
+  const activeSession = useMemo(
+    () => sessions.find((s) => s.id === selectedSessionId),
+    [selectedSessionId, sessions]
+  );
+
+  const slashCommands = useMemo(() => {
+    const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...fromSlashCommands]);
+    return Array.from(merged).sort();
+  }, [fromSlashCommands]);
+
+  const modelOptions = useMemo(() => {
+    if (fromModelOptions?.length) return fromModelOptions;
+    return cachedModelOptions ?? EMPTY_SELECT_OPTIONS;
+  }, [cachedModelOptions, fromModelOptions]);
+
+  const agentOptions = useMemo(() => {
+    return fromModeOptions?.length ? fromModeOptions : undefined;
+  }, [fromModeOptions]);
+
+  return useMemo(
+    () => ({
       activeSession,
       messages,
-      draftMessage: state.sessionDrafts[state.selectedSessionId] ?? '',
+      draftMessage,
       selectedModel: activeSession?.model ?? DEFAULT_MODEL_ID,
       selectedMode: activeSession?.mode ?? DEFAULT_MODE_ID,
       selectedCwd: activeSession?.cwd,
-      sessionNotice: state.sessionNotices[state.selectedSessionId] ?? null,
-      agentOptions: fromModeOptions?.length ? fromModeOptions : undefined,
-      modelOptions: fromModelOptions?.length ? fromModelOptions : (state.modelCache.options ?? []),
-      slashCommands: Array.from(new Set([...DEFAULT_SLASH_COMMANDS, ...fromSlashCommands])).sort(),
-      isGenerating: state.isGeneratingBySession[state.selectedSessionId] ?? false,
+      sessionNotice,
+      agentOptions,
+      modelOptions,
+      slashCommands,
+      isGenerating,
       cwdLocked: messages.length > 0,
-      activeTerminalId: state.terminalBySession[state.selectedSessionId],
-    };
-  });
+      activeTerminalId,
+    }),
+    [
+      activeSession,
+      activeTerminalId,
+      agentOptions,
+      draftMessage,
+      isGenerating,
+      messages,
+      modelOptions,
+      sessionNotice,
+      slashCommands,
+    ]
+  );
+};

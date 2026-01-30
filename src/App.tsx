@@ -15,7 +15,16 @@
  * - useCodexEffects: Codex initialization and event handling
  */
 
-import { useCallback, useRef, useMemo, useEffect, lazy, Suspense, Component, type ReactNode } from 'react';
+import {
+  useCallback,
+  useRef,
+  useMemo,
+  useEffect,
+  lazy,
+  Suspense,
+  Component,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { ChatContainer } from './components/business/ChatContainer';
@@ -128,7 +137,10 @@ function AppContent() {
 
   // Derive values outside of selectors to avoid reference issues
   const activeSession = sessions.find((sess) => sess.id === selectedSessionId);
-  const messages = sessionMessagesMap[selectedSessionId] ?? [];
+  const messages = useMemo(
+    () => sessionMessagesMap[selectedSessionId] ?? [],
+    [selectedSessionId, sessionMessagesMap]
+  );
   const draftMessage = sessionDraftsMap[selectedSessionId] ?? '';
   const sessionNotice = sessionNoticesMap[selectedSessionId] ?? null;
   const isGenerating = isGeneratingMap[selectedSessionId] ?? false;
@@ -160,7 +172,10 @@ function AppContent() {
 
   // Slash commands
   const sessionSlashCommandsMap = useSessionStore((s) => s.sessionSlashCommands);
-  const sessionSlashCommands = sessionSlashCommandsMap[selectedSessionId] ?? [];
+  const sessionSlashCommands = useMemo(
+    () => sessionSlashCommandsMap[selectedSessionId] ?? [],
+    [selectedSessionId, sessionSlashCommandsMap]
+  );
   const slashCommands = useMemo(() => {
     const merged = new Set([...DEFAULT_SLASH_COMMANDS, ...sessionSlashCommands]);
     return Array.from(merged).sort();
@@ -181,7 +196,10 @@ function AppContent() {
 
   // Codex Store - queue
   const messageQueuesMap = useCodexStore((s) => s.messageQueues);
-  const currentQueue = messageQueuesMap[selectedSessionId] ?? [];
+  const currentQueue = useMemo(
+    () => messageQueuesMap[selectedSessionId] ?? [],
+    [messageQueuesMap, selectedSessionId]
+  );
   const hasQueuedMessages = currentQueue.length > 0;
 
   // Codex Actions

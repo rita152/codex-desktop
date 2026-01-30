@@ -207,7 +207,10 @@ async function main() {
   if (sourceMetrics.contextCount === 0) {
     log('✅ Migration Complete: All Contexts removed', colors.green);
   } else {
-    log(`⚠️ Migration In Progress: ${sourceMetrics.contextCount} Contexts remaining`, colors.yellow);
+    log(
+      `⚠️ Migration In Progress: ${sourceMetrics.contextCount} Contexts remaining`,
+      colors.yellow
+    );
   }
 
   return summary;

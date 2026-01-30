@@ -15,6 +15,7 @@
 ### Context 状态
 
 所有 Context 已删除：
+
 - `src/contexts/` 目录已删除
 - `useSessionStoreSync.ts` 已删除
 - `useCodexStoreSync.ts` 已删除

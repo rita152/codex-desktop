@@ -52,10 +52,7 @@ export function useApprovalCardsFromStore(): ApprovalProps[] {
   const approvalLoading = useCodexStore((state) => state.approvalLoading);
 
   // Derive array outside of selector
-  const pendingApprovals = useMemo(
-    () => Object.values(pendingApprovalsMap),
-    [pendingApprovalsMap]
-  );
+  const pendingApprovals = useMemo(() => Object.values(pendingApprovalsMap), [pendingApprovalsMap]);
 
   const handleApprovalSelect = useCallback(
     async (
