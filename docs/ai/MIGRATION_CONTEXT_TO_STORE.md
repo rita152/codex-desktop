@@ -1,7 +1,7 @@
 # Context → Store 迁移计划
 
 **创建日期**: 2026-01-30
-**状态**: 📋 计划中
+**状态**: ✅ 主体完成
 **目标**: 将 React Context 状态管理完全迁移到 Zustand Store
 
 ---
@@ -96,16 +96,20 @@ Store (SSOT)  <────  Effect Hooks (副作用)
 **注**: Providers 暂时保留用于 Tauri 事件处理。完全移除推迟到阶段 5。
 
 ### 阶段 5：清理和优化
-**状态**: ⏳ 待开始
+**状态**: 🔄 部分完成
 
 | ID | 任务 | 文件 | 状态 |
 |----|------|------|------|
-| 5.1 | 移除 src/contexts/ 目录 | `src/contexts/` | ⏳ 待开始 |
-| 5.2 | 移除同步 hooks | `src/stores/use*StoreSync.ts` | ⏳ 待开始 |
-| 5.3 | 更新 MIGRATION.md 为完成状态 | `src/stores/MIGRATION.md` | ⏳ 待开始 |
-| 5.4 | 更新 AGENTS.md 文档 | 多个 AGENTS.md | ⏳ 待开始 |
-| 5.5 | 运行全量测试 | - | ⏳ 待开始 |
-| 5.6 | 性能测试 | - | ⏳ 待开始 |
+| 5.1 | 移除 src/contexts/ 目录 | `src/contexts/` | ⏸️ 推迟 |
+| 5.2 | 移除同步 hooks | `src/stores/use*StoreSync.ts` | ⏸️ 推迟 |
+| 5.3 | 更新 MIGRATION.md 为完成状态 | `src/stores/MIGRATION.md` | ✅ 完成 |
+| 5.4 | 更新 AGENTS.md 文档 | `src/AGENTS.md` | ✅ 完成 |
+| 5.5 | 运行全量测试 | - | ✅ 完成 (101 tests) |
+| 5.6 | 性能测试 | - | ⏸️ 推迟 |
+
+**推迟说明**:
+- 5.1/5.2：Context 内部仍有复杂的事件处理逻辑（useCodexSessionSync），完全移除需要重构 useCodexEvents 的调用方式
+- 5.6：性能测试可在功能稳定后进行
 
 ---
 
@@ -282,6 +286,7 @@ export function useCodexActions() {
 
 | 日期 | 阶段 | 变更内容 |
 |------|------|----------|
+| 2026-01-30 | 5 | 部分完成清理：更新 MIGRATION.md 和 AGENTS.md，运行全量测试 |
 | 2026-01-30 | 4 | 完成 App.tsx 重构：添加迁移文档，确认只有 App.tsx 使用 Context |
 | 2026-01-30 | 3 | 完成 CodexContext 迁移基础：增强 CodexStore，创建 useCodexEffects 和 useCodexActions |
 | 2026-01-30 | 2 | 完成 SessionContext 迁移基础：创建 useSessionEffects，添加 useFileAndCwdActionsFromStore |

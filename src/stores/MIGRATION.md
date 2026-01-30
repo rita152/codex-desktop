@@ -4,11 +4,28 @@
 
 ## 当前状态
 
-**迁移已完成！** 所有 Contexts 现在内部使用 Zustand stores：
+**迁移进行中 (Phase 5)！**
 
-- `UIContext` → 委托给 `UIStore`
-- `SessionContext` → 同步状态到 `SessionStore`
-- `CodexContext` → 同步状态到 `CodexStore`
+### Store 作为 SSOT（单一真实来源）
+
+- `UIStore` - ✅ 完全迁移，App.tsx 直接使用
+- `SessionStore` - ✅ 作为 SSOT，Context 标记为 deprecated
+- `CodexStore` - ✅ 作为 SSOT，Context 标记为 deprecated
+
+### Context 状态
+
+所有 Context 已被标记为 `@deprecated`：
+
+- `UIContext` → 使用 `useUIStore` + `useUIStoreInit`
+- `SessionContext` → 使用 `useSessionStore` + `useSessionEffects`
+- `CodexContext` → 使用 `useCodexStore` + `useCodexEffects` + `useCodexActions`
+
+### Effect Hooks（副作用处理）
+
+- `useUIStoreInit` - 响应式布局检测
+- `useSessionEffects` - 自动选择 model/mode
+- `useCodexEffects` - Codex 初始化
+- `useCodexActions` - 业务操作（model/mode 变更、消息发送等）
 
 ## 概述
 
@@ -16,15 +33,16 @@ Zustand stores 位于 `src/stores/` 目录：
 
 - `uiStore.ts` - UI 状态（侧边栏、面板、设置）
 - `sessionStore.ts` - 会话状态（消息、草稿、选项）
-- `codexStore.ts` - Codex 交互状态（审批、队列、历史）
-- `useSessionStoreSync.ts` - Context → Store 同步
-- `useCodexStoreSync.ts` - Context → Store 同步
+- `codexStore.ts` - Codex 交互状态（审批、队列、历史、会话映射）
+- `useUIStoreInit.ts` - UI 副作用初始化
+- ~~`useSessionStoreSync.ts`~~ - (deprecated) Context → Store 同步
+- ~~`useCodexStoreSync.ts`~~ - (deprecated) Context → Store 同步
 
 ## 使用策略
 
-**现有组件**：继续使用 `useXxxContext()` hooks，它们现在内部使用 stores
+**新组件**：直接使用 store selectors + effect hooks
 
-**新组件或性能优化**：直接使用 store selectors 获得更细粒度的订阅
+**现有组件**：可以继续使用 `useXxxContext()` hooks（已 deprecated，将在清理阶段移除）
 
 ## 迁移示例
 
@@ -124,6 +142,33 @@ function QueueIndicator() {
 
   if (queue.length === 0) return null;
   return <button onClick={() => clearQueue(sessionId)}>Clear ({queue.length})</button>;
+}
+```
+
+### 使用 Actions Hooks
+
+**旧代码（使用 Context actions）：**
+
+```tsx
+import { useCodexContext } from '../contexts';
+
+function ModelSelector() {
+  const { handleModelChange, selectedModel, modelOptions } = useCodexContext();
+  // ...
+}
+```
+
+**新代码（使用 useCodexActions）：**
+
+```tsx
+import { useCodexActions } from '../hooks/useCodexActions';
+import { useSessionStore, useModelOptions, useSelectedModel } from '../stores';
+
+function ModelSelector() {
+  const { handleModelChange } = useCodexActions({ ensureCodexSession });
+  const selectedModel = useSelectedModel();
+  const modelOptions = useModelOptions();
+  // ...
 }
 ```
 

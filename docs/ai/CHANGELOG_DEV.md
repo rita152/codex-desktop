@@ -6,6 +6,25 @@
 
 ## 2026-01-30
 
+### 部分完成阶段 5：清理和优化
+
+**变更点**:
+- 更新 `src/stores/MIGRATION.md`：反映当前迁移状态，添加 Effect hooks 文档
+- 更新 `src/AGENTS.md`：添加状态管理部分，说明 Stores 和 Effect hooks
+- 运行全量测试：101 个单元测试全部通过
+
+**推迟任务**:
+- 移除 `src/contexts/` 目录：Context 内部有复杂事件处理逻辑
+- 移除同步 hooks：依赖 Context
+- 性能测试：待功能稳定后进行
+
+**测试点**:
+- `npm run lint` - 通过
+- `npm run test:unit` - 101 测试全部通过
+- `npx tsc --noEmit` - 类型检查通过
+
+---
+
 ### 完成阶段 4：App.tsx 和组件层重构
 
 **变更点**:
