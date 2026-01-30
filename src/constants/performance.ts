@@ -23,5 +23,3 @@ export const PERFORMANCE = {
   // Panel resize
   MIN_CONVERSATION_WIDTH: 240,
 } as const;
-
-export type PerformanceConfig = typeof PERFORMANCE;

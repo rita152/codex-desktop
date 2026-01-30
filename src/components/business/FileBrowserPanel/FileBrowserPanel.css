@@ -215,10 +215,6 @@
   font-style: italic;
 }
 
-.file-browser-panel__item--error .file-browser-panel__item-name {
-  color: var(--color-error);
-}
-
 @media (max-width: 900px) {
   .file-browser-panel {
     flex: 0 0 200px;

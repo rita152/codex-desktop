@@ -263,10 +263,6 @@
   padding: 0;
 }
 
-.settings-remote-manager .server-manager-header {
-  display: none;
-}
-
 /* Content */
 .settings-content {
   flex: 1;

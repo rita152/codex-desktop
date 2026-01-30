@@ -187,15 +187,6 @@
   border-right-color: transparent;
 }
 
-.approval__btn--reject-always {
-  background-color: color-mix(in srgb, var(--color-error) 12%, transparent);
-  color: var(--color-error);
-}
-
-.approval__btn--reject-always:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
-}
-
 @keyframes approval-spin {
   from {
     transform: rotate(0deg);

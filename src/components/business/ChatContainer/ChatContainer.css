@@ -272,10 +272,6 @@
     left: var(--spacing-lg);
     right: var(--spacing-lg);
   }
-
-  .chat-container__terminal-resizer {
-    display: none;
-  }
 }
 
 @media (max-width: 720px) {

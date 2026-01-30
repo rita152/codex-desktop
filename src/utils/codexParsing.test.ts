@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 
 import {
   approvalStatusFromKind,
-  asArray,
   asRecord,
   applyToolCallUpdate,
   extractApprovalDescription,
@@ -10,17 +9,12 @@ import {
   extractCommand,
   extractSlashCommands,
   formatError,
-  getNumber,
   getString,
   mapApprovalOptions,
-  mergeSelectOptions,
   newMessageId,
   parseToolCall,
   resolveModelOptions,
   resolveModeOptions,
-  safeJson,
-  normalizePermissionKind,
-  normalizeToolCallStatus,
   normalizeToolKind,
 } from './codexParsing';
 
@@ -31,31 +25,17 @@ describe('codexParsing', () => {
   });
 
   it('handles helpers and normalization utilities', () => {
-    const circular: { self?: unknown } = {};
-    circular.self = circular;
-    expect(safeJson({ ok: true })).toContain('"ok": true');
-    expect(safeJson(circular)).toBe('[object Object]');
     expect(formatError(new Error('boom'))).toBe('boom');
     expect(formatError('oops')).toBe('oops');
     expect(asRecord({ value: 1 })?.value).toBe(1);
     expect(asRecord(null)).toBeNull();
-    expect(asArray('nope')).toEqual([]);
-    expect(asArray([1, 2])).toEqual([1, 2]);
     expect(getString(1)).toBeUndefined();
     expect(getString('ok')).toBe('ok');
-    expect(getNumber('1')).toBeUndefined();
-    expect(getNumber(1)).toBe(1);
     const id = newMessageId();
     expect(id).toContain('-');
   });
 
-  it('normalizes statuses, tool kinds, and permission kinds', () => {
-    expect(normalizeToolCallStatus('in_progress')).toBe('in-progress');
-    expect(normalizeToolCallStatus('in-progress')).toBe('in-progress');
-    expect(normalizeToolCallStatus('completed')).toBe('completed');
-    expect(normalizeToolCallStatus('failed')).toBe('failed');
-    expect(normalizeToolCallStatus('unknown')).toBe('pending');
-
+  it('normalizes tool kinds', () => {
     expect(normalizeToolKind('read')).toBe('read');
     expect(normalizeToolKind('delete')).toBe('edit');
     expect(normalizeToolKind('move')).toBe('edit');
@@ -66,33 +46,6 @@ describe('codexParsing', () => {
     expect(normalizeToolKind('mcp')).toBe('mcp');
     expect(normalizeToolKind('custom')).toBe('other');
     expect(normalizeToolKind(undefined)).toBeUndefined();
-
-    expect(normalizePermissionKind('allow_always')).toBe('allow-always');
-    expect(normalizePermissionKind('allow-once')).toBe('allow-once');
-    expect(normalizePermissionKind('reject_always')).toBe('reject-always');
-    expect(normalizePermissionKind('reject_once')).toBe('reject-once');
-    expect(normalizePermissionKind('abort')).toBe('reject-once');
-    expect(normalizePermissionKind('unknown')).toBe('allow-once');
-  });
-
-  it('merges select options without duplicates', () => {
-    const merged = mergeSelectOptions(
-      [{ value: 'a', label: 'A' }],
-      [
-        { value: 'a', label: 'A' },
-        { value: 'b', label: 'B' },
-      ]
-    );
-    expect(merged.map((item) => item.value)).toEqual(['a', 'b']);
-  });
-
-  it('handles empty select option inputs', () => {
-    expect(mergeSelectOptions([], [{ value: 'b', label: 'B' }])).toEqual([
-      { value: 'b', label: 'B' },
-    ]);
-    expect(mergeSelectOptions([{ value: 'a', label: 'A' }], [])).toEqual([
-      { value: 'a', label: 'A' },
-    ]);
   });
 
   it('parses tool call diff content', () => {

@@ -180,18 +180,3 @@ export function useGlobalShortcuts({
     };
   }, [handleKeyDown, enabled]);
 }
-
-/**
- * Format a shortcut string for display
- */
-export function formatShortcutForDisplay(shortcut: string): string {
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.includes('Mac');
-
-  return shortcut
-    .replace('CmdOrCtrl', isMac ? '⌘' : 'Ctrl')
-    .replace('Shift', isMac ? '⇧' : 'Shift')
-    .replace('Alt', isMac ? '⌥' : 'Alt')
-    .replace('Enter', '↵')
-    .replace('Escape', 'Esc')
-    .replace(/\+/g, isMac ? '' : '+');
-}

@@ -24,27 +24,6 @@ export function ChatIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
-export function AccountIcon({ size = 24, className = '' }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      className={cn('icon', className)}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="8" r="3.25" />
-      <path d="M4 20C5.6 16.6 8.8 15 12 15C15.2 15 18.4 16.6 20 20" />
-    </svg>
-  );
-}
-
 export function CommentIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg
@@ -172,29 +151,6 @@ export function EditIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
-export function GlobeIcon({ size = 24, className = '' }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      className={cn('icon', className)}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="9" />
-      <path d="M3 12H21" />
-      <path d="M12 3c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9" />
-      <path d="M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9" />
-    </svg>
-  );
-}
-
 export function FolderIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg
@@ -228,34 +184,6 @@ export function ForwardIcon({ size = 24, className = '' }: IconProps) {
     >
       <path d="M5 4L12 12L5 20" />
       <path d="M13 4L20 12L13 20" />
-    </svg>
-  );
-}
-
-export function SlidersIcon({ size = 24, className = '' }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      className={cn('icon', className)}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="4" y1="21" x2="4" y2="14" />
-      <line x1="4" y1="10" x2="4" y2="3" />
-      <line x1="12" y1="21" x2="12" y2="12" />
-      <line x1="12" y1="8" x2="12" y2="3" />
-      <line x1="20" y1="21" x2="20" y2="16" />
-      <line x1="20" y1="12" x2="20" y2="3" />
-      <line x1="1" y1="14" x2="7" y2="14" />
-      <line x1="9" y1="8" x2="15" y2="8" />
-      <line x1="17" y1="16" x2="23" y2="16" />
     </svg>
   );
 }
@@ -595,28 +523,6 @@ export function ArrowUpIcon({ size = 24, className = '' }: IconProps) {
     >
       <line x1="12" y1="19" x2="12" y2="5" />
       <polyline points="5 12 12 5 19 12" />
-    </svg>
-  );
-}
-
-export function MoreHorizontalIcon({ size = 24, className = '' }: IconProps) {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      className={cn('icon', className)}
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-      <circle cx="5" cy="12" r="1" />
     </svg>
   );
 }

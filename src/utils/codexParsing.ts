@@ -17,9 +17,9 @@ import type {
 } from '../components/ui/feedback/ToolCall';
 import type { PermissionOption } from '../types/codex';
 
-export type UnknownRecord = Record<string, unknown>;
+type UnknownRecord = Record<string, unknown>;
 
-export function safeJson(value: unknown): string {
+function safeJson(value: unknown): string {
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -41,7 +41,7 @@ export function asRecord(value: unknown): UnknownRecord | null {
   return value as UnknownRecord;
 }
 
-export function asArray(value: unknown): unknown[] {
+function asArray(value: unknown): unknown[] {
   return Array.isArray(value) ? value : [];
 }
 
@@ -49,11 +49,11 @@ export function getString(value: unknown): string | undefined {
   return typeof value === 'string' ? value : undefined;
 }
 
-export function getNumber(value: unknown): number | undefined {
+function getNumber(value: unknown): number | undefined {
   return typeof value === 'number' ? value : undefined;
 }
 
-export function normalizeToolCallStatus(value: unknown): ToolCallStatus {
+function normalizeToolCallStatus(value: unknown): ToolCallStatus {
   const key = String(value ?? '').toLowerCase();
   switch (key) {
     case 'in_progress':
@@ -92,7 +92,7 @@ export function normalizeToolKind(value: unknown): ToolKind | undefined {
   }
 }
 
-export function normalizePermissionKind(value: unknown): PermissionOptionKind {
+function normalizePermissionKind(value: unknown): PermissionOptionKind {
   const key = String(value ?? '').toLowerCase();
   switch (key) {
     case 'allow_always':
@@ -579,20 +579,4 @@ export function extractApprovalDescription(toolCall: UnknownRecord): string | un
     .map((item) => item.text.trim())
     .filter(Boolean);
   return texts.length > 0 ? texts.join('\n\n') : undefined;
-}
-
-export function mergeSelectOptions(
-  primary: SelectOption[],
-  fallback: SelectOption[]
-): SelectOption[] {
-  if (primary.length === 0) return fallback;
-  if (fallback.length === 0) return primary;
-  const seen = new Set(primary.map((option) => option.value));
-  const merged = [...primary];
-  for (const option of fallback) {
-    if (seen.has(option.value)) continue;
-    seen.add(option.value);
-    merged.push(option);
-  }
-  return merged;
 }

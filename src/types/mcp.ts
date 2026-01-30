@@ -128,28 +128,6 @@ export interface UpdateMcpServerRequest {
 
 // Helper functions
 
-/** Get server ID from McpServer */
-export function getServerId(server: McpServer): string {
-  return server.base.id;
-}
-
-/** Check if server is enabled */
-export function isServerEnabled(server: McpServer): boolean {
-  return server.base.enabled;
-}
-
-/** Get server type string */
-export function getServerTypeLabel(server: McpServer): string {
-  switch (server.type) {
-    case 'Stdio':
-      return 'STDIO';
-    case 'Http':
-      return 'HTTP';
-    case 'Sse':
-      return 'SSE';
-  }
-}
-
 /** Get server display name (command or url) */
 export function getServerDisplayInfo(server: McpServer): string {
   switch (server.type) {
