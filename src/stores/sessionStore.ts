@@ -424,6 +424,15 @@ export const useSessionStore = create<SessionStore>()(
               localStorage.removeItem(name);
             },
           },
+          // Create a new session on app startup (after rehydration)
+          onRehydrateStorage: () => (state) => {
+            if (state) {
+              // Use setTimeout to ensure store is fully initialized
+              setTimeout(() => {
+                state.createNewChat(undefined, 'New Chat');
+              }, 0);
+            }
+          },
         }
       )
     ),
