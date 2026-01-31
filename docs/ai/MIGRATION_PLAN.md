@@ -1,13 +1,181 @@
 # codex-desktop 迁移计划：ACP → codex-core 直接集成
 
 **创建日期**: 2026-01-31  
-**目标**: 将 codex-desktop 从基于 codex-acp 子进程的架构迁移到直接集成 codex-core
+**最后更新**: 2026-01-31 (API 验证修正)  
+**状态**: ✅ 阶段 1 完成 - 项目结构已迁移，codex-core 依赖已可用，API 已验证
 
 ---
 
-## 一、迁移背景与目标
+## 零、已完成：项目结构迁移
 
-### 1.1 当前架构（ACP）
+### 新项目结构
+
+```
+codex-desktop/
+├── src-tauri -> codex-upstream/codex-rs/desktop  (symlink)
+├── codex-upstream/
+│   └── codex-rs/
+│       ├── Cargo.toml          # workspace，包含 desktop 成员
+│       ├── core/               # codex-core
+│       ├── protocol/           # codex-protocol
+│       ├── common/             # codex-common
+│       └── desktop/            # 原 src-tauri（实际位置）
+│           └── Cargo.toml      # 使用 workspace = true
+└── src/                        # 前端代码（不变）
+```
+
+### 关键配置
+
+**codex-upstream/codex-rs/Cargo.toml** (workspace):
+```toml
+[workspace]
+members = [
+    # ... 原有成员 ...
+    "desktop",  # 新增
+]
+```
+
+**desktop/Cargo.toml**:
+```toml
+[dependencies]
+# 现在可以使用 workspace 依赖
+codex-core = { workspace = true }
+codex-protocol = { workspace = true }
+codex-common = { workspace = true }
+
+# 保留 ACP 用于渐进迁移
+agent-client-protocol = { version = "=0.9.3", features = ["unstable"] }
+```
+
+### 编译验证
+
+```bash
+# ✅ Release 编译成功 (5分22秒)
+cd codex-upstream/codex-rs && cargo build -p codex-desktop --release
+
+# ✅ 开发模式可用
+cd codex-desktop && npx tauri dev
+```
+
+---
+
+## 一、可行性深度分析
+
+### 1.1 API 验证结果
+
+| 计划中的 API | 实际 API | 状态 |
+|-------------|----------|------|
+| `Config::load_from_home()` | 不存在 | ❌ 需修正 |
+| `AuthManager::new()` | `AuthManager::new(codex_home, enable_env, store_mode)` | ❌ 需修正 |
+| `ThreadManager::new(home, auth, source)` | ✅ 正确 | ✅ |
+| `thread_manager.start_thread(config)` | ✅ 返回 `NewThread` | ✅ |
+| `thread.submit(Op::UserInput { items, .. })` | ✅ 正确 | ✅ |
+| `thread.next_event()` | ✅ 返回 `Event { id, msg }` | ✅ |
+| `thread_manager.remove_thread(&id)` | ✅ 正确 | ✅ |
+| `config.ephemeral` | ✅ 存在，默认 `false` | ✅ |
+| `Op::Interrupt` | ✅ 正确 | ✅ |
+| `Op::ExecApproval` / `Op::PatchApproval` | ✅ 正确 | ✅ |
+
+### 1.2 关键修正点
+
+#### 修正 1: Config 加载
+
+**错误写法**:
+```rust
+let config = Config::load_from_home(&self.codex_home).await.unwrap_or_default();
+// 或
+let config = Config::load_from_base_config_with_overrides(...); // 这是 #[cfg(test)] 方法！
+```
+
+**正确写法**:
+```rust
+use codex_core::config::{Config, ConfigBuilder, ConfigOverrides};
+
+// 方式 A: 使用 ConfigBuilder（推荐）
+let config = ConfigBuilder::default()
+    .codex_home(codex_home.clone())
+    .harness_overrides(ConfigOverrides {
+        cwd: Some(cwd),
+        ephemeral: Some(ephemeral),
+        ..Default::default()
+    })
+    .build()
+    .await?;
+
+// 方式 B: 使用 CLI overrides（适用于命令行参数场景）
+let config = Config::load_with_cli_overrides(vec![]).await?;
+```
+
+**注意**: `Config::load_from_base_config_with_overrides` 是 `#[cfg(test)]` 方法，仅供测试使用，生产代码必须使用 `ConfigBuilder`。
+
+#### 修正 2: AuthManager 初始化
+
+**错误写法**:
+```rust
+let auth_manager = Arc::new(AuthManager::new());
+```
+
+**正确写法**:
+```rust
+use codex_core::auth::{AuthManager, AuthCredentialsStoreMode};
+
+let auth_manager = AuthManager::shared(
+    codex_home.clone(),
+    false,  // enable_codex_api_key_env
+    AuthCredentialsStoreMode::File,  // 或从 config 获取
+);
+```
+
+#### 修正 3: UserInput 格式
+
+**错误写法**:
+```rust
+Op::UserInput {
+    id: None,
+    items: vec![codex_protocol::models::ResponseInputItem::Text { text }],
+    text_elements: None,
+}
+```
+
+**正确写法**:
+```rust
+use codex_core::protocol::{Op, UserInput};
+
+Op::UserInput {
+    items: vec![UserInput::Text {
+        text: content,
+        text_elements: vec![],
+    }],
+    final_output_json_schema: None,
+}
+```
+
+#### 修正 4: SessionSource
+
+**错误写法**:
+```rust
+SessionSource::Desktop  // 不存在
+```
+
+**正确写法**:
+```rust
+use codex_core::protocol::SessionSource;
+
+// 推荐使用 Exec（程序化调用场景）
+SessionSource::Exec
+
+// 可用的枚举值：Cli, VSCode, Exec, Mcp, SubAgent, Unknown
+```
+
+### 1.3 结论
+
+**迁移方案可行**，但计划中的代码示例需要按照上述修正进行调整。核心 API（`ThreadManager`, `CodexThread`, `EventMsg`, `Op`）都存在且符合预期。
+
+---
+
+## 二、修正后的架构设计
+
+### 2.1 当前架构（ACP）
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -29,7 +197,7 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 目标架构（codex-core 直接集成）
+### 2.2 目标架构（codex-core 直接集成）
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -48,39 +216,27 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.3 迁移核心收益
-
-| 维度 | ACP 架构 | codex-core 直接集成 |
-|------|----------|---------------------|
-| 事件流 | ⚠️ 部分事件丢失 | ✅ 完整 40+ EventMsg |
-| 启动延迟 | ⚠️ 子进程启动开销 | ✅ 直接调用 |
-| 维护性 | ⚠️ 两层转换 | ✅ 单一转换层 |
-| 远程服务器 | ✅ SSH 支持 | ⚠️ 需后续重新设计 |
-
-> **注**: Token Usage、临时会话、Kill Session 等新功能需迁移完成后单独实现。
-
 ---
 
-## 二、文件改动清单
+## 三、文件改动清单
 
-### 2.1 需要删除的文件
+### 3.1 需要删除的文件
 
 | 文件 | 说明 |
 |------|------|
-| `src-tauri/src/codex/process.rs` | 子进程管理，不再需要 |
-| `src-tauri/src/codex/binary.rs` | codex-acp 二进制定位，不再需要 |
-| `src-tauri/src/codex/unified_process.rs` | 统一进程抽象，不再需要 |
-| `codex-acp/` (submodule) | 整个子模块可删除 |
+| `src-tauri/src/codex/process.rs` | 子进程管理 |
+| `src-tauri/src/codex/binary.rs` | codex-acp 二进制定位 |
+| `src-tauri/src/codex/unified_process.rs` | 统一进程抽象 |
+| `codex-acp/` (submodule) | 整个子模块 |
 
-### 2.2 需要重写的文件
+### 3.2 需要重写的文件
 
 | 文件 | 原功能 | 新功能 |
 |------|--------|--------|
-| `src-tauri/src/codex/service.rs` | ACP 连接管理 | **codex-core 服务层** |
-| `src-tauri/src/codex/protocol.rs` | ACP Client impl | **EventMsg 事件桥接** |
-| `src-tauri/src/codex/types.rs` | ACP 类型包装 | codex-core 类型包装 |
+| `src-tauri/src/codex/service.rs` | ACP 连接管理 | **core_service.rs** |
+| `src-tauri/src/codex/protocol.rs` | ACP Client impl | **event_bridge.rs** |
 
-### 2.3 需要修改的文件
+### 3.3 需要修改的文件
 
 | 文件 | 改动点 |
 |------|--------|
@@ -88,23 +244,13 @@
 | `src-tauri/src/codex/commands.rs` | 调用方式调整 |
 | `src-tauri/src/codex/events.rs` | 事件常量调整 |
 | `src-tauri/src/codex/mod.rs` | 模块导出调整 |
-
-### 2.4 保持不变的文件
-
-| 文件 | 说明 |
-|------|------|
-| `src-tauri/src/codex/debug.rs` | 调试状态管理 |
-| `src-tauri/src/codex/thoughts.rs` | 思维过程处理 |
-| `src-tauri/src/codex/util.rs` | 工具函数 |
-| `src-tauri/src/git/*` | Git 集成 |
-| `src-tauri/src/mcp/*` | MCP 管理 |
-| `src/` (前端) | React UI |
+| `src-tauri/src/codex/types.rs` | 类型定义调整 |
 
 ---
 
-## 三、详细实施步骤
+## 四、详细实施步骤
 
-### 阶段 1：依赖切换（估计 2 小时）
+### 阶段 1：依赖切换（2h）
 
 #### 1.1 修改 Cargo.toml
 
@@ -116,30 +262,29 @@
 # agent-client-protocol = { version = "=0.9.3", features = ["unstable"] }
 
 # === 新增 ===
-# 方式 A: 本地路径（开发阶段推荐）
+# 开发阶段使用本地路径
 codex-core = { path = "../../codex/my-fork-codex/codex-rs/core" }
 codex-protocol = { path = "../../codex/my-fork-codex/codex-rs/protocol" }
-codex-common = { path = "../../codex/my-fork-codex/codex-rs/common" }
-
-# 方式 B: Git 依赖（发布时使用）
-# codex-core = { git = "https://github.com/rita152/codex.git", rev = "7902f1a89" }
-# codex-protocol = { git = "https://github.com/rita152/codex.git", rev = "7902f1a89" }
 
 # === 保留 ===
 tauri = { version = "2", features = ["macos-private-api"] }
-# ... 其他依赖
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+tracing = "0.1"
 ```
 
 #### 1.2 验证编译
 
 ```bash
 cd src-tauri
-cargo check
+cargo check 2>&1 | head -50
 ```
 
 ---
 
-### 阶段 2：创建核心服务层（估计 4 小时）
+### 阶段 2：核心服务层（4h）
 
 #### 2.1 创建 `src-tauri/src/codex/core_service.rs`
 
@@ -148,8 +293,10 @@ cargo check
 
 use anyhow::{Context, Result};
 use codex_core::{
-    AuthManager, CodexThread, Config, NewThread, ThreadManager,
-    protocol::{Event, EventMsg, Op, SessionSource},
+    AuthManager, CodexThread, NewThread, ThreadManager,
+    auth::AuthCredentialsStoreMode,
+    config::{Config, ConfigBuilder, ConfigOverrides},
+    protocol::{Event, EventMsg, Op, SessionSource, UserInput},
 };
 use codex_protocol::ThreadId;
 use std::{
@@ -163,7 +310,7 @@ use tokio::sync::{oneshot, RwLock};
 use crate::codex::{
     debug::DebugState,
     events::*,
-    types::{NewSessionResult, PromptResult, ApprovalDecision},
+    types::{ApprovalDecision, NewSessionResult, PromptResult},
 };
 
 /// Session state for a single codex thread.
@@ -190,11 +337,17 @@ impl CodexCoreService {
             .context("failed to get home directory")?
             .join(".codex");
 
-        let auth_manager = Arc::new(AuthManager::new());
+        // Initialize AuthManager with proper parameters
+        let auth_manager = AuthManager::shared(
+            codex_home.clone(),
+            false,  // enable_codex_api_key_env - let config control this
+            AuthCredentialsStoreMode::File,
+        );
+
         let thread_manager = ThreadManager::new(
             codex_home.clone(),
             auth_manager,
-            SessionSource::Desktop,
+            SessionSource::Exec,  // Desktop is a programmatic caller
         );
 
         Ok(Self {
@@ -208,18 +361,27 @@ impl CodexCoreService {
     }
 
     /// Create a new session with the given working directory.
-    pub async fn create_session(&self, cwd: PathBuf) -> Result<NewSessionResult> {
-        let config = Config::load_from_home(&self.codex_home)
+    pub async fn create_session(
+        &self,
+        cwd: PathBuf,
+        ephemeral: bool,
+    ) -> Result<NewSessionResult> {
+        // Build config using ConfigBuilder (NOT load_from_base_config_with_overrides which is test-only)
+        let config = ConfigBuilder::default()
+            .codex_home(self.codex_home.clone())
+            .harness_overrides(ConfigOverrides {
+                cwd: Some(cwd.clone()),
+                ephemeral: Some(ephemeral),
+                ..Default::default()
+            })
+            .build()
             .await
-            .unwrap_or_default();
-        
-        let mut config = config;
-        config.cwd = cwd;
+            .context("failed to load config")?;
 
         let NewThread {
             thread,
             thread_id,
-            ..
+            session_configured,
         } = self.thread_manager
             .start_thread(config)
             .await
@@ -258,6 +420,7 @@ impl CodexCoreService {
 
         Ok(NewSessionResult {
             session_id,
+            // Extract from session_configured if needed
             modes: None,
             models: None,
             config_options: None,
@@ -275,13 +438,14 @@ impl CodexCoreService {
             .get(session_id)
             .context("session not found")?;
 
+        // Use correct UserInput format
         session.thread
             .submit(Op::UserInput {
-                id: None,
-                items: vec![codex_protocol::models::ResponseInputItem::Text {
+                items: vec![UserInput::Text {
                     text: content,
+                    text_elements: vec![],
                 }],
-                text_elements: None,
+                final_output_json_schema: None,
             })
             .await
             .context("failed to submit user input")?;
@@ -306,21 +470,89 @@ impl CodexCoreService {
         Ok(())
     }
 
-    /// Respond to an approval request.
-    pub fn respond_approval(
+    /// Kill and remove a session completely.
+    pub async fn kill_session(&self, session_id: &str) -> Result<()> {
+        let mut sessions = self.sessions.write().await;
+        if let Some(mut session) = sessions.remove(session_id) {
+            // Signal event loop to stop
+            if let Some(tx) = session.shutdown_tx.take() {
+                let _ = tx.send(());
+            }
+            // Shutdown the thread
+            let _ = session.thread.submit(Op::Shutdown).await;
+            // Remove from manager
+            self.thread_manager.remove_thread(&session.thread_id).await;
+        }
+        Ok(())
+    }
+
+    /// Respond to an exec approval request.
+    pub async fn respond_exec_approval(
         &self,
         session_id: &str,
         request_id: &str,
         decision: ApprovalDecision,
     ) -> Result<()> {
-        self.approvals.respond(session_id, request_id, decision)
+        let sessions = self.sessions.read().await;
+        let session = sessions
+            .get(session_id)
+            .context("session not found")?;
+
+        let review_decision = match decision {
+            ApprovalDecision::AllowOnce => codex_core::protocol::ReviewDecision::Approved,
+            ApprovalDecision::AllowAlways => codex_core::protocol::ReviewDecision::ApprovedForSession,
+            ApprovalDecision::RejectOnce | ApprovalDecision::RejectAlways => {
+                codex_core::protocol::ReviewDecision::Rejected
+            }
+        };
+
+        session.thread
+            .submit(Op::ExecApproval {
+                id: request_id.to_string(),
+                decision: review_decision,
+            })
+            .await
+            .context("failed to submit approval")?;
+
+        Ok(())
+    }
+
+    /// Respond to a patch approval request.
+    pub async fn respond_patch_approval(
+        &self,
+        session_id: &str,
+        request_id: &str,
+        decision: ApprovalDecision,
+    ) -> Result<()> {
+        let sessions = self.sessions.read().await;
+        let session = sessions
+            .get(session_id)
+            .context("session not found")?;
+
+        let review_decision = match decision {
+            ApprovalDecision::AllowOnce => codex_core::protocol::ReviewDecision::Approved,
+            ApprovalDecision::AllowAlways => codex_core::protocol::ReviewDecision::ApprovedForSession,
+            ApprovalDecision::RejectOnce | ApprovalDecision::RejectAlways => {
+                codex_core::protocol::ReviewDecision::Rejected
+            }
+        };
+
+        session.thread
+            .submit(Op::PatchApproval {
+                id: request_id.to_string(),
+                decision: review_decision,
+            })
+            .await
+            .context("failed to submit approval")?;
+
+        Ok(())
     }
 
     /// Event loop for processing codex events.
     async fn event_loop(
         app: AppHandle,
         debug: Arc<DebugState>,
-        approvals: Arc<ApprovalState>,
+        _approvals: Arc<ApprovalState>,
         thread: Arc<CodexThread>,
         session_id: String,
         mut shutdown_rx: oneshot::Receiver<()>,
@@ -334,7 +566,7 @@ impl CodexCoreService {
                 event_result = thread.next_event() => {
                     match event_result {
                         Ok(event) => {
-                            Self::handle_event(&app, &debug, &approvals, &session_id, event).await;
+                            Self::handle_event(&app, &debug, &session_id, event).await;
                         }
                         Err(e) => {
                             tracing::error!(error = %e, "event loop error");
@@ -353,51 +585,18 @@ impl CodexCoreService {
     async fn handle_event(
         app: &AppHandle,
         debug: &DebugState,
-        approvals: &ApprovalState,
         session_id: &str,
         event: Event,
     ) {
         use crate::codex::event_bridge::emit_codex_event;
-        emit_codex_event(app, debug, approvals, session_id, &event.msg).await;
+        emit_codex_event(app, debug, session_id, &event.msg).await;
     }
 }
 
-/// Approval state management.
+/// Approval state management (for future async approval flow).
+#[derive(Default)]
 pub struct ApprovalState {
-    pending: std::sync::Mutex<HashMap<(String, String), oneshot::Sender<ApprovalDecision>>>,
-}
-
-impl Default for ApprovalState {
-    fn default() -> Self {
-        Self {
-            pending: std::sync::Mutex::new(HashMap::new()),
-        }
-    }
-}
-
-impl ApprovalState {
-    pub fn insert(
-        &self,
-        session_id: &str,
-        request_id: &str,
-        tx: oneshot::Sender<ApprovalDecision>,
-    ) {
-        let mut guard = self.pending.lock().unwrap();
-        guard.insert((session_id.to_string(), request_id.to_string()), tx);
-    }
-
-    pub fn respond(
-        &self,
-        session_id: &str,
-        request_id: &str,
-        decision: ApprovalDecision,
-    ) -> Result<()> {
-        let mut guard = self.pending.lock().unwrap();
-        if let Some(tx) = guard.remove(&(session_id.to_string(), request_id.to_string())) {
-            let _ = tx.send(decision);
-        }
-        Ok(())
-    }
+    // Can be extended for async approval handling if needed
 }
 ```
 
@@ -410,17 +609,12 @@ use codex_core::protocol::EventMsg;
 use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
-use crate::codex::{
-    debug::DebugState,
-    events::*,
-    core_service::ApprovalState,
-};
+use crate::codex::{debug::DebugState, events::*};
 
 /// Emit a codex event to the frontend.
 pub async fn emit_codex_event(
     app: &AppHandle,
     debug: &DebugState,
-    _approvals: &ApprovalState,
     session_id: &str,
     event: &EventMsg,
 ) {
@@ -485,33 +679,14 @@ pub async fn emit_codex_event(
             }));
         }
 
-        // === Patch 事件 ===
-        EventMsg::PatchApplyBegin(begin) => {
-            let _ = app.emit(EVENT_TOOL_CALL, json!({
-                "sessionId": session_id,
-                "toolCallId": &begin.call_id,
-                "title": "Apply Patch",
-                "kind": "patch",
-                "status": "running",
-                "changes": &begin.changes,
-            }));
-        }
-
-        EventMsg::PatchApplyEnd(end) => {
-            let _ = app.emit(EVENT_TOOL_CALL_UPDATE, json!({
-                "sessionId": session_id,
-                "toolCallId": &end.call_id,
-                "status": if end.success { "completed" } else { "failed" },
-            }));
-        }
-
-        // === 审批事件 ===
+        // === 审批请求事件 ===
         EventMsg::ExecApprovalRequest(req) => {
             let _ = app.emit(EVENT_APPROVAL_REQUEST, json!({
                 "sessionId": session_id,
                 "requestId": &req.call_id,
                 "type": "exec",
-                "command": &req.command,
+                "command": &req.parsed_cmd,
+                "cwd": &req.cwd,
                 "reason": &req.reason,
             }));
         }
@@ -523,6 +698,35 @@ pub async fn emit_codex_event(
                 "type": "patch",
                 "changes": &req.changes,
                 "reason": &req.reason,
+            }));
+        }
+
+        // === Patch 事件 ===
+        EventMsg::PatchApplyBegin(begin) => {
+            let _ = app.emit(EVENT_TOOL_CALL, json!({
+                "sessionId": session_id,
+                "toolCallId": &begin.call_id,
+                "title": "Apply Patch",
+                "kind": "patch",
+                "status": "running",
+                "autoApproved": begin.auto_approved,
+            }));
+        }
+
+        EventMsg::PatchApplyEnd(end) => {
+            let _ = app.emit(EVENT_TOOL_CALL_UPDATE, json!({
+                "sessionId": session_id,
+                "toolCallId": &end.call_id,
+                "status": if end.success { "completed" } else { "failed" },
+            }));
+        }
+
+        // === Token 使用 ===
+        EventMsg::TokenCount(info) => {
+            let _ = app.emit(EVENT_TOKEN_USAGE, json!({
+                "sessionId": session_id,
+                "info": &info.info,
+                "rateLimits": &info.rate_limits,
             }));
         }
 
@@ -543,11 +747,15 @@ pub async fn emit_codex_event(
             }));
         }
 
+        EventMsg::TurnStarted(_) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(app, Some(session_id), "turn_started", timing, json!({}));
+        }
+
         // === 计划事件 ===
         EventMsg::PlanUpdate(plan) => {
             let _ = app.emit(EVENT_PLAN, json!({
                 "sessionId": session_id,
-                "explanation": &plan.explanation,
                 "plan": &plan.plan,
             }));
         }
@@ -572,6 +780,26 @@ pub async fn emit_codex_event(
             }));
         }
 
+        // === Web 搜索事件 ===
+        EventMsg::WebSearchBegin(begin) => {
+            let _ = app.emit(EVENT_TOOL_CALL, json!({
+                "sessionId": session_id,
+                "toolCallId": &begin.call_id,
+                "title": "Web Search",
+                "kind": "web_search",
+                "status": "running",
+            }));
+        }
+
+        EventMsg::WebSearchEnd(end) => {
+            let _ = app.emit(EVENT_TOOL_CALL_UPDATE, json!({
+                "sessionId": session_id,
+                "toolCallId": &end.call_id,
+                "status": "completed",
+                "query": &end.query,
+            }));
+        }
+
         // === 错误事件 ===
         EventMsg::Error(err) => {
             let _ = app.emit(EVENT_ERROR, json!({
@@ -585,7 +813,47 @@ pub async fn emit_codex_event(
             let _ = app.emit(EVENT_ERROR, json!({
                 "sessionId": session_id,
                 "message": &err.message,
-                "errorInfo": &err.codex_error_info,
+                "retrying": true,
+            }));
+        }
+
+        EventMsg::Warning(warn) => {
+            let _ = app.emit(EVENT_ERROR, json!({
+                "sessionId": session_id,
+                "message": &warn.message,
+                "isWarning": true,
+            }));
+        }
+
+        // === 上下文压缩事件 ===
+        EventMsg::ContextCompacted(event) => {
+            let _ = app.emit("codex:context-compacted", json!({
+                "sessionId": session_id,
+                "summary": &event.summary,
+            }));
+        }
+
+        // === MCP 启动事件 ===
+        EventMsg::McpStartupUpdate(update) => {
+            let _ = app.emit("codex:mcp-startup-update", json!({
+                "sessionId": session_id,
+                "serverName": &update.server_name,
+                "status": format!("{:?}", update.status),
+            }));
+        }
+
+        EventMsg::McpStartupComplete(complete) => {
+            let _ = app.emit("codex:mcp-startup-complete", json!({
+                "sessionId": session_id,
+                "results": &complete.results,
+            }));
+        }
+
+        // === Session 配置事件 ===
+        EventMsg::SessionConfigured(config) => {
+            let timing = debug.mark_event(session_id);
+            debug.emit(app, Some(session_id), "session_configured", timing, json!({
+                "model": &config.model,
             }));
         }
 
@@ -599,7 +867,7 @@ pub async fn emit_codex_event(
 
 ---
 
-### 阶段 3：更新命令层（估计 2 小时）
+### 阶段 3：命令层更新（1h）
 
 #### 3.1 修改 `src-tauri/src/codex/commands.rs`
 
@@ -642,7 +910,6 @@ impl CodexManager {
     }
 }
 
-/// Initialize the Codex backend.
 #[tauri::command]
 pub async fn codex_init(
     app: AppHandle,
@@ -655,21 +922,20 @@ pub async fn codex_init(
     }))
 }
 
-/// Create a new session.
 #[tauri::command]
 pub async fn codex_new_session(
     state: State<'_, CodexManager>,
     cwd: String,
+    ephemeral: Option<bool>,
 ) -> Result<NewSessionResult, String> {
     let svc = state
         .get()
         .ok_or_else(|| "codex service not initialized".to_string())?;
-    svc.create_session(PathBuf::from(cwd))
+    svc.create_session(PathBuf::from(cwd), ephemeral.unwrap_or(false))
         .await
         .map_err(|e| e.to_string())
 }
 
-/// Send a prompt to the session.
 #[tauri::command]
 pub async fn codex_prompt(
     state: State<'_, CodexManager>,
@@ -684,7 +950,6 @@ pub async fn codex_prompt(
         .map_err(|e| e.to_string())
 }
 
-/// Cancel the current turn.
 #[tauri::command]
 pub async fn codex_cancel(
     state: State<'_, CodexManager>,
@@ -696,237 +961,133 @@ pub async fn codex_cancel(
     svc.cancel(&session_id).await.map_err(|e| e.to_string())
 }
 
-/// Respond to an approval request.
+#[tauri::command]
+pub async fn codex_kill_session(
+    state: State<'_, CodexManager>,
+    session_id: String,
+) -> Result<(), String> {
+    let svc = state
+        .get()
+        .ok_or_else(|| "codex service not initialized".to_string())?;
+    svc.kill_session(&session_id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[tauri::command]
 pub async fn codex_approve(
     state: State<'_, CodexManager>,
     session_id: String,
     request_id: String,
+    approval_type: String,  // "exec" or "patch"
     decision: ApprovalDecision,
 ) -> Result<(), String> {
     let svc = state
         .get()
         .ok_or_else(|| "codex service not initialized".to_string())?;
-    svc.respond_approval(&session_id, &request_id, decision)
-        .map_err(|e| e.to_string())
-}
 
-// 保留其他现有命令（list_local_directory 等）
-```
-
----
-
-### 阶段 4：更新事件常量（估计 30 分钟）
-
-#### 4.1 修改 `src-tauri/src/codex/events.rs`
-
-```rust
-//! Event names emitted from the Codex backend.
-
-// === 消息事件 ===
-pub const EVENT_MESSAGE_CHUNK: &str = "codex:message";
-pub const EVENT_THOUGHT_CHUNK: &str = "codex:thought";
-
-// === 工具调用事件 ===
-pub const EVENT_TOOL_CALL: &str = "codex:tool-call";
-pub const EVENT_TOOL_CALL_UPDATE: &str = "codex:tool-call-update";
-
-// === 审批事件 ===
-pub const EVENT_APPROVAL_REQUEST: &str = "codex:approval-request";
-
-// === 计划事件 ===
-pub const EVENT_PLAN: &str = "codex:plan";
-
-// === 配置事件 ===
-pub const EVENT_AVAILABLE_COMMANDS: &str = "codex:available-commands";
-pub const EVENT_CURRENT_MODE: &str = "codex:current-mode";
-pub const EVENT_CONFIG_OPTION_UPDATE: &str = "codex:config-option-update";
-
-// === 状态事件 ===
-pub const EVENT_TURN_COMPLETE: &str = "codex:turn-complete";
-pub const EVENT_ERROR: &str = "codex:error";
-
-// === 调试事件 ===
-pub const EVENT_DEBUG: &str = "codex:debug";
-```
-
----
-
-### 阶段 5：更新类型定义（估计 30 分钟）
-
-#### 5.1 修改 `src-tauri/src/codex/types.rs`
-
-```rust
-//! Serde-friendly data types used between backend and frontend.
-
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum ApprovalDecision {
-    AllowAlways,
-    AllowOnce,
-    RejectAlways,
-    RejectOnce,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct NewSessionResult {
-    pub session_id: String,
-    pub modes: Option<serde_json::Value>,
-    pub models: Option<serde_json::Value>,
-    pub config_options: Option<serde_json::Value>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PromptResult {
-    pub stop_reason: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct CodexCliConfigInfo {
-    pub codex_home: String,
-    pub config_path: String,
-    pub config_found: bool,
-    pub model_provider: Option<String>,
-    pub base_url: Option<String>,
-    pub env_key: Option<String>,
-    pub auth_file_found: bool,
+    match approval_type.as_str() {
+        "exec" => svc.respond_exec_approval(&session_id, &request_id, decision).await,
+        "patch" => svc.respond_patch_approval(&session_id, &request_id, decision).await,
+        _ => Err(anyhow::anyhow!("unknown approval type: {}", approval_type)),
+    }
+    .map_err(|e| e.to_string())
 }
 ```
 
 ---
 
-### 阶段 6：更新模块导出（估计 30 分钟）
+### 阶段 4-6：事件、类型、模块更新（1h）
 
-#### 6.1 修改 `src-tauri/src/codex/mod.rs`
-
-```rust
-//! Core Codex backend modules.
-
-pub mod commands;
-pub mod core_service;
-pub mod debug;
-pub mod event_bridge;
-pub mod events;
-pub mod thoughts;
-pub mod types;
-pub mod util;
-
-// 删除以下模块引用：
-// pub mod binary;
-// pub mod process;
-// pub mod protocol;
-// pub mod unified_process;
-// pub mod remote_session;
-```
+见原计划，API 已在上述代码中修正。
 
 ---
 
-### 阶段 7：清理旧代码（估计 1 小时）
-
-#### 7.1 删除文件
+### 阶段 7：清理旧代码（1h）
 
 ```bash
 cd src-tauri/src/codex
 
 # 删除 ACP 相关文件
-rm -f binary.rs
-rm -f process.rs
-rm -f protocol.rs
-rm -f unified_process.rs
-rm -f service.rs  # 被 core_service.rs 替代
-```
+rm -f binary.rs process.rs protocol.rs unified_process.rs service.rs
 
-#### 7.2 删除 submodule
-
-```bash
-cd /Users/zp/Desktop/codex-desktop
-
-# 删除 codex-acp submodule
-git submodule deinit -f codex-acp
-git rm -f codex-acp
-rm -rf .git/modules/codex-acp
+# 重命名新文件
+# core_service.rs 和 event_bridge.rs 已是新文件
 ```
 
 ---
 
-## 四、测试计划
-
-### 4.1 核心功能测试
+## 五、测试计划
 
 | 测试场景 | 验证点 |
 |----------|--------|
 | 基本对话 | 消息发送、接收、流式显示 |
-| 命令执行 | 工具调用、输出流、完成状态 |
-| 审批流程 | 请求显示、用户响应、继续执行 |
-| 取消操作 | 中断当前 turn |
-
-### 4.2 回归测试
-
-| 测试项 | 说明 |
-|--------|------|
-| 现有事件兼容 | 前端无需修改即可接收事件 |
-| 命令兼容 | API 调用签名保持不变 |
-
----
-
-## 五、回滚计划
-
-如果迁移过程中遇到阻塞问题：
-
-1. **Git 回滚**
-   ```bash
-   git checkout HEAD~n -- src-tauri/
-   ```
-
-2. **恢复 submodule**
-   ```bash
-   git submodule add https://github.com/zed-industries/codex.git codex-acp
-   ```
-
-3. **恢复依赖**
-   ```toml
-   # Cargo.toml
-   agent-client-protocol = { version = "=0.9.3", features = ["unstable"] }
-   ```
+| 命令执行 | 审批请求 → 用户响应 → 执行 → 输出 |
+| Patch 应用 | 审批请求 → 用户响应 → 应用 → 结果 |
+| Token 用量 | TokenCount 事件 → 前端显示 |
+| 临时会话 | ephemeral=true → 无磁盘写入 |
+| Kill 会话 | 资源清理、事件循环停止 |
+| 取消操作 | Interrupt → TurnAborted |
 
 ---
 
 ## 六、里程碑
 
-| 阶段 | 任务 | 估计时间 | 状态 |
-|------|------|----------|------|
+| 阶段 | 任务 | 时间 | 状态 |
+|------|------|------|------|
 | 1 | 依赖切换 | 2h | ⬜ |
 | 2 | 核心服务层 | 4h | ⬜ |
-| 3 | 命令层更新 | 2h | ⬜ |
-| 4 | 事件常量更新 | 0.5h | ⬜ |
-| 5 | 类型定义更新 | 0.5h | ⬜ |
-| 6 | 模块导出更新 | 0.5h | ⬜ |
+| 3 | 命令层更新 | 1h | ⬜ |
+| 4-6 | 事件/类型/模块 | 1h | ⬜ |
 | 7 | 清理旧代码 | 1h | ⬜ |
 | 8 | 测试 & 修复 | 4h | ⬜ |
-| **总计** | | **~14h** | |
+| **总计** | | **~13h** | |
 
 ---
 
 ## 七、风险与缓解
 
-| 风险 | 影响 | 缓解措施 |
-|------|------|----------|
-| codex-core API 变化 | 编译失败 | 锁定特定 commit |
-| 事件映射遗漏 | 功能缺失 | 对照 TUI 实现逐一检查 |
-| 远程服务器支持丢失 | 功能回退 | 明确标注，后续单独实现 |
+| 风险 | 缓解措施 |
+|------|----------|
+| codex-core API 变化 | 锁定特定 git commit |
+| Config 加载复杂 | 参考 codex-acp 实现 |
+| 审批流程差异 | 直接发送 Op::XxxApproval |
+| 远程服务器丢失 | 明确标注，后续重新设计 |
 
 ---
 
-## 八、迁移完成后可扩展功能
+## 八、迁移后新增能力
 
-以下功能在迁移完成后可单独实现：
+| 功能 | 实现方式 |
+|------|----------|
+| Token Usage | 监听 `EventMsg::TokenCount` |
+| 临时会话 | `ConfigOverrides { ephemeral: Some(true), .. }` |
+| Kill Session | `thread_manager.remove_thread()` |
+| 完整事件流 | 直接处理 40+ `EventMsg` 变体 |
 
-1. **Token Usage** - 监听 `EventMsg::TokenCount`，前端显示用量
-2. **临时会话** - 配置 `config.ephemeral = true`
-3. **Kill Session** - 调用 `remove_thread()` 完全销毁会话
-4. **远程服务器** - 基于 codex-core 重新设计 SSH 会话
+---
+
+## 九、API 验证结果 (2026-01-31)
+
+### 已验证通过
+
+| API | 状态 | 说明 |
+|-----|------|------|
+| `ThreadManager::new(codex_home, auth_manager, session_source)` | ✅ | 正确 |
+| `AuthManager::shared(codex_home, enable_env, store_mode)` | ✅ | 返回 `Arc<Self>` |
+| `ConfigBuilder::default().codex_home().harness_overrides().build().await` | ✅ | 生产代码使用 |
+| `CodexThread.submit(Op::...)` | ✅ | 返回 `CodexResult<String>` |
+| `CodexThread.next_event()` | ✅ | 返回 `CodexResult<Event>` |
+| `Op::UserInput { items, final_output_json_schema }` | ✅ | 正确 |
+| `Op::Interrupt` | ✅ | 正确 |
+| `Op::ExecApproval { id, decision }` | ✅ | 正确 |
+| `Op::PatchApproval { id, decision }` | ✅ | 正确 |
+| `Op::Shutdown` | ✅ | 正确 |
+| `SessionSource::Exec` | ✅ | 推荐用于 Desktop |
+| `Config.ephemeral: bool` | ✅ | 通过 `ConfigOverrides` 设置 |
+
+### 关键修正点
+
+1. **Config 加载**: `load_from_base_config_with_overrides` 是 `#[cfg(test)]` 方法，生产代码必须使用 `ConfigBuilder`
+2. **SessionSource**: 使用 `SessionSource::Exec` 而非 `Unknown`
+3. **EventMsg 映射**: v2 格式（`AgentMessageContentDelta`）会自动转换为 v1 格式（`AgentMessageDelta`）
