@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useId, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useId, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createPortal } from 'react-dom';
 
@@ -28,6 +28,7 @@ export function ModelSelector({
   const [submenuHighlightedIndex, setSubmenuHighlightedIndex] = useState(-1);
   const [dropdownPosition, setDropdownPosition] = useState({ bottom: 0, left: 0, width: 0 });
   const [submenuPosition, setSubmenuPosition] = useState({ top: 0, left: 0 });
+  const [submenuPositioned, setSubmenuPositioned] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -90,19 +91,27 @@ export function ModelSelector({
     });
   }, [isOpen]);
 
-  // Calculate submenu position with boundary detection
+  // Reset submenu positioned state when submenu changes
   useEffect(() => {
-    if (!submenuModelId || !dropdownRef.current) return;
+    if (!submenuModelId) {
+      setSubmenuPositioned(false);
+    }
+  }, [submenuModelId]);
+
+  // Calculate submenu position with boundary detection using actual dimensions
+  useLayoutEffect(() => {
+    if (!submenuModelId || !dropdownRef.current || !submenuRef.current) return;
     const optionIndex = options.findIndex((m) => m.value === submenuModelId);
     const optionEl = optionRefs.current[optionIndex];
     if (!optionEl) return;
 
     const optionRect = optionEl.getBoundingClientRect();
     const dropdownRect = dropdownRef.current.getBoundingClientRect();
+    const submenuRect = submenuRef.current.getBoundingClientRect();
 
-    // Estimated submenu dimensions (from CSS: min-width 220px, max-width 280px)
-    const submenuWidth = 280;
-    const submenuHeight = 200; // Estimated height for 3-4 effort options
+    // Use actual submenu dimensions
+    const submenuWidth = submenuRect.width || 280;
+    const submenuHeight = submenuRect.height || 200;
     const gap = 4;
     const padding = 8; // Safety padding from window edge
 
@@ -122,15 +131,16 @@ export function ModelSelector({
       left = Math.max(padding, window.innerWidth - submenuWidth - padding);
     }
 
-    // Calculate vertical position
+    // Calculate vertical position - anchor to bottom of window if needed
     let top = optionRect.top;
     const bottomOverflow = top + submenuHeight - window.innerHeight + padding;
     if (bottomOverflow > 0) {
       // Adjust upward if overflowing bottom
-      top = Math.max(padding, top - bottomOverflow);
+      top = Math.max(padding, window.innerHeight - submenuHeight - padding);
     }
 
     setSubmenuPosition({ top, left });
+    setSubmenuPositioned(true);
   }, [submenuModelId, options]);
 
   const handleSelect = useCallback(
@@ -375,7 +385,8 @@ export function ModelSelector({
             ref={submenuRef}
             className={cn(
               'model-selector__submenu',
-              variant === 'glass' && 'model-selector__submenu--glass'
+              variant === 'glass' && 'model-selector__submenu--glass',
+              !submenuPositioned && 'model-selector__submenu--positioning'
             )}
             style={{
               top: submenuPosition.top,

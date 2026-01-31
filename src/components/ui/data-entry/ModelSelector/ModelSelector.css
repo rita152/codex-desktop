@@ -221,6 +221,11 @@
   padding: var(--spacing-xs) 0;
 }
 
+.model-selector__submenu--positioning {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .model-selector__submenu--glass {
   background-color: transparent;
   border: none;
