@@ -376,8 +376,10 @@ export function ModelSelector({
                   onClick={() => handleSelect(submenuModel, effortOption.effort)}
                   onMouseEnter={() => setSubmenuHighlightedIndex(index)}
                 >
-                  <span className="model-selector__submenu-effort">{effortOption.effort}</span>
-                  <span className="model-selector__submenu-desc">{effortOption.description}</span>
+                  <div className="model-selector__submenu-content">
+                    <span className="model-selector__submenu-effort">{effortOption.effort}</span>
+                    <span className="model-selector__submenu-desc">{effortOption.description}</span>
+                  </div>
                   {isEffortSelected && (
                     <CheckIcon size={14} className="model-selector__submenu-check" />
                   )}
