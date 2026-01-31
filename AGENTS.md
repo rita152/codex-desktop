@@ -28,9 +28,9 @@ Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript
 | Tauri command wiring         | `src-tauri/src/lib.rs` (`generate_handler![...]`)                 |
 | Frontend ↔ backend boundary  | `src/api/*` (invoke wrappers)                                     |
 | Codex events (codex:\*)      | `src-tauri/src/codex/events.rs` + `src/hooks/useCodexEvents.ts`   |
-| Remote servers & `remote://` | `docs/remote-servers.md` + `src/utils/remotePath.ts`              |
-| Git integration              | `docs/git.md` + `src-tauri/src/git/*` + `src/api/git.ts`          |
-| Settings                     | `docs/settings.md` + `src/hooks/useSettings.ts`                   |
+| Remote servers & `remote://` | `src-tauri/src/remote/*` + `src/utils/remotePath.ts`              |
+| Git integration              | `src-tauri/src/git/*` + `src/api/git.ts`                          |
+| Settings                     | `src/hooks/useSettings.ts` + `src/types/settings.ts`              |
 | CI/quality gate behavior     | `scripts/quality-gate.mjs` + `.github/workflows/quality-gate.yml` |
 | ACP sidecar fetch            | `scripts/fetch-codex-acp.mjs` + `src-tauri/src/codex/binary.rs`   |
 

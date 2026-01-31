@@ -31,4 +31,3 @@ Settings UI is a modal orchestrator with form-like sections. Keep it as UI compo
 - Section registry/exports: `sections/index.ts`
 - Settings data model + defaults: `src/types/settings.ts`
 - Persistence + theme DOM side effects: `src/hooks/useSettings.ts`
-- Current implementation notes: `docs/settings.md`

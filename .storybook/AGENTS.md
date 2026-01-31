@@ -23,5 +23,5 @@ Storybook 10 with addon-vitest + addon-a11y. Stories are treated as a test surfa
 
 ## Known deviations (keep consistent going forward)
 
-- Some stories export multiple variants; `.kiro/steering/frontend-rules.md` prefers a single `Default`.
+- Some stories export multiple variants; prefer a single `Default` story going forward.
 - Some story titles don't follow a single taxonomy (`UI/DataDisplay/*` vs `UI/Markdown` etc.).
