@@ -2,7 +2,7 @@
  * Model Panel
  */
 
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -36,6 +36,21 @@ export const ModelPanel = memo(function ModelPanel({
   fetchStatus,
 }: ModelPanelProps) {
   const { t } = useTranslation();
+  const autoFetchTriggeredRef = useRef(false);
+
+  // Auto-fetch models on mount if list is empty and not already loading
+  useEffect(() => {
+    if (
+      !autoFetchTriggeredRef.current &&
+      availableModels.length === 0 &&
+      onFetchModels &&
+      !fetchStatus?.loading &&
+      !fetchStatus?.lastUpdated
+    ) {
+      autoFetchTriggeredRef.current = true;
+      onFetchModels();
+    }
+  }, [availableModels.length, onFetchModels, fetchStatus?.loading, fetchStatus?.lastUpdated]);
 
   // Check whether the selected model is still in the available list
   const isCurrentModelAvailable =
