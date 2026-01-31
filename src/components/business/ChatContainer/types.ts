@@ -4,6 +4,7 @@ import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
+import type { ModelOption, ReasoningEffort } from '../../../types/options';
 import type { SessionNotice } from '../../../hooks/useSessionMeta';
 import type { QueuedMessage } from '../../../hooks/useMessageQueue';
 import type { SidePanelTab } from '../UnifiedSidePanel';
@@ -46,12 +47,14 @@ export interface ChatContainerProps {
   selectedAgent?: string;
   /** 切换模式回调 */
   onAgentChange?: (agent: string) => void;
-  /** 模型列表 */
-  modelOptions?: SelectOption[];
+  /** 模型列表 (with reasoning effort support) */
+  modelOptions?: ModelOption[];
   /** 当前选中模型 */
   selectedModel?: string;
-  /** 切换模型回调 */
-  onModelChange?: (model: string) => void;
+  /** 当前选中的 reasoning effort */
+  selectedEffort?: ReasoningEffort;
+  /** 切换模型回调 (now includes effort) */
+  onModelChange?: (model: string, effort?: ReasoningEffort) => void;
   /** Slash commands 提示 */
   slashCommands?: string[];
   /** 输入框占位文案 */

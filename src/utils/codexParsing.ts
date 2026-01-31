@@ -1,6 +1,6 @@
 import { buildUnifiedDiff } from './diff';
 
-import type { SelectOption } from '../types/options';
+import type { SelectOption, ModelOption, ReasoningEffort, ReasoningEffortOption } from '../types/options';
 import type {
   ApprovalDiff,
   ApprovalStatus,
@@ -351,9 +351,30 @@ export function extractCommand(rawInput: unknown): string | undefined {
   return parsedText ?? undefined;
 }
 
+function parseReasoningEffort(value: unknown): ReasoningEffort | undefined {
+  const str = getString(value)?.toLowerCase();
+  if (!str) return undefined;
+  const validEfforts: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
+  return validEfforts.includes(str as ReasoningEffort) ? (str as ReasoningEffort) : undefined;
+}
+
+function parseReasoningEffortOptions(raw: unknown): ReasoningEffortOption[] {
+  const array = asArray(raw);
+  return array
+    .map((item) => {
+      const rec = asRecord(item);
+      if (!rec) return null;
+      const effort = parseReasoningEffort(rec.effort);
+      if (!effort) return null;
+      const description = getString(rec.description) ?? '';
+      return { effort, description };
+    })
+    .filter(Boolean) as ReasoningEffortOption[];
+}
+
 function parseModelOptionsFromSessionModels(
   raw: unknown
-): { currentModelId?: string; options: SelectOption[] } | null {
+): { currentModelId?: string; options: ModelOption[] } | null {
   const record = asRecord(raw);
   if (!record) return null;
   const currentModelId = getString(record.currentModelId ?? record.current_model_id);
@@ -366,9 +387,18 @@ function parseModelOptionsFromSessionModels(
         getString(optionRecord.modelId ?? optionRecord.model_id ?? optionRecord.id) ?? undefined;
       if (!value) return null;
       const label = getString(optionRecord.name) ?? value;
-      return { value, label };
+      const defaultReasoningEffort = parseReasoningEffort(optionRecord.defaultReasoningEffort);
+      const supportedReasoningEfforts = parseReasoningEffortOptions(optionRecord.supportedReasoningEfforts);
+      const supportsPersonality = optionRecord.supportsPersonality === true;
+      
+      const option: ModelOption = { value, label };
+      if (defaultReasoningEffort) option.defaultReasoningEffort = defaultReasoningEffort;
+      if (supportedReasoningEfforts.length > 0) option.supportedReasoningEfforts = supportedReasoningEfforts;
+      if (supportsPersonality) option.supportsPersonality = supportsPersonality;
+      
+      return option;
     })
-    .filter(Boolean) as SelectOption[];
+    .filter(Boolean) as ModelOption[];
 
   if (options.length === 0 && !currentModelId) return null;
   return { currentModelId, options };
@@ -487,10 +517,18 @@ function parseModeOptionsFromConfigOptions(
 export function resolveModelOptions(
   models: unknown,
   configOptions: unknown
-): { currentModelId?: string; options: SelectOption[] } | null {
-  return (
-    parseModelOptionsFromSessionModels(models) ?? parseModelOptionsFromConfigOptions(configOptions)
-  );
+): { currentModelId?: string; options: ModelOption[] } | null {
+  // Prefer session models (has reasoning effort info) over config options
+  const fromSession = parseModelOptionsFromSessionModels(models);
+  if (fromSession) return fromSession;
+  
+  // Fall back to config options (no reasoning effort info)
+  const fromConfig = parseModelOptionsFromConfigOptions(configOptions);
+  if (fromConfig) {
+    // Cast SelectOption[] to ModelOption[] (safe since ModelOption extends SelectOption)
+    return { currentModelId: fromConfig.currentModelId, options: fromConfig.options as ModelOption[] };
+  }
+  return null;
 }
 
 export function resolveModeOptions(

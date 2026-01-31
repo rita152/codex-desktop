@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
+import { ModelSelector } from '../../ui/data-entry/ModelSelector';
 import { Card } from '../../ui/data-display/Card';
 import { Button } from '../../ui/data-entry/Button';
 import {
@@ -85,6 +86,7 @@ export const ChatInput = memo(function ChatInput({
   onAgentChange,
   modelOptions,
   selectedModel,
+  selectedEffort,
   onModelChange,
   slashCommands = [],
   width,
@@ -348,9 +350,10 @@ export const ChatInput = memo(function ChatInput({
           />
         </div>
         <div className="chat-input__toolbar-right">
-          <Select
+          <ModelSelector
             options={resolvedModelOptions}
-            value={selectedModel}
+            selectedModel={selectedModel}
+            selectedEffort={selectedEffort}
             onChange={onModelChange}
             borderless
             size="sm"

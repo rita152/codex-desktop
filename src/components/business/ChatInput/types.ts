@@ -1,3 +1,4 @@
+import type { ModelOption, ReasoningEffort } from '../../../types/options';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 
 export interface ChatInputProps {
@@ -10,9 +11,13 @@ export interface ChatInputProps {
   agentOptions?: SelectOption[];
   selectedAgent?: string;
   onAgentChange?: (agent: string) => void;
-  modelOptions?: SelectOption[];
+  /** Model options with reasoning effort support */
+  modelOptions?: ModelOption[];
   selectedModel?: string;
-  onModelChange?: (model: string) => void;
+  /** Currently selected reasoning effort */
+  selectedEffort?: ReasoningEffort;
+  /** Callback when model or effort changes */
+  onModelChange?: (model: string, effort?: ReasoningEffort) => void;
   slashCommands?: string[];
   width?: string | number;
   className?: string;

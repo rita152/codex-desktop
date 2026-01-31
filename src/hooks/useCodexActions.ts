@@ -25,6 +25,7 @@ import { formatError, newMessageId } from '../utils/codexParsing';
 
 import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
+import type { ReasoningEffort } from '../types/options';
 
 // Global reference to ensureCodexSession (set by useCodexEffects)
 let globalEnsureCodexSession: ((chatSessionId: string) => Promise<string>) | null = null;
@@ -76,28 +77,45 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
   const codexStore = useCodexStore;
 
   // Model change handler with optimistic update and rollback
+  // Now also accepts optional reasoning effort parameter
   const handleModelChange = useCallback(
-    async (modelId: string) => {
+    async (modelId: string, effort?: ReasoningEffort) => {
       const { selectedSessionId, sessions, updateSession, setNotice, clearSessionNotice } =
         sessionStore.getState();
       const { getCodexSessionId } = codexStore.getState();
 
       const activeSession = sessions.find((s) => s.id === selectedSessionId);
       const previousModel = activeSession?.model ?? DEFAULT_MODEL_ID;
-      if (modelId === previousModel) return;
+      const previousEffort = activeSession?.reasoningEffort;
+      
+      // Check if anything actually changed
+      const modelChanged = modelId !== previousModel;
+      const effortChanged = effort !== previousEffort;
+      if (!modelChanged && !effortChanged) return;
 
-      // Optimistic update
-      updateSession(selectedSessionId, { model: modelId });
+      // Optimistic update - update both model and effort
+      const updates: Partial<ChatSession> = {};
+      if (modelChanged) updates.model = modelId;
+      if (effortChanged) updates.reasoningEffort = effort;
+      updateSession(selectedSessionId, updates);
       clearSessionNotice(selectedSessionId);
 
       const codexSessionId = getCodexSessionId(selectedSessionId);
       if (!codexSessionId) return;
 
       try {
-        await setSessionModel(codexSessionId, modelId);
+        // TODO: Backend needs to support setting reasoning effort
+        // For now, we only sync the model if it changed
+        if (modelChanged) {
+          await setSessionModel(codexSessionId, modelId);
+        }
+        // Note: Reasoning effort will be applied when sending prompts
       } catch (err) {
         // Rollback on error
-        updateSession(selectedSessionId, { model: previousModel });
+        updateSession(selectedSessionId, { 
+          model: previousModel,
+          reasoningEffort: previousEffort,
+        });
         setNotice(selectedSessionId, {
           kind: 'error',
           message: t('errors.modelSwitchFailed', { error: formatError(err) }),

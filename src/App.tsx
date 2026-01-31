@@ -172,6 +172,7 @@ function AppContent() {
   // Derived state
   const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
   const selectedMode = activeSession?.mode ?? DEFAULT_MODE_ID;
+  const selectedEffort = activeSession?.reasoningEffort;
   const selectedCwd = activeSession?.cwd;
   const cwdLocked = messages.length > 0;
   const activeTerminalId = terminalBySession[selectedSessionId];
@@ -384,6 +385,7 @@ function AppContent() {
         onAgentChange={handleModeChange}
         modelOptions={modelOptions}
         selectedModel={selectedModel}
+        selectedEffort={selectedEffort}
         onModelChange={handleModelChange}
         slashCommands={slashCommands}
         onSessionSelect={handleSessionSelect}

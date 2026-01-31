@@ -44,6 +44,7 @@ export const ChatContainer = memo(function ChatContainer({
   onAgentChange,
   modelOptions,
   selectedModel,
+  selectedEffort,
   onModelChange,
   slashCommands,
   inputPlaceholder,
@@ -226,6 +227,7 @@ export const ChatContainer = memo(function ChatContainer({
                 agentOptions={agentOptions}
                 onAgentChange={onAgentChange}
                 selectedModel={selectedModel}
+                selectedEffort={selectedEffort}
                 modelOptions={modelOptions}
                 onModelChange={onModelChange}
                 slashCommands={slashCommands}

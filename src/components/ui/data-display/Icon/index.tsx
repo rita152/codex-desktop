@@ -86,6 +86,26 @@ export function ChevronUpIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+export function ChevronRightIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export function GitBranchIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg
