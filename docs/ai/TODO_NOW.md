@@ -1,80 +1,50 @@
 # 当前任务清单
 
-**更新日期**: 2026-01-30
+**更新日期**: 2026-01-31
 
 ---
 
 ## 正在进行
 
-### [OPT-001] Prompt 执行链路优化
+### [FEAT-001] Debug & Token Usage 事件实现
 
-**状态**: 🟢 Phase 1 完成，待验证
-**优先级**: P0
-**文档**: [PROMPT_PIPELINE_OPTIMIZATION.md](./PROMPT_PIPELINE_OPTIMIZATION.md)
+**状态**: 🟡 计划制定完成，待实施
+**优先级**: P2
+**文档**: [IMPL_DEBUG_TOKEN_USAGE.md](./IMPL_DEBUG_TOKEN_USAGE.md)
 
-#### Phase 1 完成情况 ✅
+#### 任务背景
 
-- [x] **Phase 1.1**: 实现 App 启动预热机制
-- [x] **Phase 1.2**: 添加 `codex_warmup` 命令
-- [x] **Phase 1.3**: 创建 `useCodexReadyState` hook
+codex-acp 发送的两个事件当前前端未处理：
+- `codex:debug` - 调试时序信息
+- `codex:token-usage` - Token 用量统计
 
-#### 下一步行动
+#### Phase 1: Token Usage（优先）
 
-- [ ] **验证**: 测试 Phase 1 效果，确认首次响应改善
-- [ ] **Phase 2.1**: 添加 prompt 超时机制
-  - 文件: `src-tauri/src/codex/service.rs`
-  - 工作量: 2h
-- [ ] **Phase 2.2**: 实现用户可取消功能
-  - 工作量: 4h
+- [ ] **Step 1.1**: 扩展 sessionStore 添加 tokenUsage 状态
+- [ ] **Step 1.2**: 添加 codex:token-usage 事件监听
+- [ ] **Step 1.3**: 创建 TokenUsage UI 组件
+- [ ] **Step 1.4**: 集成到 ChatContainer
+
+#### Phase 2: Debug Panel
+
+- [ ] **Step 2.1**: 添加 DebugEvent 类型
+- [ ] **Step 2.2**: 创建 debugStore
+- [ ] **Step 2.3**: 添加 codex:debug 事件监听
+- [ ] **Step 2.4**: 扩展 uiStore 添加 showDebugPanel
+- [ ] **Step 2.5**: 创建 DebugPanel 组件
+- [ ] **Step 2.6**: 添加快捷键切换
 
 ---
 
 ## 待开始
 
-### [MIG-001] Context → Store 迁移
-
-**状态**: ⚪ 待继续
-**优先级**: P1
-**文档**: [MIGRATION_CONTEXT_TO_STORE.md](./MIGRATION_CONTEXT_TO_STORE.md)
-
-#### 剩余工作
-
-- [ ] 移除废弃的 Context 代码
-- [ ] 更新组件引用
+无
 
 ---
 
 ## 已完成
 
-### [OPT-001-P1] Phase 1: 冷启动优化
-
-**状态**: ✅ 完成
-**完成日期**: 2026-01-30
-
-#### 成果
-
-- 实现 App 启动后 500ms 预热机制
-- 添加 `codex_warmup` 后端命令
-- 首次 `ensureCodexSession` 复用 warmup session
-- 创建 `useCodexReadyState` hook
-
-#### 预期收益
-
-- 首次响应: 5-9s → 1-2s
-
----
-
-### [ANALYSIS-001] Prompt 执行链路阻塞分析
-
-**状态**: ✅ 完成
-**完成日期**: 2026-01-30
-
-#### 成果
-
-- 识别 10 个潜在阻塞点
-- 完成延迟分析（首次 5-9s，后续 130-530ms）
-- 制定 4 阶段优化计划
-- 产出完整优化文档
+无
 
 ---
 
@@ -86,14 +56,20 @@
 
 ## 决策待定
 
-### [DEC-001] Chunk 合并策略
-
-**问题**: 是否需要在 Rust 端还是 JS 端实现 chunk 合并？
+### [DEC-001] Token Usage 显示位置
 
 **选项**:
-- A: Rust 端 - 减少 IPC 开销，但增加复杂度
-- B: JS 端 - 实现简单，但 IPC 次数不减少
+- A: ChatContainer 底部状态栏（推荐）
+- B: 消息列表顶部固定区域
+- C: 侧边栏信息面板
 
-**倾向**: B（JS 端），因为 IPC 开销不是主要瓶颈
+**当前倾向**: A
 
-**等待**: 性能测试数据
+### [DEC-002] Debug Panel 触发方式
+
+**选项**:
+- A: 快捷键 Cmd+Shift+D（推荐）
+- B: Settings 面板中的开关
+- C: 开发模式自动显示
+
+**当前倾向**: A
