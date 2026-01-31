@@ -1,8 +1,8 @@
 # codex-desktop 迁移计划：ACP → codex-core 直接集成
 
 **创建日期**: 2026-01-31  
-**最后更新**: 2026-01-31 (迁移完成)  
-**状态**: ✅ 迁移完成 - 所有测试通过，ACP 已移除，codex-core 直接集成
+**最后更新**: 2026-01-31 (迁移真正完成)  
+**状态**: ✅ 迁移完成 - src-tauri 已 symlink 到 codex-upstream/codex-rs/desktop，ACP 已完全移除
 
 ---
 
