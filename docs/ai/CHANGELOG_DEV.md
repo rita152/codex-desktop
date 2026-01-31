@@ -6,20 +6,26 @@
 
 ## 2026-01-31
 
-### 初始化 AI 工程资产
+### [MIGRATION-001] 架构迁移计划制定
 
-**变更类型**: 文档
+**类型**: 架构决策
 
-**变更内容**:
-- 删除旧的 AI 工程资产文件
-- 创建新的文档结构：
-  - `INDEX.md` - 资产索引
-  - `PROJECT_SNAPSHOT.md` - 项目快照
-  - `TODO_NOW.md` - 任务清单
-  - `CHANGELOG_DEV.md` - 变更日志
-  - `IMPL_DEBUG_TOKEN_USAGE.md` - 实现指南
+**内容**:
+- 分析 codex-acp 的限制（token usage 不支持、无法 kill session）
+- 决定从 codex-acp 迁移到 codex-core 直接集成
+- 创建详细迁移计划文档
 
-**影响面**: 无代码变更
+**影响面**:
+- `src-tauri/src/codex/` 目录大部分文件需要重写
+- 依赖从 agent-client-protocol 切换到 codex-core
+
+**新增能力**:
+- TokenCountEvent 完整支持
+- 临时会话 (ephemeral)
+- Kill Session (remove_thread)
+- 完整的 40+ EventMsg 事件流
+
+**预估**: 2-3 天
 
 ---
 
@@ -28,21 +34,17 @@
 ```markdown
 ### [变更标题]
 
-**变更类型**: 功能 | Bug 修复 | 重构 | 文档 | 配置
+**类型**: 功能 | Bug 修复 | 重构 | 文档
 
-**变更内容**:
-- 改动点 1
-- 改动点 2
+**内容**:
+- 改动点
 
 **影响面**:
-- 文件: xxx
-- 模块: xxx
+- 文件/模块
 
 **测试点**:
-- [ ] 测试项 1
-- [ ] 测试项 2
+- [ ] 测试项
 
-**回滚要点**:
-- 步骤 1
-- 步骤 2
+**回滚**:
+- 步骤
 ```
