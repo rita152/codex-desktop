@@ -90,7 +90,7 @@ export function ModelSelector({
     });
   }, [isOpen]);
 
-  // Calculate submenu position
+  // Calculate submenu position with boundary detection
   useEffect(() => {
     if (!submenuModelId || !dropdownRef.current) return;
     const optionIndex = options.findIndex((m) => m.value === submenuModelId);
@@ -100,11 +100,37 @@ export function ModelSelector({
     const optionRect = optionEl.getBoundingClientRect();
     const dropdownRect = dropdownRef.current.getBoundingClientRect();
 
-    // Position submenu to the right of the option
-    setSubmenuPosition({
-      top: optionRect.top,
-      left: dropdownRect.right + 4,
-    });
+    // Estimated submenu dimensions (from CSS: min-width 220px, max-width 280px)
+    const submenuWidth = 280;
+    const submenuHeight = 200; // Estimated height for 3-4 effort options
+    const gap = 4;
+    const padding = 8; // Safety padding from window edge
+
+    // Calculate horizontal position
+    let left: number;
+    const spaceOnRight = window.innerWidth - dropdownRect.right - gap - padding;
+    const spaceOnLeft = dropdownRect.left - gap - padding;
+
+    if (spaceOnRight >= submenuWidth) {
+      // Enough space on right
+      left = dropdownRect.right + gap;
+    } else if (spaceOnLeft >= submenuWidth) {
+      // Show on left side
+      left = dropdownRect.left - submenuWidth - gap;
+    } else {
+      // Not enough space on either side, show on right but constrained
+      left = Math.max(padding, window.innerWidth - submenuWidth - padding);
+    }
+
+    // Calculate vertical position
+    let top = optionRect.top;
+    const bottomOverflow = top + submenuHeight - window.innerHeight + padding;
+    if (bottomOverflow > 0) {
+      // Adjust upward if overflowing bottom
+      top = Math.max(padding, top - bottomOverflow);
+    }
+
+    setSubmenuPosition({ top, left });
   }, [submenuModelId, options]);
 
   const handleSelect = useCallback(
