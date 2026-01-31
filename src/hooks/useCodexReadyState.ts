@@ -24,9 +24,7 @@ export type CodexReadyState = 'initializing' | 'warming' | 'ready';
 export function useCodexReadyState(): CodexReadyState {
   const selectedSessionId = useSessionStore((s) => s.selectedSessionId);
   const modelOptions = useSessionStore((s) => s.modelCache.options);
-  const hasCodexSession = useCodexStore(
-    (s) => !!s.codexSessionByChat[selectedSessionId]
-  );
+  const hasCodexSession = useCodexStore((s) => !!s.codexSessionByChat[selectedSessionId]);
 
   // If we have a codex session for current chat, we're ready
   if (hasCodexSession) {

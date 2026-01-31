@@ -15,7 +15,13 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { initCodex, createSession, setSessionMode, setSessionModel, warmupCodex } from '../api/codex';
+import {
+  initCodex,
+  createSession,
+  setSessionMode,
+  setSessionModel,
+  warmupCodex,
+} from '../api/codex';
 import { devDebug } from '../utils/logger';
 import { formatError, resolveModelOptions, resolveModeOptions } from '../utils/codexParsing';
 import { resolveOptionId, shouldSyncOption } from '../utils/optionSelection';
