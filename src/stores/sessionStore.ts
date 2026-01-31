@@ -35,6 +35,12 @@ export interface OptionsCache {
   currentId?: string;
 }
 
+// Codex thread info for session resume
+export interface CodexThreadInfo {
+  threadId: string;
+  rolloutPath: string;
+}
+
 // State types
 interface SessionState {
   // Session list
@@ -60,6 +66,9 @@ interface SessionState {
 
   // Terminal state (per session)
   terminalBySession: Record<string, string>;
+
+  // Codex thread info for resume (per session, persisted)
+  codexThreadInfo: Record<string, CodexThreadInfo>;
 }
 
 interface SessionActions {
@@ -146,6 +155,10 @@ interface SessionActions {
   // Session meta cleanup
   removeSessionMeta: (sessionId: string, newSessionId?: string) => void;
 
+  // Codex thread info actions (for session resume)
+  setCodexThreadInfo: (chatSessionId: string, info: CodexThreadInfo) => void;
+  clearCodexThreadInfo: (chatSessionId: string) => void;
+
   // New chat action
   createNewChat: (cwd?: string, title?: string) => string;
 }
@@ -175,6 +188,7 @@ const initialState: SessionState = {
   modeCache: { options: null, currentId: DEFAULT_MODE_ID },
   isGeneratingBySession: { [initialSession.id]: false },
   terminalBySession: {},
+  codexThreadInfo: {},
 };
 
 // Helper to handle functional updates
@@ -219,6 +233,7 @@ export const useSessionStore = create<SessionStore>()(
               const { [sessionId]: _slash, ...restSlash } = state.sessionSlashCommands;
               const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
               const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
+              const { [sessionId]: _threadInfo, ...restThreadInfo } = state.codexThreadInfo;
 
               return {
                 sessions: state.sessions.filter((s) => s.id !== sessionId),
@@ -230,6 +245,7 @@ export const useSessionStore = create<SessionStore>()(
                 sessionSlashCommands: restSlash,
                 sessionModelOptions: restModel,
                 sessionModeOptions: restMode,
+                codexThreadInfo: restThreadInfo,
               };
             }),
 
@@ -364,6 +380,18 @@ export const useSessionStore = create<SessionStore>()(
             set(updates);
           },
 
+          // Codex thread info actions
+          setCodexThreadInfo: (chatSessionId, info) =>
+            set((state) => ({
+              codexThreadInfo: { ...state.codexThreadInfo, [chatSessionId]: info },
+            })),
+
+          clearCodexThreadInfo: (chatSessionId) =>
+            set((state) => {
+              const { [chatSessionId]: _, ...rest } = state.codexThreadInfo;
+              return { codexThreadInfo: rest };
+            }),
+
           // New chat action
           createNewChat: (cwd, title = 'New Chat') => {
             const newId = String(Date.now());
@@ -393,6 +421,7 @@ export const useSessionStore = create<SessionStore>()(
             selectedSessionId: state.selectedSessionId,
             sessionMessages: state.sessionMessages,
             sessionDrafts: state.sessionDrafts,
+            codexThreadInfo: state.codexThreadInfo,
           }),
           // Custom storage to handle Date serialization/deserialization
           storage: {

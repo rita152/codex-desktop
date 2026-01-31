@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import {
   initCodex,
   createSession,
+  resumeSession,
   setSessionMode,
   setSessionModel,
   warmupCodex,
@@ -52,6 +53,7 @@ export function useCodexEffects(): void {
   // Warmup session info (can be reused by first ensureCodexSession call)
   const warmupResultRef = useRef<{
     sessionId: string;
+    rolloutPath?: string;
     modeOptions?: { value: string; label: string }[];
     modelOptions?: { value: string; label: string }[];
     currentModeId?: string;
@@ -94,6 +96,7 @@ export function useCodexEffects(): void {
 
             warmupResultRef.current = {
               sessionId: result.sessionId,
+              rolloutPath: result.rolloutPath,
               modeOptions: modeState?.options,
               modelOptions: modelState?.options,
               currentModeId: modeState?.currentModeId,
@@ -188,7 +191,7 @@ export function useCodexEffects(): void {
       const pending = pendingSessionInitRef.current[chatSessionId];
       if (pending) return pending;
 
-      // Create new session
+      // Create or resume session
       const task = (async () => {
         const sessions = sessionStore.sessions;
         const sessionMeta = sessions.find((session) => session.id === chatSessionId);
@@ -196,6 +199,32 @@ export function useCodexEffects(): void {
           typeof sessionMeta?.cwd === 'string' && sessionMeta.cwd.trim() !== ''
             ? sessionMeta.cwd
             : '.';
+
+        // Check if we have rollout info for resume
+        const threadInfo = sessionStore.codexThreadInfo[chatSessionId];
+        if (threadInfo?.rolloutPath) {
+          try {
+            // Try to resume from rollout
+            devDebug('[codex] attempting to resume session from rollout', threadInfo.rolloutPath);
+            const result = await resumeSession(threadInfo.rolloutPath, cwd);
+            devDebug('[codex] session resumed successfully', result.sessionId);
+
+            codexStore.registerCodexSession(chatSessionId, result.sessionId);
+
+            // Update thread info with new session ID (rollout path stays the same)
+            sessionStore.setCodexThreadInfo(chatSessionId, {
+              threadId: result.sessionId,
+              rolloutPath: threadInfo.rolloutPath,
+            });
+
+            return result.sessionId;
+          } catch (err) {
+            // Resume failed (e.g., rollout file deleted/corrupted), fallback to new session
+            devDebug('[codex] resume failed, creating new session:', err);
+            // Clear invalid thread info
+            sessionStore.clearCodexThreadInfo(chatSessionId);
+          }
+        }
 
         // Try to reuse warmup session if cwd is '.' (default)
         const warmupResult = warmupResultRef.current;
@@ -284,6 +313,14 @@ export function useCodexEffects(): void {
           }
           if (syncTasks.length > 0) {
             await Promise.all(syncTasks);
+          }
+
+          // Save thread info for future resume (if rolloutPath available)
+          if (warmupResult.rolloutPath) {
+            sessionStore.setCodexThreadInfo(chatSessionId, {
+              threadId: warmupResult.sessionId,
+              rolloutPath: warmupResult.rolloutPath,
+            });
           }
 
           return warmupResult.sessionId;
@@ -402,6 +439,14 @@ export function useCodexEffects(): void {
         }
         if (syncTasks.length > 0) {
           await Promise.all(syncTasks);
+        }
+
+        // Save thread info for future resume (if rolloutPath available)
+        if (result.rolloutPath) {
+          sessionStore.setCodexThreadInfo(chatSessionId, {
+            threadId: result.sessionId,
+            rolloutPath: result.rolloutPath,
+          });
         }
 
         return result.sessionId;

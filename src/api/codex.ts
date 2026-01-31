@@ -16,6 +16,18 @@ export async function createSession(cwd: string): Promise<NewSessionResult> {
   return invoke<NewSessionResult>('codex_new_session', { cwd });
 }
 
+/**
+ * Resume a session from a rollout file.
+ * This restores the full conversation context from a previous session.
+ */
+export async function resumeSession(rolloutPath: string, cwd?: string): Promise<NewSessionResult> {
+  return invoke<NewSessionResult>('codex_resume_session', {
+    rolloutPath,
+    rollout_path: rolloutPath,
+    cwd,
+  });
+}
+
 export async function sendPrompt(sessionId: string, content: string): Promise<PromptResult> {
   return invoke<PromptResult>('codex_prompt', {
     sessionId,

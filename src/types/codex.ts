@@ -54,6 +54,8 @@ export interface AuthMethod extends Record<string, unknown> {
 
 export interface NewSessionResult {
   sessionId: string;
+  /** Path to rollout file for session resume */
+  rolloutPath?: string;
   modes?: unknown;
   models?: unknown;
   configOptions?: unknown;
