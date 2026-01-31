@@ -48,16 +48,16 @@
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-### 1.3 迁移收益
+### 1.3 迁移核心收益
 
-| 特性 | ACP 架构 | codex-core 直接集成 |
+| 维度 | ACP 架构 | codex-core 直接集成 |
 |------|----------|---------------------|
-| Token Usage | ❌ ACP 未支持 | ✅ TokenCountEvent |
-| 临时会话 | ❌ 不支持 | ✅ config.ephemeral |
-| Kill Session | ❌ 只能 cancel | ✅ remove_thread() |
-| 完整事件流 | ⚠️ 部分丢失 | ✅ 40+ EventMsg |
-| 启动延迟 | ⚠️ 子进程启动 | ✅ 直接调用 |
-| 远程服务器支持 | ✅ SSH | ⚠️ 需重新设计 |
+| 事件流 | ⚠️ 部分事件丢失 | ✅ 完整 40+ EventMsg |
+| 启动延迟 | ⚠️ 子进程启动开销 | ✅ 直接调用 |
+| 维护性 | ⚠️ 两层转换 | ✅ 单一转换层 |
+| 远程服务器 | ✅ SSH 支持 | ⚠️ 需后续重新设计 |
+
+> **注**: Token Usage、临时会话、Kill Session 等新功能需迁移完成后单独实现。
 
 ---
 
@@ -86,7 +86,7 @@
 |------|--------|
 | `src-tauri/Cargo.toml` | 依赖替换 |
 | `src-tauri/src/codex/commands.rs` | 调用方式调整 |
-| `src-tauri/src/codex/events.rs` | 新增事件常量 |
+| `src-tauri/src/codex/events.rs` | 事件常量调整 |
 | `src-tauri/src/codex/mod.rs` | 模块导出调整 |
 
 ### 2.4 保持不变的文件
@@ -130,15 +130,7 @@ tauri = { version = "2", features = ["macos-private-api"] }
 # ... 其他依赖
 ```
 
-#### 1.2 更新 Cargo workspace（如需要）
-
-```toml
-# 如果 codex-core 依赖需要 workspace 配置
-[patch.crates-io]
-# 可能需要的 patch
-```
-
-#### 1.3 验证编译
+#### 1.2 验证编译
 
 ```bash
 cd src-tauri
@@ -166,7 +158,7 @@ use std::{
     sync::Arc,
 };
 use tauri::{AppHandle, Emitter};
-use tokio::sync::{mpsc, oneshot, Mutex, RwLock};
+use tokio::sync::{oneshot, RwLock};
 
 use crate::codex::{
     debug::DebugState,
@@ -178,7 +170,6 @@ use crate::codex::{
 struct SessionState {
     thread: Arc<CodexThread>,
     thread_id: ThreadId,
-    /// Channel to signal event loop termination.
     shutdown_tx: Option<oneshot::Sender<()>>,
 }
 
@@ -189,7 +180,6 @@ pub struct CodexCoreService {
     sessions: Arc<RwLock<HashMap<String, SessionState>>>,
     debug: Arc<DebugState>,
     codex_home: PathBuf,
-    /// Pending approval requests.
     approvals: Arc<ApprovalState>,
 }
 
@@ -218,22 +208,17 @@ impl CodexCoreService {
     }
 
     /// Create a new session with the given working directory.
-    pub async fn create_session(
-        &self,
-        cwd: PathBuf,
-        ephemeral: bool,
-    ) -> Result<NewSessionResult> {
-        let mut config = Config::load_from_home(&self.codex_home)
+    pub async fn create_session(&self, cwd: PathBuf) -> Result<NewSessionResult> {
+        let config = Config::load_from_home(&self.codex_home)
             .await
             .unwrap_or_default();
         
+        let mut config = config;
         config.cwd = cwd;
-        config.ephemeral = ephemeral;
 
         let NewThread {
             thread,
             thread_id,
-            session_configured,
             ..
         } = self.thread_manager
             .start_thread(config)
@@ -273,7 +258,7 @@ impl CodexCoreService {
 
         Ok(NewSessionResult {
             session_id,
-            modes: None, // TODO: Extract from session_configured
+            modes: None,
             models: None,
             config_options: None,
         })
@@ -301,7 +286,6 @@ impl CodexCoreService {
             .await
             .context("failed to submit user input")?;
 
-        // The actual response comes through the event loop
         Ok(PromptResult {
             stop_reason: serde_json::json!("pending"),
         })
@@ -319,22 +303,6 @@ impl CodexCoreService {
             .await
             .context("failed to cancel")?;
 
-        Ok(())
-    }
-
-    /// Kill and remove a session.
-    pub async fn kill_session(&self, session_id: &str) -> Result<()> {
-        let mut sessions = self.sessions.write().await;
-        if let Some(mut session) = sessions.remove(session_id) {
-            // Signal event loop to stop
-            if let Some(tx) = session.shutdown_tx.take() {
-                let _ = tx.send(());
-            }
-            // Shutdown the thread
-            let _ = session.thread.submit(Op::Shutdown).await;
-            // Remove from manager
-            self.thread_manager.remove_thread(&session.thread_id).await;
-        }
         Ok(())
     }
 
@@ -360,7 +328,7 @@ impl CodexCoreService {
         loop {
             tokio::select! {
                 _ = &mut shutdown_rx => {
-                    tracing::info!(session_id = %session_id, "event loop shutdown requested");
+                    tracing::info!(session_id = %session_id, "event loop shutdown");
                     break;
                 }
                 event_result = thread.next_event() => {
@@ -382,7 +350,6 @@ impl CodexCoreService {
         }
     }
 
-    /// Handle a single codex event.
     async fn handle_event(
         app: &AppHandle,
         debug: &DebugState,
@@ -440,7 +407,6 @@ impl ApprovalState {
 //! Bridge between codex-core EventMsg and Tauri events.
 
 use codex_core::protocol::EventMsg;
-use serde::Serialize;
 use serde_json::json;
 use tauri::{AppHandle, Emitter};
 
@@ -454,7 +420,7 @@ use crate::codex::{
 pub async fn emit_codex_event(
     app: &AppHandle,
     debug: &DebugState,
-    approvals: &ApprovalState,
+    _approvals: &ApprovalState,
     session_id: &str,
     event: &EventMsg,
 ) {
@@ -560,15 +526,6 @@ pub async fn emit_codex_event(
             }));
         }
 
-        // === Token 使用 (新增!) ===
-        EventMsg::TokenCount(info) => {
-            let _ = app.emit(EVENT_TOKEN_USAGE, json!({
-                "sessionId": session_id,
-                "info": &info.info,
-                "rateLimits": &info.rate_limits,
-            }));
-        }
-
         // === Turn 完成 ===
         EventMsg::TurnComplete(complete) => {
             let _ = app.emit(EVENT_TURN_COMPLETE, json!({
@@ -650,9 +607,7 @@ pub async fn emit_codex_event(
 //! Tauri command handlers for Codex interactions.
 
 use crate::codex::core_service::CodexCoreService;
-use crate::codex::types::{
-    ApprovalDecision, CodexCliConfigInfo, NewSessionResult, PromptResult,
-};
+use crate::codex::types::{ApprovalDecision, NewSessionResult, PromptResult};
 use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{AppHandle, State};
@@ -693,8 +648,7 @@ pub async fn codex_init(
     app: AppHandle,
     state: State<'_, CodexManager>,
 ) -> Result<serde_json::Value, String> {
-    let svc = state.get_or_create(app).await.map_err(|e| e.to_string())?;
-    // Return basic info
+    state.get_or_create(app).await.map_err(|e| e.to_string())?;
     Ok(serde_json::json!({
         "status": "initialized",
         "version": env!("CARGO_PKG_VERSION"),
@@ -706,12 +660,11 @@ pub async fn codex_init(
 pub async fn codex_new_session(
     state: State<'_, CodexManager>,
     cwd: String,
-    ephemeral: Option<bool>,
 ) -> Result<NewSessionResult, String> {
     let svc = state
         .get()
         .ok_or_else(|| "codex service not initialized".to_string())?;
-    svc.create_session(PathBuf::from(cwd), ephemeral.unwrap_or(false))
+    svc.create_session(PathBuf::from(cwd))
         .await
         .map_err(|e| e.to_string())
 }
@@ -743,20 +696,6 @@ pub async fn codex_cancel(
     svc.cancel(&session_id).await.map_err(|e| e.to_string())
 }
 
-/// Kill and remove a session (新增!).
-#[tauri::command]
-pub async fn codex_kill_session(
-    state: State<'_, CodexManager>,
-    session_id: String,
-) -> Result<(), String> {
-    let svc = state
-        .get()
-        .ok_or_else(|| "codex service not initialized".to_string())?;
-    svc.kill_session(&session_id)
-        .await
-        .map_err(|e| e.to_string())
-}
-
 /// Respond to an approval request.
 #[tauri::command]
 pub async fn codex_approve(
@@ -772,7 +711,7 @@ pub async fn codex_approve(
         .map_err(|e| e.to_string())
 }
 
-// ... 保留其他命令（list_local_directory 等）
+// 保留其他现有命令（list_local_directory 等）
 ```
 
 ---
@@ -809,20 +748,11 @@ pub const EVENT_ERROR: &str = "codex:error";
 
 // === 调试事件 ===
 pub const EVENT_DEBUG: &str = "codex:debug";
-
-// === Token 使用事件 (新增!) ===
-pub const EVENT_TOKEN_USAGE: &str = "codex:token-usage";
-
-// === 会话事件 (新增!) ===
-pub const EVENT_SESSION_KILLED: &str = "codex:session-killed";
-
-// === 上下文事件 (新增!) ===
-pub const EVENT_CONTEXT_COMPACTED: &str = "codex:context-compacted";
 ```
 
 ---
 
-### 阶段 5：更新类型定义（估计 1 小时）
+### 阶段 5：更新类型定义（估计 30 分钟）
 
 #### 5.1 修改 `src-tauri/src/codex/types.rs`
 
@@ -853,16 +783,6 @@ pub struct NewSessionResult {
 #[serde(rename_all = "camelCase")]
 pub struct PromptResult {
     pub stop_reason: serde_json::Value,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TokenUsageInfo {
-    pub input_tokens: i64,
-    pub output_tokens: i64,
-    pub cached_input_tokens: i64,
-    pub reasoning_output_tokens: i64,
-    pub total_tokens: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -918,9 +838,7 @@ rm -f binary.rs
 rm -f process.rs
 rm -f protocol.rs
 rm -f unified_process.rs
-
-# 如果不再需要远程支持，也可删除
-# rm -f remote_session.rs
+rm -f service.rs  # 被 core_service.rs 替代
 ```
 
 #### 7.2 删除 submodule
@@ -936,89 +854,29 @@ rm -rf .git/modules/codex-acp
 
 ---
 
-### 阶段 8：前端调整（估计 1 小时）
-
-#### 8.1 更新 `src/api/codex.ts`
-
-```typescript
-// 新增命令
-export async function killSession(sessionId: string): Promise<void> {
-  return invoke('codex_kill_session', { sessionId });
-}
-
-// 新增 ephemeral 参数
-export async function newSession(cwd: string, ephemeral = false): Promise<NewSessionResult> {
-  return invoke('codex_new_session', { cwd, ephemeral });
-}
-```
-
-#### 8.2 更新 `src/hooks/useCodexEvents.ts`
-
-```typescript
-// 添加 token usage 事件处理
-useEffect(() => {
-  const unlisten = listen('codex:token-usage', (event) => {
-    const { sessionId, info } = event.payload as TokenUsagePayload;
-    // 更新 token 使用状态
-    sessionStore.updateTokenUsage(sessionId, info);
-  });
-  return () => { unlisten.then(f => f()); };
-}, []);
-```
-
-#### 8.3 更新 `src/stores/sessionStore.ts`
-
-```typescript
-interface SessionState {
-  // ... 现有字段
-  tokenUsage?: TokenUsageInfo;
-}
-
-interface TokenUsageInfo {
-  inputTokens: number;
-  outputTokens: number;
-  cachedInputTokens: number;
-  reasoningOutputTokens: number;
-  totalTokens: number;
-}
-```
-
----
-
 ## 四、测试计划
 
-### 4.1 单元测试
-
-| 测试项 | 文件 | 说明 |
-|--------|------|------|
-| 服务初始化 | `core_service.rs` | 验证 ThreadManager 创建 |
-| 会话创建 | `core_service.rs` | 验证 thread 启动 |
-| 事件映射 | `event_bridge.rs` | 验证 EventMsg → Tauri Event |
-
-### 4.2 集成测试
+### 4.1 核心功能测试
 
 | 测试场景 | 验证点 |
 |----------|--------|
-| 基本对话 | 消息发送、接收、显示 |
+| 基本对话 | 消息发送、接收、流式显示 |
 | 命令执行 | 工具调用、输出流、完成状态 |
-| Token 用量 | TokenCount 事件、前端显示 |
-| 临时会话 | ephemeral=true, 无磁盘写入 |
-| Kill 会话 | 资源清理、事件循环停止 |
-| 审批流程 | 请求、响应、继续执行 |
+| 审批流程 | 请求显示、用户响应、继续执行 |
+| 取消操作 | 中断当前 turn |
 
-### 4.3 性能测试
+### 4.2 回归测试
 
-| 指标 | 基准 (ACP) | 目标 (codex-core) |
-|------|------------|-------------------|
-| 首次响应延迟 | ~500ms | <200ms |
-| 事件转发延迟 | ~5ms | <1ms |
-| 内存占用 | 子进程独立 | 共享进程 |
+| 测试项 | 说明 |
+|--------|------|
+| 现有事件兼容 | 前端无需修改即可接收事件 |
+| 命令兼容 | API 调用签名保持不变 |
 
 ---
 
 ## 五、回滚计划
 
-如果迁移过程中遇到阻塞问题，可以通过以下方式回滚：
+如果迁移过程中遇到阻塞问题：
 
 1. **Git 回滚**
    ```bash
@@ -1038,7 +896,7 @@ interface TokenUsageInfo {
 
 ---
 
-## 六、里程碑与时间线
+## 六、里程碑
 
 | 阶段 | 任务 | 估计时间 | 状态 |
 |------|------|----------|------|
@@ -1046,12 +904,11 @@ interface TokenUsageInfo {
 | 2 | 核心服务层 | 4h | ⬜ |
 | 3 | 命令层更新 | 2h | ⬜ |
 | 4 | 事件常量更新 | 0.5h | ⬜ |
-| 5 | 类型定义更新 | 1h | ⬜ |
+| 5 | 类型定义更新 | 0.5h | ⬜ |
 | 6 | 模块导出更新 | 0.5h | ⬜ |
 | 7 | 清理旧代码 | 1h | ⬜ |
-| 8 | 前端调整 | 1h | ⬜ |
-| 9 | 测试 & 修复 | 4h | ⬜ |
-| **总计** | | **16h (~2-3 天)** | |
+| 8 | 测试 & 修复 | 4h | ⬜ |
+| **总计** | | **~14h** | |
 
 ---
 
@@ -1061,14 +918,15 @@ interface TokenUsageInfo {
 |------|------|----------|
 | codex-core API 变化 | 编译失败 | 锁定特定 commit |
 | 事件映射遗漏 | 功能缺失 | 对照 TUI 实现逐一检查 |
-| 远程服务器支持丢失 | 功能回退 | 后续阶段单独实现 |
-| 性能不如预期 | 用户体验下降 | 基准测试、优化 |
+| 远程服务器支持丢失 | 功能回退 | 明确标注，后续单独实现 |
 
 ---
 
-## 八、后续优化（可选）
+## 八、迁移完成后可扩展功能
 
-1. **远程服务器支持重构** - 基于 codex-core 重新实现 SSH 远程会话
-2. **会话持久化** - 利用 RolloutRecorder 实现历史记录
-3. **多会话管理** - 支持并发多个 thread
-4. **配置同步** - 将 Tauri 设置与 codex Config 同步
+以下功能在迁移完成后可单独实现：
+
+1. **Token Usage** - 监听 `EventMsg::TokenCount`，前端显示用量
+2. **临时会话** - 配置 `config.ephemeral = true`
+3. **Kill Session** - 调用 `remove_thread()` 完全销毁会话
+4. **远程服务器** - 基于 codex-core 重新设计 SSH 会话
