@@ -2,17 +2,18 @@
  * Settings Modal - Main Component
  */
 
-import { useEffect, useCallback, useId, useState, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useCallback, useId, useState, useMemo, lazy, Suspense, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../../../hooks/useSettings';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
 import { useModelFetch } from '../../../hooks/useModelFetch';
+import { useSettingsStore } from '../../../stores/settingsStore';
 import { GeneralSettings, ShortcutSettings, RemoteSettings, McpSettings } from './sections';
 import { List } from '../../ui/data-display/List';
 import { ListItem } from '../../ui/data-display/ListItem';
 import { Button } from '../../ui/data-entry/Button';
 import { cn } from '../../../utils/cn';
-import type { SettingsSection } from '../../../types/settings';
+import type { SettingsSection, ModelSettings as ModelSettingsType } from '../../../types/settings';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 import './SettingsModal.css';
 
@@ -83,6 +84,30 @@ export function SettingsModal({
     useSettings();
   const { fetching, fetchError, lastFetchedAt, fetchModels } = useModelFetch();
 
+  // Track initial setup completion
+  const hasCompletedInitialSetup = useSettingsStore((s) => s.hasCompletedInitialSetup);
+  const markSetupComplete = useSettingsStore((s) => s.markSetupComplete);
+  const hasSelectedModelRef = useRef(false);
+
+  // Track if user has selected a default model during this session
+  const handleModelUpdate = useCallback(
+    (values: Partial<ModelSettingsType>) => {
+      if (values.defaultModel) {
+        hasSelectedModelRef.current = true;
+      }
+      updateSettings('model', values);
+    },
+    [updateSettings]
+  );
+
+  // Mark setup complete when closing if user has selected a model
+  const handleClose = useCallback(() => {
+    if (!hasCompletedInitialSetup && (hasSelectedModelRef.current || settings.model.defaultModel)) {
+      markSetupComplete();
+    }
+    onClose();
+  }, [hasCompletedInitialSetup, markSetupComplete, onClose, settings.model.defaultModel]);
+
   const fetchStatus = useMemo(
     () => ({
       loading: fetching,
@@ -136,22 +161,22 @@ export function SettingsModal({
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        handleClose();
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
 
   // Handle overlay click
   const handleOverlayClick = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) {
-        onClose();
+        handleClose();
       }
     },
-    [onClose]
+    [handleClose]
   );
 
   // Render save status
@@ -211,7 +236,7 @@ export function SettingsModal({
           <Suspense fallback={lazyFallback}>
             <ModelSettings
               settings={settings.model}
-              onUpdate={(values) => updateSettings('model', values)}
+              onUpdate={handleModelUpdate}
               availableModels={availableModels}
               onFetchModels={handleFetchModels}
               fetchStatus={fetchStatus}
@@ -310,7 +335,7 @@ export function SettingsModal({
               {renderSaveStatus()}
               <Button
                 className="settings-modal__close"
-                onClick={onClose}
+                onClick={handleClose}
                 aria-label={t('settings.close')}
               >
                 ✕

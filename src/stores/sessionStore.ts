@@ -13,6 +13,7 @@ import { subscribeWithSelector, persist, devtools } from 'zustand/middleware';
 import { useMemo } from 'react';
 
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from '../constants/chat';
+import { useSettingsStore } from './settingsStore';
 
 import type { ChatSession } from '../types/session';
 import type { Message } from '../types/message';
@@ -166,12 +167,17 @@ interface SessionActions {
 export type SessionStore = SessionState & SessionActions;
 
 // Create initial session
-const createInitialSession = (): ChatSession => ({
-  id: String(Date.now()),
-  title: 'New Chat',
-  model: DEFAULT_MODEL_ID,
-  mode: DEFAULT_MODE_ID,
-});
+const createInitialSession = (): ChatSession => {
+  // Use default model from settings, fallback to hardcoded default
+  const defaultModel =
+    useSettingsStore.getState().settings.model.defaultModel || DEFAULT_MODEL_ID;
+  return {
+    id: String(Date.now()),
+    title: 'New Chat',
+    model: defaultModel,
+    mode: DEFAULT_MODE_ID,
+  };
+};
 
 // Initial state
 const initialSession = createInitialSession();
@@ -395,11 +401,14 @@ export const useSessionStore = create<SessionStore>()(
           // New chat action
           createNewChat: (cwd, title = 'New Chat') => {
             const newId = String(Date.now());
+            // Use default model from settings, fallback to hardcoded default
+            const defaultModel =
+              useSettingsStore.getState().settings.model.defaultModel || DEFAULT_MODEL_ID;
             const newSession: ChatSession = {
               id: newId,
               title,
               cwd,
-              model: DEFAULT_MODEL_ID,
+              model: defaultModel,
               mode: DEFAULT_MODE_ID,
             };
 

@@ -100,6 +100,7 @@ function AppContent() {
 
   // Load settings on mount
   const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const hasCompletedInitialSetup = useSettingsStore((state) => state.hasCompletedInitialSetup);
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -118,9 +119,26 @@ function AppContent() {
   const sidePanelWidth = useUIStore((s) => s.sidePanelWidth);
   const setSidePanelWidth = useUIStore((s) => s.setSidePanelWidth);
   const settingsOpen = useUIStore((s) => s.settingsOpen);
+  const settingsInitialSection = useUIStore((s) => s.settingsInitialSection);
   const openSettings = useUIStore((s) => s.openSettings);
   const closeSettings = useUIStore((s) => s.closeSettings);
   const handleSideAction = useUIStore((s) => s.handleSideAction);
+
+  // First-time setup: auto-open settings modal to model section
+  const initialSetupCheckedRef = useRef(false);
+  useEffect(() => {
+    // Only check once, and wait a bit for warmup to fetch model options
+    if (initialSetupCheckedRef.current) return;
+    initialSetupCheckedRef.current = true;
+
+    if (!hasCompletedInitialSetup) {
+      // Delay opening to allow warmup to fetch model options
+      const timer = setTimeout(() => {
+        openSettings('model');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasCompletedInitialSetup, openSettings]);
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
@@ -398,6 +416,7 @@ function AppContent() {
           <SettingsModal
             isOpen={settingsOpen}
             onClose={closeSettings}
+            initialSection={settingsInitialSection}
             availableModels={modelOptions}
             onModelOptionsResolved={handleModelOptionsFetched}
           />
