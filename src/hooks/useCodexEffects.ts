@@ -77,14 +77,20 @@ export function useCodexEffects(): void {
         warmupTimer = setTimeout(async () => {
           if (!isMounted) return;
 
+          // Try warmup first (optional optimization, may not be implemented)
           try {
-            // First, warmup the ACP connection (spawn process, initialize protocol)
             await warmupCodex();
             devDebug('[codex] connection warmed up');
+          } catch (err) {
+            // Warmup command may not exist - this is fine, continue with session creation
+            devDebug('[codex] warmup skipped (command not available):', err);
+          }
 
-            if (!isMounted) return;
+          if (!isMounted) return;
 
-            // Then create a warmup session to pre-fetch mode/model options
+          // Create a warmup session to pre-fetch mode/model options
+          // This is the critical part - must succeed to load model list
+          try {
             const result = await createSession('.');
             devDebug('[codex] warmup session created', result.sessionId);
 
@@ -122,8 +128,9 @@ export function useCodexEffects(): void {
 
             devDebug('[codex] warmup complete, options applied');
           } catch (err) {
-            // Warmup failure is non-fatal, log and continue
-            devDebug('[codex] warmup failed (non-fatal)', err);
+            // Session creation failure - log but don't crash
+            console.error('[codex] warmup session creation failed:', err);
+            devDebug('[codex] warmup session creation failed', err);
           }
         }, WARMUP_DELAY_MS);
       } catch (err) {

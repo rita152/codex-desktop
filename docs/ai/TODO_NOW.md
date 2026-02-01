@@ -4,7 +4,26 @@
 
 ---
 
-## 当前任务：Prompt Enhance 功能
+## 已完成：模型选择启动时序修复
+
+**状态**: ✅ 已完成
+
+### 问题描述
+- 应用启动时模型选择器显示 "Select model" 而不是用户设置的默认模型
+- 用户需要手动打开设置面板才能触发模型列表加载
+
+### 根因分析
+1. `codex_warmup` 命令在 Rust 后端未实现
+2. `warmupCodex()` 失败后整个 warmup 流程被跳过（包括获取模型列表的 `createSession()`）
+3. `settingsStore` 初始化时使用 `DEFAULT_SETTINGS`，新会话无法获取用户保存的默认模型
+
+### 修复内容
+- `src/stores/settingsStore.ts`: 同步加载 localStorage 中的 settings
+- `src/hooks/useCodexEffects.ts`: 分离 `warmupCodex()` 和 `createSession()` 的 try-catch
+
+---
+
+## 历史任务：Prompt Enhance 功能
 
 **计划文档**: [PROMPT_ENHANCE_PLAN.md](./PROMPT_ENHANCE_PLAN.md)  
 **状态**: ✅ 核心功能已完成

@@ -55,24 +55,24 @@ function applyThemeToDOM(themeOption: ThemeOption) {
   document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedTheme);
 }
 
-// Initialize theme immediately on module load
-function initializeTheme() {
+// Load settings synchronously from localStorage on module load
+// This ensures sessionStore can access correct defaultModel during initialization
+function loadSettingsSync(): AppSettings {
   try {
     const localSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (localSettings) {
       const parsed = JSON.parse(localSettings) as AppSettings;
-      if (parsed.general?.theme) {
-        applyThemeToDOM(parsed.general.theme);
-        return;
-      }
+      return { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch {
     // Fall through to default
   }
-  applyThemeToDOM('system');
+  return DEFAULT_SETTINGS;
 }
 
-initializeTheme();
+// Load settings and apply theme at module initialization
+const syncLoadedSettings = loadSettingsSync();
+applyThemeToDOM(syncLoadedSettings.general.theme);
 
 // Check if initial setup was completed
 function checkSetupComplete(): boolean {
@@ -83,9 +83,9 @@ function checkSetupComplete(): boolean {
   }
 }
 
-// Initial state
+// Initial state - use synchronously loaded settings for correct defaultModel
 const initialState: SettingsState = {
-  settings: DEFAULT_SETTINGS,
+  settings: syncLoadedSettings,
   loading: true,
   error: null,
   saveStatus: 'idle',
