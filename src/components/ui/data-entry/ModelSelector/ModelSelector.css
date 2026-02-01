@@ -115,7 +115,7 @@
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  z-index: 9999;
+  z-index: 10001;
   max-height: 320px;
   overflow-y: auto;
   min-width: 180px;
@@ -215,7 +215,7 @@
   border: var(--border-width-thin) solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
-  z-index: 10000;
+  z-index: 10002;
   min-width: 220px;
   max-width: 280px;
   padding: var(--spacing-xs) 0;
