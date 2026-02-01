@@ -249,21 +249,21 @@ function AppContent() {
   }, [sessionSlashCommands]);
 
   // Current plan from messages (steps + explanation)
-  const { currentPlanSteps, currentPlanExplanation } = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      const planSteps = msg.planSteps;
-      if (planSteps && planSteps.length > 0) {
-        const allCompleted = planSteps.every((step) => step.status === 'completed');
-        if (allCompleted) return { currentPlanSteps: undefined, currentPlanExplanation: undefined };
-        return {
-          currentPlanSteps: planSteps,
-          currentPlanExplanation: msg.planExplanation,
-        };
+  let currentPlanSteps: (typeof messages)[number]['planSteps'] | undefined;
+  let currentPlanExplanation: (typeof messages)[number]['planExplanation'] | undefined;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const planSteps = msg.planSteps;
+    if (planSteps && planSteps.length > 0) {
+      const allCompleted = planSteps.every((step) => step.status === 'completed');
+      if (!allCompleted) {
+        currentPlanSteps = planSteps;
+        currentPlanExplanation = msg.planExplanation;
       }
+      break;
     }
-    return { currentPlanSteps: undefined, currentPlanExplanation: undefined };
-  }, [messages]);
+  }
 
   // Track if user manually closed plan panel
   const planUserClosedRef = useRef(false);
