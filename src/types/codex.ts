@@ -211,3 +211,23 @@ export interface BackgroundEventPayload {
   sessionId: string;
   message: string;
 }
+
+/** Context compacted event payload */
+export interface ContextCompactedEvent {
+  sessionId: string;
+}
+
+/** MCP startup update event payload */
+export interface McpStartupUpdateEvent {
+  sessionId: string;
+  server: string;
+  status: string;
+}
+
+/** MCP startup complete event payload */
+export interface McpStartupCompleteEvent {
+  sessionId: string;
+  ready: string[];
+  failed: string[];
+  cancelled: string[];
+}

@@ -51,6 +51,45 @@ function ChevronDownIcon({ size = 16 }: { size?: number }) {
   );
 }
 
+// Extract the FIRST **bold** status header from content (TUI-inspired)
+// This is displayed as the Thinking label
+function extractFirstBoldHeader(raw: string): string | null {
+  const match = raw.match(/\*\*([^*]+)\*\*/);
+  if (match && match[1]) {
+    const title = match[1].trim();
+    return title.length > 0 ? title : null;
+  }
+  return null;
+}
+
+// Remove the leading **status header** from content for display
+// Since header is shown in label, don't duplicate it in body
+function removeLeadingBoldHeader(raw: string): string {
+  // Remove the first **...**  pattern and any following whitespace/newlines
+  return raw.replace(/^\s*\*\*[^*]+\*\*\s*/, '').trim();
+}
+
+// Fallback: extract title from # > - formats
+function extractFallbackTitle(raw: string): string | null {
+  const lines = raw.split('\n');
+  const titleIndex = lines.findIndex((line) => line.trim().length > 0);
+  if (titleIndex === -1) return null;
+
+  const rawTitleLine = lines[titleIndex] ?? '';
+  let titleLine = rawTitleLine.trim();
+
+  const headingMatch = titleLine.match(/^#{1,6}\s+(.+)$/);
+  if (headingMatch) return headingMatch[1]?.trim() ?? null;
+
+  const quoteMatch = titleLine.match(/^>\s*(.+)$/);
+  if (quoteMatch) return quoteMatch[1]?.trim() ?? null;
+
+  const bulletMatch = titleLine.match(/^[-*]\s+(.+)$/);
+  if (bulletMatch) return bulletMatch[1]?.trim() ?? null;
+
+  return null;
+}
+
 export function Thinking({
   content,
   title,
@@ -70,7 +109,7 @@ export function Thinking({
   const [isOpen, setIsOpen] = useState(defaultOpen ?? false);
   const [elapsedTime, setElapsedTime] = useState(0);
 
-  // 实时计时
+  // Timer for elapsed time
   useEffect(() => {
     if (!isActive || !startTime) {
       setElapsedTime(0);
@@ -87,36 +126,29 @@ export function Thinking({
     return () => clearInterval(timer);
   }, [isActive, startTime]);
 
-  const extractTitleAndBody = (raw: string): { title: string | null; body: string } => {
-    const lines = raw.split('\n');
-    const titleIndex = lines.findIndex((line) => line.trim().length > 0);
-    if (titleIndex === -1) return { title: null, body: '' };
+  // Extract current status header: prefer **bold**, fallback to # > -
+  const extractedTitle = extractFirstBoldHeader(content) ?? extractFallbackTitle(content);
 
-    const rawTitleLine = lines[titleIndex] ?? '';
-    let titleLine = rawTitleLine.trim();
-
-    const headingMatch = titleLine.match(/^#{1,6}\s+(.+)$/);
-    if (headingMatch) {
-      titleLine = headingMatch[1]?.trim() ?? '';
-    } else {
-      const quoteMatch = titleLine.match(/^>\s*(.+)$/);
-      if (quoteMatch) titleLine = quoteMatch[1]?.trim() ?? '';
-      const bulletMatch = titleLine.match(/^[-*]\s+(.+)$/);
-      if (bulletMatch) titleLine = bulletMatch[1]?.trim() ?? '';
-    }
-
-    const remaining = lines.slice(titleIndex + 1);
-    if (remaining.length > 0 && remaining[0]?.trim().length === 0) {
-      remaining.shift();
-    }
-
-    return { title: titleLine.length > 0 ? titleLine : null, body: remaining.join('\n') };
-  };
+  // Remove the header from display content (since it's shown in the label)
+  const displayContent = extractFirstBoldHeader(content)
+    ? removeLeadingBoldHeader(content)
+    : content;
 
   const getLabel = (): string => {
-    if (phase === 'working') {
-      return t('thinking.label.working');
+    // When we have an extracted status header, show it with duration info
+    if (extractedTitle) {
+      if (phase === 'working') return extractedTitle;
+      if (phase === 'thinking') {
+        if (startTime) return `${extractedTitle} · ${formatDurationLong(t, elapsedTime)}`;
+        return extractedTitle;
+      }
+      // phase === 'done'
+      if (duration !== undefined) return `${extractedTitle} · ${formatDurationLong(t, duration)}`;
+      return extractedTitle;
     }
+
+    // Fallback to generic labels
+    if (phase === 'working') return t('thinking.label.working');
     if (phase === 'thinking') {
       if (startTime) {
         return t('thinking.label.thinkingWithDuration', {
@@ -125,19 +157,14 @@ export function Thinking({
       }
       return t('thinking.label.thinking');
     }
-    // phase === 'done'
     if (duration !== undefined) {
-      return t('thinking.label.doneWithDuration', {
-        duration: formatDurationLong(t, duration),
-      });
+      return t('thinking.label.doneWithDuration', { duration: formatDurationLong(t, duration) });
     }
     return t('thinking.label.title');
   };
 
-  const { title: extractedTitle, body: extractedBody } = extractTitleAndBody(content);
   const labelMarkdown =
     headerVariant === 'title' ? (title ?? extractedTitle ?? t('thinking.label.title')) : getLabel();
-  const displayContent = headerVariant === 'title' ? extractedBody : content;
   const hasBodyContent = displayContent.trim().length > 0;
   const shouldHideHeader = hideWorkingLabel && phase === 'working' && headerVariant !== 'title';
   const isExpanded = shouldHideHeader ? true : isOpen;

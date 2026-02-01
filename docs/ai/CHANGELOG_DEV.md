@@ -2,6 +2,56 @@
 
 ## 2026-02-01
 
+### Enhancement: Multi-Thinking blocks for status headers (TUI-inspired)
+
+**Summary**:
+Implemented TUI's design where each `**bold**` status header creates a NEW Thinking component. When a new `**...**` appears in the thinking stream, the current thought is finalized and a new one begins.
+
+**Files Modified**:
+- `src/hooks/codexEventMessageHandlers.ts`: Modified `appendThoughtChunk` to split by `**...**` headers
+- `src/components/ui/feedback/Thinking/index.tsx`: Added `extractLastBoldHeader` for label display
+
+**Changes**:
+1. `appendThoughtChunk` now detects new `**...**` headers by comparing bold count
+2. When new header detected, splits content into multiple thought messages
+3. Each thought message = one Thinking component
+4. Previous thoughts are finalized (phase='done'), only last one streams
+5. Thinking component extracts header for label display
+
+**Key Logic** (event handler):
+```typescript
+const prevBoldCount = countBoldHeaders(currentContent);
+const nextBoldCount = countBoldHeaders(nextContent);
+
+if (nextBoldCount > prevBoldCount) {
+  // Split into multiple thought messages
+  const sections = splitByBoldHeaders(nextContent);
+  // Create one Message per section
+}
+```
+
+**Display Result**:
+```
+┌─────────────────────────────────────┐
+│ 🧠 Analyzing current project · 3秒  │  ← Thought 1 (done)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ 🧠 Planning project analysis · 2秒  │  ← Thought 2 (done)
+└─────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│ 🧠 Scanning repository · 5秒        │  ← Thought 3 (streaming)
+│   I'm starting by scanning...       │  ← Body WITHOUT **header**
+└─────────────────────────────────────┘
+```
+
+**Header Deduplication**:
+- Header extracted to label → `removeLeadingBoldHeader()` removes it from body
+- Body displays clean content without `**Scanning repository**` prefix
+
+**Impact**: Multiple Thinking components per prompt when content has multiple `**...**` headers. Each phase is independently collapsible. No duplicate headers in body.
+
+---
+
 ### Enhancement: Frontend event listeners for new codex-core events
 
 **Summary**:

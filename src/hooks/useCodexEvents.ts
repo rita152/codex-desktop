@@ -41,6 +41,9 @@ import type {
   UndoCompletedEvent,
   DeprecationNoticeEvent,
   BackgroundEventPayload,
+  ContextCompactedEvent,
+  McpStartupUpdateEvent,
+  McpStartupCompleteEvent,
 } from '../types/codex';
 import type { PlanStep, PlanStatus } from '../types/plan';
 
@@ -528,6 +531,64 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
           message: event.payload.message,
         });
         // Log background events but don't display to user by default
+      }),
+
+      // Context compacted - notify user about memory optimization
+      listen<ContextCompactedEvent>('codex:context-compacted', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:context-compacted]', { sessionId });
+        // Add a system message to notify user
+        const systemMsg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: i18n.t('chat.contextCompacted', {
+            defaultValue: 'Context has been compacted to fit within the model context window.',
+          }),
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        useSessionStore.getState().addMessage(sessionId, systemMsg);
+      }),
+
+      // MCP startup update - track MCP server startup progress
+      listen<McpStartupUpdateEvent>('codex:mcp-startup-update', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:mcp-startup-update]', {
+          sessionId: event.payload.sessionId,
+          server: event.payload.server,
+          status: event.payload.status,
+        });
+        // Could update UI to show MCP startup progress
+        // For now, just log
+      }),
+
+      // MCP startup complete - all MCP servers have finished starting
+      listen<McpStartupCompleteEvent>('codex:mcp-startup-complete', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:mcp-startup-complete]', {
+          sessionId: event.payload.sessionId,
+          ready: event.payload.ready,
+          failed: event.payload.failed,
+          cancelled: event.payload.cancelled,
+        });
+        // Notify user if any MCP servers failed
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        if (event.payload.failed && event.payload.failed.length > 0) {
+          const failedMsg: Message = {
+            id: newMessageId(),
+            role: 'assistant',
+            content: i18n.t('chat.mcpServersFailed', {
+              servers: event.payload.failed.join(', '),
+              defaultValue: `MCP servers failed to start: ${event.payload.failed.join(', ')}`,
+            }),
+            isStreaming: false,
+            timestamp: new Date(),
+          };
+          useSessionStore.getState().addMessage(sessionId, failedMsg);
+        }
       }),
     ];
     commitListeners(listenerToken, unlistenPromises);
