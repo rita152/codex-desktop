@@ -3,6 +3,7 @@
  */
 
 import { DEFAULT_MODEL_ID } from '../constants/chat';
+import type { ReasoningEffort } from './options';
 
 // Settings section types
 export type SettingsSection = 'general' | 'model' | 'mcp' | 'remote' | 'shortcuts';
@@ -25,6 +26,7 @@ export type ApiProvider = 'openai' | 'azure' | 'custom';
 // Model settings
 export interface ModelSettings {
   defaultModel: string;
+  defaultReasoningEffort?: ReasoningEffort;
   apiProvider: ApiProvider;
   apiBaseUrl: string;
   apiKey: string;

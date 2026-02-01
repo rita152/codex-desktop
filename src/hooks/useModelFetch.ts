@@ -4,10 +4,10 @@ import { authCodex, createSession, loadCodexCliConfig, setCodexEnv } from '../ap
 import { formatError, resolveModelOptions } from '../utils/codexParsing';
 
 import type { CodexCliConfigInfo } from '../types/codex';
-import type { SelectOption } from '../types/options';
+import type { ModelOption } from '../types/options';
 
 export type ModelFetchResult = {
-  options: SelectOption[];
+  options: ModelOption[];
   currentId?: string;
 };
 

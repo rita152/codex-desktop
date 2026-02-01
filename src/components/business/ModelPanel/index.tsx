@@ -2,13 +2,13 @@
  * Model Panel
  */
 
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ModelSettings as ModelSettingsType } from '../../../types/settings';
-import type { SelectOption } from '../../ui/data-entry/Select/types';
+import type { ModelOption, ReasoningEffort } from '../../../types/options';
 import { Button } from '../../ui/data-entry/Button';
 
-import { NativeSelect } from '../../ui/data-entry/NativeSelect';
+import { ModelSelector } from '../../ui/data-entry/ModelSelector';
 import { ConfigEditor } from './ConfigEditor';
 
 export interface FetchStatus {
@@ -21,7 +21,7 @@ export interface ModelPanelProps {
   settings: ModelSettingsType;
   onUpdate: (values: Partial<ModelSettingsType>) => void;
   /** Dynamically fetched model list */
-  availableModels?: SelectOption[];
+  availableModels?: ModelOption[];
   /** Handler to fetch models */
   onFetchModels?: () => void;
   /** Status of the model fetch operation */
@@ -56,6 +56,17 @@ export const ModelPanel = memo(function ModelPanel({
   const isCurrentModelAvailable =
     availableModels.length === 0 ||
     availableModels.some((model) => model.value === settings.defaultModel);
+
+  // Handle model and effort change
+  const handleModelChange = useCallback(
+    (modelId: string, effort?: ReasoningEffort) => {
+      onUpdate({
+        defaultModel: modelId,
+        defaultReasoningEffort: effort,
+      });
+    },
+    [onUpdate]
+  );
 
   return (
     <div className="settings-section-content">
@@ -133,24 +144,14 @@ export const ModelPanel = memo(function ModelPanel({
         ) : null}
 
         {availableModels.length > 0 ? (
-          <NativeSelect
-            id="model-select"
-            className="settings-select"
-            value={isCurrentModelAvailable ? settings.defaultModel : ''}
-            onChange={(e) => onUpdate({ defaultModel: e.target.value })}
-            style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}
-          >
-            {!isCurrentModelAvailable && (
-              <option value="" disabled>
-                {t('settings.model.selectModel')}
-              </option>
-            )}
-            {availableModels.map((model) => (
-              <option key={model.value} value={model.value}>
-                {model.label}
-              </option>
-            ))}
-          </NativeSelect>
+          <ModelSelector
+            options={availableModels}
+            selectedModel={isCurrentModelAvailable ? settings.defaultModel : undefined}
+            selectedEffort={settings.defaultReasoningEffort}
+            onChange={handleModelChange}
+            size="md"
+            aria-label={t('settings.model.defaultModel')}
+          />
         ) : (
           <div className="settings-item__placeholder">
             <span className="settings-item__placeholder-icon">ℹ️</span>

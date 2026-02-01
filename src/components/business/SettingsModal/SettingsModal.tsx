@@ -14,7 +14,7 @@ import { ListItem } from '../../ui/data-display/ListItem';
 import { Button } from '../../ui/data-entry/Button';
 import { cn } from '../../../utils/cn';
 import type { SettingsSection, ModelSettings as ModelSettingsType } from '../../../types/settings';
-import type { SelectOption } from '../../ui/data-entry/Select/types';
+import type { ModelOption } from '../../../types/options';
 import './SettingsModal.css';
 
 const ModelSettings = lazy(() =>
@@ -26,8 +26,8 @@ interface SettingsModalProps {
   onClose: () => void;
   initialSection?: SettingsSection;
   /** 动态获取的可用模型列表 */
-  availableModels?: SelectOption[];
-  onModelOptionsResolved?: (payload: { options: SelectOption[]; currentId?: string }) => void;
+  availableModels?: ModelOption[];
+  onModelOptionsResolved?: (payload: { options: ModelOption[]; currentId?: string }) => void;
 }
 
 // Navigation items configuration

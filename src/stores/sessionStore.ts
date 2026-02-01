@@ -168,14 +168,16 @@ export type SessionStore = SessionState & SessionActions;
 
 // Create initial session
 const createInitialSession = (): ChatSession => {
-  // Use default model from settings, fallback to hardcoded default
-  const defaultModel =
-    useSettingsStore.getState().settings.model.defaultModel || DEFAULT_MODEL_ID;
+  // Use default model and reasoning effort from settings
+  const modelSettings = useSettingsStore.getState().settings.model;
+  const defaultModel = modelSettings.defaultModel || DEFAULT_MODEL_ID;
+  const defaultReasoningEffort = modelSettings.defaultReasoningEffort;
   return {
     id: String(Date.now()),
     title: 'New Chat',
     model: defaultModel,
     mode: DEFAULT_MODE_ID,
+    reasoningEffort: defaultReasoningEffort,
   };
 };
 
@@ -401,15 +403,17 @@ export const useSessionStore = create<SessionStore>()(
           // New chat action
           createNewChat: (cwd, title = 'New Chat') => {
             const newId = String(Date.now());
-            // Use default model from settings, fallback to hardcoded default
-            const defaultModel =
-              useSettingsStore.getState().settings.model.defaultModel || DEFAULT_MODEL_ID;
+            // Use default model and reasoning effort from settings
+            const modelSettings = useSettingsStore.getState().settings.model;
+            const defaultModel = modelSettings.defaultModel || DEFAULT_MODEL_ID;
+            const defaultReasoningEffort = modelSettings.defaultReasoningEffort;
             const newSession: ChatSession = {
               id: newId,
               title,
               cwd,
               model: defaultModel,
               mode: DEFAULT_MODE_ID,
+              reasoningEffort: defaultReasoningEffort,
             };
 
             set((state) => ({
