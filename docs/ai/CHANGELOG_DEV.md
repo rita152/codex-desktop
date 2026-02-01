@@ -2,6 +2,56 @@
 
 ## 2026-02-01
 
+### Feature: Collapsible ToolCallGroup for parallel commands
+
+**Summary**:
+Added `ToolCallGroup` component to group and collapse multiple parallel tool calls. When 3+ consecutive toolcalls appear in the Working panel, they are automatically grouped into a collapsible section showing summary status.
+
+**Files Added**:
+- `src/components/ui/feedback/ToolCallGroup/index.tsx`: Main component
+- `src/components/ui/feedback/ToolCallGroup/types.ts`: Type definitions
+- `src/components/ui/feedback/ToolCallGroup/ToolCallGroup.css`: Styles
+
+**Files Modified**:
+- `src/components/ui/feedback/Working/index.tsx`: Added grouping logic with `groupItems()` function
+
+**Key Changes**:
+1. `ToolCallGroup` displays collapsed summary: "15 parallel commands"
+2. Shows aggregated status: running count, completion count, failures
+3. Click to expand and see individual tool calls
+4. Real-time elapsed time tracking for in-progress groups
+5. `Working` component groups consecutive toolcalls (MIN_GROUP_SIZE=3)
+
+**Grouping Logic**:
+```typescript
+function groupItems(items: WorkingItem[]): GroupedItem[] {
+  // Consecutive toolcalls → ToolCallGroup (if >= MIN_GROUP_SIZE)
+  // Other items → single items
+}
+```
+
+**UI Result**:
+```
+Before:
+┌ Working ────────────────────────────┐
+│ exec: ls -la                    ✓   │
+│ exec: cat package.json          ✓   │
+│ exec: git status                ✓   │
+│ exec: npm run build             ⟳   │
+│ ... (15 more items)                 │
+└─────────────────────────────────────┘
+
+After:
+┌ Working ────────────────────────────┐
+│ 📦 15 parallel commands   12/15 ✓   │  ← Collapsed by default
+│   └─ Click to expand               │
+└─────────────────────────────────────┘
+```
+
+**Impact**: Significantly reduces UI clutter when AI agent executes many parallel shell commands.
+
+---
+
 ### Enhancement: Multi-Thinking blocks for status headers (TUI-inspired)
 
 **Summary**:

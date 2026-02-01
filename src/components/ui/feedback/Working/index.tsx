@@ -5,13 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../../../utils/cn';
 import { Thinking } from '../Thinking';
 import { ToolCall } from '../ToolCall';
+import { ToolCallGroup } from '../ToolCallGroup';
 import { Approval } from '../Approval';
 import { formatDurationLong } from '../../../../i18n/format';
 import { useGlobalTimer } from '../../../../hooks/useGlobalTimer';
 
 import type { WorkingItem, WorkingProps } from './types';
+import type { ToolCallProps } from '../ToolCall';
 
 import './Working.css';
+
+// Minimum number of consecutive toolcalls to form a group
+const MIN_GROUP_SIZE = 3;
 
 function ChevronDownIcon({ size = 16 }: { size?: number }) {
   return (
@@ -37,7 +42,53 @@ const getItemKey = (item: WorkingItem, index: number): string => {
   return `thinking-${startTime ?? index}`;
 };
 
-const renderItem = (item: WorkingItem, index: number) => {
+// Grouped item type for rendering
+type GroupedItem =
+  | { type: 'single'; item: WorkingItem; index: number }
+  | { type: 'toolcall-group'; toolCalls: ToolCallProps[]; startIndex: number };
+
+/**
+ * Group consecutive toolcalls into ToolCallGroup when there are MIN_GROUP_SIZE or more.
+ * Other items remain as single items.
+ */
+function groupItems(items: WorkingItem[]): GroupedItem[] {
+  const result: GroupedItem[] = [];
+  let i = 0;
+
+  while (i < items.length) {
+    const item = items[i];
+
+    if (item.type === 'toolcall') {
+      // Count consecutive toolcalls
+      let j = i;
+      const toolCalls: ToolCallProps[] = [];
+      while (j < items.length && items[j].type === 'toolcall') {
+        toolCalls.push((items[j] as { type: 'toolcall'; data: ToolCallProps }).data);
+        j++;
+      }
+
+      if (toolCalls.length >= MIN_GROUP_SIZE) {
+        // Group them
+        result.push({ type: 'toolcall-group', toolCalls, startIndex: i });
+        i = j;
+      } else {
+        // Not enough to group, add as single items
+        for (let k = i; k < j; k++) {
+          result.push({ type: 'single', item: items[k], index: k });
+        }
+        i = j;
+      }
+    } else {
+      // Non-toolcall item
+      result.push({ type: 'single', item, index: i });
+      i++;
+    }
+  }
+
+  return result;
+}
+
+const renderSingleItem = (item: WorkingItem, index: number) => {
   if (item.type === 'thinking') {
     return (
       <Thinking key={getItemKey(item, index)} {...item.data} variant="embedded" hideWorkingLabel />
@@ -47,6 +98,22 @@ const renderItem = (item: WorkingItem, index: number) => {
     return <ToolCall key={getItemKey(item, index)} {...item.data} variant="embedded" />;
   }
   return <Approval key={getItemKey(item, index)} {...item.data} variant="embedded" />;
+};
+
+const renderGroupedItem = (groupedItem: GroupedItem) => {
+  if (groupedItem.type === 'single') {
+    return renderSingleItem(groupedItem.item, groupedItem.index);
+  }
+  // toolcall-group
+  const groupId = `toolcall-group-${groupedItem.startIndex}`;
+  return (
+    <ToolCallGroup
+      key={groupId}
+      groupId={groupId}
+      toolCalls={groupedItem.toolCalls}
+      variant="embedded"
+    />
+  );
 };
 
 const hasIncompleteWorkingItem = (item: WorkingItem): boolean => {
@@ -208,7 +275,7 @@ export function Working({
       {open && (
         <div className="working__content" ref={contentRef} onWheel={handleWheel}>
           <div className="working__content-inner">
-            <div className="working__items">{items.map(renderItem)}</div>
+            <div className="working__items">{groupItems(items).map(renderGroupedItem)}</div>
           </div>
         </div>
       )}
