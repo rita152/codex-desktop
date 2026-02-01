@@ -76,7 +76,7 @@ function extractFallbackTitle(raw: string): string | null {
   if (titleIndex === -1) return null;
 
   const rawTitleLine = lines[titleIndex] ?? '';
-  let titleLine = rawTitleLine.trim();
+  const titleLine = rawTitleLine.trim();
 
   const headingMatch = titleLine.match(/^#{1,6}\s+(.+)$/);
   if (headingMatch) return headingMatch[1]?.trim() ?? null;

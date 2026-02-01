@@ -617,6 +617,24 @@ export function LoaderIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+/** Stop/Square icon for interrupting tasks */
+export function StopIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+    >
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  );
+}
+
 /** List/checklist icon for Plan panel */
 export function ListIcon({ size = 24, className = '' }: IconProps) {
   return (

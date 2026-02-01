@@ -2,6 +2,43 @@
 
 ## 2026-02-01
 
+### Feature: User-initiated task interruption
+
+**Summary**:
+Added user-initiated task interruption feature. When a task is running, the send button transforms into a cancel button with visual feedback.
+
+**Files Modified**:
+- `src/api/codex.ts`: Added `cancelSession` API wrapper for `codex_cancel` Tauri command
+- `src/hooks/useCodexActions.ts`: Added `handleCancelGeneration` action
+- `src/components/ui/data-display/Icon/index.tsx`: Added `StopIcon` (filled square)
+- `src/components/business/ChatInput/types.ts`: Added `isGenerating` and `onCancel` props
+- `src/components/business/ChatInput/index.tsx`: Modified send button to show stop icon and call onCancel when generating
+- `src/components/business/ChatInput/ChatInput.css`: Added generating state styles (blue default, red on hover)
+- `src/components/business/ChatInput/ChatInput.stories.tsx`: Added `Generating` story
+- `src/components/business/ChatContainer/types.ts`: Added `onCancelGeneration` prop
+- `src/components/business/ChatContainer/index.tsx`: Pass `isGenerating` and `onCancel` to ChatInput
+- `src/App.tsx`: Wire `handleCancelGeneration` to ChatContainer and global shortcuts
+- `src/i18n/locales/en-US.json`: Added `common.cancel` translation
+- `src/i18n/locales/zh-CN.json`: Added `common.cancel` translation
+
+**Behavior**:
+1. When `isGenerating=true`, send button shows stop icon (■) in blue
+2. Hovering over the button turns it red to indicate cancel action
+3. Clicking the button calls `codex_cancel` via Tauri to interrupt the running task
+4. Backend sends `TurnAborted` event which sets `isGenerating=false`
+
+**UI States**:
+```
+┌─────────────────────────────────────────────────────┐
+│  默认状态                        [ disabled 发送 ] │
+│  输入内容后                      [ 黑色 发送 ]     │
+│  生成中                          [ 蓝色 ■ ]        │
+│  生成中 + hover                  [ 红色 ■ ]        │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
 ### Feature: Add Plan as UnifiedSidePanel tab with auto show/hide
 
 **Summary**:

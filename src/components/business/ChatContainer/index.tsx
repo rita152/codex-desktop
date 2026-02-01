@@ -31,6 +31,7 @@ export const ChatContainer = memo(function ChatContainer({
   messages,
   approvals,
   isGenerating = false,
+  onCancelGeneration,
   currentPlan,
   currentPlanExplanation,
   messageQueue = [],
@@ -221,6 +222,8 @@ export const ChatContainer = memo(function ChatContainer({
                 onChange={onInputChange}
                 onSend={handleSend}
                 disabled={false}
+                isGenerating={isGenerating}
+                onCancel={onCancelGeneration}
                 placeholder={inputPlaceholder}
                 onAddClick={onAddClick}
                 selectedAgent={selectedAgent}

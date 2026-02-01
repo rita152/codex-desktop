@@ -27,6 +27,8 @@ export interface ChatContainerProps {
   approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
+  /** 取消正在进行的生成 */
+  onCancelGeneration?: () => void;
   /** 当前执行计划步骤（固定显示在 ChatInput 上方） */
   currentPlan?: PlanStep[];
   /** 当前执行计划说明文本 */

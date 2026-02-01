@@ -104,6 +104,17 @@ export async function setCodexEnv(key: string, value: string): Promise<void> {
 }
 
 /**
+ * Cancel the current turn for a session.
+ * Interrupts any in-progress generation.
+ */
+export async function cancelSession(sessionId: string): Promise<void> {
+  await invoke<void>('codex_cancel', {
+    sessionId,
+    session_id: sessionId,
+  });
+}
+
+/**
  * Warmup the Codex connection.
  * Pre-initializes the backend for faster first response.
  */

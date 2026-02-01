@@ -18,7 +18,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useSessionStore } from '../stores/sessionStore';
 import { useCodexStore } from '../stores/codexStore';
-import { sendPrompt, setSessionMode, setSessionModel } from '../api/codex';
+import { sendPrompt, setSessionMode, setSessionModel, cancelSession } from '../api/codex';
 import { terminalKill } from '../api/terminal';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 import { formatError, newMessageId } from '../utils/codexParsing';
@@ -378,6 +378,24 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- codexStore is a stable zustand reference
   }, []);
 
+  // Cancel current generation
+  const handleCancelGeneration = useCallback(async () => {
+    const { selectedSessionId } = sessionStore.getState();
+    const { getCodexSessionId } = codexStore.getState();
+
+    const codexSessionId = getCodexSessionId(selectedSessionId);
+    if (!codexSessionId) return;
+
+    try {
+      await cancelSession(codexSessionId);
+    } catch (err) {
+      // Log error but don't show to user - the turn-complete event will handle state
+       
+      console.error('[cancel] Failed to cancel session:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionStore and codexStore are stable zustand references
+  }, []);
+
   return {
     // Model/Mode changes
     handleModelChange,
@@ -389,6 +407,9 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
 
     // Session management
     handleSessionDelete,
+
+    // Generation control
+    handleCancelGeneration,
 
     // Message queue
     handleClearQueue,

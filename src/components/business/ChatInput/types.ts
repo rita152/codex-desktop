@@ -8,6 +8,15 @@ export interface ChatInputProps {
   onAddClick?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  /**
+   * Whether the session is currently generating a response.
+   * When true, the send button becomes a cancel button.
+   */
+  isGenerating?: boolean;
+  /**
+   * Called when user clicks the cancel button during generation.
+   */
+  onCancel?: () => void;
   agentOptions?: SelectOption[];
   selectedAgent?: string;
   onAgentChange?: (agent: string) => void;

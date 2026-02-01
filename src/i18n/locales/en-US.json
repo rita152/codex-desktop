@@ -2,6 +2,7 @@
   "common": {
     "add": "Add",
     "send": "Send",
+    "cancel": "Cancel",
     "rename": "Rename",
     "delete": "Delete"
   },

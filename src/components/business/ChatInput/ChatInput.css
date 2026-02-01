@@ -166,11 +166,23 @@
 .chat-input__send-button {
   color: var(--color-text-secondary);
   opacity: 0.5;
+  transition: color 0.15s, opacity 0.15s, background-color 0.15s;
 }
 
 .chat-input__send-button--active {
   color: var(--color-text);
   opacity: 1;
+}
+
+/* Generating state: blue background */
+.chat-input__send-button--generating {
+  color: var(--color-accent-blue);
+  opacity: 1;
+}
+
+/* Generating state hover: red to indicate cancel */
+.chat-input__send-button--generating:hover:not(:disabled) {
+  color: var(--color-error);
 }
 
 /* Context remaining ring indicator */

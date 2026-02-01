@@ -17,6 +17,7 @@ import {
   NotebookIcon,
   SparklesIcon,
   LoaderIcon,
+  StopIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { useSlashCommands } from '../../../hooks/useSlashCommands';
@@ -35,6 +36,7 @@ const ICON_NOTEBOOK_18 = <NotebookIcon size={18} />;
 const ICON_CHAT_16 = <ChatIcon size={16} />;
 const ICON_PLUS_20 = <PlusIcon size={20} />;
 const ICON_SEND_20 = <SendIcon size={20} />;
+const ICON_STOP_20 = <StopIcon size={20} />;
 const ICON_SPARKLES_20 = <SparklesIcon size={20} />;
 const ICON_LOADER_20 = <LoaderIcon size={20} />;
 
@@ -86,6 +88,8 @@ export const ChatInput = memo(function ChatInput({
   onAddClick,
   placeholder = '',
   disabled = false,
+  isGenerating = false,
+  onCancel,
   agentOptions,
   selectedAgent = 'agent-full',
   onAgentChange,
@@ -147,7 +151,7 @@ export const ChatInput = memo(function ChatInput({
   // In production, you might want to use a toast or notice system
   useMemo(() => {
     if (enhanceError) {
-      // eslint-disable-next-line no-console
+       
       console.error('[prompt-enhance] Error:', enhanceError);
     }
   }, [enhanceError]);
@@ -438,15 +442,16 @@ export const ChatInput = memo(function ChatInput({
             aria-label={t('chatInput.selectModel')}
           />
           <IconButton
-            icon={ICON_SEND_20}
-            onClick={trySend}
-            aria-label={t('common.send')}
+            icon={isGenerating ? ICON_STOP_20 : ICON_SEND_20}
+            onClick={isGenerating ? onCancel : trySend}
+            aria-label={isGenerating ? t('common.cancel') : t('common.send')}
             size="sm"
             variant="ghost"
-            disabled={disabled || !hasContent}
+            disabled={disabled || (!isGenerating && !hasContent)}
             className={cn(
               'chat-input__send-button',
-              hasContent && 'chat-input__send-button--active'
+              !isGenerating && hasContent && 'chat-input__send-button--active',
+              isGenerating && 'chat-input__send-button--generating'
             )}
           />
         </div>

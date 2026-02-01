@@ -319,6 +319,7 @@ function AppContent() {
     handleModeChange,
     handleSessionDelete,
     handleSendMessage,
+    handleCancelGeneration,
     handleClearQueue,
     handleRemoveFromQueue,
     handleMoveToTopInQueue,
@@ -462,22 +463,17 @@ function AppContent() {
     }
   }, [sidePanelVisible, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
 
-  // Stop generation (placeholder)
-  const handleStopGeneration = useCallback(() => {
-    console.log('Stop generation requested');
-  }, []);
-
   // Global shortcut actions
   const shortcutActions = useMemo(
     () => ({
       newSession: handleNewChat,
       sendMessage: () => {},
-      stopGeneration: handleStopGeneration,
+      stopGeneration: handleCancelGeneration,
       openSettings,
       toggleSidebar,
       toggleTerminal: handleToggleTerminal,
     }),
-    [handleNewChat, handleStopGeneration, openSettings, toggleSidebar, handleToggleTerminal]
+    [handleNewChat, handleCancelGeneration, openSettings, toggleSidebar, handleToggleTerminal]
   );
 
   // Register global shortcuts
@@ -521,6 +517,7 @@ function AppContent() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
+        onCancelGeneration={handleCancelGeneration}
         currentPlan={currentPlanSteps}
         currentPlanExplanation={currentPlanExplanation}
         messageQueue={formattedQueue}
