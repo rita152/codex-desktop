@@ -66,9 +66,16 @@ export const UnifiedSidePanel = memo(function UnifiedSidePanel({
   // Check if plan has steps to show
   const hasPlan = planSteps && planSteps.length > 0;
 
-  const tabs = useMemo<Array<{ id: SidePanelTab; label: string; icon: ReactNode; hidden?: boolean }>>(
+  const tabs = useMemo<
+    Array<{ id: SidePanelTab; label: string; icon: ReactNode; hidden?: boolean }>
+  >(
     () => [
-      { id: 'plan', label: t('chatSideActions.plan', { defaultValue: 'Plan' }), icon: <ListIcon size={14} />, hidden: !hasPlan },
+      {
+        id: 'plan',
+        label: t('chatSideActions.plan', { defaultValue: 'Plan' }),
+        icon: <ListIcon size={14} />,
+        hidden: !hasPlan,
+      },
       { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
       { id: 'git', label: t('chatSideActions.git'), icon: <GitBranchIcon size={14} /> },
       { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={14} /> },

@@ -450,9 +450,7 @@ export function ModelSelector({
         {selectedOption ? (
           <>
             <span className="model-selector__value">{selectedOption.label}</span>
-            {effortDisplay && (
-              <span className="model-selector__effort-badge">{effortDisplay}</span>
-            )}
+            {effortDisplay && <span className="model-selector__effort-badge">{effortDisplay}</span>}
           </>
         ) : (
           <span className="model-selector__placeholder">

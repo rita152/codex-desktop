@@ -151,7 +151,6 @@ export const ChatInput = memo(function ChatInput({
   // In production, you might want to use a toast or notice system
   useMemo(() => {
     if (enhanceError) {
-       
       console.error('[prompt-enhance] Error:', enhanceError);
     }
   }, [enhanceError]);

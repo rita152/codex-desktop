@@ -1,6 +1,11 @@
 import { buildUnifiedDiff } from './diff';
 
-import type { SelectOption, ModelOption, ReasoningEffort, ReasoningEffortOption } from '../types/options';
+import type {
+  SelectOption,
+  ModelOption,
+  ReasoningEffort,
+  ReasoningEffortOption,
+} from '../types/options';
 import type {
   ApprovalDiff,
   ApprovalStatus,
@@ -388,14 +393,17 @@ function parseModelOptionsFromSessionModels(
       if (!value) return null;
       const label = getString(optionRecord.name) ?? value;
       const defaultReasoningEffort = parseReasoningEffort(optionRecord.defaultReasoningEffort);
-      const supportedReasoningEfforts = parseReasoningEffortOptions(optionRecord.supportedReasoningEfforts);
+      const supportedReasoningEfforts = parseReasoningEffortOptions(
+        optionRecord.supportedReasoningEfforts
+      );
       const supportsPersonality = optionRecord.supportsPersonality === true;
-      
+
       const option: ModelOption = { value, label };
       if (defaultReasoningEffort) option.defaultReasoningEffort = defaultReasoningEffort;
-      if (supportedReasoningEfforts.length > 0) option.supportedReasoningEfforts = supportedReasoningEfforts;
+      if (supportedReasoningEfforts.length > 0)
+        option.supportedReasoningEfforts = supportedReasoningEfforts;
       if (supportsPersonality) option.supportsPersonality = supportsPersonality;
-      
+
       return option;
     })
     .filter(Boolean) as ModelOption[];
@@ -521,12 +529,15 @@ export function resolveModelOptions(
   // Prefer session models (has reasoning effort info) over config options
   const fromSession = parseModelOptionsFromSessionModels(models);
   if (fromSession) return fromSession;
-  
+
   // Fall back to config options (no reasoning effort info)
   const fromConfig = parseModelOptionsFromConfigOptions(configOptions);
   if (fromConfig) {
     // Cast SelectOption[] to ModelOption[] (safe since ModelOption extends SelectOption)
-    return { currentModelId: fromConfig.currentModelId, options: fromConfig.options as ModelOption[] };
+    return {
+      currentModelId: fromConfig.currentModelId,
+      options: fromConfig.options as ModelOption[],
+    };
   }
   return null;
 }

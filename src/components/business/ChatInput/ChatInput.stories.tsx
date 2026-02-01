@@ -73,8 +73,8 @@ export const Generating: Story = {
     return (
       <div className="chat-input-story__container">
         <p style={{ marginBottom: 16, color: 'var(--color-text-secondary)' }}>
-          When generating, the send button turns blue and becomes a cancel button.
-          Hover to see the red cancel state.
+          When generating, the send button turns blue and becomes a cancel button. Hover to see the
+          red cancel state.
         </p>
         <ChatInput
           {...args}

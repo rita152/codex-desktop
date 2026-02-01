@@ -39,6 +39,7 @@
 Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rust 后端结合，提供流畅的 AI 对话体验。
 
 **核心功能**：
+
 - 多会话管理（活跃会话 + 历史会话恢复）
 - 代码高亮、Markdown 渲染、文件差异对比
 - Prompt 一键优化（Ephemeral Session）
@@ -221,6 +222,7 @@ Codex Desktop 支持选择远程目录作为会话工作目录。
 2. 点击顶部工作目录按钮，切换到 “远程” 标签页，选择服务器并浏览远程目录后确认。
 
 相关实现：
+
 - 远程路径处理：`src/utils/remotePath.ts`
 - SSH 集成：`src-tauri/src/remote/`
 

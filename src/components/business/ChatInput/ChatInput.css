@@ -166,7 +166,10 @@
 .chat-input__send-button {
   color: var(--color-text-secondary);
   opacity: 0.5;
-  transition: color 0.15s, opacity 0.15s, background-color 0.15s;
+  transition:
+    color 0.15s,
+    opacity 0.15s,
+    background-color 0.15s;
 }
 
 .chat-input__send-button--active {
@@ -231,7 +234,9 @@
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.15s, visibility 0.15s;
+  transition:
+    opacity 0.15s,
+    visibility 0.15s;
   pointer-events: none;
   box-shadow: var(--shadow-md);
   border: 1px solid var(--color-border);
@@ -256,7 +261,9 @@
 /* Enhance button */
 .chat-input__enhance-button {
   color: var(--color-text-secondary);
-  transition: color 0.2s, transform 0.2s;
+  transition:
+    color 0.2s,
+    transform 0.2s;
 }
 
 .chat-input__enhance-button:hover:not(:disabled) {

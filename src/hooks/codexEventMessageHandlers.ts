@@ -44,9 +44,7 @@ export function createCodexMessageHandlers(
   };
 
   // Split content by **bold** headers, returning array of { header, body } sections
-  const splitByBoldHeaders = (
-    s: string
-  ): Array<{ header: string | null; body: string }> => {
+  const splitByBoldHeaders = (s: string): Array<{ header: string | null; body: string }> => {
     const sections: Array<{ header: string | null; body: string }> = [];
     // Split by **...**  pattern, keeping the delimiter
     const parts = s.split(/(\*\*[^*]+\*\*)/);

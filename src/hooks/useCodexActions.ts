@@ -87,7 +87,7 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
       const activeSession = sessions.find((s) => s.id === selectedSessionId);
       const previousModel = activeSession?.model ?? DEFAULT_MODEL_ID;
       const previousEffort = activeSession?.reasoningEffort;
-      
+
       // Check if anything actually changed
       const modelChanged = modelId !== previousModel;
       const effortChanged = effort !== previousEffort;
@@ -112,7 +112,7 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
         // Note: Reasoning effort will be applied when sending prompts
       } catch (err) {
         // Rollback on error
-        updateSession(selectedSessionId, { 
+        updateSession(selectedSessionId, {
           model: previousModel,
           reasoningEffort: previousEffort,
         });
@@ -390,7 +390,7 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
       await cancelSession(codexSessionId);
     } catch (err) {
       // Log error but don't show to user - the turn-complete event will handle state
-       
+
       console.error('[cancel] Failed to cancel session:', err);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionStore and codexStore are stable zustand references

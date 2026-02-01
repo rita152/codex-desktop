@@ -291,7 +291,9 @@ export const ToolCallGroup = memo(function ToolCallGroup({
           })}
         </span>
         <span className="tool-call-group__icon tool-call-group__icon--status">{statusIcon}</span>
-        <span className={cn('tool-call-group__status', `tool-call-group__status--${summary.status}`)}>
+        <span
+          className={cn('tool-call-group__status', `tool-call-group__status--${summary.status}`)}
+        >
           {statusLabel}
         </span>
         {showDuration && <span className="tool-call-group__duration">{showDuration}</span>}
