@@ -2,6 +2,24 @@
 
 ## 2026-02-01
 
+### Fix: Plan event format mismatch
+
+**Summary**:
+Fixed `codex:plan` event listener to match actual backend payload format.
+
+**Files Modified**:
+- `src/hooks/useCodexEvents.ts`: Updated event type and field mapping
+
+**Issue**:
+- Backend sends: `{ plan: [{ step: "...", status: "..." }] }`
+- Frontend expected: `{ plan: { entries: [{ content: "...", status: "..." }] } }`
+
+**Fix**:
+- Changed type from `plan.entries[].content` to `plan[].step`
+- Removed unnecessary nesting expectation
+
+---
+
 ### Feature: Collapsible ToolCallGroup for parallel commands
 
 **Summary**:

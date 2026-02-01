@@ -328,19 +328,22 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
         if (!update) return;
         applyToolCallUpdateMessage(sessionId, update);
       }),
+      // Plan update from update_plan tool
+      // Backend sends: { sessionId, plan: [{ step, status }] }
       listen<{
         sessionId: string;
-        plan: { entries: Array<{ content: string; status: string; priority: string }> };
+        plan: Array<{ step: string; status: string }>;
       }>('codex:plan', (event) => {
         if (!isListenerActive()) return;
         const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
-        const entries = event.payload.plan?.entries;
-        if (entries && Array.isArray(entries)) {
-          const steps: PlanStep[] = entries.map((entry, index) => ({
+        devDebug('[codex:plan]', { sessionId, plan: event.payload.plan });
+        const planItems = event.payload.plan;
+        if (planItems && Array.isArray(planItems)) {
+          const steps: PlanStep[] = planItems.map((item, index) => ({
             id: `plan-step-${index}`,
-            title: entry.content,
-            status: mapPlanStatus(entry.status),
+            title: item.step,
+            status: mapPlanStatus(item.status),
           }));
           messageHandlers.updatePlan(sessionId, steps);
         }
