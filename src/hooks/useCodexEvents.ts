@@ -315,6 +315,18 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
           messageHandlers.updatePlan(sessionId, steps);
         }
       }),
+      // Token usage event - context remaining percentage
+      listen<{
+        sessionId: string;
+        info: unknown;
+        rateLimits: unknown;
+        percentRemaining: number | null;
+      }>('codex:token-usage', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        useSessionStore.getState().setContextRemaining(sessionId, event.payload.percentRemaining);
+      }),
     ];
     commitListeners(listenerToken, unlistenPromises);
 

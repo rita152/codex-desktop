@@ -127,4 +127,8 @@ export interface ChatContainerProps {
    * Reset prompt history navigation.
    */
   onResetPromptNavigation?: () => void;
+  /**
+   * Remaining context percentage (0-100), null when not available.
+   */
+  contextRemainingPercent?: number | null;
 }

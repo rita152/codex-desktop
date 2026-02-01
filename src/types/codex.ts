@@ -75,10 +75,24 @@ export interface CodexCliConfigInfo {
   authFileFound: boolean;
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  cachedInputTokens: number;
+  outputTokens: number;
+  reasoningOutputTokens: number;
+  totalTokens: number;
+}
+
+export interface TokenUsageInfo {
+  totalTokenUsage: TokenUsage;
+  lastTokenUsage: TokenUsage;
+  modelContextWindow: number | null;
+}
+
 export interface TokenUsageEvent {
   sessionId: string;
-  totalTokens: number;
-  lastTokens?: number;
-  contextWindow?: number | null;
-  percentRemaining?: number | null;
+  info: TokenUsageInfo | null;
+  rateLimits: unknown;
+  /** Remaining context percentage (0-100), calculated by backend */
+  percentRemaining: number | null;
 }

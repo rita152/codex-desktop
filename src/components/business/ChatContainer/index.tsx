@@ -81,6 +81,7 @@ export const ChatContainer = memo(function ChatContainer({
   onNavigatePreviousPrompt,
   onNavigateNextPrompt,
   onResetPromptNavigation,
+  contextRemainingPercent,
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -235,6 +236,7 @@ export const ChatContainer = memo(function ChatContainer({
                 onNavigatePrevious={onNavigatePreviousPrompt}
                 onNavigateNext={onNavigateNextPrompt}
                 onResetNavigation={onResetPromptNavigation}
+                contextRemainingPercent={contextRemainingPercent}
               />
             </div>
           </div>

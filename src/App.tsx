@@ -168,6 +168,7 @@ function AppContent() {
   const updateSession = useSessionStore((s) => s.updateSession);
   const createNewChat = useSessionStore((s) => s.createNewChat);
   const applyModelOptions = useSessionStore((s) => s.applyModelOptions);
+  const contextRemainingMap = useSessionStore((s) => s.contextRemaining);
 
   // Derived state
   const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
@@ -176,6 +177,7 @@ function AppContent() {
   const selectedCwd = activeSession?.cwd;
   const cwdLocked = messages.length > 0;
   const activeTerminalId = terminalBySession[selectedSessionId];
+  const contextRemainingPercent = contextRemainingMap[selectedSessionId] ?? null;
 
   // Model/Mode options
   const sessionModelOptionsMap = useSessionStore((s) => s.sessionModelOptions);
@@ -412,6 +414,7 @@ function AppContent() {
         onNavigatePreviousPrompt={(currentDraft) => navigateToPreviousPrompt(currentDraft)}
         onNavigateNextPrompt={() => navigateToNextPrompt()}
         onResetPromptNavigation={() => resetPromptNavigation()}
+        contextRemainingPercent={contextRemainingPercent}
       />
       {settingsOpen && (
         <Suspense fallback={null}>

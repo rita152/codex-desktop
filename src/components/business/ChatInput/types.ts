@@ -35,4 +35,9 @@ export interface ChatInputProps {
    * Called when navigation should be reset (e.g., on send).
    */
   onResetNavigation?: () => void;
+  /**
+   * Remaining context percentage (0-100), null when not available.
+   * Displayed as "X% left" in the toolbar.
+   */
+  contextRemainingPercent?: number | null;
 }

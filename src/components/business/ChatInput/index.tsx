@@ -94,6 +94,7 @@ export const ChatInput = memo(function ChatInput({
   onNavigatePrevious,
   onNavigateNext,
   onResetNavigation,
+  contextRemainingPercent,
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -348,6 +349,43 @@ export const ChatInput = memo(function ChatInput({
             dropdownTitle={t('chatInput.switchMode')}
             aria-label={t('chatInput.selectAgent')}
           />
+          {contextRemainingPercent != null && (
+            <div
+              className={cn(
+                'chat-input__context-ring',
+                contextRemainingPercent < 20 && 'chat-input__context-ring--danger',
+                contextRemainingPercent >= 20 &&
+                  contextRemainingPercent < 40 &&
+                  'chat-input__context-ring--warning'
+              )}
+              title={`${contextRemainingPercent}% left`}
+            >
+              <svg viewBox="0 0 20 20" className="chat-input__context-ring-svg">
+                <circle
+                  className="chat-input__context-ring-bg"
+                  cx="10"
+                  cy="10"
+                  r="8"
+                  fill="none"
+                  strokeWidth="2"
+                />
+                <circle
+                  className="chat-input__context-ring-progress"
+                  cx="10"
+                  cy="10"
+                  r="8"
+                  fill="none"
+                  strokeWidth="2"
+                  strokeDasharray={`${(contextRemainingPercent / 100) * 50.27} 50.27`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 10 10)"
+                />
+              </svg>
+              <span className="chat-input__context-ring-tooltip">
+                {contextRemainingPercent}% left
+              </span>
+            </div>
+          )}
         </div>
         <div className="chat-input__toolbar-right">
           <ModelSelector

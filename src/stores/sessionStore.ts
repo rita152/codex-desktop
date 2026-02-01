@@ -70,6 +70,9 @@ interface SessionState {
 
   // Codex thread info for resume (per session, persisted)
   codexThreadInfo: Record<string, CodexThreadInfo>;
+
+  // Context remaining percentage (per session, from token usage events)
+  contextRemaining: Record<string, number | null>;
 }
 
 interface SessionActions {
@@ -160,6 +163,9 @@ interface SessionActions {
   setCodexThreadInfo: (chatSessionId: string, info: CodexThreadInfo) => void;
   clearCodexThreadInfo: (chatSessionId: string) => void;
 
+  // Context remaining actions
+  setContextRemaining: (sessionId: string, percent: number | null) => void;
+
   // New chat action
   createNewChat: (cwd?: string, title?: string) => string;
 }
@@ -197,6 +203,7 @@ const initialState: SessionState = {
   isGeneratingBySession: { [initialSession.id]: false },
   terminalBySession: {},
   codexThreadInfo: {},
+  contextRemaining: {},
 };
 
 // Helper to handle functional updates
@@ -242,6 +249,7 @@ export const useSessionStore = create<SessionStore>()(
               const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
               const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
               const { [sessionId]: _threadInfo, ...restThreadInfo } = state.codexThreadInfo;
+              const { [sessionId]: _context, ...restContext } = state.contextRemaining;
 
               return {
                 sessions: state.sessions.filter((s) => s.id !== sessionId),
@@ -254,6 +262,7 @@ export const useSessionStore = create<SessionStore>()(
                 sessionModelOptions: restModel,
                 sessionModeOptions: restMode,
                 codexThreadInfo: restThreadInfo,
+                contextRemaining: restContext,
               };
             }),
 
@@ -399,6 +408,12 @@ export const useSessionStore = create<SessionStore>()(
               const { [chatSessionId]: _, ...rest } = state.codexThreadInfo;
               return { codexThreadInfo: rest };
             }),
+
+          // Context remaining actions
+          setContextRemaining: (sessionId, percent) =>
+            set((state) => ({
+              contextRemaining: { ...state.contextRemaining, [sessionId]: percent },
+            })),
 
           // New chat action
           createNewChat: (cwd, title = 'New Chat') => {
@@ -593,6 +608,12 @@ export const useCwdLocked = () =>
  */
 export const useActiveTerminalId = () =>
   useSessionStore((state) => state.terminalBySession[state.selectedSessionId]);
+
+/**
+ * Get current session's context remaining percentage
+ */
+export const useContextRemaining = () =>
+  useSessionStore((state) => state.contextRemaining[state.selectedSessionId] ?? null);
 
 /**
  * Get current plan from messages
