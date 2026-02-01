@@ -2,39 +2,43 @@
 
 ## 2026-02-01
 
-### Feature: Move Plan to floating side panel with auto show/hide
+### Feature: Add Plan as UnifiedSidePanel tab with auto show/hide
 
 **Summary**:
-Moved Plan component from ChatInput top to a floating side panel near ChatSideActions.
-The panel auto-shows when plan has incomplete steps and auto-hides when all completed.
-
-**Files Added**:
-- `src/components/business/PlanPanel/index.tsx`: Floating panel component
-- `src/components/business/PlanPanel/PlanPanel.css`: Panel styles
+Added Plan as a tab in UnifiedSidePanel (alongside explorer, git, terminal, remote).
+The Plan tab auto-shows when plan appears and auto-hides when all steps completed.
 
 **Files Modified**:
-- `src/components/business/ChatContainer/index.tsx`: Integrated PlanPanel with auto-show logic
-- `src/components/business/ChatContainer/ChatContainer.css`: Removed old `.chat-container__plan` styles
+- `src/components/business/UnifiedSidePanel/index.tsx`: Added 'plan' tab type and Plan panel content
+- `src/components/business/UnifiedSidePanel/UnifiedSidePanel.css`: Added Plan tab styles
+- `src/components/business/ChatSideActions/index.tsx`: Added Plan button (shows when plan exists)
+- `src/components/business/ChatSideActions/ChatSideActions.css`: Added highlight style for Plan button
+- `src/components/ui/data-display/Icon/index.tsx`: Added ListIcon for Plan
+- `src/components/business/ChatContainer/index.tsx`: Pass hasPlan and plan data
+- `src/App.tsx`: Auto-show/hide Plan tab logic
+- `src/components/business/ChatContainer/ChatContainer.css`: Removed old floating Plan styles
+
+**Files Deleted**:
+- `src/components/business/PlanPanel/` (replaced by UnifiedSidePanel tab)
 
 **Behavior**:
-1. Plan appears → Panel auto-opens (slides in from right)
-2. User closes panel → Stays closed until plan updates
-3. Plan updates → Panel re-opens
-4. All steps completed → Panel auto-closes
-5. When UnifiedSidePanel is open → PlanPanel hidden to avoid overlap
+1. Plan appears → Side panel auto-opens with Plan tab active
+2. User closes side panel → Stays closed until new plan arrives
+3. New plan arrives → Side panel re-opens with Plan tab
+4. All steps completed → Side panel auto-closes (if on Plan tab)
+5. Plan button in ChatSideActions pulses when plan exists
 
 **UI Position**:
 ```
-┌─────────────────────────────────────────┐
-│  消息列表                               │
-│                      [ChatSideActions]  │  ← 右上角工具栏
-│                      ┌─────────────┐   │
-│                      │ 📋 Plan 2/5 │   │  ← PlanPanel (下方)
-│                      │ ✓ Step 1    │   │
-│                      │ □ Step 2    │   │
-│                      └─────────────┘   │
-│  ChatInput                              │
-└─────────────────────────────────────────┘
+┌─────────────────────────────────────────┬──────────────────┐
+│  消息列表                               │ [Plan][📁][Git]  │  ← tabs
+│                                         ├──────────────────┤
+│                                         │ 📋 Plan          │
+│                                         │ ✓ Step 1         │
+│                                         │ □ Step 2 (active)│
+│                                         │ □ Step 3         │
+│  ChatInput                              │                  │
+└─────────────────────────────────────────┴──────────────────┘
 ```
 
 ---

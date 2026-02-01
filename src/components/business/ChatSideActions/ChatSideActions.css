@@ -39,6 +39,22 @@
   color: var(--color-text-secondary);
 }
 
+/* Highlight style for Plan button */
+.chat-side-actions__highlight {
+  color: var(--color-primary) !important;
+  animation: chat-side-actions-pulse 2s infinite ease-in-out;
+}
+
+@keyframes chat-side-actions-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
 @media (max-width: 720px) {
   .chat-side-actions {
     display: none;

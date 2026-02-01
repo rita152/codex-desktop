@@ -151,3 +151,25 @@
   display: none;
   pointer-events: none;
 }
+
+/* Plan tab styling */
+.unified-side-panel__tab--plan {
+  color: var(--color-primary);
+}
+
+.unified-side-panel__tab--plan.unified-side-panel__tab--active {
+  color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, var(--color-bg-elevated));
+}
+
+/* Plan panel wrapper */
+.unified-side-panel__plan-wrapper {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-sm);
+}
+
+.unified-side-panel__plan-wrapper .plan {
+  border: none;
+  background-color: transparent;
+}

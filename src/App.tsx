@@ -265,6 +265,45 @@ function AppContent() {
     return { currentPlanSteps: undefined, currentPlanExplanation: undefined };
   }, [messages]);
 
+  // Track if user manually closed plan panel
+  const planUserClosedRef = useRef(false);
+  const prevPlanStepsRef = useRef(currentPlanSteps);
+
+  // Auto-show/hide plan tab in side panel
+  useEffect(() => {
+    const hasPlan = currentPlanSteps && currentPlanSteps.length > 0;
+    const prevHadPlan = prevPlanStepsRef.current && prevPlanStepsRef.current.length > 0;
+
+    // Plan just appeared or updated
+    if (hasPlan && !prevHadPlan) {
+      // New plan arrived, reset user-closed state
+      planUserClosedRef.current = false;
+    }
+
+    // Show plan panel when plan exists and user hasn't manually closed
+    if (hasPlan && !planUserClosedRef.current) {
+      setSidePanelVisible(true);
+      setActiveSidePanelTab('plan');
+    }
+
+    // Close plan panel when plan completes (all steps done or no plan)
+    if (!hasPlan && prevHadPlan && activeSidePanelTab === 'plan') {
+      setSidePanelVisible(false);
+      planUserClosedRef.current = false;
+    }
+
+    prevPlanStepsRef.current = currentPlanSteps;
+  }, [currentPlanSteps, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
+
+  // Track when user manually closes the plan panel
+  const originalHandleSidePanelClose = handleSidePanelClose;
+  const wrappedHandleSidePanelClose = useCallback(() => {
+    if (activeSidePanelTab === 'plan') {
+      planUserClosedRef.current = true;
+    }
+    originalHandleSidePanelClose();
+  }, [activeSidePanelTab, originalHandleSidePanelClose]);
+
   // Codex Store - queue and session mapping
   const messageQueuesMap = useCodexStore((s) => s.messageQueues);
   const registerCodexSession = useCodexStore((s) => s.registerCodexSession);
@@ -508,7 +547,7 @@ function AppContent() {
         sidePanelVisible={sidePanelVisible}
         activeSidePanelTab={activeSidePanelTab}
         sidePanelWidth={sidePanelWidth}
-        onSidePanelClose={handleSidePanelClose}
+        onSidePanelClose={wrappedHandleSidePanelClose}
         onSidePanelResizeStart={handleSidePanelResize}
         onSidePanelTabChange={handleSidePanelTabChange}
         terminalId={activeTerminalId ?? null}

@@ -1,4 +1,4 @@
-import { lazy, memo, Suspense, useEffect, useRef, useState } from 'react';
+import { lazy, memo, Suspense, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -6,7 +6,6 @@ import { Sidebar } from '../Sidebar';
 import { ChatMessageList } from '../ChatMessageList';
 import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
-import { PlanPanel } from '../PlanPanel';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarRightIcon } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
@@ -94,47 +93,8 @@ export const ChatContainer = memo(function ChatContainer({
   const internalBodyRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = bodyRefProp ?? internalBodyRef;
 
-  // PlanPanel visibility state
-  // - Auto-show when plan appears (has incomplete steps)
-  // - Auto-hide when all steps completed
-  // - User can manually close, but it will re-open if plan updates
-  const [planPanelVisible, setPlanPanelVisible] = useState(false);
-  const [planPanelUserClosed, setPlanPanelUserClosed] = useState(false);
-
-  // Check if plan has incomplete steps
-  const hasPlanIncomplete =
-    currentPlan &&
-    currentPlan.length > 0 &&
-    currentPlan.some((step) => step.status !== 'completed');
-
-  // Auto-show/hide PlanPanel based on plan state
-  useEffect(() => {
-    if (hasPlanIncomplete) {
-      // Plan has incomplete steps - show panel (unless user manually closed)
-      if (!planPanelUserClosed) {
-        setPlanPanelVisible(true);
-      }
-    } else {
-      // All completed or no plan - hide panel and reset user-closed state
-      setPlanPanelVisible(false);
-      setPlanPanelUserClosed(false);
-    }
-  }, [hasPlanIncomplete, planPanelUserClosed]);
-
-  // When new plan arrives (different from current), reset user-closed state
-  const prevPlanRef = useRef(currentPlan);
-  useEffect(() => {
-    if (currentPlan !== prevPlanRef.current) {
-      // Plan changed, reset user-closed state so it can auto-show
-      setPlanPanelUserClosed(false);
-      prevPlanRef.current = currentPlan;
-    }
-  }, [currentPlan]);
-
-  const handlePlanPanelClose = () => {
-    setPlanPanelVisible(false);
-    setPlanPanelUserClosed(true);
-  };
+  // Check if there's an active plan (has steps)
+  const hasPlan = currentPlan && currentPlan.length > 0;
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
@@ -199,16 +159,9 @@ export const ChatContainer = memo(function ChatContainer({
       >
         <ChatSideActions
           onAction={onSideAction}
+          hasPlan={hasPlan}
           className={sidePanelVisible ? 'chat-side-actions--hidden' : ''}
         />
-        {currentPlan && currentPlan.length > 0 && (
-          <PlanPanel
-            steps={currentPlan}
-            explanation={currentPlanExplanation}
-            visible={planPanelVisible && !sidePanelVisible}
-            onClose={handlePlanPanelClose}
-          />
-        )}
         <div
           className={cn(
             'chat-container__body',
@@ -310,6 +263,8 @@ export const ChatContainer = memo(function ChatContainer({
             terminalId={terminalId || null}
             sessionCwd={sessionCwd || ''}
             onFileSelect={onFileSelect || (() => {})}
+            planSteps={currentPlan}
+            planExplanation={currentPlanExplanation}
           />
         )}
       </div>
