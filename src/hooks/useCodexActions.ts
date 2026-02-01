@@ -18,13 +18,14 @@ import { useTranslation } from 'react-i18next';
 
 import { useSessionStore } from '../stores/sessionStore';
 import { useCodexStore } from '../stores/codexStore';
-import { sendPrompt, setSessionMode, setSessionModel } from '../api/codex';
+import { sendPrompt, setSessionMode, setSessionModel, cancelSession } from '../api/codex';
 import { terminalKill } from '../api/terminal';
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 import { formatError, newMessageId } from '../utils/codexParsing';
 
 import type { Message } from '../types/message';
 import type { ChatSession } from '../types/session';
+import type { ReasoningEffort } from '../types/options';
 
 // Global reference to ensureCodexSession (set by useCodexEffects)
 let globalEnsureCodexSession: ((chatSessionId: string) => Promise<string>) | null = null;
@@ -76,28 +77,45 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
   const codexStore = useCodexStore;
 
   // Model change handler with optimistic update and rollback
+  // Now also accepts optional reasoning effort parameter
   const handleModelChange = useCallback(
-    async (modelId: string) => {
+    async (modelId: string, effort?: ReasoningEffort) => {
       const { selectedSessionId, sessions, updateSession, setNotice, clearSessionNotice } =
         sessionStore.getState();
       const { getCodexSessionId } = codexStore.getState();
 
       const activeSession = sessions.find((s) => s.id === selectedSessionId);
       const previousModel = activeSession?.model ?? DEFAULT_MODEL_ID;
-      if (modelId === previousModel) return;
+      const previousEffort = activeSession?.reasoningEffort;
 
-      // Optimistic update
-      updateSession(selectedSessionId, { model: modelId });
+      // Check if anything actually changed
+      const modelChanged = modelId !== previousModel;
+      const effortChanged = effort !== previousEffort;
+      if (!modelChanged && !effortChanged) return;
+
+      // Optimistic update - update both model and effort
+      const updates: Partial<ChatSession> = {};
+      if (modelChanged) updates.model = modelId;
+      if (effortChanged) updates.reasoningEffort = effort;
+      updateSession(selectedSessionId, updates);
       clearSessionNotice(selectedSessionId);
 
       const codexSessionId = getCodexSessionId(selectedSessionId);
       if (!codexSessionId) return;
 
       try {
-        await setSessionModel(codexSessionId, modelId);
+        // TODO: Backend needs to support setting reasoning effort
+        // For now, we only sync the model if it changed
+        if (modelChanged) {
+          await setSessionModel(codexSessionId, modelId);
+        }
+        // Note: Reasoning effort will be applied when sending prompts
       } catch (err) {
         // Rollback on error
-        updateSession(selectedSessionId, { model: previousModel });
+        updateSession(selectedSessionId, {
+          model: previousModel,
+          reasoningEffort: previousEffort,
+        });
         setNotice(selectedSessionId, {
           kind: 'error',
           message: t('errors.modelSwitchFailed', { error: formatError(err) }),
@@ -360,6 +378,24 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- codexStore is a stable zustand reference
   }, []);
 
+  // Cancel current generation
+  const handleCancelGeneration = useCallback(async () => {
+    const { selectedSessionId } = sessionStore.getState();
+    const { getCodexSessionId } = codexStore.getState();
+
+    const codexSessionId = getCodexSessionId(selectedSessionId);
+    if (!codexSessionId) return;
+
+    try {
+      await cancelSession(codexSessionId);
+    } catch (err) {
+      // Log error but don't show to user - the turn-complete event will handle state
+
+      console.error('[cancel] Failed to cancel session:', err);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sessionStore and codexStore are stable zustand references
+  }, []);
+
   return {
     // Model/Mode changes
     handleModelChange,
@@ -371,6 +407,9 @@ export function useCodexActions(options?: UseCodexActionsOptions) {
 
     // Session management
     handleSessionDelete,
+
+    // Generation control
+    handleCancelGeneration,
 
     // Message queue
     handleClearQueue,

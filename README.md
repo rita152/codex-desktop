@@ -22,10 +22,11 @@
   - [本地 CI 等价：Quality Gate](#quality-gate)
 - [运行时与配置](#运行时与配置)
   - [Codex 目录（CODEX_HOME）](#codex-home)
-  - [codex-acp 启动策略（npx / sidecar）](#codex-acp)
+  - [历史会话](#history-sessions)
+  - [Prompt 优化](#prompt-enhance)
   - [远程服务器与 remote:// 工作目录](#remote-workdir)
-  - [Git 集成（当前实现）](#git-集成当前实现)
-  - [设置面板（当前实现）](#设置面板当前实现)
+  - [Git 集成](#git-集成当前实现)
+  - [设置面板](#设置面板当前实现)
 - [项目结构](#项目结构)
 - [排障（常见问题）](#排障常见问题)
 - [贡献指南（Contributing）](#contributing)
@@ -35,7 +36,16 @@
 
 ## 概述
 
-Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rust 后端结合，提供流畅的 AI 对话体验。支持多会话管理、代码高亮、Markdown 渲染等功能。
+Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rust 后端结合，提供流畅的 AI 对话体验。
+
+**核心功能**：
+
+- 多会话管理（活跃会话 + 历史会话恢复）
+- 代码高亮、Markdown 渲染、文件差异对比
+- Prompt 一键优化（Ephemeral Session）
+- 模型选择与推理力度配置
+- 远程服务器目录浏览（SSH）
+- Git 集成（本地 + 远程只读历史）
 
 ## 目标平台
 
@@ -64,7 +74,7 @@ Codex Desktop 是一个原生桌面应用，通过 Tauri 将 React 前端与 Rus
 这份仓库的核心分界线是：
 
 - **前端（React）**：尽量保持平台无关；通过 `src/api/*`（`invoke()` 封装）+ `src/hooks/*`（事件订阅/状态机）与 Tauri 交互。
-- **后端（Rust/Tauri）**：提供稳定的 command surface（即前端 `invoke('<command>')` 的契约），并管理与 `codex-acp` 的进程/协议/事件。
+- **后端（Rust/Tauri）**：提供稳定的 command surface（即前端 `invoke('<command>')` 的契约），直接集成 `codex-core` 处理 AI 会话。
 
 建议的阅读顺序：
 
@@ -126,7 +136,7 @@ npm run tauri build
 说明：
 
 - `npm run build` = `tsc && vite build`（TypeScript 严格模式 + unused 检查会导致构建失败）。
-- `npm run tauri build` 会先跑 `build:tauri`：拉取 `codex-acp` sidecar（见 `scripts/fetch-codex-acp.mjs`）再构建前端。
+- `npm run tauri build` 会构建完整的桌面应用。
 
 ### 测试
 
@@ -180,41 +190,48 @@ QUALITY_GATE_SKIP=audit npm run quality:gate
 
 应用会读取/写入 Codex 配置目录（默认在用户目录下）。相关能力（读写 `~/.codex/**`）由 Tauri capability 配置授权（见 `src-tauri/capabilities/default.json`）。
 
-<a id="codex-acp"></a>
+<a id="history-sessions"></a>
 
-### codex-acp 启动策略（npx / sidecar）
+### 历史会话
 
-本项目依赖 `codex-acp` 作为 sidecar/远程入口。
+历史会话从 `~/.codex/sessions/` 目录中的 rollout 文件加载。
 
-- Debug（开发）默认走 **npx**；Release（打包）默认走 **sidecar**（见 `src-tauri/src/codex/binary.rs`）。
-- 构建时会用 `scripts/fetch-codex-acp.mjs` 从 npm 拉取平台二进制到 `src-tauri/bin/`。
+- 应用启动时显示空白新会话
+- 侧边栏自动加载历史会话列表
+- 点击历史会话会恢复完整的对话上下文
 
-常用环境变量覆盖（见 `src-tauri/src/codex/binary.rs`）：
+<a id="prompt-enhance"></a>
 
-- `CODEX_DESKTOP_ACP_MODE=npx|sidecar`
-- `CODEX_DESKTOP_ACP_PATH=/abs/path/to/codex-acp`（显式路径）
-- `CODEX_DESKTOP_ACP_SIDECAR_NAME=codex-acp`（sidecar binary 名称，默认 `codex-acp`）
-- `CODEX_DESKTOP_ACP_NPX_SPEC=@zed-industries/codex-acp@0.9.0`（npx 包规格）
-- `CODEX_DESKTOP_NPX_BIN=npx`（npx 可执行名称/路径）
+### Prompt 优化
+
+输入框工具栏提供「优化 Prompt」按钮，点击后会创建一个临时会话（Ephemeral Session）对当前输入进行优化：
+
+- 优化完成后直接替换输入框内容
+- 临时会话在完成后自动销毁，不影响主会话
+- 优化失败时保留原内容并显示错误提示
+
+相关实现：`src/hooks/usePromptEnhance.ts`
 
 <a id="remote-workdir"></a>
 
 ### 远程服务器与 remote:// 工作目录
 
-Codex Desktop 支持通过 SSH 在远端启动 `codex-acp`，并选择远程目录作为会话工作目录。
+Codex Desktop 支持选择远程目录作为会话工作目录。
 
 1. 在侧边栏的 “Remote Servers/远程服务器” 面板中添加服务器（仅支持 SSH Agent 或密钥文件认证）。
 2. 点击顶部工作目录按钮，切换到 “远程” 标签页，选择服务器并浏览远程目录后确认。
-3. 远端需要可用的 Node.js + npx。应用会在远端缺少配置时自动同步本地 `~/.codex/auth.json` 与 `~/.codex/config.toml`（不会覆盖已存在的远端文件）。
 
-更多细节（`~/.ssh/config` 解析、`remote://<server-id>/<path>` 规则、限制与排障）见：`docs/remote-servers.md`。
+相关实现：
+
+- 远程路径处理：`src/utils/remotePath.ts`
+- SSH 集成：`src-tauri/src/remote/`
 
 ### Git 集成（当前实现）
 
 - 后端通过系统 `git` CLI 执行命令，复用本机 Git 配置/SSH/GPG。
 - 远程目录目前只支持**只读历史**：在远端通过 SSH 执行 `git log --all` 并解析。
 
-细节与实现指针见：`docs/git.md`。
+相关实现：`src-tauri/src/git/` + `src/api/git.ts`
 
 ### 设置面板（当前实现）
 
@@ -222,7 +239,7 @@ Codex Desktop 支持通过 SSH 在远端启动 `codex-acp`，并选择远程目�
 - 主题切换写入 `document.documentElement[data-theme]`；语言切换走 i18next。
 - Web 预览环境下（无 Tauri runtime）本地文件读写、远程服务器列表等能力不可用。
 
-细节与实现指针见：`docs/settings.md`。
+相关实现：`src/hooks/useSettings.ts` + `src/types/settings.ts`
 
 ## 项目结构
 
@@ -234,15 +251,16 @@ codex-desktop/
 │   │   └── business/      # 业务组件
 │   ├── api/               # Tauri invoke 封装
 │   ├── hooks/             # 自定义 Hooks
+│   ├── stores/            # Zustand 状态管理
 │   ├── types/             # TypeScript 类型定义
 │   └── utils/             # 工具函数
 ├── src-tauri/             # Rust/Tauri 后端
 │   ├── src/               # Rust 源码
 │   └── tauri.conf.json    # Tauri 配置
-├── .storybook/             # Storybook 配置
-├── scripts/                # quality gate + sidecar fetch
-├── codex-acp/              # git submodule（上游 ACP + npm wrapper）
-└── docs/                  # 项目文档
+├── .storybook/            # Storybook 配置
+├── scripts/               # quality gate scripts
+├── codex-upstream/        # git submodule（上游 codex-rs）
+└── docs/                  # 项目文档与 AI 工程资产
 ```
 
 ## 排障（常见问题）
@@ -259,23 +277,9 @@ CI 会显式安装 Chromium。你本地可执行：
 npx playwright install chromium
 ```
 
-### 3) `npm run tauri build` / `npm run fetch:codex-acp` 失败：`tar` 不存在
-
-`scripts/fetch-codex-acp.mjs` 通过 `npm pack` + `tar -xzf` 解包，需要系统 `tar` 可用。
-
-### 4) 打包后报 “codex-acp sidecar not found”
-
-打包默认走 sidecar。可按以下顺序排查：
-
-1. 确认构建流程执行了 `npm run fetch:codex-acp`（Tauri build 会经由 `build:tauri` 触发）。
-2. 确认 sidecar 名称/路径与配置一致：`src-tauri/tauri.conf.json` 的 `bundle.externalBin` 为 `bin/codex-acp`。
-3. 如需强制覆盖：设置 `CODEX_DESKTOP_ACP_PATH` 指向实际二进制路径，或用 `CODEX_DESKTOP_ACP_MODE=npx` 验证链路。
-
-### 5) 远程服务器列表为空
+### 3) 远程服务器列表为空
 
 当前实现只读取 `~/.ssh/config` 中**无通配符**的 `Host` 条目；应用内不持久化 add/remove。
-
-详见：`docs/remote-servers.md`。
 
 <a id="contributing"></a>
 
@@ -316,20 +320,14 @@ npm run quality:gate
 
 实现见：`.github/workflows/release-build.yml`。
 
-## 文档
-
-- Git 集成：`docs/git.md`
-- 远程服务器：`docs/remote-servers.md`
-- 设置面板：`docs/settings.md`
-
 ## 文档索引（面向开发者）
 
 - 全局索引/约定与入口：`AGENTS.md`
 - 前端架构边界：`src/AGENTS.md`
 - 前端 invoke 封装规则：`src/api/AGENTS.md`
-- 后端总览与 sidecar 策略：`src-tauri/AGENTS.md`
+- 后端总览：`src-tauri/AGENTS.md`
 - 后端命令/事件接入流程：`src-tauri/src/AGENTS.md`
-- scripts（quality gate / fetch sidecar）：`scripts/AGENTS.md`
+- scripts（quality gate）：`scripts/AGENTS.md`
 - Storybook 约定：`.storybook/AGENTS.md`
 
 ## 推荐 IDE 配置

@@ -1,10 +1,10 @@
-/** 审批状态（与 codex-acp ReviewDecision 对应） */
+/** Approval status (maps to codex-core ReviewDecision) */
 export type ApprovalStatus = 'pending' | 'approved' | 'approved-for-session' | 'rejected';
 
-/** 审批类型 */
+/** Approval type */
 export type ApprovalType = 'exec' | 'patch';
 
-/** 权限选项类型（与 codex-acp PermissionOptionKind 对应） */
+/** Permission option kind (maps to codex-core PermissionOptionKind) */
 export type PermissionOptionKind = 'allow-once' | 'allow-always' | 'reject-once' | 'reject-always';
 
 /** 权限选项 */

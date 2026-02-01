@@ -3,7 +3,7 @@
 export const DEFAULT_MODEL_ID = 'gpt-5.2-high';
 export const DEFAULT_MODE_ID = 'agent-full';
 
-// Keep in sync with codex-acp built-in commands.
+// Keep in sync with codex-core built-in commands.
 export const DEFAULT_SLASH_COMMANDS = [
   'review',
   'review-branch',

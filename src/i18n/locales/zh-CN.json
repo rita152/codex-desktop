@@ -2,6 +2,7 @@
   "common": {
     "add": "添加",
     "send": "发送",
+    "cancel": "取消",
     "rename": "重命名",
     "delete": "删除"
   },
@@ -27,6 +28,7 @@
     "selectAgent": "选择智能体",
     "selectModel": "选择模型",
     "switchMode": "切换模式",
+    "enhancePrompt": "优化提示词",
     "agentOptions": {
       "chat": "对话",
       "agent": "智能体",
@@ -105,7 +107,8 @@
     "newChat": "新建对话",
     "menu": "菜单",
     "settings": "设置",
-    "resizeAria": "调整侧边栏宽度"
+    "resizeAria": "调整侧边栏宽度",
+    "history": "历史对话"
   },
   "errors": {
     "modelSetFailed": "模型设置失败：{{error}}",

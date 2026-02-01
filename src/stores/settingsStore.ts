@@ -16,6 +16,7 @@ import { DEFAULT_SETTINGS } from '../types/settings';
 
 // Constants
 const SETTINGS_STORAGE_KEY = 'codex-desktop-settings';
+const SETUP_COMPLETE_KEY = 'codex-desktop-setup-complete';
 const THEME_ATTRIBUTE = 'data-theme';
 
 // Types
@@ -24,6 +25,8 @@ interface SettingsState {
   loading: boolean;
   error: string | null;
   saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  /** Whether the user has completed the initial setup (selected default model) */
+  hasCompletedInitialSetup: boolean;
 }
 
 interface SettingsActions {
@@ -35,6 +38,8 @@ interface SettingsActions {
   updateShortcuts: (shortcuts: Partial<ShortcutSettings>) => Promise<void>;
   resetSettings: () => Promise<void>;
   applyTheme: (theme: ThemeOption) => void;
+  /** Mark the initial setup as complete (user has selected default model) */
+  markSetupComplete: () => void;
 }
 
 export type SettingsStore = SettingsState & SettingsActions;
@@ -50,31 +55,41 @@ function applyThemeToDOM(themeOption: ThemeOption) {
   document.documentElement.setAttribute(THEME_ATTRIBUTE, resolvedTheme);
 }
 
-// Initialize theme immediately on module load
-function initializeTheme() {
+// Load settings synchronously from localStorage on module load
+// This ensures sessionStore can access correct defaultModel during initialization
+function loadSettingsSync(): AppSettings {
   try {
     const localSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (localSettings) {
       const parsed = JSON.parse(localSettings) as AppSettings;
-      if (parsed.general?.theme) {
-        applyThemeToDOM(parsed.general.theme);
-        return;
-      }
+      return { ...DEFAULT_SETTINGS, ...parsed };
     }
   } catch {
     // Fall through to default
   }
-  applyThemeToDOM('system');
+  return DEFAULT_SETTINGS;
 }
 
-initializeTheme();
+// Load settings and apply theme at module initialization
+const syncLoadedSettings = loadSettingsSync();
+applyThemeToDOM(syncLoadedSettings.general.theme);
 
-// Initial state
+// Check if initial setup was completed
+function checkSetupComplete(): boolean {
+  try {
+    return localStorage.getItem(SETUP_COMPLETE_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+// Initial state - use synchronously loaded settings for correct defaultModel
 const initialState: SettingsState = {
-  settings: DEFAULT_SETTINGS,
+  settings: syncLoadedSettings,
   loading: true,
   error: null,
   saveStatus: 'idle',
+  hasCompletedInitialSetup: checkSetupComplete(),
 };
 
 // Create the store
@@ -182,6 +197,15 @@ export const useSettingsStore = create<SettingsStore>()(
       applyTheme: (theme) => {
         applyThemeToDOM(theme);
       },
+
+      markSetupComplete: () => {
+        try {
+          localStorage.setItem(SETUP_COMPLETE_KEY, 'true');
+        } catch {
+          // localStorage not available, ignore
+        }
+        set({ hasCompletedInitialSetup: true });
+      },
     })),
     { name: 'SettingsStore', enabled: import.meta.env.DEV }
   )
@@ -192,6 +216,10 @@ export const useShortcuts = () => useSettingsStore((state) => state.settings.sho
 export const useTheme = () => useSettingsStore((state) => state.settings.general.theme);
 export const useSettingsLoading = () => useSettingsStore((state) => state.loading);
 export const useSettingsError = () => useSettingsStore((state) => state.error);
+export const useHasCompletedInitialSetup = () =>
+  useSettingsStore((state) => state.hasCompletedInitialSetup);
+export const useDefaultModelId = () =>
+  useSettingsStore((state) => state.settings.model.defaultModel);
 
 // Listen for system theme changes
 if (typeof window !== 'undefined') {

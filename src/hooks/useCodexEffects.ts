@@ -3,7 +3,7 @@
  *
  * Handles all Codex-related side effects:
  * - Initialize Codex on mount
- * - Warmup codex-acp connection for faster first response
+ * - Warmup backend connection for faster first response
  * - Set up Tauri event listeners (via useCodexEvents)
  * - Provide ensureCodexSession for session management
  *
@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import {
   initCodex,
   createSession,
+  resumeSession,
   setSessionMode,
   setSessionModel,
   warmupCodex,
@@ -52,6 +53,7 @@ export function useCodexEffects(): void {
   // Warmup session info (can be reused by first ensureCodexSession call)
   const warmupResultRef = useRef<{
     sessionId: string;
+    rolloutPath?: string;
     modeOptions?: { value: string; label: string }[];
     modelOptions?: { value: string; label: string }[];
     currentModeId?: string;
@@ -75,14 +77,20 @@ export function useCodexEffects(): void {
         warmupTimer = setTimeout(async () => {
           if (!isMounted) return;
 
+          // Try warmup first (optional optimization, may not be implemented)
           try {
-            // First, warmup the ACP connection (spawn process, initialize protocol)
             await warmupCodex();
             devDebug('[codex] connection warmed up');
+          } catch (err) {
+            // Warmup command may not exist - this is fine, continue with session creation
+            devDebug('[codex] warmup skipped (command not available):', err);
+          }
 
-            if (!isMounted) return;
+          if (!isMounted) return;
 
-            // Then create a warmup session to pre-fetch mode/model options
+          // Create a warmup session to pre-fetch mode/model options
+          // This is the critical part - must succeed to load model list
+          try {
             const result = await createSession('.');
             devDebug('[codex] warmup session created', result.sessionId);
 
@@ -94,6 +102,7 @@ export function useCodexEffects(): void {
 
             warmupResultRef.current = {
               sessionId: result.sessionId,
+              rolloutPath: result.rolloutPath,
               modeOptions: modeState?.options,
               modelOptions: modelState?.options,
               currentModeId: modeState?.currentModeId,
@@ -119,8 +128,9 @@ export function useCodexEffects(): void {
 
             devDebug('[codex] warmup complete, options applied');
           } catch (err) {
-            // Warmup failure is non-fatal, log and continue
-            devDebug('[codex] warmup failed (non-fatal)', err);
+            // Session creation failure - log but don't crash
+            console.error('[codex] warmup session creation failed:', err);
+            devDebug('[codex] warmup session creation failed', err);
           }
         }, WARMUP_DELAY_MS);
       } catch (err) {
@@ -188,7 +198,7 @@ export function useCodexEffects(): void {
       const pending = pendingSessionInitRef.current[chatSessionId];
       if (pending) return pending;
 
-      // Create new session
+      // Create or resume session
       const task = (async () => {
         const sessions = sessionStore.sessions;
         const sessionMeta = sessions.find((session) => session.id === chatSessionId);
@@ -196,6 +206,32 @@ export function useCodexEffects(): void {
           typeof sessionMeta?.cwd === 'string' && sessionMeta.cwd.trim() !== ''
             ? sessionMeta.cwd
             : '.';
+
+        // Check if we have rollout info for resume
+        const threadInfo = sessionStore.codexThreadInfo[chatSessionId];
+        if (threadInfo?.rolloutPath) {
+          try {
+            // Try to resume from rollout
+            devDebug('[codex] attempting to resume session from rollout', threadInfo.rolloutPath);
+            const result = await resumeSession(threadInfo.rolloutPath, cwd);
+            devDebug('[codex] session resumed successfully', result.sessionId);
+
+            codexStore.registerCodexSession(chatSessionId, result.sessionId);
+
+            // Update thread info with new session ID (rollout path stays the same)
+            sessionStore.setCodexThreadInfo(chatSessionId, {
+              threadId: result.sessionId,
+              rolloutPath: threadInfo.rolloutPath,
+            });
+
+            return result.sessionId;
+          } catch (err) {
+            // Resume failed (e.g., rollout file deleted/corrupted), fallback to new session
+            devDebug('[codex] resume failed, creating new session:', err);
+            // Clear invalid thread info
+            sessionStore.clearCodexThreadInfo(chatSessionId);
+          }
+        }
 
         // Try to reuse warmup session if cwd is '.' (default)
         const warmupResult = warmupResultRef.current;
@@ -284,6 +320,14 @@ export function useCodexEffects(): void {
           }
           if (syncTasks.length > 0) {
             await Promise.all(syncTasks);
+          }
+
+          // Save thread info for future resume (if rolloutPath available)
+          if (warmupResult.rolloutPath) {
+            sessionStore.setCodexThreadInfo(chatSessionId, {
+              threadId: warmupResult.sessionId,
+              rolloutPath: warmupResult.rolloutPath,
+            });
           }
 
           return warmupResult.sessionId;
@@ -402,6 +446,14 @@ export function useCodexEffects(): void {
         }
         if (syncTasks.length > 0) {
           await Promise.all(syncTasks);
+        }
+
+        // Save thread info for future resume (if rolloutPath available)
+        if (result.rolloutPath) {
+          sessionStore.setCodexThreadInfo(chatSessionId, {
+            threadId: result.sessionId,
+            rolloutPath: result.rolloutPath,
+          });
         }
 
         return result.sessionId;

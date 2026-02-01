@@ -5,6 +5,7 @@ coverage
 storybook-static
 src-tauri
 codex-acp
+codex-upstream
 public
 docs
 package-lock.json

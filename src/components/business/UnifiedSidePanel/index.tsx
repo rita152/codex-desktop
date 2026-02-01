@@ -8,8 +8,11 @@ import {
   ServerIcon,
   TerminalIcon,
   CloseIcon,
+  ListIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
+import { Plan } from '../../ui/data-display/Plan';
+import type { PlanStep } from '../../../types/plan';
 import './UnifiedSidePanel.css';
 
 const TerminalPanel = lazy(() =>
@@ -26,7 +29,7 @@ const FileBrowserPanel = lazy(() =>
 
 const GitPanel = lazy(() => import('../GitPanel').then((module) => ({ default: module.GitPanel })));
 
-export type SidePanelTab = 'terminal' | 'git' | 'explorer' | 'remote';
+export type SidePanelTab = 'terminal' | 'git' | 'explorer' | 'remote' | 'plan';
 
 interface UnifiedSidePanelProps {
   activeTab: SidePanelTab;
@@ -40,6 +43,10 @@ interface UnifiedSidePanelProps {
 
   sessionCwd: string;
   onFileSelect: (path: string) => void;
+
+  // Plan panel props
+  planSteps?: PlanStep[];
+  planExplanation?: string;
 }
 
 export const UnifiedSidePanel = memo(function UnifiedSidePanel({
@@ -51,17 +58,30 @@ export const UnifiedSidePanel = memo(function UnifiedSidePanel({
   terminalId,
   sessionCwd,
   onFileSelect,
+  planSteps,
+  planExplanation,
 }: UnifiedSidePanelProps) {
   const { t } = useTranslation();
 
-  const tabs = useMemo<Array<{ id: SidePanelTab; label: string; icon: ReactNode }>>(
+  // Check if plan has steps to show
+  const hasPlan = planSteps && planSteps.length > 0;
+
+  const tabs = useMemo<
+    Array<{ id: SidePanelTab; label: string; icon: ReactNode; hidden?: boolean }>
+  >(
     () => [
+      {
+        id: 'plan',
+        label: t('chatSideActions.plan', { defaultValue: 'Plan' }),
+        icon: <ListIcon size={14} />,
+        hidden: !hasPlan,
+      },
       { id: 'explorer', label: t('chatSideActions.explorer'), icon: <FolderIcon size={14} /> },
       { id: 'git', label: t('chatSideActions.git'), icon: <GitBranchIcon size={14} /> },
       { id: 'terminal', label: t('chatSideActions.terminal'), icon: <TerminalIcon size={14} /> },
       { id: 'remote', label: t('chatSideActions.remote'), icon: <ServerIcon size={14} /> },
     ],
-    [t]
+    [t, hasPlan]
   );
 
   const [mountedTabs, setMountedTabs] = useState<SidePanelTab[]>([activeTab]);
@@ -90,21 +110,24 @@ export const UnifiedSidePanel = memo(function UnifiedSidePanel({
 
       <div className="unified-side-panel__header">
         <div className="unified-side-panel__tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={cn(
-                'unified-side-panel__tab',
-                activeTab === tab.id && 'unified-side-panel__tab--active'
-              )}
-              onClick={() => onTabChange(tab.id)}
-              title={tab.label}
-              aria-label={tab.label}
-              aria-selected={activeTab === tab.id}
-            >
-              {tab.icon}
-            </button>
-          ))}
+          {tabs
+            .filter((tab) => !tab.hidden)
+            .map((tab) => (
+              <button
+                key={tab.id}
+                className={cn(
+                  'unified-side-panel__tab',
+                  activeTab === tab.id && 'unified-side-panel__tab--active',
+                  tab.id === 'plan' && 'unified-side-panel__tab--plan'
+                )}
+                onClick={() => onTabChange(tab.id)}
+                title={tab.label}
+                aria-label={tab.label}
+                aria-selected={activeTab === tab.id}
+              >
+                {tab.icon}
+              </button>
+            ))}
         </div>
 
         <div className="unified-side-panel__actions">
@@ -119,6 +142,14 @@ export const UnifiedSidePanel = memo(function UnifiedSidePanel({
       </div>
 
       <div className="unified-side-panel__content">
+        {hasPlan &&
+          renderPanel(
+            'plan',
+            <div className="unified-side-panel__plan-wrapper">
+              <Plan steps={planSteps} explanation={planExplanation} />
+            </div>
+          )}
+
         {renderPanel(
           'terminal',
           <TerminalPanel terminalId={terminalId} visible={activeTab === 'terminal'} />

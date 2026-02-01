@@ -113,3 +113,17 @@
 .sidebar--dragging .sidebar__resize-handle::after {
   background-color: var(--color-border);
 }
+
+.sidebar__section-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-top: var(--border-width-thin) solid var(--color-border);
+}

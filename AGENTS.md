@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-01-28
-**Commit:** 77a37dc
+**Generated:** 2026-02-01
+**Commit:** a4d75e4
 **Branch:** main
 
 Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript + Vite 7 frontend.
@@ -12,27 +12,27 @@ Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript
 ./
 ├── src/                # React app (UI + business + hooks + api)
 ├── src-tauri/          # Tauri/Rust backend (commands + services)
-├── scripts/            # quality gate + sidecar fetch
+├── codex-upstream/     # git submodule (upstream codex-rs)
+├── scripts/            # quality gate scripts
 ├── docs/               # design/usage docs ("current implementation")
-├── codex-acp/          # git submodule (upstream ACP + npm wrapper)
 ├── .storybook/         # Storybook config
 └── (removed) .kiro/    # local engineering rules/checklists (deleted)
 ```
 
 ## WHERE TO LOOK
 
-| Task                         | Location                                                          |
-| ---------------------------- | ----------------------------------------------------------------- |
-| Frontend entry               | `src/main.tsx` → `src/App.tsx`                                    |
-| Frontend architecture rules  | `src/AGENTS.md`                                                   |
-| Tauri command wiring         | `src-tauri/src/lib.rs` (`generate_handler![...]`)                 |
-| Frontend ↔ backend boundary  | `src/api/*` (invoke wrappers)                                     |
-| Codex events (codex:\*)      | `src-tauri/src/codex/events.rs` + `src/hooks/useCodexEvents.ts`   |
-| Remote servers & `remote://` | `src-tauri/src/remote/*` + `src/utils/remotePath.ts`              |
-| Git integration              | `src-tauri/src/git/*` + `src/api/git.ts`                          |
-| Settings                     | `src/hooks/useSettings.ts` + `src/types/settings.ts`              |
-| CI/quality gate behavior     | `scripts/quality-gate.mjs` + `.github/workflows/quality-gate.yml` |
-| ACP sidecar fetch            | `scripts/fetch-codex-acp.mjs` + `src-tauri/src/codex/binary.rs`   |
+| Task                         | Location                                                              |
+| ---------------------------- | --------------------------------------------------------------------- |
+| Frontend entry               | `src/main.tsx` → `src/App.tsx`                                        |
+| Frontend architecture rules  | `src/AGENTS.md`                                                       |
+| Tauri command wiring         | `src-tauri/src/lib.rs` (`generate_handler![...]`)                     |
+| Frontend ↔ backend boundary  | `src/api/*` (invoke wrappers)                                         |
+| Codex events (codex:\*)      | `src-tauri/src/codex/events.rs` + `src/hooks/useCodexEvents.ts`       |
+| Remote servers & `remote://` | `src-tauri/src/remote/*` + `src/utils/remotePath.ts`                  |
+| Git integration              | `src-tauri/src/git/*` + `src/api/git.ts`                              |
+| Settings                     | `src/hooks/useSettings.ts` + `src/types/settings.ts`                  |
+| CI/quality gate behavior     | `scripts/quality-gate.mjs` + `.github/workflows/quality-gate.yml`     |
+| History sessions             | `src/hooks/useHistoryList.ts` + `src-tauri/src/codex/core_service.rs` |
 
 ## COMMANDS
 
@@ -46,7 +46,7 @@ npm run tauri dev      # desktop (Vite + Tauri)
 
 # build
 npm run build          # tsc + vite build
-npm run tauri build    # triggers build:tauri (includes fetching codex-acp)
+npm run tauri build    # full desktop build
 
 # tests
 npm run test           # vitest browser (playwright)
@@ -66,7 +66,7 @@ cargo test --locked
 - TypeScript is **strict** + `noUnusedLocals/noUnusedParameters` (build fails on unused).
 - CI treats **ESLint warnings as failures** (`--max-warnings=0`).
 - No TS import alias configured (expect deep **relative imports**).
-- Prettier ignores `src-tauri/`, `codex-acp/`, `docs/` (Rust side enforced by `cargo fmt`/`clippy`).
+- Prettier ignores `src-tauri/`, `codex-upstream/`, `docs/` (Rust side enforced by `cargo fmt`/`clippy`).
 
 ## ANTI-PATTERNS (THIS REPO)
 
@@ -76,8 +76,8 @@ cargo test --locked
 
 ## GOTCHAS
 
-- Tauri sidecars: `bundle.externalBin: ["bin/codex-acp"]` expects a file named `src-tauri/bin/codex-acp-$TARGET_TRIPLE[.exe]`. Our fetch script writes `src-tauri/bin/codex-acp-<target>`; make sure `<target>` is the Rust target triple Tauri expects (see Tauri sidecar docs) or override via `CODEX_DESKTOP_ACP_*`.
 - Remote server list comes from `~/.ssh/config` (current implementation); add/remove commands are intentionally not persistent.
+- History sessions are loaded from rollout files in `~/.codex/sessions/`.
 
 ## NESTED GUIDES (closest wins)
 

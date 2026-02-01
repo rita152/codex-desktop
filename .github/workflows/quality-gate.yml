@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -52,10 +54,12 @@ jobs:
           - windows-latest
     defaults:
       run:
-        working-directory: src-tauri
+        working-directory: codex-upstream/codex-rs/desktop
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -67,18 +71,14 @@ jobs:
         with:
           node-version: 22.12
 
-      - name: Fetch codex-acp sidecar
-        run: npm run fetch:codex-acp
-        working-directory: ${{ github.workspace }}
-
       - name: Cache cargo
         uses: actions/cache@v4
         with:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
+            codex-upstream/codex-rs/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('codex-upstream/codex-rs/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 

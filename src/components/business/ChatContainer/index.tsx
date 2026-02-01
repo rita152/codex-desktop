@@ -8,7 +8,6 @@ import { ChatInput } from '../ChatInput';
 import { ChatSideActions } from '../ChatSideActions';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { SidebarRightIcon } from '../../ui/data-display/Icon';
-import { Plan } from '../../ui/data-display/Plan';
 import { cn } from '../../../utils/cn';
 
 import type { ChatContainerProps } from './types';
@@ -25,13 +24,16 @@ const QueueIndicator = lazy(() =>
 
 export const ChatContainer = memo(function ChatContainer({
   sessions,
+  historySessions = [],
   selectedSessionId,
   sessionCwd,
   sessionNotice,
   messages,
   approvals,
   isGenerating = false,
+  onCancelGeneration,
   currentPlan,
+  currentPlanExplanation,
   messageQueue = [],
   hasQueuedMessages = false,
   onClearQueue,
@@ -44,6 +46,7 @@ export const ChatContainer = memo(function ChatContainer({
   onAgentChange,
   modelOptions,
   selectedModel,
+  selectedEffort,
   onModelChange,
   slashCommands,
   inputPlaceholder,
@@ -80,6 +83,7 @@ export const ChatContainer = memo(function ChatContainer({
   onNavigatePreviousPrompt,
   onNavigateNextPrompt,
   onResetPromptNavigation,
+  contextRemainingPercent,
 }: ChatContainerProps) {
   const { t } = useTranslation();
   const [sidebarWidth, setSidebarWidth] = useState(DEFAULT_SIDEBAR_WIDTH);
@@ -89,6 +93,9 @@ export const ChatContainer = memo(function ChatContainer({
   // Remove local state for terminal width since it's unified now
   const internalBodyRef = useRef<HTMLDivElement | null>(null);
   const bodyRef = bodyRefProp ?? internalBodyRef;
+
+  // Check if there's an active plan (has steps)
+  const hasPlan = currentPlan && currentPlan.length > 0;
 
   const handleSend = (message: string) => {
     onSendMessage?.(message);
@@ -127,6 +134,7 @@ export const ChatContainer = memo(function ChatContainer({
       >
         <Sidebar
           sessions={sessions}
+          historySessions={historySessions}
           selectedSessionId={selectedSessionId}
           onSessionSelect={onSessionSelect}
           onNewChat={onNewChat}
@@ -152,6 +160,7 @@ export const ChatContainer = memo(function ChatContainer({
       >
         <ChatSideActions
           onAction={onSideAction}
+          hasPlan={hasPlan}
           className={sidePanelVisible ? 'chat-side-actions--hidden' : ''}
         />
         <div
@@ -208,24 +217,20 @@ export const ChatContainer = memo(function ChatContainer({
                   />
                 </Suspense>
               )}
-              {currentPlan && currentPlan.length > 0 && (
-                <Plan
-                  steps={currentPlan}
-                  title={t('chat.planTitle')}
-                  className="chat-container__plan"
-                />
-              )}
               <ChatInput
                 value={inputValue}
                 onChange={onInputChange}
                 onSend={handleSend}
                 disabled={false}
+                isGenerating={isGenerating}
+                onCancel={onCancelGeneration}
                 placeholder={inputPlaceholder}
                 onAddClick={onAddClick}
                 selectedAgent={selectedAgent}
                 agentOptions={agentOptions}
                 onAgentChange={onAgentChange}
                 selectedModel={selectedModel}
+                selectedEffort={selectedEffort}
                 modelOptions={modelOptions}
                 onModelChange={onModelChange}
                 slashCommands={slashCommands}
@@ -233,6 +238,7 @@ export const ChatContainer = memo(function ChatContainer({
                 onNavigatePrevious={onNavigatePreviousPrompt}
                 onNavigateNext={onNavigateNextPrompt}
                 onResetNavigation={onResetPromptNavigation}
+                contextRemainingPercent={contextRemainingPercent}
               />
             </div>
           </div>
@@ -260,6 +266,8 @@ export const ChatContainer = memo(function ChatContainer({
             terminalId={terminalId || null}
             sessionCwd={sessionCwd || ''}
             onFileSelect={onFileSelect || (() => {})}
+            planSteps={currentPlan}
+            planExplanation={currentPlanExplanation}
           />
         )}
       </div>

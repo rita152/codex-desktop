@@ -86,6 +86,26 @@ export function ChevronUpIcon({ size = 24, className = '' }: IconProps) {
   );
 }
 
+export function ChevronRightIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
+
 export function GitBranchIcon({ size = 24, className = '' }: IconProps) {
   return (
     <svg
@@ -544,6 +564,97 @@ export function CornerDownRightIcon({ size = 24, className = '' }: IconProps) {
     >
       <polyline points="15 10 20 15 15 20" />
       <path d="M4 4v7a4 4 0 0 0 4 4h12" />
+    </svg>
+  );
+}
+
+export function SparklesIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 3L13.5 8.5L19 10L13.5 11.5L12 17L10.5 11.5L5 10L10.5 8.5L12 3Z" />
+      <path d="M19 15L19.88 17.12L22 18L19.88 18.88L19 21L18.12 18.88L16 18L18.12 17.12L19 15Z" />
+      <path d="M5 3L5.66 4.84L7.5 5.5L5.66 6.16L5 8L4.34 6.16L2.5 5.5L4.34 4.84L5 3Z" />
+    </svg>
+  );
+}
+
+export function LoaderIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M12 2V6" />
+      <path d="M12 18V22" />
+      <path d="M4.93 4.93L7.76 7.76" />
+      <path d="M16.24 16.24L19.07 19.07" />
+      <path d="M2 12H6" />
+      <path d="M18 12H22" />
+      <path d="M4.93 19.07L7.76 16.24" />
+      <path d="M16.24 7.76L19.07 4.93" />
+    </svg>
+  );
+}
+
+/** Stop/Square icon for interrupting tasks */
+export function StopIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      aria-hidden="true"
+      focusable="false"
+      className={cn('icon', className)}
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="none"
+    >
+      <rect x="6" y="6" width="12" height="12" rx="2" />
+    </svg>
+  );
+}
+
+/** List/checklist icon for Plan panel */
+export function ListIcon({ size = 24, className = '' }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn('icon', className)}
+    >
+      <line x1="8" y1="6" x2="21" y2="6" />
+      <line x1="8" y1="12" x2="21" y2="12" />
+      <line x1="8" y1="18" x2="21" y2="18" />
+      <line x1="3" y1="6" x2="3.01" y2="6" />
+      <line x1="3" y1="12" x2="3.01" y2="12" />
+      <line x1="3" y1="18" x2="3.01" y2="18" />
     </svg>
   );
 }

@@ -76,6 +76,11 @@ import { useCodexEffects } from './hooks/useCodexEffects';
 import { useCodexActions } from './hooks/useCodexActions';
 import { useFileAndCwdActionsFromStore } from './hooks/useFileAndCwdActions';
 import { useApprovalCardsFromStore } from './hooks/useApprovalCards';
+import { useHistoryList } from './hooks/useHistoryList';
+import { resumeSession } from './api/codex';
+import { devDebug } from './utils/logger';
+
+import type { ChatSession } from './types/session';
 import {
   useUIStore,
   useUIStoreInit,
@@ -100,6 +105,7 @@ function AppContent() {
 
   // Load settings on mount
   const loadSettings = useSettingsStore((state) => state.loadSettings);
+  const hasCompletedInitialSetup = useSettingsStore((state) => state.hasCompletedInitialSetup);
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -118,16 +124,72 @@ function AppContent() {
   const sidePanelWidth = useUIStore((s) => s.sidePanelWidth);
   const setSidePanelWidth = useUIStore((s) => s.setSidePanelWidth);
   const settingsOpen = useUIStore((s) => s.settingsOpen);
+  const settingsInitialSection = useUIStore((s) => s.settingsInitialSection);
   const openSettings = useUIStore((s) => s.openSettings);
   const closeSettings = useUIStore((s) => s.closeSettings);
   const handleSideAction = useUIStore((s) => s.handleSideAction);
+
+  // First-time setup: auto-open settings modal to model section
+  const initialSetupCheckedRef = useRef(false);
+  useEffect(() => {
+    // Only check once, and wait a bit for warmup to fetch model options
+    if (initialSetupCheckedRef.current) return;
+    initialSetupCheckedRef.current = true;
+
+    if (!hasCompletedInitialSetup) {
+      // Delay opening to allow warmup to fetch model options
+      const timer = setTimeout(() => {
+        openSettings('model');
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [hasCompletedInitialSetup, openSettings]);
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
+  // Load history sessions from rollout files (limit to 10 recent items)
+  const { items: historyItems } = useHistoryList(true, 10);
+
   // Session Store - sessions, messages, options
   // Use primitive selectors to avoid infinite loops from derived values
-  const sessions = useSessionStore((s) => s.sessions);
+  const activeSessions = useSessionStore((s) => s.sessions);
   const selectedSessionId = useSessionStore((s) => s.selectedSessionId);
+
+  // Merge active sessions with history (history items shown after active sessions)
+  // Filter out history items that already exist in active sessions
+  const activeSessionIds = useMemo(
+    () => new Set(activeSessions.map((s) => s.id)),
+    [activeSessions]
+  );
+
+  // Map of history item id to rollout path (for resuming sessions)
+  const historyRolloutPaths = useMemo(
+    () => new Map(historyItems.map((item) => [item.id, item.rolloutPath])),
+    [historyItems]
+  );
+
+  const historySessions: ChatSession[] = useMemo(
+    () =>
+      historyItems
+        .filter((item) => !activeSessionIds.has(item.id))
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          cwd: item.cwd,
+          model: DEFAULT_MODEL_ID,
+          mode: DEFAULT_MODE_ID,
+        })),
+    [historyItems, activeSessionIds]
+  );
+
+  // Sessions are now passed separately to Sidebar for grouped display
+  // activeSessions = current app sessions
+  // historySessions = loaded from rollout files
+  // allSessions is used for internal lookups (finding activeSession, etc.)
+  const allSessions = useMemo(
+    () => [...activeSessions, ...historySessions],
+    [activeSessions, historySessions]
+  );
   const setSelectedSessionId = useSessionStore((s) => s.setSelectedSessionId);
   const sessionMessagesMap = useSessionStore((s) => s.sessionMessages);
   const sessionDraftsMap = useSessionStore((s) => s.sessionDrafts);
@@ -136,7 +198,7 @@ function AppContent() {
   const setDraft = useSessionStore((s) => s.setDraft);
 
   // Derive values outside of selectors to avoid reference issues
-  const activeSession = sessions.find((sess) => sess.id === selectedSessionId);
+  const activeSession = allSessions.find((sess) => sess.id === selectedSessionId);
   const messages = useMemo(
     () => sessionMessagesMap[selectedSessionId] ?? [],
     [selectedSessionId, sessionMessagesMap]
@@ -149,14 +211,19 @@ function AppContent() {
   const setSessionNotices = useSessionStore((s) => s.setSessionNotices);
   const updateSession = useSessionStore((s) => s.updateSession);
   const createNewChat = useSessionStore((s) => s.createNewChat);
+  const addSession = useSessionStore((s) => s.addSession);
+  const setCodexThreadInfo = useSessionStore((s) => s.setCodexThreadInfo);
   const applyModelOptions = useSessionStore((s) => s.applyModelOptions);
+  const contextRemainingMap = useSessionStore((s) => s.contextRemaining);
 
   // Derived state
   const selectedModel = activeSession?.model ?? DEFAULT_MODEL_ID;
   const selectedMode = activeSession?.mode ?? DEFAULT_MODE_ID;
+  const selectedEffort = activeSession?.reasoningEffort;
   const selectedCwd = activeSession?.cwd;
   const cwdLocked = messages.length > 0;
   const activeTerminalId = terminalBySession[selectedSessionId];
+  const contextRemainingPercent = contextRemainingMap[selectedSessionId] ?? null;
 
   // Model/Mode options
   const sessionModelOptionsMap = useSessionStore((s) => s.sessionModelOptions);
@@ -181,21 +248,65 @@ function AppContent() {
     return Array.from(merged).sort();
   }, [sessionSlashCommands]);
 
-  // Current plan from messages
-  const currentPlan = useMemo(() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const planSteps = messages[i].planSteps;
-      if (planSteps && planSteps.length > 0) {
-        const allCompleted = planSteps.every((step) => step.status === 'completed');
-        if (allCompleted) return undefined;
-        return planSteps;
-      }
-    }
-    return undefined;
-  }, [messages]);
+  // Current plan from messages (steps + explanation)
+  let currentPlanSteps: (typeof messages)[number]['planSteps'] | undefined;
+  let currentPlanExplanation: (typeof messages)[number]['planExplanation'] | undefined;
 
-  // Codex Store - queue
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    const planSteps = msg.planSteps;
+    if (planSteps && planSteps.length > 0) {
+      const allCompleted = planSteps.every((step) => step.status === 'completed');
+      if (!allCompleted) {
+        currentPlanSteps = planSteps;
+        currentPlanExplanation = msg.planExplanation;
+      }
+      break;
+    }
+  }
+
+  // Track if user manually closed plan panel
+  const planUserClosedRef = useRef(false);
+  const prevPlanStepsRef = useRef(currentPlanSteps);
+
+  // Auto-show/hide plan tab in side panel
+  useEffect(() => {
+    const hasPlan = currentPlanSteps && currentPlanSteps.length > 0;
+    const prevHadPlan = prevPlanStepsRef.current && prevPlanStepsRef.current.length > 0;
+
+    // Plan just appeared or updated
+    if (hasPlan && !prevHadPlan) {
+      // New plan arrived, reset user-closed state
+      planUserClosedRef.current = false;
+    }
+
+    // Show plan panel when plan exists and user hasn't manually closed
+    if (hasPlan && !planUserClosedRef.current) {
+      setSidePanelVisible(true);
+      setActiveSidePanelTab('plan');
+    }
+
+    // Close plan panel when plan completes (all steps done or no plan)
+    if (!hasPlan && prevHadPlan && activeSidePanelTab === 'plan') {
+      setSidePanelVisible(false);
+      planUserClosedRef.current = false;
+    }
+
+    prevPlanStepsRef.current = currentPlanSteps;
+  }, [currentPlanSteps, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
+
+  // Track when user manually closes the plan panel
+  const originalHandleSidePanelClose = handleSidePanelClose;
+  const wrappedHandleSidePanelClose = useCallback(() => {
+    if (activeSidePanelTab === 'plan') {
+      planUserClosedRef.current = true;
+    }
+    originalHandleSidePanelClose();
+  }, [activeSidePanelTab, originalHandleSidePanelClose]);
+
+  // Codex Store - queue and session mapping
   const messageQueuesMap = useCodexStore((s) => s.messageQueues);
+  const registerCodexSession = useCodexStore((s) => s.registerCodexSession);
   const currentQueue = useMemo(
     () => messageQueuesMap[selectedSessionId] ?? [],
     [messageQueuesMap, selectedSessionId]
@@ -208,6 +319,7 @@ function AppContent() {
     handleModeChange,
     handleSessionDelete,
     handleSendMessage,
+    handleCancelGeneration,
     handleClearQueue,
     handleRemoveFromQueue,
     handleMoveToTopInQueue,
@@ -237,10 +349,67 @@ function AppContent() {
   }, [createNewChat, selectedCwd, t]);
 
   const handleSessionSelect = useCallback(
-    (sessionId: string) => {
+    async (sessionId: string) => {
+      // Check if this is a history session that needs to be restored
+      const isHistorySession = !activeSessionIds.has(sessionId);
+      const rolloutPath = historyRolloutPaths.get(sessionId);
+
+      if (isHistorySession && rolloutPath) {
+        // Find the history session info
+        const historySession = historySessions.find((s) => s.id === sessionId);
+        if (!historySession) {
+          devDebug('[app] history session not found', sessionId);
+          return;
+        }
+
+        try {
+          devDebug('[app] restoring history session', sessionId, rolloutPath);
+
+          // Add the session to active sessions FIRST (before resumeSession)
+          addSession({
+            id: sessionId,
+            title: historySession.title,
+            cwd: historySession.cwd,
+            model: historySession.model,
+            mode: historySession.mode,
+          });
+
+          // Pre-register the session mapping BEFORE calling resumeSession
+          // The history item ID equals the codex session ID (both are the original thread ID)
+          registerCodexSession(sessionId, sessionId);
+
+          // Resume the session from rollout
+          const result = await resumeSession(rolloutPath, historySession.cwd);
+
+          // Update the mapping if the returned session ID is different
+          if (result.sessionId !== sessionId) {
+            registerCodexSession(sessionId, result.sessionId);
+          }
+
+          // Store thread info for future reference
+          setCodexThreadInfo(sessionId, {
+            threadId: result.sessionId,
+            rolloutPath,
+          });
+
+          devDebug('[app] history session restored', sessionId, result.sessionId);
+        } catch (err) {
+          devDebug('[app] failed to restore history session', err);
+          // Still select the session even if restore fails
+        }
+      }
+
       setSelectedSessionId(sessionId);
     },
-    [setSelectedSessionId]
+    [
+      activeSessionIds,
+      historyRolloutPaths,
+      historySessions,
+      addSession,
+      registerCodexSession,
+      setCodexThreadInfo,
+      setSelectedSessionId,
+    ]
   );
 
   const handleSessionRename = useCallback(
@@ -294,22 +463,17 @@ function AppContent() {
     }
   }, [sidePanelVisible, activeSidePanelTab, setSidePanelVisible, setActiveSidePanelTab]);
 
-  // Stop generation (placeholder)
-  const handleStopGeneration = useCallback(() => {
-    console.log('Stop generation requested');
-  }, []);
-
   // Global shortcut actions
   const shortcutActions = useMemo(
     () => ({
       newSession: handleNewChat,
       sendMessage: () => {},
-      stopGeneration: handleStopGeneration,
+      stopGeneration: handleCancelGeneration,
       openSettings,
       toggleSidebar,
       toggleTerminal: handleToggleTerminal,
     }),
-    [handleNewChat, handleStopGeneration, openSettings, toggleSidebar, handleToggleTerminal]
+    [handleNewChat, handleCancelGeneration, openSettings, toggleSidebar, handleToggleTerminal]
   );
 
   // Register global shortcuts
@@ -344,7 +508,8 @@ function AppContent() {
   return (
     <>
       <ChatContainer
-        sessions={sessions}
+        sessions={activeSessions}
+        historySessions={historySessions}
         selectedSessionId={selectedSessionId}
         sessionCwd={selectedCwd}
         sessionNotice={sessionNotice}
@@ -352,7 +517,9 @@ function AppContent() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
-        currentPlan={currentPlan}
+        onCancelGeneration={handleCancelGeneration}
+        currentPlan={currentPlanSteps}
+        currentPlanExplanation={currentPlanExplanation}
         messageQueue={formattedQueue}
         hasQueuedMessages={hasQueuedMessages}
         onClearQueue={handleClearQueue}
@@ -366,6 +533,7 @@ function AppContent() {
         onAgentChange={handleModeChange}
         modelOptions={modelOptions}
         selectedModel={selectedModel}
+        selectedEffort={selectedEffort}
         onModelChange={handleModelChange}
         slashCommands={slashCommands}
         onSessionSelect={handleSessionSelect}
@@ -376,7 +544,7 @@ function AppContent() {
         sidePanelVisible={sidePanelVisible}
         activeSidePanelTab={activeSidePanelTab}
         sidePanelWidth={sidePanelWidth}
-        onSidePanelClose={handleSidePanelClose}
+        onSidePanelClose={wrappedHandleSidePanelClose}
         onSidePanelResizeStart={handleSidePanelResize}
         onSidePanelTabChange={handleSidePanelTabChange}
         terminalId={activeTerminalId ?? null}
@@ -392,12 +560,14 @@ function AppContent() {
         onNavigatePreviousPrompt={(currentDraft) => navigateToPreviousPrompt(currentDraft)}
         onNavigateNextPrompt={() => navigateToNextPrompt()}
         onResetPromptNavigation={() => resetPromptNavigation()}
+        contextRemainingPercent={contextRemainingPercent}
       />
       {settingsOpen && (
         <Suspense fallback={null}>
           <SettingsModal
             isOpen={settingsOpen}
             onClose={closeSettings}
+            initialSection={settingsInitialSection}
             availableModels={modelOptions}
             onModelOptionsResolved={handleModelOptionsFetched}
           />

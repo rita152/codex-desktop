@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { TextArea } from '../../ui/data-entry/TextArea';
 import { IconButton } from '../../ui/data-entry/IconButton';
 import { Select } from '../../ui/data-entry/Select';
+import { ModelSelector } from '../../ui/data-entry/ModelSelector';
 import { Card } from '../../ui/data-display/Card';
 import { Button } from '../../ui/data-entry/Button';
 import {
@@ -14,9 +15,13 @@ import {
   ChatIcon,
   ForwardIcon,
   NotebookIcon,
+  SparklesIcon,
+  LoaderIcon,
+  StopIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { useSlashCommands } from '../../../hooks/useSlashCommands';
+import { usePromptEnhance } from '../../../hooks/usePromptEnhance';
 
 import type { ChatInputProps } from './types';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -31,6 +36,9 @@ const ICON_NOTEBOOK_18 = <NotebookIcon size={18} />;
 const ICON_CHAT_16 = <ChatIcon size={16} />;
 const ICON_PLUS_20 = <PlusIcon size={20} />;
 const ICON_SEND_20 = <SendIcon size={20} />;
+const ICON_STOP_20 = <StopIcon size={20} />;
+const ICON_SPARKLES_20 = <SparklesIcon size={20} />;
+const ICON_LOADER_20 = <LoaderIcon size={20} />;
 
 const buildAgentOptions = (t: TFunction): SelectOption[] => [
   { value: 'chat', label: t('chatInput.agentOptions.chat'), icon: ICON_CHAT_18 },
@@ -80,11 +88,14 @@ export const ChatInput = memo(function ChatInput({
   onAddClick,
   placeholder = '',
   disabled = false,
+  isGenerating = false,
+  onCancel,
   agentOptions,
   selectedAgent = 'agent-full',
   onAgentChange,
   modelOptions,
   selectedModel,
+  selectedEffort,
   onModelChange,
   slashCommands = [],
   width,
@@ -92,6 +103,7 @@ export const ChatInput = memo(function ChatInput({
   onNavigatePrevious,
   onNavigateNext,
   onResetNavigation,
+  contextRemainingPercent,
 }: ChatInputProps) {
   const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -123,6 +135,25 @@ export const ChatInput = memo(function ChatInput({
     onChange,
     textareaRef,
   });
+
+  // Prompt enhancement
+  const { enhance, isEnhancing, error: enhanceError } = usePromptEnhance();
+
+  const handleEnhancePrompt = useCallback(async () => {
+    if (isEnhancing || !trimmedValue) return;
+    const result = await enhance(trimmedValue);
+    if (result) {
+      onChange(result);
+    }
+  }, [isEnhancing, trimmedValue, enhance, onChange]);
+
+  // Show error as a transient alert (simple implementation)
+  // In production, you might want to use a toast or notice system
+  useMemo(() => {
+    if (enhanceError) {
+      console.error('[prompt-enhance] Error:', enhanceError);
+    }
+  }, [enhanceError]);
 
   const trySend = useCallback(() => {
     if (disabled) return;
@@ -334,6 +365,19 @@ export const ChatInput = memo(function ChatInput({
             variant="ghost"
             disabled={disabled || !onAddClick}
           />
+          <IconButton
+            icon={isEnhancing ? ICON_LOADER_20 : ICON_SPARKLES_20}
+            onClick={handleEnhancePrompt}
+            aria-label={t('chatInput.enhancePrompt')}
+            size="sm"
+            variant="ghost"
+            disabled={disabled || isEnhancing || !hasContent}
+            className={cn(
+              'chat-input__enhance-button',
+              isEnhancing && 'chat-input__enhance-button--loading'
+            )}
+            title={enhanceError || t('chatInput.enhancePrompt')}
+          />
           <Select
             options={resolvedAgentOptions}
             value={selectedAgent}
@@ -346,11 +390,49 @@ export const ChatInput = memo(function ChatInput({
             dropdownTitle={t('chatInput.switchMode')}
             aria-label={t('chatInput.selectAgent')}
           />
+          {contextRemainingPercent != null && (
+            <div
+              className={cn(
+                'chat-input__context-ring',
+                contextRemainingPercent < 20 && 'chat-input__context-ring--danger',
+                contextRemainingPercent >= 20 &&
+                  contextRemainingPercent < 40 &&
+                  'chat-input__context-ring--warning'
+              )}
+              title={`${contextRemainingPercent}% left`}
+            >
+              <svg viewBox="0 0 20 20" className="chat-input__context-ring-svg">
+                <circle
+                  className="chat-input__context-ring-bg"
+                  cx="10"
+                  cy="10"
+                  r="8"
+                  fill="none"
+                  strokeWidth="2"
+                />
+                <circle
+                  className="chat-input__context-ring-progress"
+                  cx="10"
+                  cy="10"
+                  r="8"
+                  fill="none"
+                  strokeWidth="2"
+                  strokeDasharray={`${(contextRemainingPercent / 100) * 50.27} 50.27`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 10 10)"
+                />
+              </svg>
+              <span className="chat-input__context-ring-tooltip">
+                {contextRemainingPercent}% left
+              </span>
+            </div>
+          )}
         </div>
         <div className="chat-input__toolbar-right">
-          <Select
+          <ModelSelector
             options={resolvedModelOptions}
-            value={selectedModel}
+            selectedModel={selectedModel}
+            selectedEffort={selectedEffort}
             onChange={onModelChange}
             borderless
             size="sm"
@@ -359,15 +441,16 @@ export const ChatInput = memo(function ChatInput({
             aria-label={t('chatInput.selectModel')}
           />
           <IconButton
-            icon={ICON_SEND_20}
-            onClick={trySend}
-            aria-label={t('common.send')}
+            icon={isGenerating ? ICON_STOP_20 : ICON_SEND_20}
+            onClick={isGenerating ? onCancel : trySend}
+            aria-label={isGenerating ? t('common.cancel') : t('common.send')}
             size="sm"
             variant="ghost"
-            disabled={disabled || !hasContent}
+            disabled={disabled || (!isGenerating && !hasContent)}
             className={cn(
               'chat-input__send-button',
-              hasContent && 'chat-input__send-button--active'
+              !isGenerating && hasContent && 'chat-input__send-button--active',
+              isGenerating && 'chat-input__send-button--generating'
             )}
           />
         </div>

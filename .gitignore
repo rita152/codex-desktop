@@ -27,11 +27,4 @@ coverage
 *storybook.log
 storybook-static
 
-# Tauri sidecar binaries (fetched during build)
-src-tauri/bin/codex-acp-*
-
-# Upstream codex source (for local development)
-codex-upstream/
-
-# Tauri temp output files
-src-tauri/*.txt
+# Upstream codex source is now a git submodule (tracked)

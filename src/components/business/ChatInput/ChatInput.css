@@ -166,11 +166,121 @@
 .chat-input__send-button {
   color: var(--color-text-secondary);
   opacity: 0.5;
+  transition:
+    color 0.15s,
+    opacity 0.15s,
+    background-color 0.15s;
 }
 
 .chat-input__send-button--active {
   color: var(--color-text);
   opacity: 1;
+}
+
+/* Generating state: blue background */
+.chat-input__send-button--generating {
+  color: var(--color-accent-blue);
+  opacity: 1;
+}
+
+/* Generating state hover: red to indicate cancel */
+.chat-input__send-button--generating:hover:not(:disabled) {
+  color: var(--color-error);
+}
+
+/* Context remaining ring indicator */
+.chat-input__context-ring {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chat-input__context-ring-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.chat-input__context-ring-bg {
+  stroke: var(--color-border);
+}
+
+.chat-input__context-ring-progress {
+  stroke: var(--color-text-tertiary);
+  transition: stroke 0.2s;
+}
+
+.chat-input__context-ring--warning .chat-input__context-ring-progress {
+  stroke: var(--color-warning);
+}
+
+.chat-input__context-ring--danger .chat-input__context-ring-progress {
+  stroke: var(--color-error);
+}
+
+/* Tooltip on hover */
+.chat-input__context-ring-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text);
+  font-size: var(--font-size-xs);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s,
+    visibility 0.15s;
+  pointer-events: none;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--color-border);
+  z-index: 10;
+}
+
+.chat-input__context-ring-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: var(--color-border);
+}
+
+.chat-input__context-ring:hover .chat-input__context-ring-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Enhance button */
+.chat-input__enhance-button {
+  color: var(--color-text-secondary);
+  transition:
+    color 0.2s,
+    transform 0.2s;
+}
+
+.chat-input__enhance-button:hover:not(:disabled) {
+  color: var(--color-accent-blue);
+}
+
+.chat-input__enhance-button--loading {
+  animation: chat-input-spin 1s linear infinite;
+}
+
+@keyframes chat-input-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 响应式：空间不足时隐藏文字，只显示图标 */

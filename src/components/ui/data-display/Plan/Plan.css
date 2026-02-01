@@ -1,197 +1,219 @@
 .plan {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
-  background-color: var(--color-bg-secondary);
   border-radius: var(--radius-md);
-  border: var(--border-width-thin) solid var(--color-border);
-  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  background-color: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
 }
 
-.plan__controls {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  z-index: 5;
+/* Trigger button */
+.plan__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
-.plan__toggle-btn {
+.plan__trigger:hover {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.plan__trigger:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: -2px;
+}
+
+/* Icon */
+.plan__icon {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Title */
+.plan__title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+/* Progress badge */
+.plan__progress {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chevron */
+.plan__chevron {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.plan--open .plan__chevron {
+  transform: rotate(180deg);
+}
+
+/* Content area */
+.plan__content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.plan--open .plan__content {
+  grid-template-rows: 1fr;
+}
+
+.plan__content-inner {
+  overflow: hidden;
+}
+
+/* Explanation */
+.plan__explanation {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: 12px;
+  font-style: italic;
   color: var(--color-text-secondary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-subtle);
 }
 
-.plan__toggle-btn:hover {
-  background-color: var(--color-bg-hover);
-  color: var(--color-text);
-}
-
-/* Collapsed State */
-.plan--collapsed {
-  gap: 0;
-  padding: var(--spacing-sm);
-  min-height: auto;
-}
-
-.plan__collapsed-content {
-  width: 100%;
-}
-
-.plan__step--collapsed-view {
-  margin: 0;
-  padding: 2px 4px;
-  /* tighter padding */
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  animation: none;
-  /* No slide in for switch */
-  padding-right: 28px;
-  /* Space for toggle button */
-}
-
-/* Ensure active indicator still visible or adjusted in simplified view */
-.plan__step--collapsed-view .plan__step-icon-wrapper {
-  margin-top: 2px;
-}
-
-.plan__header {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: var(--spacing-sm);
-}
-
+/* Steps list */
 .plan__steps {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.plan__step-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+  padding: var(--spacing-sm) var(--spacing-md);
   gap: var(--spacing-xs);
 }
 
-.plan__step-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text);
-  line-height: 1.4;
-}
-
-.plan__step-description {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.1);
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-@keyframes popIn {
-  0% {
-    transform: scale(0);
-    opacity: 0;
-  }
-
-  80% {
-    transform: scale(1.2);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
+/* Individual step */
 .plan__step {
   display: flex;
   align-items: flex-start;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-bg);
-  transition: all 0.2s ease-in-out;
-  border: var(--border-width-thin) solid transparent;
-  animation: slideIn 0.3s ease-out backwards;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) 0;
+  font-size: 13px;
+  line-height: 1.4;
+  transition: opacity 0.15s;
+}
+
+.plan__step--completed {
+  opacity: 0.6;
 }
 
 .plan__step--active {
-  background-color: var(--color-bg-elevated);
-  border-color: var(--color-primary);
-  box-shadow: var(--shadow-sm);
+  font-weight: 500;
 }
 
-.plan__step--active .plan__step-icon {
-  animation: pulse 2s infinite ease-in-out;
-}
-
-.plan__step-icon-wrapper {
-  display: flex;
+/* Checkbox icons */
+.plan__checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  margin-top: 2px;
-  /* Visual alignment with line-height */
+  font-size: 14px;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  line-height: 1;
 }
 
-.plan__step-icon {
-  color: var(--color-text-secondary);
-  transition: color 0.2s;
-}
-
-.plan__step-icon--completed {
+.plan__checkbox--completed {
   color: var(--color-success);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.plan__step-icon--error {
+.plan__checkbox--error {
   color: var(--color-error);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.plan__step-icon--active {
+.plan__checkbox--active {
   color: var(--color-primary);
+  animation: plan-pulse 2s infinite ease-in-out;
 }
 
-.plan__step-icon--pending {
+.plan__checkbox--pending {
   color: var(--color-text-secondary);
+}
+
+@keyframes plan-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Step text */
+.plan__step-text {
+  flex: 1;
+  color: var(--color-text);
+}
+
+.plan__step-text--completed {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+
+/* Active summary (shown when collapsed) */
+.plan__active-summary {
+  display: none;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.plan:not(.plan--open) .plan__active-summary {
+  display: flex;
+}
+
+.plan__active-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Shimmer effect for active step title */
+.plan__step--active .plan__step-text {
+  background: linear-gradient(
+    90deg,
+    var(--color-text) 0%,
+    var(--color-primary) 50%,
+    var(--color-text) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: plan-shimmer 3s infinite;
+}
+
+@keyframes plan-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }

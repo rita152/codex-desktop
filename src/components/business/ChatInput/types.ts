@@ -1,3 +1,4 @@
+import type { ModelOption, ReasoningEffort } from '../../../types/options';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
 
 export interface ChatInputProps {
@@ -7,12 +8,25 @@ export interface ChatInputProps {
   onAddClick?: () => void;
   placeholder?: string;
   disabled?: boolean;
+  /**
+   * Whether the session is currently generating a response.
+   * When true, the send button becomes a cancel button.
+   */
+  isGenerating?: boolean;
+  /**
+   * Called when user clicks the cancel button during generation.
+   */
+  onCancel?: () => void;
   agentOptions?: SelectOption[];
   selectedAgent?: string;
   onAgentChange?: (agent: string) => void;
-  modelOptions?: SelectOption[];
+  /** Model options with reasoning effort support */
+  modelOptions?: ModelOption[];
   selectedModel?: string;
-  onModelChange?: (model: string) => void;
+  /** Currently selected reasoning effort */
+  selectedEffort?: ReasoningEffort;
+  /** Callback when model or effort changes */
+  onModelChange?: (model: string, effort?: ReasoningEffort) => void;
   slashCommands?: string[];
   width?: string | number;
   className?: string;
@@ -30,4 +44,9 @@ export interface ChatInputProps {
    * Called when navigation should be reset (e.g., on send).
    */
   onResetNavigation?: () => void;
+  /**
+   * Remaining context percentage (0-100), null when not available.
+   * Displayed as "X% left" in the toolbar.
+   */
+  contextRemainingPercent?: number | null;
 }

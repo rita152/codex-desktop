@@ -2,6 +2,7 @@
   "common": {
     "add": "Add",
     "send": "Send",
+    "cancel": "Cancel",
     "rename": "Rename",
     "delete": "Delete"
   },
@@ -27,6 +28,7 @@
     "selectAgent": "Select agent",
     "selectModel": "Select model",
     "switchMode": "Switch mode",
+    "enhancePrompt": "Enhance prompt",
     "agentOptions": {
       "chat": "Chat",
       "agent": "Agent",
@@ -105,7 +107,8 @@
     "newChat": "New chat",
     "menu": "Menu",
     "settings": "Settings",
-    "resizeAria": "Resize sidebar"
+    "resizeAria": "Resize sidebar",
+    "history": "History"
   },
   "errors": {
     "modelSetFailed": "Failed to set model: {{error}}",

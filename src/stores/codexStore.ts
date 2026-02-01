@@ -13,7 +13,12 @@ import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 
 import type { ApprovalStatus } from '../components/ui/feedback/Approval';
-import type { ApprovalRequest } from '../types/codex';
+import type {
+  ApprovalRequest,
+  RequestUserInputEvent,
+  DynamicToolCallEvent,
+  ElicitationRequestEvent,
+} from '../types/codex';
 
 // Queued message type
 export interface QueuedMessage {
@@ -33,6 +38,18 @@ interface CodexState {
   pendingApprovals: Record<string, ApprovalRequest>;
   approvalStatuses: Record<string, ApprovalStatus>;
   approvalLoading: Record<string, boolean>;
+
+  // User input requests (AI requesting input from user)
+  pendingUserInputRequests: Record<string, RequestUserInputEvent>;
+
+  // Dynamic tool call requests
+  pendingDynamicToolCalls: Record<string, DynamicToolCallEvent>;
+
+  // MCP elicitation requests
+  pendingElicitationRequests: Record<string, ElicitationRequestEvent>;
+
+  // Undo state (per session)
+  undoInProgress: Record<string, boolean>;
 
   // Message queue (per session)
   messageQueues: Record<string, QueuedMessage[]>;
@@ -58,6 +75,22 @@ interface CodexActions {
   setApprovalLoading: (callId: string, loading: boolean) => void;
   clearApproval: (callId: string) => void;
   clearAllApprovals: () => void;
+
+  // User input request actions
+  registerUserInputRequest: (request: RequestUserInputEvent) => void;
+  clearUserInputRequest: (callId: string) => void;
+
+  // Dynamic tool call actions
+  registerDynamicToolCall: (request: DynamicToolCallEvent) => void;
+  clearDynamicToolCall: (callId: string) => void;
+
+  // Elicitation request actions
+  registerElicitationRequest: (request: ElicitationRequestEvent) => void;
+  clearElicitationRequest: (requestId: string) => void;
+
+  // Undo actions
+  setUndoInProgress: (sessionId: string, inProgress: boolean) => void;
+  isUndoInProgress: (sessionId: string) => boolean;
 
   // Message queue actions
   enqueueMessage: (sessionId: string, content: string) => void;
@@ -88,6 +121,10 @@ const initialState: CodexState = {
   pendingApprovals: {},
   approvalStatuses: {},
   approvalLoading: {},
+  pendingUserInputRequests: {},
+  pendingDynamicToolCalls: {},
+  pendingElicitationRequests: {},
+  undoInProgress: {},
   messageQueues: {},
   promptHistory: [],
   historyIndex: -1,
@@ -180,6 +217,64 @@ export const useCodexStore = create<CodexStore>()(
           approvalStatuses: {},
           approvalLoading: {},
         }),
+
+      // User input request actions
+      registerUserInputRequest: (request) =>
+        set((state) => ({
+          pendingUserInputRequests: {
+            ...state.pendingUserInputRequests,
+            [request.callId]: request,
+          },
+        })),
+
+      clearUserInputRequest: (callId) =>
+        set((state) => {
+          const { [callId]: _, ...rest } = state.pendingUserInputRequests;
+          return { pendingUserInputRequests: rest };
+        }),
+
+      // Dynamic tool call actions
+      registerDynamicToolCall: (request) =>
+        set((state) => ({
+          pendingDynamicToolCalls: {
+            ...state.pendingDynamicToolCalls,
+            [request.callId]: request,
+          },
+        })),
+
+      clearDynamicToolCall: (callId) =>
+        set((state) => {
+          const { [callId]: _, ...rest } = state.pendingDynamicToolCalls;
+          return { pendingDynamicToolCalls: rest };
+        }),
+
+      // Elicitation request actions
+      registerElicitationRequest: (request) =>
+        set((state) => ({
+          pendingElicitationRequests: {
+            ...state.pendingElicitationRequests,
+            [request.requestId]: request,
+          },
+        })),
+
+      clearElicitationRequest: (requestId) =>
+        set((state) => {
+          const { [requestId]: _, ...rest } = state.pendingElicitationRequests;
+          return { pendingElicitationRequests: rest };
+        }),
+
+      // Undo actions
+      setUndoInProgress: (sessionId, inProgress) =>
+        set((state) => ({
+          undoInProgress: {
+            ...state.undoInProgress,
+            [sessionId]: inProgress,
+          },
+        })),
+
+      isUndoInProgress: (sessionId) => {
+        return get().undoInProgress[sessionId] ?? false;
+      },
 
       // Message queue actions
       enqueueMessage: (sessionId, content) =>
@@ -362,3 +457,39 @@ export const useCodexSessionId = (chatId: string) =>
  */
 export const useIsPendingSessionInit = (chatId: string) =>
   useCodexStore((state) => !!state.pendingSessionInit[chatId]);
+
+/**
+ * Get pending user input requests for a session
+ */
+export const usePendingUserInputRequests = (sessionId: string) =>
+  useCodexStore((state) => {
+    return Object.values(state.pendingUserInputRequests).filter(
+      (req) => req.sessionId === sessionId
+    );
+  });
+
+/**
+ * Get pending dynamic tool calls for a session
+ */
+export const usePendingDynamicToolCalls = (sessionId: string) =>
+  useCodexStore((state) => {
+    return Object.values(state.pendingDynamicToolCalls).filter(
+      (req) => req.sessionId === sessionId
+    );
+  });
+
+/**
+ * Get pending elicitation requests for a session
+ */
+export const usePendingElicitationRequests = (sessionId: string) =>
+  useCodexStore((state) => {
+    return Object.values(state.pendingElicitationRequests).filter(
+      (req) => req.sessionId === sessionId
+    );
+  });
+
+/**
+ * Check if undo is in progress for a session
+ */
+export const useIsUndoInProgress = (sessionId: string) =>
+  useCodexStore((state) => state.undoInProgress[sessionId] ?? false);

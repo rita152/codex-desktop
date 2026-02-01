@@ -4,14 +4,17 @@ import type { Message } from '../ChatMessageList/types';
 import type { ChatSession } from '../Sidebar/types';
 import type { ApprovalProps } from '../../ui/feedback/Approval';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
+import type { ModelOption, ReasoningEffort } from '../../../types/options';
 import type { SessionNotice } from '../../../hooks/useSessionMeta';
 import type { QueuedMessage } from '../../../hooks/useMessageQueue';
 import type { SidePanelTab } from '../UnifiedSidePanel';
 import type { PlanStep } from '../../../types/plan';
 
 export interface ChatContainerProps {
-  /** 会话列表 */
+  /** 活动会话列表（当前应用会话） */
   sessions: ChatSession[];
+  /** 历史会话列表（从 rollout 文件加载） */
+  historySessions?: ChatSession[];
   /** 当前选中的会话 ID */
   selectedSessionId?: string;
   /** 当前会话工作目录 */
@@ -24,8 +27,12 @@ export interface ChatContainerProps {
   approvals?: ApprovalProps[];
   /** 是否正在生成回复 */
   isGenerating?: boolean;
+  /** 取消正在进行的生成 */
+  onCancelGeneration?: () => void;
   /** 当前执行计划步骤（固定显示在 ChatInput 上方） */
   currentPlan?: PlanStep[];
+  /** 当前执行计划说明文本 */
+  currentPlanExplanation?: string;
   /** 消息队列 */
   messageQueue?: QueuedMessage[];
   /** 是否有排队中的消息 */
@@ -46,12 +53,14 @@ export interface ChatContainerProps {
   selectedAgent?: string;
   /** 切换模式回调 */
   onAgentChange?: (agent: string) => void;
-  /** 模型列表 */
-  modelOptions?: SelectOption[];
+  /** 模型列表 (with reasoning effort support) */
+  modelOptions?: ModelOption[];
   /** 当前选中模型 */
   selectedModel?: string;
-  /** 切换模型回调 */
-  onModelChange?: (model: string) => void;
+  /** 当前选中的 reasoning effort */
+  selectedEffort?: ReasoningEffort;
+  /** 切换模型回调 (now includes effort) */
+  onModelChange?: (model: string, effort?: ReasoningEffort) => void;
   /** Slash commands 提示 */
   slashCommands?: string[];
   /** 输入框占位文案 */
@@ -124,4 +133,8 @@ export interface ChatContainerProps {
    * Reset prompt history navigation.
    */
   onResetPromptNavigation?: () => void;
+  /**
+   * Remaining context percentage (0-100), null when not available.
+   */
+  contextRemainingPercent?: number | null;
 }

@@ -1,0 +1,190 @@
+.tool-call-group {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background-color: var(--color-bg-secondary);
+}
+
+.tool-call-group--embedded {
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  border-left: 2px solid var(--color-border);
+  margin-left: var(--spacing-xs);
+}
+
+/* Trigger button */
+.tool-call-group__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
+}
+
+.tool-call-group--embedded .tool-call-group__trigger {
+  padding: var(--working-item-padding-y, var(--spacing-sm))
+    var(--working-item-padding-x, var(--spacing-md));
+}
+
+.tool-call-group__trigger:hover {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text);
+}
+
+.tool-call-group__trigger:focus-visible {
+  outline: 2px solid var(--color-border-hover);
+  outline-offset: -2px;
+}
+
+/* Icons */
+.tool-call-group__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.tool-call-group__icon--status {
+  margin-left: auto;
+}
+
+.tool-call-group--in-progress .tool-call-group__icon--status {
+  animation: tool-call-group-spin 1s linear infinite;
+}
+
+@keyframes tool-call-group-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Title */
+.tool-call-group__title {
+  flex: 1;
+  font-weight: 500;
+  color: var(--color-text);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status badge */
+.tool-call-group__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tool-call-group__status--pending {
+  background-color: var(--color-bg-muted);
+  color: var(--color-text-secondary);
+}
+
+.tool-call-group__status--in-progress {
+  background-color: color-mix(in srgb, var(--color-info) 15%, transparent);
+  color: var(--color-info);
+}
+
+.tool-call-group__status--completed {
+  background-color: color-mix(in srgb, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+}
+
+.tool-call-group__status--failed {
+  background-color: color-mix(in srgb, var(--color-error) 15%, transparent);
+  color: var(--color-error);
+}
+
+/* Duration */
+.tool-call-group__duration {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Chevron */
+.tool-call-group__chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.tool-call-group--open .tool-call-group__chevron {
+  transform: rotate(180deg);
+}
+
+/* Content area */
+.tool-call-group__content {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.2s ease;
+}
+
+.tool-call-group--open .tool-call-group__content {
+  grid-template-rows: 1fr;
+}
+
+.tool-call-group__content-inner {
+  overflow: hidden;
+}
+
+/* Items container */
+.tool-call-group__items {
+  display: flex;
+  flex-direction: column;
+  padding-left: var(--spacing-md);
+  border-top: 1px solid var(--color-border);
+}
+
+.tool-call-group--embedded .tool-call-group__items {
+  border-top: none;
+  padding-left: var(--spacing-sm);
+}
+
+/* Shimmer effect for in-progress */
+.tool-call-group--in-progress .tool-call-group__title {
+  background: linear-gradient(
+    90deg,
+    var(--color-text) 0%,
+    var(--color-info) 50%,
+    var(--color-text) 100%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: tool-call-group-shimmer 2s infinite;
+}
+
+@keyframes tool-call-group-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}

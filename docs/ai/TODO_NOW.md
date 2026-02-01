@@ -1,56 +1,45 @@
-# 当前任务清单
+# 当前任务追踪
 
-**更新日期**: 2026-01-31
-
----
-
-## 进行中
-
-### [MIGRATION-001] ACP → codex-core 迁移
-
-**状态**: 🟡 计划完成，待实施  
-**优先级**: P0  
-**文档**: [MIGRATION_PLAN.md](./MIGRATION_PLAN.md)
-
-#### 实施阶段
-
-| # | 任务 | 时间 | 状态 |
-|---|------|------|------|
-| 1 | 依赖切换 (Cargo.toml) | 2h | ⬜ |
-| 2 | 核心服务层 (core_service.rs) | 4h | ⬜ |
-| 3 | 事件桥接层 (event_bridge.rs) | 2h | ⬜ |
-| 4 | 命令层更新 (commands.rs) | 1h | ⬜ |
-| 5 | 类型/事件常量更新 | 1h | ⬜ |
-| 6 | 清理旧代码 | 1h | ⬜ |
-| 7 | 前端调整 | 1h | ⬜ |
-| 8 | 测试 & 修复 | 4h | ⬜ |
-
-**总计**: ~16h (2-3 天)
-
-#### 下一步
-
-1. [ ] 修改 `src-tauri/Cargo.toml` 添加 codex-core 依赖
-2. [ ] 创建 `src-tauri/src/codex/core_service.rs`
-3. [ ] 创建 `src-tauri/src/codex/event_bridge.rs`
+**更新日期**: 2026-02-01
 
 ---
 
-## 待开始
+## 当前状态：无活跃任务
 
-| 任务 | 依赖 | 优先级 |
-|------|------|--------|
-| Token Usage UI | MIGRATION-001 | P2 |
-| 临时会话支持 | MIGRATION-001 | P2 |
-| Kill Session 功能 | MIGRATION-001 | P2 |
+目前没有进行中的开发任务。
 
 ---
 
-## 已完成
+## 近期已完成功能
 
-- [x] 迁移计划文档编写
+### 1. 历史会话加载与显示 (2026-02-01)
+
+- ✅ 从 `~/.codex/sessions/` 加载 rollout 文件
+- ✅ Sidebar 分组显示活跃/历史会话
+- ✅ 点击历史会话恢复完整对话上下文
+- ✅ 修复 `SessionConfigured` 事件消费问题
+
+### 2. Prompt Enhance 功能 (2026-02-01)
+
+- ✅ Ephemeral Session 方案实现
+- ✅ `usePromptEnhance` Hook
+- ✅ ChatInput 工具栏集成
+- 详见：[PROMPT_ENHANCE_PLAN.md](./PROMPT_ENHANCE_PLAN.md)
+
+### 3. 模型选择器优化 (2026-02-01)
+
+- ✅ 修复启动时模型列表不加载问题
+- ✅ 支持默认推理力度设置
+- ✅ ModelSelector 子菜单边界检测
+
+### 4. codex-acp 清理 (2026-02-01)
+
+- ✅ 移除所有 codex-acp 依赖
+- ✅ 统一使用 codex-core 直接集成
+- ✅ 更新相关文档
 
 ---
 
-## 阻塞项
+## 详细变更记录
 
-无
+见 [CHANGELOG_DEV.md](./CHANGELOG_DEV.md)

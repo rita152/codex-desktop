@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "build:tauri": "npm run fetch:codex-acp && npm run build",
-    "fetch:codex-acp": "node scripts/fetch-codex-acp.mjs",
+    "build:tauri": "npm run build",
     "test": "vitest --browser --run",
     "test:unit": "vitest --run --config vitest.unit.config.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
@@ -24,7 +23,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@tanstack/react-virtual": "^3.13.18",
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-dialog": "^2.5.0",
+    "@tauri-apps/plugin-dialog": "^2.6.0",
     "@tauri-apps/plugin-fs": "^2.4.5",
     "@tauri-apps/plugin-opener": "^2",
     "@xterm/addon-fit": "^0.11.0",

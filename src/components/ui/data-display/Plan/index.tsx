@@ -1,97 +1,115 @@
 import { memo, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../../../../utils/cn';
-import {
-  CheckIcon,
-  ClockIcon,
-  CloseIcon,
-  TerminalIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-} from '../Icon';
+import { ChevronDownIcon } from '../Icon';
 import type { PlanProps, PlanStep, PlanStatus } from './types';
 import './Plan.css';
 
-const StepIcon = memo(({ status }: { status: PlanStatus }) => {
+// TUI-style checkbox icons
+function CheckboxIcon({ status }: { status: PlanStatus }) {
   switch (status) {
     case 'completed':
-      return <CheckIcon size={16} className="plan__step-icon plan__step-icon--completed" />;
+      return <span className="plan__checkbox plan__checkbox--completed">✓</span>;
     case 'error':
-      return <CloseIcon size={16} className="plan__step-icon plan__step-icon--error" />;
+      return <span className="plan__checkbox plan__checkbox--error">✗</span>;
     case 'active':
-      return <TerminalIcon size={16} className="plan__step-icon plan__step-icon--active" />;
+      return <span className="plan__checkbox plan__checkbox--active">□</span>;
     case 'pending':
     default:
-      return <ClockIcon size={16} className="plan__step-icon plan__step-icon--pending" />;
+      return <span className="plan__checkbox plan__checkbox--pending">□</span>;
   }
-});
+}
 
-StepIcon.displayName = 'StepIcon';
+const PlanStepItem = memo(({ step }: { step: PlanStep }) => {
+  const isCompleted = step.status === 'completed';
+  const isActive = step.status === 'active';
+  const isError = step.status === 'error';
 
-const PlanStepItem = memo(({ step, className }: { step: PlanStep; className?: string }) => {
   return (
     <div
-      className={cn('plan__step', step.status === 'active' && 'plan__step--active', className)}
+      className={cn(
+        'plan__step',
+        isActive && 'plan__step--active',
+        isCompleted && 'plan__step--completed',
+        isError && 'plan__step--error'
+      )}
       role="listitem"
-      aria-current={step.status === 'active' ? 'step' : undefined}
+      aria-current={isActive ? 'step' : undefined}
     >
-      <div className="plan__step-icon-wrapper">
-        <StepIcon status={step.status} />
-      </div>
-      <div className="plan__step-content">
-        <div className="plan__step-title">{step.title}</div>
-        {step.description && <div className="plan__step-description">{step.description}</div>}
-      </div>
+      <CheckboxIcon status={step.status} />
+      <span className={cn('plan__step-text', isCompleted && 'plan__step-text--completed')}>
+        {step.title}
+      </span>
     </div>
   );
 });
 
 PlanStepItem.displayName = 'PlanStepItem';
 
-export function Plan({ steps = [], title, className = '' }: PlanProps) {
-  // Default to expanded, consistent with user expectation of visibility
-  const [isCollapsed, setIsCollapsed] = useState(false);
+export function Plan({ steps = [], explanation, title, className = '' }: PlanProps) {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(true);
 
-  const activeStep = useMemo(() => {
-    // Find the current active step, or the first pending, or the last completed one
-    return (
-      steps.find((s) => s.status === 'active') ||
-      steps.find((s) => s.status === 'pending') ||
-      (steps.length > 0 ? steps[steps.length - 1] : undefined)
-    );
+  // Calculate progress
+  const { completed, total, activeStep } = useMemo(() => {
+    let completedCount = 0;
+    let active: PlanStep | undefined;
+    for (const step of steps) {
+      if (step.status === 'completed') completedCount++;
+      if (step.status === 'active' && !active) active = step;
+    }
+    // If no active, find first pending
+    if (!active) {
+      active = steps.find((s) => s.status === 'pending');
+    }
+    return { completed: completedCount, total: steps.length, activeStep: active };
   }, [steps]);
 
-  // If no steps, render nothing (should be handled by parent, but safe to handle here)
   if (!steps || steps.length === 0) return null;
 
-  return (
-    <div className={cn('plan', isCollapsed && 'plan--collapsed', className)}>
-      <div className="plan__controls">
-        <button
-          className="plan__toggle-btn"
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          aria-label={isCollapsed ? 'Expand plan' : 'Collapse plan'}
-          title={isCollapsed ? 'Expand' : 'Collapse'}
-        >
-          {isCollapsed ? <ChevronUpIcon size={14} /> : <ChevronDownIcon size={14} />}
-        </button>
-      </div>
+  const progressText = t('plan.progress', {
+    completed,
+    total,
+    defaultValue: `${completed}/${total}`,
+  });
 
-      {isCollapsed ? (
-        // Collapsed View: Only show active step
-        <div className="plan__collapsed-content">
-          {activeStep && <PlanStepItem step={activeStep} className="plan__step--collapsed-view" />}
-        </div>
-      ) : (
-        // Expanded View: Title + List
-        <>
-          {title && <div className="plan__header">{title}</div>}
+  return (
+    <div className={cn('plan', isOpen && 'plan--open', className)}>
+      <button
+        type="button"
+        className="plan__trigger"
+        onClick={() => setIsOpen((v) => !v)}
+        aria-expanded={isOpen}
+      >
+        <span className="plan__icon">📋</span>
+        <span className="plan__title">{title || t('plan.title', { defaultValue: 'Plan' })}</span>
+        <span className="plan__progress">{progressText}</span>
+        <span className="plan__chevron">
+          <ChevronDownIcon size={14} />
+        </span>
+      </button>
+
+      <div className="plan__content">
+        <div className="plan__content-inner">
+          {/* Explanation */}
+          {explanation && <div className="plan__explanation">{explanation}</div>}
+
+          {/* Steps list */}
           <div className="plan__steps" role="list">
             {steps.map((step) => (
               <PlanStepItem key={step.id} step={step} />
             ))}
           </div>
-        </>
-      )}
+
+          {/* Collapsed summary when closed */}
+          {!isOpen && activeStep && (
+            <div className="plan__active-summary">
+              <CheckboxIcon status={activeStep.status} />
+              <span className="plan__active-text">{activeStep.title}</span>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

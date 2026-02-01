@@ -6,12 +6,11 @@ Project documentation and AI engineering assets.
 
 ## Structure
 
-- `ai/`: AI engineering assets (project facts, changelog, migration plans)
-  - `PROJECT_SNAPSHOT.md`: current project state
-  - `TODO_NOW.md`: active tasks
-  - `CHANGELOG_DEV.md`: development changelog
-  - `INDEX.md`: asset index
-  - `MIGRATION_PLAN.md`: architecture migration plans
+- `ai/`: AI engineering assets
+  - `TODO_NOW.md`: active tasks and status tracking
+  - `CHANGELOG_DEV.md`: development changelog (recent changes)
+  - `PROMPT_ENHANCE_PLAN.md`: feature implementation plan (completed)
+- `screen_shoot.png`: application screenshot
 
 ## Conventions
 

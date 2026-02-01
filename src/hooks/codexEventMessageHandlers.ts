@@ -21,7 +21,7 @@ export type CodexMessageHandlers = {
   upsertToolCallMessage: (sessionId: string, toolCall: ToolCallProps) => void;
   applyToolCallUpdateMessage: (sessionId: string, update: ToolCall) => void;
   finalizeStreamingMessages: (sessionId: string) => void;
-  updatePlan: (sessionId: string, steps: PlanStep[]) => void;
+  updatePlan: (sessionId: string, steps: PlanStep[], explanation?: string) => void;
 };
 
 const buildUpdater = (setSessionMessagesRef: SetSessionMessagesRef): UpdateMessages => {
@@ -36,6 +36,46 @@ export function createCodexMessageHandlers(
   setSessionMessagesRef: SetSessionMessagesRef
 ): CodexMessageHandlers {
   const updateMessages = buildUpdater(setSessionMessagesRef);
+
+  // Count **bold** headers in text
+  const countBoldHeaders = (s: string): number => {
+    const matches = s.match(/\*\*[^*]+\*\*/g);
+    return matches ? matches.length : 0;
+  };
+
+  // Split content by **bold** headers, returning array of { header, body } sections
+  const splitByBoldHeaders = (s: string): Array<{ header: string | null; body: string }> => {
+    const sections: Array<{ header: string | null; body: string }> = [];
+    // Split by **...**  pattern, keeping the delimiter
+    const parts = s.split(/(\*\*[^*]+\*\*)/);
+
+    let currentHeader: string | null = null;
+    let currentBody = '';
+
+    for (const part of parts) {
+      const boldMatch = part.match(/^\*\*([^*]+)\*\*$/);
+      if (boldMatch) {
+        // This part is a bold header
+        // Save previous section if it has content
+        if (currentHeader !== null || currentBody.trim().length > 0) {
+          sections.push({ header: currentHeader, body: currentBody.trim() });
+        }
+        // Start new section with this header
+        currentHeader = boldMatch[1]?.trim() ?? null;
+        currentBody = '';
+      } else {
+        // Regular text, append to current body
+        currentBody += part;
+      }
+    }
+
+    // Don't forget the last section
+    if (currentHeader !== null || currentBody.trim().length > 0) {
+      sections.push({ header: currentHeader, body: currentBody.trim() });
+    }
+
+    return sections;
+  };
 
   const appendThoughtChunk = (sessionId: string, text: string) => {
     updateMessages((prev) => {
@@ -53,6 +93,7 @@ export function createCodexMessageHandlers(
         isAppendDuplicate: text.startsWith(lastContent),
       });
 
+      // Case 1: No existing thought message, create new one
       if (!lastMessage || lastMessage.role !== 'thought' || !lastMessage.isStreaming) {
         const nextMessage: Message = {
           id: newMessageId(),
@@ -69,9 +110,60 @@ export function createCodexMessageHandlers(
         return { ...prev, [sessionId]: [...list, nextMessage] };
       }
 
+      // Case 2: Existing thought message, check if new **header** appeared
       const current = lastMessage;
       const currentContent = current.thinking?.content ?? current.content;
       const nextContent = currentContent + text;
+
+      const prevBoldCount = countBoldHeaders(currentContent);
+      const nextBoldCount = countBoldHeaders(nextContent);
+
+      // If new bold header appeared, split into multiple thought messages
+      if (nextBoldCount > prevBoldCount) {
+        devDebug('[appendThoughtChunk] New bold header detected', {
+          prevBoldCount,
+          nextBoldCount,
+        });
+
+        // Split full content into sections
+        const sections = splitByBoldHeaders(nextContent);
+
+        if (sections.length > 1) {
+          // Create multiple thought messages
+          const startTime = current.thinking?.startTime ?? now;
+          const nextList = list.slice(0, -1); // Remove current thought
+
+          for (let i = 0; i < sections.length; i++) {
+            const section = sections[i];
+            const isLast = i === sections.length - 1;
+            const sectionContent = section.header
+              ? `**${section.header}**\n\n${section.body}`
+              : section.body;
+
+            if (sectionContent.trim().length === 0) continue;
+
+            const thoughtMessage: Message = {
+              id: newMessageId(),
+              role: 'thought',
+              content: sectionContent,
+              isStreaming: isLast, // Only last section is still streaming
+              thinking: {
+                content: sectionContent,
+                phase: isLast ? 'thinking' : 'done',
+                isStreaming: isLast,
+                startTime: isLast ? now : startTime,
+                duration: isLast ? undefined : (now - startTime) / 1000,
+              },
+              timestamp: isLast ? undefined : new Date(now),
+            };
+            nextList.push(thoughtMessage);
+          }
+
+          return { ...prev, [sessionId]: nextList };
+        }
+      }
+
+      // Case 3: No new header, just append to current thought
       const startTime = current.thinking?.startTime ?? now;
       const nextList = [...list];
       nextList[nextList.length - 1] = {
@@ -276,10 +368,15 @@ export function createCodexMessageHandlers(
     });
   };
 
-  const updatePlan = (sessionId: string, steps: PlanStep[]) => {
+  const updatePlan = (sessionId: string, steps: PlanStep[], explanation?: string) => {
     updateMessages((prev) => {
       const list = prev[sessionId] ?? [];
       const lastMessage = list[list.length - 1];
+
+      const planUpdate = {
+        planSteps: steps,
+        ...(explanation ? { planExplanation: explanation } : {}),
+      };
 
       // Only attach planSteps to existing assistant messages
       // Don't create new messages with empty content - Plan is displayed fixed above ChatInput
@@ -287,7 +384,7 @@ export function createCodexMessageHandlers(
         const nextList = [...list];
         nextList[nextList.length - 1] = {
           ...lastMessage,
-          planSteps: steps,
+          ...planUpdate,
         };
         return { ...prev, [sessionId]: nextList };
       }
@@ -298,7 +395,7 @@ export function createCodexMessageHandlers(
         const nextList = [...list];
         nextList[nextList.length - 1] = {
           ...lastMessage,
-          planSteps: steps,
+          ...planUpdate,
         };
         return { ...prev, [sessionId]: nextList };
       }

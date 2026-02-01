@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import type {
   ApprovalDecision,
   CodexCliConfigInfo,
+  HistoryListResult,
   NewSessionResult,
   PromptResult,
   InitializeResult,
@@ -12,8 +13,36 @@ export async function initCodex(): Promise<InitializeResult> {
   return invoke<InitializeResult>('codex_init');
 }
 
-export async function createSession(cwd: string): Promise<NewSessionResult> {
-  return invoke<NewSessionResult>('codex_new_session', { cwd });
+/**
+ * Create a new Codex session.
+ * @param cwd - Working directory for the session
+ * @param ephemeral - If true, session won't persist rollout file (for one-off tasks like prompt enhance)
+ */
+export async function createSession(cwd: string, ephemeral?: boolean): Promise<NewSessionResult> {
+  return invoke<NewSessionResult>('codex_new_session', { cwd, ephemeral });
+}
+
+/**
+ * Kill and remove a session completely.
+ * Use this to clean up ephemeral sessions after one-off tasks.
+ */
+export async function killSession(sessionId: string): Promise<void> {
+  await invoke<void>('codex_kill_session', {
+    sessionId,
+    session_id: sessionId,
+  });
+}
+
+/**
+ * Resume a session from a rollout file.
+ * This restores the full conversation context from a previous session.
+ */
+export async function resumeSession(rolloutPath: string, cwd?: string): Promise<NewSessionResult> {
+  return invoke<NewSessionResult>('codex_resume_session', {
+    rolloutPath,
+    rollout_path: rolloutPath,
+    cwd,
+  });
 }
 
 export async function sendPrompt(sessionId: string, content: string): Promise<PromptResult> {
@@ -75,10 +104,32 @@ export async function setCodexEnv(key: string, value: string): Promise<void> {
 }
 
 /**
- * Warmup the Codex ACP connection.
- * This pre-spawns the codex-acp process and initializes the protocol,
- * reducing latency for the first actual session creation.
+ * Cancel the current turn for a session.
+ * Interrupts any in-progress generation.
+ */
+export async function cancelSession(sessionId: string): Promise<void> {
+  await invoke<void>('codex_cancel', {
+    sessionId,
+    session_id: sessionId,
+  });
+}
+
+/**
+ * Warmup the Codex connection.
+ * Pre-initializes the backend for faster first response.
  */
 export async function warmupCodex(): Promise<void> {
   await invoke<void>('codex_warmup');
+}
+
+/**
+ * List history sessions from rollout files.
+ * Returns sessions that can be resumed, sorted by updated_at (newest first).
+ * @param pageSize - Maximum number of items to return (default 50)
+ */
+export async function listHistory(pageSize?: number): Promise<HistoryListResult> {
+  return invoke<HistoryListResult>('codex_list_history', {
+    pageSize,
+    page_size: pageSize,
+  });
 }

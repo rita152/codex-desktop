@@ -12,6 +12,7 @@ import { create } from 'zustand';
 import { subscribeWithSelector, devtools } from 'zustand/middleware';
 
 import type { SidePanelTab } from '../components/business/UnifiedSidePanel';
+import type { SettingsSection } from '../types/settings';
 
 // Constants
 export const SIDEBAR_AUTO_HIDE_MAX_WIDTH = 900;
@@ -32,6 +33,7 @@ interface UIState {
 
   // Settings Modal
   settingsOpen: boolean;
+  settingsInitialSection?: SettingsSection;
 }
 
 interface UIActions {
@@ -49,7 +51,7 @@ interface UIActions {
   handleSidePanelTabChange: (tab: SidePanelTab) => void;
 
   // Settings Modal actions
-  openSettings: () => void;
+  openSettings: (initialSection?: SettingsSection) => void;
   closeSettings: () => void;
 }
 
@@ -63,6 +65,7 @@ const initialState: UIState = {
   activeSidePanelTab: 'explorer',
   sidePanelWidth: DEFAULT_SIDE_PANEL_WIDTH,
   settingsOpen: false,
+  settingsInitialSection: undefined,
 };
 
 // Create the store
@@ -103,9 +106,10 @@ export const useUIStore = create<UIStore>()(
       handleSidePanelTabChange: (tab) => set({ activeSidePanelTab: tab }),
 
       // Settings Modal actions
-      openSettings: () => set({ settingsOpen: true }),
+      openSettings: (initialSection) =>
+        set({ settingsOpen: true, settingsInitialSection: initialSection }),
 
-      closeSettings: () => set({ settingsOpen: false }),
+      closeSettings: () => set({ settingsOpen: false, settingsInitialSection: undefined }),
     })),
     { name: 'UIStore', enabled: import.meta.env.DEV }
   )
