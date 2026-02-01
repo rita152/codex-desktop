@@ -21,7 +21,7 @@ export type CodexMessageHandlers = {
   upsertToolCallMessage: (sessionId: string, toolCall: ToolCallProps) => void;
   applyToolCallUpdateMessage: (sessionId: string, update: ToolCall) => void;
   finalizeStreamingMessages: (sessionId: string) => void;
-  updatePlan: (sessionId: string, steps: PlanStep[]) => void;
+  updatePlan: (sessionId: string, steps: PlanStep[], explanation?: string) => void;
 };
 
 const buildUpdater = (setSessionMessagesRef: SetSessionMessagesRef): UpdateMessages => {
@@ -370,10 +370,15 @@ export function createCodexMessageHandlers(
     });
   };
 
-  const updatePlan = (sessionId: string, steps: PlanStep[]) => {
+  const updatePlan = (sessionId: string, steps: PlanStep[], explanation?: string) => {
     updateMessages((prev) => {
       const list = prev[sessionId] ?? [];
       const lastMessage = list[list.length - 1];
+
+      const planUpdate = {
+        planSteps: steps,
+        ...(explanation ? { planExplanation: explanation } : {}),
+      };
 
       // Only attach planSteps to existing assistant messages
       // Don't create new messages with empty content - Plan is displayed fixed above ChatInput
@@ -381,7 +386,7 @@ export function createCodexMessageHandlers(
         const nextList = [...list];
         nextList[nextList.length - 1] = {
           ...lastMessage,
-          planSteps: steps,
+          ...planUpdate,
         };
         return { ...prev, [sessionId]: nextList };
       }
@@ -392,7 +397,7 @@ export function createCodexMessageHandlers(
         const nextList = [...list];
         nextList[nextList.length - 1] = {
           ...lastMessage,
-          planSteps: steps,
+          ...planUpdate,
         };
         return { ...prev, [sessionId]: nextList };
       }

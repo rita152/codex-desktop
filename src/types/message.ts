@@ -29,6 +29,8 @@ export interface Message {
   thinking?: ThinkingData;
   /** 执行计划步骤 */
   planSteps?: PlanStep[];
+  /** 计划说明（来自 update_plan 工具的 explanation） */
+  planExplanation?: string;
   /** 是否正在流式输出 */
   isStreaming?: boolean;
   /** 工具调用 */

@@ -29,6 +29,8 @@ export interface ChatContainerProps {
   isGenerating?: boolean;
   /** 当前执行计划步骤（固定显示在 ChatInput 上方） */
   currentPlan?: PlanStep[];
+  /** 当前执行计划说明文本 */
+  currentPlanExplanation?: string;
   /** 消息队列 */
   messageQueue?: QueuedMessage[];
   /** 是否有排队中的消息 */

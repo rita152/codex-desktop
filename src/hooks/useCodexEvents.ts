@@ -329,15 +329,20 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
         applyToolCallUpdateMessage(sessionId, update);
       }),
       // Plan update from update_plan tool
-      // Backend sends: { sessionId, plan: [{ step, status }] }
+      // Backend sends: { sessionId, plan: [{ step, status }], explanation?: string }
       listen<{
         sessionId: string;
         plan: Array<{ step: string; status: string }>;
+        explanation?: string;
       }>('codex:plan', (event) => {
         if (!isListenerActive()) return;
         const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
-        devDebug('[codex:plan]', { sessionId, plan: event.payload.plan });
+        devDebug('[codex:plan]', {
+          sessionId,
+          plan: event.payload.plan,
+          explanation: event.payload.explanation,
+        });
         const planItems = event.payload.plan;
         if (planItems && Array.isArray(planItems)) {
           const steps: PlanStep[] = planItems.map((item, index) => ({
@@ -345,7 +350,7 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
             title: item.step,
             status: mapPlanStatus(item.status),
           }));
-          messageHandlers.updatePlan(sessionId, steps);
+          messageHandlers.updatePlan(sessionId, steps, event.payload.explanation);
         }
       }),
       // Token usage event - context remaining percentage

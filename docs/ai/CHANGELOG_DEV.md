@@ -2,6 +2,44 @@
 
 ## 2026-02-01
 
+### Enhancement: Redesign Plan component with TUI-style
+
+**Summary**:
+Redesigned Plan component to match codex-core TUI style with checkbox icons, progress summary, and explanation support.
+
+**Files Modified**:
+- `src/components/ui/data-display/Plan/index.tsx`: Complete rewrite with TUI-style
+- `src/components/ui/data-display/Plan/Plan.css`: New collapsible design
+- `src/components/ui/data-display/Plan/types.ts`: Added `explanation` prop
+- `src/types/message.ts`: Added `planExplanation` field
+- `src/hooks/codexEventMessageHandlers.ts`: Support explanation in updatePlan
+- `src/hooks/useCodexEvents.ts`: Extract explanation from plan event
+- `src-tauri/src/codex/event_bridge.rs`: Forward explanation field
+- `src/App.tsx`: Extract and pass planExplanation
+- `src/components/business/ChatContainer/`: Pass explanation to Plan
+
+**UI Changes**:
+- TUI-style checkbox icons: `✓` (completed), `□` (pending/active), `✗` (error)
+- Completed steps show strikethrough text
+- Active step has shimmer animation
+- Progress summary: "2/5" in header badge
+- Explanation text shown above steps (italic, gray)
+- Collapsible design with smooth animation
+
+**Visual Result**:
+```
+┌─────────────────────────────────────────┐
+│ 📋 Plan                           2/5 ▼ │
+├─────────────────────────────────────────┤
+│ Adapting to new requirements            │  ← explanation
+│ ✓ First step                            │  ← strikethrough
+│ □ Second step                           │  ← shimmer animation
+│ □ Third step                            │
+└─────────────────────────────────────────┘
+```
+
+---
+
 ### Fix: Plan event format mismatch
 
 **Summary**:

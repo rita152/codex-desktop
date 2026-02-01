@@ -248,17 +248,21 @@ function AppContent() {
     return Array.from(merged).sort();
   }, [sessionSlashCommands]);
 
-  // Current plan from messages
-  const currentPlan = useMemo(() => {
+  // Current plan from messages (steps + explanation)
+  const { currentPlanSteps, currentPlanExplanation } = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
-      const planSteps = messages[i].planSteps;
+      const msg = messages[i];
+      const planSteps = msg.planSteps;
       if (planSteps && planSteps.length > 0) {
         const allCompleted = planSteps.every((step) => step.status === 'completed');
-        if (allCompleted) return undefined;
-        return planSteps;
+        if (allCompleted) return { currentPlanSteps: undefined, currentPlanExplanation: undefined };
+        return {
+          currentPlanSteps: planSteps,
+          currentPlanExplanation: msg.planExplanation,
+        };
       }
     }
-    return undefined;
+    return { currentPlanSteps: undefined, currentPlanExplanation: undefined };
   }, [messages]);
 
   // Codex Store - queue and session mapping
@@ -478,7 +482,8 @@ function AppContent() {
         approvals={approvalCards}
         sidebarVisible={sidebarVisible}
         isGenerating={isGenerating}
-        currentPlan={currentPlan}
+        currentPlan={currentPlanSteps}
+        currentPlanExplanation={currentPlanExplanation}
         messageQueue={formattedQueue}
         hasQueuedMessages={hasQueuedMessages}
         onClearQueue={handleClearQueue}

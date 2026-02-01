@@ -33,6 +33,7 @@ export const ChatContainer = memo(function ChatContainer({
   approvals,
   isGenerating = false,
   currentPlan,
+  currentPlanExplanation,
   messageQueue = [],
   hasQueuedMessages = false,
   onClearQueue,
@@ -215,7 +216,7 @@ export const ChatContainer = memo(function ChatContainer({
               {currentPlan && currentPlan.length > 0 && (
                 <Plan
                   steps={currentPlan}
-                  title={t('chat.planTitle')}
+                  explanation={currentPlanExplanation}
                   className="chat-container__plan"
                 />
               )}
