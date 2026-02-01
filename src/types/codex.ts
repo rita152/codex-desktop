@@ -122,3 +122,92 @@ export interface HistoryListResult {
   /** Whether more items are available (pagination) */
   hasMore: boolean;
 }
+
+// === New Event Types ===
+
+/** Thread name updated event payload */
+export interface ThreadNameUpdatedEvent {
+  sessionId: string;
+  threadId: string;
+  threadName: string | null;
+}
+
+/** Thread rolled back event payload */
+export interface ThreadRolledBackEvent {
+  sessionId: string;
+  numTurns: number;
+}
+
+/** Request user input question */
+export interface RequestUserInputQuestion {
+  id: string;
+  prompt: string;
+  type?: 'text' | 'password' | 'confirm';
+  default?: string;
+}
+
+/** Request user input event payload */
+export interface RequestUserInputEvent {
+  sessionId: string;
+  callId: string;
+  turnId: string;
+  questions: RequestUserInputQuestion[];
+}
+
+/** Dynamic tool call request event payload */
+export interface DynamicToolCallEvent {
+  sessionId: string;
+  callId: string;
+  turnId: string;
+  tool: string;
+  arguments: Record<string, unknown>;
+}
+
+/** MCP elicitation request event payload */
+export interface ElicitationRequestEvent {
+  sessionId: string;
+  serverName: string;
+  requestId: string;
+  message: string;
+}
+
+/** View image tool call event payload */
+export interface ViewImageEvent {
+  sessionId: string;
+  callId: string;
+  path: string;
+}
+
+/** Terminal interaction event payload */
+export interface TerminalInteractionEvent {
+  sessionId: string;
+  callId: string;
+  processId: string;
+  stdin: string;
+}
+
+/** Undo started event payload */
+export interface UndoStartedEvent {
+  sessionId: string;
+  message: string | null;
+}
+
+/** Undo completed event payload */
+export interface UndoCompletedEvent {
+  sessionId: string;
+  success: boolean;
+  message: string | null;
+}
+
+/** Deprecation notice event payload */
+export interface DeprecationNoticeEvent {
+  sessionId: string;
+  summary: string;
+  details: string | null;
+}
+
+/** Background event payload */
+export interface BackgroundEventPayload {
+  sessionId: string;
+  message: string;
+}

@@ -2,6 +2,88 @@
 
 ## 2026-02-01
 
+### Enhancement: Frontend event listeners for new codex-core events
+
+**Summary**:
+Added frontend event listeners and state management for the 11 new Tauri events.
+
+**Files Modified**:
+- `src/types/codex.ts`: Added 11 new event type definitions
+- `src/hooks/useCodexEvents.ts`: Added 11 new event listeners
+- `src/stores/codexStore.ts`: Added state and actions for user input, dynamic tools, elicitation, and undo
+
+**New Event Handlers**:
+
+| Event | Handler Action |
+|-------|----------------|
+| `codex:thread-name-updated` | Updates session title in sessionStore |
+| `codex:thread-rolled-back` | Shows system message about context rollback |
+| `codex:request-user-input` | Registers in `pendingUserInputRequests` |
+| `codex:dynamic-tool-call` | Registers in `pendingDynamicToolCalls` |
+| `codex:elicitation-request` | Registers in `pendingElicitationRequests` |
+| `codex:view-image` | Creates tool call message for image display |
+| `codex:terminal-interaction` | Updates tool call with stdin info |
+| `codex:undo-started` | Sets `undoInProgress` state |
+| `codex:undo-completed` | Clears undo state, shows result message |
+| `codex:deprecation-notice` | Shows warning message to user |
+| `codex:background-event` | Logs to console (no UI display) |
+
+**New Selectors Added**:
+- `usePendingUserInputRequests(sessionId)`
+- `usePendingDynamicToolCalls(sessionId)`
+- `usePendingElicitationRequests(sessionId)`
+- `useIsUndoInProgress(sessionId)`
+
+**Impact**:
+- Frontend can now receive and process all newly forwarded events
+- UI components can use selectors to display pending requests
+- Undo status can be shown in UI
+
+---
+
+### Enhancement: Complete event bridge coverage for codex-core EventMsg
+
+**Summary**:
+Added missing event type forwarding from codex-core to frontend. Previously ~22 event types were not being forwarded to the frontend.
+
+**New Events Added** (12 types):
+
+| Category | Event | Tauri Event Name |
+|----------|-------|------------------|
+| Thread | `ThreadNameUpdated` | `codex:thread-name-updated` |
+| Thread | `ThreadRolledBack` | `codex:thread-rolled-back` |
+| User Input | `RequestUserInput` | `codex:request-user-input` |
+| User Input | `DynamicToolCallRequest` | `codex:dynamic-tool-call` |
+| User Input | `ElicitationRequest` | `codex:elicitation-request` |
+| Tool | `ViewImageToolCall` | `codex:view-image` |
+| Tool | `TerminalInteraction` | `codex:terminal-interaction` |
+| Undo | `UndoStarted` | `codex:undo-started` |
+| Undo | `UndoCompleted` | `codex:undo-completed` |
+| Notification | `DeprecationNotice` | `codex:deprecation-notice` |
+| Notification | `BackgroundEvent` | `codex:background-event` |
+
+**Files Modified**:
+- `src-tauri/src/codex/events.rs`: Added 12 new event constants
+- `src-tauri/src/codex/event_bridge.rs`: Added handling for 12 new event types
+
+**Events Still Not Forwarded** (intentionally):
+- Request-response events: `GetHistoryEntryResponse`, `McpListToolsResponse`, `ListCustomPromptsResponse`, `ListSkillsResponse`
+- Alternative delta events: `AgentReasoningRawContent*`, `AgentMessageContentDelta`, `ReasoningContentDelta`, `PlanDelta`
+- Internal events: `ShutdownComplete`, `SkillsUpdateAvailable`, `TurnDiff`
+- Collab events: `CollabAgent*`, `CollabWaiting*`, `CollabClose*`
+- Review mode events: `EnteredReviewMode`, `ExitedReviewMode`
+- Low-level events: `RawResponseItem`, `ItemStarted`, `ItemCompleted`
+
+**Impact**:
+- Frontend can now receive and potentially handle thread name updates, undo operations, user input requests, etc.
+- Note: Frontend UI components for these new events need to be implemented separately
+
+**Testing**:
+- Rust backend compiles successfully
+- No breaking changes to existing event handling
+
+---
+
 ### Fix: History conversation messages not loading
 
 **Problem**:

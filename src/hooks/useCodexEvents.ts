@@ -28,7 +28,20 @@ import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID } from '../constants/chat';
 
 import type { MutableRefObject } from 'react';
 import type { Message } from '../types/message';
-import type { ApprovalRequest } from '../types/codex';
+import type {
+  ApprovalRequest,
+  ThreadNameUpdatedEvent,
+  ThreadRolledBackEvent,
+  RequestUserInputEvent,
+  DynamicToolCallEvent,
+  ElicitationRequestEvent,
+  ViewImageEvent,
+  TerminalInteractionEvent,
+  UndoStartedEvent,
+  UndoCompletedEvent,
+  DeprecationNoticeEvent,
+  BackgroundEventPayload,
+} from '../types/codex';
 import type { PlanStep, PlanStatus } from '../types/plan';
 
 /**
@@ -340,6 +353,181 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
         const sessionId = resolveChatSessionId(event.payload.sessionId);
         if (!sessionId) return;
         useSessionStore.getState().setContextRemaining(sessionId, event.payload.percentRemaining);
+      }),
+
+      // === New Events ===
+
+      // Thread name updated - update session title
+      listen<ThreadNameUpdatedEvent>('codex:thread-name-updated', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:thread-name-updated]', {
+          sessionId,
+          threadName: event.payload.threadName,
+        });
+        if (event.payload.threadName) {
+          useSessionStore.getState().updateSession(sessionId, {
+            title: event.payload.threadName,
+          });
+        }
+      }),
+
+      // Thread rolled back - notify user about context rollback
+      listen<ThreadRolledBackEvent>('codex:thread-rolled-back', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:thread-rolled-back]', {
+          sessionId,
+          numTurns: event.payload.numTurns,
+        });
+        // Add a system message to notify user
+        const systemMsg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: i18n.t('chat.threadRolledBack', {
+            count: event.payload.numTurns,
+            defaultValue: `Context rolled back by ${event.payload.numTurns} turn(s) to fit within context window.`,
+          }),
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        useSessionStore.getState().addMessage(sessionId, systemMsg);
+      }),
+
+      // Request user input - register pending user input request
+      listen<RequestUserInputEvent>('codex:request-user-input', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:request-user-input]', {
+          sessionId: event.payload.sessionId,
+          callId: event.payload.callId,
+          questions: event.payload.questions,
+        });
+        useCodexStore.getState().registerUserInputRequest(event.payload);
+      }),
+
+      // Dynamic tool call request
+      listen<DynamicToolCallEvent>('codex:dynamic-tool-call', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:dynamic-tool-call]', {
+          sessionId: event.payload.sessionId,
+          tool: event.payload.tool,
+        });
+        useCodexStore.getState().registerDynamicToolCall(event.payload);
+      }),
+
+      // MCP elicitation request
+      listen<ElicitationRequestEvent>('codex:elicitation-request', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:elicitation-request]', {
+          sessionId: event.payload.sessionId,
+          serverName: event.payload.serverName,
+          message: event.payload.message,
+        });
+        useCodexStore.getState().registerElicitationRequest(event.payload);
+      }),
+
+      // View image tool call - show image in chat
+      listen<ViewImageEvent>('codex:view-image', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:view-image]', {
+          sessionId,
+          path: event.payload.path,
+        });
+        // Emit as a tool call for display
+        upsertToolCallMessage(sessionId, {
+          toolCallId: event.payload.callId,
+          title: `View Image: ${event.payload.path}`,
+          kind: 'read',
+          status: 'completed',
+          content: [{ type: 'text', text: event.payload.path }],
+        });
+      }),
+
+      // Terminal interaction - stdin sent to running process
+      listen<TerminalInteractionEvent>('codex:terminal-interaction', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:terminal-interaction]', {
+          sessionId: event.payload.sessionId,
+          callId: event.payload.callId,
+          stdin: event.payload.stdin,
+        });
+        // Update the existing tool call with stdin info
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        applyToolCallUpdateMessage(sessionId, {
+          toolCallId: event.payload.callId,
+          tool_call_id: event.payload.callId,
+          stdin: event.payload.stdin,
+        });
+      }),
+
+      // Undo started
+      listen<UndoStartedEvent>('codex:undo-started', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:undo-started]', { sessionId });
+        useCodexStore.getState().setUndoInProgress(sessionId, true);
+      }),
+
+      // Undo completed
+      listen<UndoCompletedEvent>('codex:undo-completed', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        devDebug('[codex:undo-completed]', {
+          sessionId,
+          success: event.payload.success,
+        });
+        useCodexStore.getState().setUndoInProgress(sessionId, false);
+        // Notify user about undo result
+        const resultMsg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: event.payload.success
+            ? i18n.t('chat.undoSuccess', { defaultValue: 'Changes have been undone.' })
+            : i18n.t('chat.undoFailed', {
+                message: event.payload.message,
+                defaultValue: `Undo failed: ${event.payload.message ?? 'Unknown error'}`,
+              }),
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        useSessionStore.getState().addMessage(sessionId, resultMsg);
+      }),
+
+      // Deprecation notice
+      listen<DeprecationNoticeEvent>('codex:deprecation-notice', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:deprecation-notice]', {
+          sessionId: event.payload.sessionId,
+          summary: event.payload.summary,
+        });
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        // Show deprecation warning to user
+        const warnMsg: Message = {
+          id: newMessageId(),
+          role: 'assistant',
+          content: `⚠️ ${event.payload.summary}${event.payload.details ? `\n\n${event.payload.details}` : ''}`,
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        useSessionStore.getState().addMessage(sessionId, warnMsg);
+      }),
+
+      // Background event
+      listen<BackgroundEventPayload>('codex:background-event', (event) => {
+        if (!isListenerActive()) return;
+        devDebug('[codex:background-event]', {
+          sessionId: event.payload.sessionId,
+          message: event.payload.message,
+        });
+        // Log background events but don't display to user by default
       }),
     ];
     commitListeners(listenerToken, unlistenPromises);
