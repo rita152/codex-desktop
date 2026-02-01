@@ -4,6 +4,12 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { useCodexStore } from './codexStore';
 import { resetCodexStore } from './testUtils';
 
+import type {
+  DynamicToolCallEvent,
+  ElicitationRequestEvent,
+  RequestUserInputEvent,
+} from '../types/codex';
+
 describe('CodexStore', () => {
   beforeEach(() => {
     resetCodexStore();
@@ -106,7 +112,9 @@ describe('CodexStore', () => {
         sessionId: 'session-1',
         message: 'Please provide input',
       };
-      useCodexStore.getState().registerUserInputRequest(request as any);
+      useCodexStore
+        .getState()
+        .registerUserInputRequest(request as unknown as RequestUserInputEvent);
       expect(useCodexStore.getState().pendingUserInputRequests['call-1']).toEqual(request);
 
       useCodexStore.getState().clearUserInputRequest('call-1');
@@ -120,7 +128,7 @@ describe('CodexStore', () => {
         name: 'tool',
         arguments: {},
       };
-      useCodexStore.getState().registerDynamicToolCall(request as any);
+      useCodexStore.getState().registerDynamicToolCall(request as unknown as DynamicToolCallEvent);
       expect(useCodexStore.getState().pendingDynamicToolCalls['call-1']).toEqual(request);
 
       useCodexStore.getState().clearDynamicToolCall('call-1');
@@ -133,7 +141,9 @@ describe('CodexStore', () => {
         sessionId: 'session-1',
         prompt: 'Need data',
       };
-      useCodexStore.getState().registerElicitationRequest(request as any);
+      useCodexStore
+        .getState()
+        .registerElicitationRequest(request as unknown as ElicitationRequestEvent);
       expect(useCodexStore.getState().pendingElicitationRequests['req-1']).toEqual(request);
 
       useCodexStore.getState().clearElicitationRequest('req-1');
