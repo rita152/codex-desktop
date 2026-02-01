@@ -1,7 +1,7 @@
 # Prompt Enhance 功能实施计划
 
 **创建日期**: 2026-02-01  
-**状态**: 进行中
+**状态**: ✅ 已完成
 
 ---
 
@@ -70,7 +70,7 @@ export async function createSession(cwd: string, ephemeral?: boolean): Promise<N
 }
 ```
 
-**状态**: [ ] 待实现
+**状态**: ✅ 已完成
 
 ---
 
@@ -105,7 +105,7 @@ interface UsePromptEnhanceReturn {
 7. Kill session
 8. 返回优化后的 prompt
 
-**状态**: [ ] 待实现
+**状态**: ✅ 已完成
 
 ---
 
@@ -129,7 +129,7 @@ interface UsePromptEnhanceReturn {
 4. 优化完成 → 替换输入框内容
 5. 优化失败 → 显示错误提示，保留原内容
 
-**状态**: [ ] 待实现
+**状态**: ✅ 已完成
 
 ---
 
@@ -144,7 +144,7 @@ interface UsePromptEnhanceReturn {
 enhanceSystemPrompt?: string;
 ```
 
-**状态**: [ ] 待实现
+**状态**: ✅ 无需新增（hook 内聚）
 
 ---
 
@@ -159,7 +159,7 @@ You are a prompt optimization assistant.
 `;
 ```
 
-**状态**: [ ] 待后续补充
+**状态**: ✅ 已完成（内置于 hook 中）
 
 ---
 
@@ -213,18 +213,18 @@ Step 4/5 (类型/常量) ← 可并行
 
 | Step | 任务 | 状态 | 完成日期 |
 |------|------|------|----------|
-| 1 | 前端 API 层扩展 | [ ] 待开始 | - |
-| 2 | usePromptEnhance Hook | [ ] 待开始 | - |
-| 3 | UI 集成 | [ ] 待开始 | - |
-| 4 | 类型定义 | [ ] 待开始 | - |
-| 5 | System Prompt | [ ] 待后续 | - |
+| 1 | 前端 API 层扩展 | ✅ 已完成 | 2026-02-01 |
+| 2 | usePromptEnhance Hook | ✅ 已完成 | 2026-02-01 |
+| 3 | UI 集成 | ✅ 已完成 | 2026-02-01 |
+| 4 | 类型定义 | ✅ 无需新增 | 2026-02-01 |
+| 5 | System Prompt | ✅ 已完成 | 2026-02-01 |
 
 ---
 
 ## 九、验收标准
 
-- [ ] 点击优化按钮，能够成功发送请求并获取结果
-- [ ] 优化完成后，输入框内容被替换
-- [ ] 优化失败时，显示错误提示且保留原内容
-- [ ] 每次优化完成后，ephemeral session 被正确销毁
-- [ ] 不影响主会话的正常使用
+- [x] 点击优化按钮，能够成功发送请求并获取结果
+- [x] 优化完成后，输入框内容被替换
+- [x] 优化失败时，显示错误提示且保留原内容
+- [x] 每次优化完成后，ephemeral session 被正确销毁
+- [x] 不影响主会话的正常使用

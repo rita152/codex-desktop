@@ -1,7 +1,7 @@
 # PROJECT KNOWLEDGE BASE
 
-**Generated:** 2026-01-28
-**Commit:** 77a37dc
+**Generated:** 2026-02-01
+**Commit:** a4d75e4
 **Branch:** main
 
 Codex Desktop: a Tauri 2 desktop app (Rust backend) with a React 19 + TypeScript + Vite 7 frontend.

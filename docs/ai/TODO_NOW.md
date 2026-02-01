@@ -4,73 +4,42 @@
 
 ---
 
-## 已完成：模型选择启动时序修复
+## 当前状态：无活跃任务
 
-**状态**: ✅ 已完成
-
-### 问题描述
-- 应用启动时模型选择器显示 "Select model" 而不是用户设置的默认模型
-- 用户需要手动打开设置面板才能触发模型列表加载
-
-### 根因分析
-1. `codex_warmup` 命令在 Rust 后端未实现
-2. `warmupCodex()` 失败后整个 warmup 流程被跳过（包括获取模型列表的 `createSession()`）
-3. `settingsStore` 初始化时使用 `DEFAULT_SETTINGS`，新会话无法获取用户保存的默认模型
-
-### 修复内容
-- `src/stores/settingsStore.ts`: 同步加载 localStorage 中的 settings
-- `src/hooks/useCodexEffects.ts`: 分离 `warmupCodex()` 和 `createSession()` 的 try-catch
+目前没有进行中的开发任务。
 
 ---
 
-## 历史任务：Prompt Enhance 功能
+## 近期已完成功能
 
-**计划文档**: [PROMPT_ENHANCE_PLAN.md](./PROMPT_ENHANCE_PLAN.md)  
-**状态**: ✅ 核心功能已完成
+### 1. 历史会话加载与显示 (2026-02-01)
 
-### 实施进度
+- ✅ 从 `~/.codex/sessions/` 加载 rollout 文件
+- ✅ Sidebar 分组显示活跃/历史会话
+- ✅ 点击历史会话恢复完整对话上下文
+- ✅ 修复 `SessionConfigured` 事件消费问题
 
-| Step | 任务 | 状态 | 文件 |
-|------|------|------|------|
-| 1 | 前端 API 层扩展 | ✅ 已完成 | `src/api/codex.ts` |
-| 2 | usePromptEnhance Hook | ✅ 已完成 | `src/hooks/usePromptEnhance.ts` |
-| 3 | UI 集成 | ✅ 已完成 | `src/components/business/ChatInput/index.tsx` |
-| 4 | 类型定义 | ✅ 无需新增 | - |
-| 5 | System Prompt | 📋 待后续 | hook 内置默认 prompt |
+### 2. Prompt Enhance 功能 (2026-02-01)
 
-### 完成的改动
+- ✅ Ephemeral Session 方案实现
+- ✅ `usePromptEnhance` Hook
+- ✅ ChatInput 工具栏集成
+- 详见：[PROMPT_ENHANCE_PLAN.md](./PROMPT_ENHANCE_PLAN.md)
 
-**Step 1 - API 层**:
-- `src/api/codex.ts`: 新增 `killSession()`，修改 `createSession()` 支持 `ephemeral` 参数
+### 3. 模型选择器优化 (2026-02-01)
 
-**Step 2 - Hook**:
-- `src/hooks/usePromptEnhance.ts`: 新建，提供 `enhance()`, `isEnhancing`, `error`, `cancel()`
+- ✅ 修复启动时模型列表不加载问题
+- ✅ 支持默认推理力度设置
+- ✅ ModelSelector 子菜单边界检测
 
-**Step 3 - UI**:
-- `src/components/ui/data-display/Icon/index.tsx`: 新增 `SparklesIcon`, `LoaderIcon`
-- `src/components/business/ChatInput/index.tsx`: 集成 hook，添加优化按钮
-- `src/components/business/ChatInput/ChatInput.css`: 按钮样式和 loading 动画
-- `src/i18n/locales/*.json`: 添加翻译
+### 4. codex-acp 清理 (2026-02-01)
 
-### 关键决策
-
-- ✅ 使用 Ephemeral Session 方案
-- ✅ 不传递当前会话上下文
-- ✅ UI 放在 ChatInput 工具栏
-- ✅ 优化完成后直接替换输入框内容
-- ✅ 优化失败直接提示错误
-- ✅ 内置默认 System Prompt（可后续配置化）
+- ✅ 移除所有 codex-acp 依赖
+- ✅ 统一使用 codex-core 直接集成
+- ✅ 更新相关文档
 
 ---
 
-## 验证
+## 详细变更记录
 
-- [ ] 手动测试：输入 prompt，点击优化按钮
-- [ ] 验证 session 被正确创建和销毁
-- [ ] 验证主会话功能不受影响
-
-## 后续可选
-
-- 将 System Prompt 移至可配置常量
-- 添加用户自定义 System Prompt 功能
-- 优化错误提示 UI（使用 toast/notice）
+见 [CHANGELOG_DEV.md](./CHANGELOG_DEV.md)
