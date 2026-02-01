@@ -2,6 +2,43 @@
 
 ## 2026-02-01
 
+### Feature: Move Plan to floating side panel with auto show/hide
+
+**Summary**:
+Moved Plan component from ChatInput top to a floating side panel near ChatSideActions.
+The panel auto-shows when plan has incomplete steps and auto-hides when all completed.
+
+**Files Added**:
+- `src/components/business/PlanPanel/index.tsx`: Floating panel component
+- `src/components/business/PlanPanel/PlanPanel.css`: Panel styles
+
+**Files Modified**:
+- `src/components/business/ChatContainer/index.tsx`: Integrated PlanPanel with auto-show logic
+- `src/components/business/ChatContainer/ChatContainer.css`: Removed old `.chat-container__plan` styles
+
+**Behavior**:
+1. Plan appears → Panel auto-opens (slides in from right)
+2. User closes panel → Stays closed until plan updates
+3. Plan updates → Panel re-opens
+4. All steps completed → Panel auto-closes
+5. When UnifiedSidePanel is open → PlanPanel hidden to avoid overlap
+
+**UI Position**:
+```
+┌─────────────────────────────────────────┐
+│  消息列表                               │
+│                      [ChatSideActions]  │  ← 右上角工具栏
+│                      ┌─────────────┐   │
+│                      │ 📋 Plan 2/5 │   │  ← PlanPanel (下方)
+│                      │ ✓ Step 1    │   │
+│                      │ □ Step 2    │   │
+│                      └─────────────┘   │
+│  ChatInput                              │
+└─────────────────────────────────────────┘
+```
+
+---
+
 ### Enhancement: Redesign Plan component with TUI-style
 
 **Summary**:
