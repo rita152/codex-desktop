@@ -76,6 +76,11 @@ import { useCodexEffects } from './hooks/useCodexEffects';
 import { useCodexActions } from './hooks/useCodexActions';
 import { useFileAndCwdActionsFromStore } from './hooks/useFileAndCwdActions';
 import { useApprovalCardsFromStore } from './hooks/useApprovalCards';
+import { useHistoryList } from './hooks/useHistoryList';
+import { resumeSession } from './api/codex';
+import { devDebug } from './utils/logger';
+
+import type { ChatSession } from './types/session';
 import {
   useUIStore,
   useUIStoreInit,
@@ -142,10 +147,46 @@ function AppContent() {
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
+  // Load history sessions from rollout files
+  const { items: historyItems } = useHistoryList(true, 50);
+
   // Session Store - sessions, messages, options
   // Use primitive selectors to avoid infinite loops from derived values
-  const sessions = useSessionStore((s) => s.sessions);
+  const activeSessions = useSessionStore((s) => s.sessions);
   const selectedSessionId = useSessionStore((s) => s.selectedSessionId);
+
+  // Merge active sessions with history (history items shown after active sessions)
+  // Filter out history items that already exist in active sessions
+  const activeSessionIds = useMemo(
+    () => new Set(activeSessions.map((s) => s.id)),
+    [activeSessions]
+  );
+
+  // Map of history item id to rollout path (for resuming sessions)
+  const historyRolloutPaths = useMemo(
+    () => new Map(historyItems.map((item) => [item.id, item.rolloutPath])),
+    [historyItems]
+  );
+
+  const historySessions: ChatSession[] = useMemo(
+    () =>
+      historyItems
+        .filter((item) => !activeSessionIds.has(item.id))
+        .map((item) => ({
+          id: item.id,
+          title: item.title,
+          cwd: item.cwd,
+          model: DEFAULT_MODEL_ID,
+          mode: DEFAULT_MODE_ID,
+        })),
+    [historyItems, activeSessionIds]
+  );
+
+  // Combine active sessions and history sessions for display
+  const sessions = useMemo(
+    () => [...activeSessions, ...historySessions],
+    [activeSessions, historySessions]
+  );
   const setSelectedSessionId = useSessionStore((s) => s.setSelectedSessionId);
   const sessionMessagesMap = useSessionStore((s) => s.sessionMessages);
   const sessionDraftsMap = useSessionStore((s) => s.sessionDrafts);
@@ -167,6 +208,8 @@ function AppContent() {
   const setSessionNotices = useSessionStore((s) => s.setSessionNotices);
   const updateSession = useSessionStore((s) => s.updateSession);
   const createNewChat = useSessionStore((s) => s.createNewChat);
+  const addSession = useSessionStore((s) => s.addSession);
+  const setCodexThreadInfo = useSessionStore((s) => s.setCodexThreadInfo);
   const applyModelOptions = useSessionStore((s) => s.applyModelOptions);
   const contextRemainingMap = useSessionStore((s) => s.contextRemaining);
 
@@ -258,10 +301,57 @@ function AppContent() {
   }, [createNewChat, selectedCwd, t]);
 
   const handleSessionSelect = useCallback(
-    (sessionId: string) => {
+    async (sessionId: string) => {
+      // Check if this is a history session that needs to be restored
+      const isHistorySession = !activeSessionIds.has(sessionId);
+      const rolloutPath = historyRolloutPaths.get(sessionId);
+
+      if (isHistorySession && rolloutPath) {
+        // Find the history session info
+        const historySession = historySessions.find((s) => s.id === sessionId);
+        if (!historySession) {
+          devDebug('[app] history session not found', sessionId);
+          return;
+        }
+
+        try {
+          devDebug('[app] restoring history session', sessionId, rolloutPath);
+
+          // Resume the session from rollout
+          const result = await resumeSession(rolloutPath, historySession.cwd);
+
+          // Add the session to active sessions
+          addSession({
+            id: sessionId,
+            title: historySession.title,
+            cwd: historySession.cwd,
+            model: historySession.model,
+            mode: historySession.mode,
+          });
+
+          // Store thread info for future reference
+          setCodexThreadInfo(sessionId, {
+            threadId: result.sessionId,
+            rolloutPath,
+          });
+
+          devDebug('[app] history session restored', sessionId, result.sessionId);
+        } catch (err) {
+          devDebug('[app] failed to restore history session', err);
+          // Still select the session even if restore fails
+        }
+      }
+
       setSelectedSessionId(sessionId);
     },
-    [setSelectedSessionId]
+    [
+      activeSessionIds,
+      historyRolloutPaths,
+      historySessions,
+      addSession,
+      setCodexThreadInfo,
+      setSelectedSessionId,
+    ]
   );
 
   const handleSessionRename = useCallback(

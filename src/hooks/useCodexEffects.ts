@@ -3,7 +3,7 @@
  *
  * Handles all Codex-related side effects:
  * - Initialize Codex on mount
- * - Warmup codex-acp connection for faster first response
+ * - Warmup backend connection for faster first response
  * - Set up Tauri event listeners (via useCodexEvents)
  * - Provide ensureCodexSession for session management
  *

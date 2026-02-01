@@ -34,19 +34,3 @@ Config via env:
 - Audit: `QUALITY_GATE_AUDIT_REGISTRY`
 
 Common pitfall: skipping `build` but not `size` will fail because `dist/assets` is missing.
-
-## fetch-codex-acp.mjs
-
-Fetches a platform-specific `codex-acp` binary from npm and writes it into `src-tauri/bin/`.
-
-Entry:
-
-```bash
-npm run fetch:codex-acp
-```
-
-Notes:
-
-- Uses `npm pack` + `tar -xzf` (requires `tar` on PATH).
-- Writes `src-tauri/bin/codex-acp-<target-triple>[.exe]`.
-- Tauri bundle config expects `bin/codex-acp` (see root AGENTS.md gotchas).

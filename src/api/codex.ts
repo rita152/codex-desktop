@@ -3,6 +3,7 @@ import { invoke } from '@tauri-apps/api/core';
 import type {
   ApprovalDecision,
   CodexCliConfigInfo,
+  HistoryListResult,
   NewSessionResult,
   PromptResult,
   InitializeResult,
@@ -17,10 +18,7 @@ export async function initCodex(): Promise<InitializeResult> {
  * @param cwd - Working directory for the session
  * @param ephemeral - If true, session won't persist rollout file (for one-off tasks like prompt enhance)
  */
-export async function createSession(
-  cwd: string,
-  ephemeral?: boolean
-): Promise<NewSessionResult> {
+export async function createSession(cwd: string, ephemeral?: boolean): Promise<NewSessionResult> {
   return invoke<NewSessionResult>('codex_new_session', { cwd, ephemeral });
 }
 
@@ -106,10 +104,21 @@ export async function setCodexEnv(key: string, value: string): Promise<void> {
 }
 
 /**
- * Warmup the Codex ACP connection.
- * This pre-spawns the codex-acp process and initializes the protocol,
- * reducing latency for the first actual session creation.
+ * Warmup the Codex connection.
+ * Pre-initializes the backend for faster first response.
  */
 export async function warmupCodex(): Promise<void> {
   await invoke<void>('codex_warmup');
+}
+
+/**
+ * List history sessions from rollout files.
+ * Returns sessions that can be resumed, sorted by updated_at (newest first).
+ * @param pageSize - Maximum number of items to return (default 50)
+ */
+export async function listHistory(pageSize?: number): Promise<HistoryListResult> {
+  return invoke<HistoryListResult>('codex_list_history', {
+    pageSize,
+    page_size: pageSize,
+  });
 }

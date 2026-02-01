@@ -9,7 +9,7 @@
  */
 
 import { create } from 'zustand';
-import { subscribeWithSelector, persist, devtools } from 'zustand/middleware';
+import { subscribeWithSelector, devtools } from 'zustand/middleware';
 import { useMemo } from 'react';
 
 import { DEFAULT_MODEL_ID, DEFAULT_MODE_ID, DEFAULT_SLASH_COMMANDS } from '../constants/chat';
@@ -211,288 +211,235 @@ const applyUpdate = <T>(current: T, update: T | ((prev: T) => T)): T => {
   return typeof update === 'function' ? (update as (prev: T) => T)(current) : update;
 };
 
-// Create the store with persistence
+// Create the store (no persistence - history loaded from rollout files)
 export const useSessionStore = create<SessionStore>()(
   devtools(
-    subscribeWithSelector(
-      persist(
-        (set, get) => ({
-          ...initialState,
+    subscribeWithSelector((set, get) => ({
+      ...initialState,
 
-          // Session list actions
-          setSessions: (sessions) =>
-            set((state) => ({ sessions: applyUpdate(state.sessions, sessions) })),
+      // Session list actions
+      setSessions: (sessions) =>
+        set((state) => ({ sessions: applyUpdate(state.sessions, sessions) })),
 
-          setSelectedSessionId: (id) => set({ selectedSessionId: id }),
+      setSelectedSessionId: (id) => set({ selectedSessionId: id }),
 
-          addSession: (session) =>
-            set((state) => ({
-              sessions: [session, ...state.sessions],
-              sessionMessages: { ...state.sessionMessages, [session.id]: [] },
-              sessionDrafts: { ...state.sessionDrafts, [session.id]: '' },
-              isGeneratingBySession: { ...state.isGeneratingBySession, [session.id]: false },
-            })),
+      addSession: (session) =>
+        set((state) => ({
+          sessions: [session, ...state.sessions],
+          sessionMessages: { ...state.sessionMessages, [session.id]: [] },
+          sessionDrafts: { ...state.sessionDrafts, [session.id]: '' },
+          isGeneratingBySession: { ...state.isGeneratingBySession, [session.id]: false },
+        })),
 
-          updateSession: (sessionId, updates) =>
-            set((state) => ({
-              sessions: state.sessions.map((s) => (s.id === sessionId ? { ...s, ...updates } : s)),
-            })),
+      updateSession: (sessionId, updates) =>
+        set((state) => ({
+          sessions: state.sessions.map((s) => (s.id === sessionId ? { ...s, ...updates } : s)),
+        })),
 
-          removeSession: (sessionId) =>
-            set((state) => {
-              const { [sessionId]: _messages, ...restMessages } = state.sessionMessages;
-              const { [sessionId]: _drafts, ...restDrafts } = state.sessionDrafts;
-              const { [sessionId]: _notices, ...restNotices } = state.sessionNotices;
-              const { [sessionId]: _generating, ...restGenerating } = state.isGeneratingBySession;
-              const { [sessionId]: _terminal, ...restTerminals } = state.terminalBySession;
-              const { [sessionId]: _slash, ...restSlash } = state.sessionSlashCommands;
-              const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
-              const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
-              const { [sessionId]: _threadInfo, ...restThreadInfo } = state.codexThreadInfo;
-              const { [sessionId]: _context, ...restContext } = state.contextRemaining;
+      removeSession: (sessionId) =>
+        set((state) => {
+          const { [sessionId]: _messages, ...restMessages } = state.sessionMessages;
+          const { [sessionId]: _drafts, ...restDrafts } = state.sessionDrafts;
+          const { [sessionId]: _notices, ...restNotices } = state.sessionNotices;
+          const { [sessionId]: _generating, ...restGenerating } = state.isGeneratingBySession;
+          const { [sessionId]: _terminal, ...restTerminals } = state.terminalBySession;
+          const { [sessionId]: _slash, ...restSlash } = state.sessionSlashCommands;
+          const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
+          const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
+          const { [sessionId]: _threadInfo, ...restThreadInfo } = state.codexThreadInfo;
+          const { [sessionId]: _context, ...restContext } = state.contextRemaining;
 
-              return {
-                sessions: state.sessions.filter((s) => s.id !== sessionId),
-                sessionMessages: restMessages,
-                sessionDrafts: restDrafts,
-                sessionNotices: restNotices,
-                isGeneratingBySession: restGenerating,
-                terminalBySession: restTerminals,
-                sessionSlashCommands: restSlash,
-                sessionModelOptions: restModel,
-                sessionModeOptions: restMode,
-                codexThreadInfo: restThreadInfo,
-                contextRemaining: restContext,
-              };
-            }),
-
-          // Messages actions
-          setSessionMessages: (messages) =>
-            set((state) => ({ sessionMessages: applyUpdate(state.sessionMessages, messages) })),
-
-          addMessage: (sessionId, message) =>
-            set((state) => ({
-              sessionMessages: {
-                ...state.sessionMessages,
-                [sessionId]: [...(state.sessionMessages[sessionId] ?? []), message],
-              },
-            })),
-
-          updateMessage: (sessionId, messageId, updates) =>
-            set((state) => ({
-              sessionMessages: {
-                ...state.sessionMessages,
-                [sessionId]: (state.sessionMessages[sessionId] ?? []).map((m) =>
-                  String(m.id) === messageId ? { ...m, ...updates } : m
-                ),
-              },
-            })),
-
-          clearMessages: (sessionId) =>
-            set((state) => ({
-              sessionMessages: { ...state.sessionMessages, [sessionId]: [] },
-            })),
-
-          // Drafts actions
-          setSessionDrafts: (drafts) =>
-            set((state) => ({ sessionDrafts: applyUpdate(state.sessionDrafts, drafts) })),
-
-          setDraft: (sessionId, draft) =>
-            set((state) => ({
-              sessionDrafts: { ...state.sessionDrafts, [sessionId]: draft },
-            })),
-
-          // Notices actions
-          setSessionNotices: (notices) =>
-            set((state) => ({ sessionNotices: applyUpdate(state.sessionNotices, notices) })),
-
-          setNotice: (sessionId, notice) =>
-            set((state) => ({
-              sessionNotices: { ...state.sessionNotices, [sessionId]: notice },
-            })),
-
-          clearSessionNotice: (sessionId) =>
-            set((state) => {
-              const { [sessionId]: _, ...rest } = state.sessionNotices;
-              return { sessionNotices: rest };
-            }),
-
-          // Slash commands actions
-          setSessionSlashCommands: (commands) =>
-            set((state) => ({
-              sessionSlashCommands: applyUpdate(state.sessionSlashCommands, commands),
-            })),
-
-          // Model options actions
-          setSessionModelOptions: (options) =>
-            set((state) => ({
-              sessionModelOptions: applyUpdate(state.sessionModelOptions, options),
-            })),
-
-          applyModelOptions: ({ options, currentId, fallbackCurrentId }) => {
-            const nextCurrentId = currentId ?? fallbackCurrentId;
-            set({
-              modelCache: { options, currentId: nextCurrentId },
-            });
-          },
-
-          // Mode options actions
-          setSessionModeOptions: (options) =>
-            set((state) => ({
-              sessionModeOptions: applyUpdate(state.sessionModeOptions, options),
-            })),
-
-          applyModeOptions: ({ options, currentId, fallbackCurrentId }) => {
-            const nextCurrentId = currentId ?? fallbackCurrentId;
-            set({
-              modeCache: { options, currentId: nextCurrentId },
-            });
-          },
-
-          // Generation state actions
-          setIsGeneratingBySession: (generating) =>
-            set((state) => ({
-              isGeneratingBySession: applyUpdate(state.isGeneratingBySession, generating),
-            })),
-
-          setIsGenerating: (sessionId, isGenerating) =>
-            set((state) => ({
-              isGeneratingBySession: { ...state.isGeneratingBySession, [sessionId]: isGenerating },
-            })),
-
-          // Terminal state actions
-          setTerminalBySession: (terminals) =>
-            set((state) => ({
-              terminalBySession: applyUpdate(state.terminalBySession, terminals),
-            })),
-
-          setTerminal: (sessionId, terminalId) =>
-            set((state) => ({
-              terminalBySession: { ...state.terminalBySession, [sessionId]: terminalId },
-            })),
-
-          clearTerminal: (sessionId) =>
-            set((state) => {
-              const { [sessionId]: _, ...rest } = state.terminalBySession;
-              return { terminalBySession: rest };
-            }),
-
-          // Session meta cleanup
-          removeSessionMeta: (sessionId, newSessionId) => {
-            const state = get();
-            const { [sessionId]: _notices, ...restNotices } = state.sessionNotices;
-            const { [sessionId]: _slash, ...restSlash } = state.sessionSlashCommands;
-            const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
-            const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
-
-            const updates: Partial<SessionState> = {
-              sessionNotices: newSessionId
-                ? { ...restNotices, [newSessionId]: undefined }
-                : restNotices,
-              sessionSlashCommands: restSlash,
-              sessionModelOptions: restModel,
-              sessionModeOptions: restMode,
-            };
-
-            set(updates);
-          },
-
-          // Codex thread info actions
-          setCodexThreadInfo: (chatSessionId, info) =>
-            set((state) => ({
-              codexThreadInfo: { ...state.codexThreadInfo, [chatSessionId]: info },
-            })),
-
-          clearCodexThreadInfo: (chatSessionId) =>
-            set((state) => {
-              const { [chatSessionId]: _, ...rest } = state.codexThreadInfo;
-              return { codexThreadInfo: rest };
-            }),
-
-          // Context remaining actions
-          setContextRemaining: (sessionId, percent) =>
-            set((state) => ({
-              contextRemaining: { ...state.contextRemaining, [sessionId]: percent },
-            })),
-
-          // New chat action
-          createNewChat: (cwd, title = 'New Chat') => {
-            const newId = String(Date.now());
-            // Use default model and reasoning effort from settings
-            const modelSettings = useSettingsStore.getState().settings.model;
-            const defaultModel = modelSettings.defaultModel || DEFAULT_MODEL_ID;
-            const defaultReasoningEffort = modelSettings.defaultReasoningEffort;
-            const newSession: ChatSession = {
-              id: newId,
-              title,
-              cwd,
-              model: defaultModel,
-              mode: DEFAULT_MODE_ID,
-              reasoningEffort: defaultReasoningEffort,
-            };
-
-            set((state) => ({
-              sessions: [newSession, ...state.sessions],
-              sessionMessages: { ...state.sessionMessages, [newId]: [] },
-              sessionDrafts: { ...state.sessionDrafts, [newId]: '' },
-              isGeneratingBySession: { ...state.isGeneratingBySession, [newId]: false },
-              selectedSessionId: newId,
-            }));
-
-            return newId;
-          },
+          return {
+            sessions: state.sessions.filter((s) => s.id !== sessionId),
+            sessionMessages: restMessages,
+            sessionDrafts: restDrafts,
+            sessionNotices: restNotices,
+            isGeneratingBySession: restGenerating,
+            terminalBySession: restTerminals,
+            sessionSlashCommands: restSlash,
+            sessionModelOptions: restModel,
+            sessionModeOptions: restMode,
+            codexThreadInfo: restThreadInfo,
+            contextRemaining: restContext,
+          };
         }),
-        {
-          name: 'codex-sessions',
-          partialize: (state) => ({
-            sessions: state.sessions,
-            selectedSessionId: state.selectedSessionId,
-            sessionMessages: state.sessionMessages,
-            sessionDrafts: state.sessionDrafts,
-            codexThreadInfo: state.codexThreadInfo,
-          }),
-          // Custom storage to handle Date serialization/deserialization
-          storage: {
-            getItem: (name) => {
-              const str = localStorage.getItem(name);
-              if (!str) return null;
-              const parsed = JSON.parse(str);
-              // Rehydrate timestamp strings back to Date objects
-              if (parsed?.state?.sessionMessages) {
-                for (const sessionId of Object.keys(parsed.state.sessionMessages)) {
-                  const messages = parsed.state.sessionMessages[sessionId];
-                  if (Array.isArray(messages)) {
-                    for (const msg of messages) {
-                      if (msg.timestamp && typeof msg.timestamp === 'string') {
-                        const date = new Date(msg.timestamp);
-                        // Only convert if valid date
-                        msg.timestamp = isNaN(date.getTime()) ? undefined : date;
-                      }
-                    }
-                  }
-                }
-              }
-              return parsed;
-            },
-            setItem: (name, value) => {
-              localStorage.setItem(name, JSON.stringify(value));
-            },
-            removeItem: (name) => {
-              localStorage.removeItem(name);
-            },
+
+      // Messages actions
+      setSessionMessages: (messages) =>
+        set((state) => ({ sessionMessages: applyUpdate(state.sessionMessages, messages) })),
+
+      addMessage: (sessionId, message) =>
+        set((state) => ({
+          sessionMessages: {
+            ...state.sessionMessages,
+            [sessionId]: [...(state.sessionMessages[sessionId] ?? []), message],
           },
-          // Create a new session on app startup (after rehydration)
-          onRehydrateStorage: () => (state) => {
-            if (state) {
-              // Use setTimeout to ensure store is fully initialized
-              setTimeout(() => {
-                state.createNewChat(undefined, 'New Chat');
-              }, 0);
-            }
+        })),
+
+      updateMessage: (sessionId, messageId, updates) =>
+        set((state) => ({
+          sessionMessages: {
+            ...state.sessionMessages,
+            [sessionId]: (state.sessionMessages[sessionId] ?? []).map((m) =>
+              String(m.id) === messageId ? { ...m, ...updates } : m
+            ),
           },
-        }
-      )
-    ),
+        })),
+
+      clearMessages: (sessionId) =>
+        set((state) => ({
+          sessionMessages: { ...state.sessionMessages, [sessionId]: [] },
+        })),
+
+      // Drafts actions
+      setSessionDrafts: (drafts) =>
+        set((state) => ({ sessionDrafts: applyUpdate(state.sessionDrafts, drafts) })),
+
+      setDraft: (sessionId, draft) =>
+        set((state) => ({
+          sessionDrafts: { ...state.sessionDrafts, [sessionId]: draft },
+        })),
+
+      // Notices actions
+      setSessionNotices: (notices) =>
+        set((state) => ({ sessionNotices: applyUpdate(state.sessionNotices, notices) })),
+
+      setNotice: (sessionId, notice) =>
+        set((state) => ({
+          sessionNotices: { ...state.sessionNotices, [sessionId]: notice },
+        })),
+
+      clearSessionNotice: (sessionId) =>
+        set((state) => {
+          const { [sessionId]: _, ...rest } = state.sessionNotices;
+          return { sessionNotices: rest };
+        }),
+
+      // Slash commands actions
+      setSessionSlashCommands: (commands) =>
+        set((state) => ({
+          sessionSlashCommands: applyUpdate(state.sessionSlashCommands, commands),
+        })),
+
+      // Model options actions
+      setSessionModelOptions: (options) =>
+        set((state) => ({
+          sessionModelOptions: applyUpdate(state.sessionModelOptions, options),
+        })),
+
+      applyModelOptions: ({ options, currentId, fallbackCurrentId }) => {
+        const nextCurrentId = currentId ?? fallbackCurrentId;
+        set({
+          modelCache: { options, currentId: nextCurrentId },
+        });
+      },
+
+      // Mode options actions
+      setSessionModeOptions: (options) =>
+        set((state) => ({
+          sessionModeOptions: applyUpdate(state.sessionModeOptions, options),
+        })),
+
+      applyModeOptions: ({ options, currentId, fallbackCurrentId }) => {
+        const nextCurrentId = currentId ?? fallbackCurrentId;
+        set({
+          modeCache: { options, currentId: nextCurrentId },
+        });
+      },
+
+      // Generation state actions
+      setIsGeneratingBySession: (generating) =>
+        set((state) => ({
+          isGeneratingBySession: applyUpdate(state.isGeneratingBySession, generating),
+        })),
+
+      setIsGenerating: (sessionId, isGenerating) =>
+        set((state) => ({
+          isGeneratingBySession: { ...state.isGeneratingBySession, [sessionId]: isGenerating },
+        })),
+
+      // Terminal state actions
+      setTerminalBySession: (terminals) =>
+        set((state) => ({
+          terminalBySession: applyUpdate(state.terminalBySession, terminals),
+        })),
+
+      setTerminal: (sessionId, terminalId) =>
+        set((state) => ({
+          terminalBySession: { ...state.terminalBySession, [sessionId]: terminalId },
+        })),
+
+      clearTerminal: (sessionId) =>
+        set((state) => {
+          const { [sessionId]: _, ...rest } = state.terminalBySession;
+          return { terminalBySession: rest };
+        }),
+
+      // Session meta cleanup
+      removeSessionMeta: (sessionId, newSessionId) => {
+        const state = get();
+        const { [sessionId]: _notices, ...restNotices } = state.sessionNotices;
+        const { [sessionId]: _slash, ...restSlash } = state.sessionSlashCommands;
+        const { [sessionId]: _model, ...restModel } = state.sessionModelOptions;
+        const { [sessionId]: _mode, ...restMode } = state.sessionModeOptions;
+
+        const updates: Partial<SessionState> = {
+          sessionNotices: newSessionId
+            ? { ...restNotices, [newSessionId]: undefined }
+            : restNotices,
+          sessionSlashCommands: restSlash,
+          sessionModelOptions: restModel,
+          sessionModeOptions: restMode,
+        };
+
+        set(updates);
+      },
+
+      // Codex thread info actions
+      setCodexThreadInfo: (chatSessionId, info) =>
+        set((state) => ({
+          codexThreadInfo: { ...state.codexThreadInfo, [chatSessionId]: info },
+        })),
+
+      clearCodexThreadInfo: (chatSessionId) =>
+        set((state) => {
+          const { [chatSessionId]: _, ...rest } = state.codexThreadInfo;
+          return { codexThreadInfo: rest };
+        }),
+
+      // Context remaining actions
+      setContextRemaining: (sessionId, percent) =>
+        set((state) => ({
+          contextRemaining: { ...state.contextRemaining, [sessionId]: percent },
+        })),
+
+      // New chat action
+      createNewChat: (cwd, title = 'New Chat') => {
+        const newId = String(Date.now());
+        // Use default model and reasoning effort from settings
+        const modelSettings = useSettingsStore.getState().settings.model;
+        const defaultModel = modelSettings.defaultModel || DEFAULT_MODEL_ID;
+        const defaultReasoningEffort = modelSettings.defaultReasoningEffort;
+        const newSession: ChatSession = {
+          id: newId,
+          title,
+          cwd,
+          model: defaultModel,
+          mode: DEFAULT_MODE_ID,
+          reasoningEffort: defaultReasoningEffort,
+        };
+
+        set((state) => ({
+          sessions: [newSession, ...state.sessions],
+          sessionMessages: { ...state.sessionMessages, [newId]: [] },
+          sessionDrafts: { ...state.sessionDrafts, [newId]: '' },
+          isGeneratingBySession: { ...state.isGeneratingBySession, [newId]: false },
+          selectedSessionId: newId,
+        }));
+
+        return newId;
+      },
+    })),
     { name: 'SessionStore', enabled: import.meta.env.DEV }
   )
 );
