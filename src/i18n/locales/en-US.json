@@ -106,7 +106,8 @@
     "newChat": "New chat",
     "menu": "Menu",
     "settings": "Settings",
-    "resizeAria": "Resize sidebar"
+    "resizeAria": "Resize sidebar",
+    "history": "History"
   },
   "errors": {
     "modelSetFailed": "Failed to set model: {{error}}",

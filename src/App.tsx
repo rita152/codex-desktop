@@ -147,8 +147,8 @@ function AppContent() {
   const handleSidePanelClose = useUIStore((s) => s.handleSidePanelClose);
   const handleSidePanelTabChange = useUIStore((s) => s.handleSidePanelTabChange);
 
-  // Load history sessions from rollout files
-  const { items: historyItems } = useHistoryList(true, 50);
+  // Load history sessions from rollout files (limit to 10 recent items)
+  const { items: historyItems } = useHistoryList(true, 10);
 
   // Session Store - sessions, messages, options
   // Use primitive selectors to avoid infinite loops from derived values
@@ -182,8 +182,11 @@ function AppContent() {
     [historyItems, activeSessionIds]
   );
 
-  // Combine active sessions and history sessions for display
-  const sessions = useMemo(
+  // Sessions are now passed separately to Sidebar for grouped display
+  // activeSessions = current app sessions
+  // historySessions = loaded from rollout files
+  // allSessions is used for internal lookups (finding activeSession, etc.)
+  const allSessions = useMemo(
     () => [...activeSessions, ...historySessions],
     [activeSessions, historySessions]
   );
@@ -195,7 +198,7 @@ function AppContent() {
   const setDraft = useSessionStore((s) => s.setDraft);
 
   // Derive values outside of selectors to avoid reference issues
-  const activeSession = sessions.find((sess) => sess.id === selectedSessionId);
+  const activeSession = allSessions.find((sess) => sess.id === selectedSessionId);
   const messages = useMemo(
     () => sessionMessagesMap[selectedSessionId] ?? [],
     [selectedSessionId, sessionMessagesMap]
@@ -258,8 +261,9 @@ function AppContent() {
     return undefined;
   }, [messages]);
 
-  // Codex Store - queue
+  // Codex Store - queue and session mapping
   const messageQueuesMap = useCodexStore((s) => s.messageQueues);
+  const registerCodexSession = useCodexStore((s) => s.registerCodexSession);
   const currentQueue = useMemo(
     () => messageQueuesMap[selectedSessionId] ?? [],
     [messageQueuesMap, selectedSessionId]
@@ -317,10 +321,7 @@ function AppContent() {
         try {
           devDebug('[app] restoring history session', sessionId, rolloutPath);
 
-          // Resume the session from rollout
-          const result = await resumeSession(rolloutPath, historySession.cwd);
-
-          // Add the session to active sessions
+          // Add the session to active sessions FIRST (before resumeSession)
           addSession({
             id: sessionId,
             title: historySession.title,
@@ -328,6 +329,18 @@ function AppContent() {
             model: historySession.model,
             mode: historySession.mode,
           });
+
+          // Pre-register the session mapping BEFORE calling resumeSession
+          // The history item ID equals the codex session ID (both are the original thread ID)
+          registerCodexSession(sessionId, sessionId);
+
+          // Resume the session from rollout
+          const result = await resumeSession(rolloutPath, historySession.cwd);
+
+          // Update the mapping if the returned session ID is different
+          if (result.sessionId !== sessionId) {
+            registerCodexSession(sessionId, result.sessionId);
+          }
 
           // Store thread info for future reference
           setCodexThreadInfo(sessionId, {
@@ -349,6 +362,7 @@ function AppContent() {
       historyRolloutPaths,
       historySessions,
       addSession,
+      registerCodexSession,
       setCodexThreadInfo,
       setSelectedSessionId,
     ]
@@ -455,7 +469,8 @@ function AppContent() {
   return (
     <>
       <ChatContainer
-        sessions={sessions}
+        sessions={activeSessions}
+        historySessions={historySessions}
         selectedSessionId={selectedSessionId}
         sessionCwd={selectedCwd}
         sessionNotice={sessionNotice}

@@ -25,6 +25,7 @@ const QueueIndicator = lazy(() =>
 
 export const ChatContainer = memo(function ChatContainer({
   sessions,
+  historySessions = [],
   selectedSessionId,
   sessionCwd,
   sessionNotice,
@@ -129,6 +130,7 @@ export const ChatContainer = memo(function ChatContainer({
       >
         <Sidebar
           sessions={sessions}
+          historySessions={historySessions}
           selectedSessionId={selectedSessionId}
           onSessionSelect={onSessionSelect}
           onNewChat={onNewChat}

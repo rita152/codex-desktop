@@ -186,6 +186,20 @@ export function useCodexEvents(callbacks?: CodexEventsCallbacks): void {
         if (!sessionId) return;
         appendAssistantChunk(sessionId, event.payload.text);
       }),
+      // User message (from history replay)
+      listen<{ sessionId: string; text: string }>('codex:user-message', (event) => {
+        if (!isListenerActive()) return;
+        const sessionId = resolveChatSessionId(event.payload.sessionId);
+        if (!sessionId) return;
+        const userMsg: Message = {
+          id: newMessageId(),
+          role: 'user',
+          content: event.payload.text,
+          isStreaming: false,
+          timestamp: new Date(),
+        };
+        useSessionStore.getState().addMessage(sessionId, userMsg);
+      }),
       listen<{ sessionId: string; text: string }>('codex:thought', (event) => {
         if (!isListenerActive()) return;
         devDebug('[codex:thought] Received', {

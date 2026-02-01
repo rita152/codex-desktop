@@ -106,7 +106,8 @@
     "newChat": "新建对话",
     "menu": "菜单",
     "settings": "设置",
-    "resizeAria": "调整侧边栏宽度"
+    "resizeAria": "调整侧边栏宽度",
+    "history": "历史对话"
   },
   "errors": {
     "modelSetFailed": "模型设置失败：{{error}}",

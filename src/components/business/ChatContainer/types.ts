@@ -11,8 +11,10 @@ import type { SidePanelTab } from '../UnifiedSidePanel';
 import type { PlanStep } from '../../../types/plan';
 
 export interface ChatContainerProps {
-  /** 会话列表 */
+  /** 活动会话列表（当前应用会话） */
   sessions: ChatSession[];
+  /** 历史会话列表（从 rollout 文件加载） */
+  historySessions?: ChatSession[];
   /** 当前选中的会话 ID */
   selectedSessionId?: string;
   /** 当前会话工作目录 */

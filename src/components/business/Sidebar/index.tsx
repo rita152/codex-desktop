@@ -13,11 +13,12 @@ import {
   MenuIcon,
   TrashIcon,
   SettingsIcon,
+  ClockIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { useSidebarResize } from '../../../hooks/useSidebarResize';
 
-import type { SidebarProps } from './types';
+import type { SidebarProps, ChatSession } from './types';
 import type { ListItemAction } from '../../ui/data-display/ListItem/types';
 
 import './Sidebar.css';
@@ -28,6 +29,7 @@ const DEFAULT_WIDTH = 200;
 
 export const Sidebar = memo(function Sidebar({
   sessions,
+  historySessions = [],
   selectedSessionId,
   onSessionSelect,
   onNewChat,
@@ -127,22 +129,53 @@ export const Sidebar = memo(function Sidebar({
 
       <div className="sidebar__content">
         <List scrollable>
-          {sessions.map((session) => (
-            <ListItem
-              key={session.id}
-              icon={<CommentIcon size={18} />}
-              selected={session.id === selectedSessionId}
-              onClick={() => onSessionSelect?.(session.id)}
-              actions={getSessionActions(session.id, session.title)}
-              editing={editingSessionId === session.id}
-              editValue={editValue}
-              onEditChange={setEditValue}
-              onEditConfirm={handleConfirmRename}
-              onEditCancel={handleCancelRename}
-            >
-              {session.title}
-            </ListItem>
-          ))}
+          {/* Active sessions (current app session) */}
+          {sessions.length > 0 && (
+            <>
+              {sessions.map((session) => (
+                <ListItem
+                  key={session.id}
+                  icon={<CommentIcon size={18} />}
+                  selected={session.id === selectedSessionId}
+                  onClick={() => onSessionSelect?.(session.id)}
+                  actions={getSessionActions(session.id, session.title)}
+                  editing={editingSessionId === session.id}
+                  editValue={editValue}
+                  onEditChange={setEditValue}
+                  onEditConfirm={handleConfirmRename}
+                  onEditCancel={handleCancelRename}
+                >
+                  {session.title}
+                </ListItem>
+              ))}
+            </>
+          )}
+
+          {/* History sessions (from rollout files) */}
+          {historySessions.length > 0 && (
+            <>
+              <div className="sidebar__section-divider">
+                <ClockIcon size={14} />
+                <span>{t('sidebar.history')}</span>
+              </div>
+              {historySessions.map((session: ChatSession) => (
+                <ListItem
+                  key={session.id}
+                  icon={<CommentIcon size={18} />}
+                  selected={session.id === selectedSessionId}
+                  onClick={() => onSessionSelect?.(session.id)}
+                  actions={getSessionActions(session.id, session.title)}
+                  editing={editingSessionId === session.id}
+                  editValue={editValue}
+                  onEditChange={setEditValue}
+                  onEditConfirm={handleConfirmRename}
+                  onEditCancel={handleCancelRename}
+                >
+                  {session.title}
+                </ListItem>
+              ))}
+            </>
+          )}
         </List>
       </div>
 
