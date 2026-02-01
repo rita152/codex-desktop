@@ -241,6 +241,29 @@
   visibility: visible;
 }
 
+/* Enhance button */
+.chat-input__enhance-button {
+  color: var(--color-text-secondary);
+  transition: color 0.2s, transform 0.2s;
+}
+
+.chat-input__enhance-button:hover:not(:disabled) {
+  color: var(--color-accent-blue);
+}
+
+.chat-input__enhance-button--loading {
+  animation: chat-input-spin 1s linear infinite;
+}
+
+@keyframes chat-input-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* 响应式：空间不足时隐藏文字，只显示图标 */
 @container (max-width: 480px) {
   .chat-input__toolbar .select__value {

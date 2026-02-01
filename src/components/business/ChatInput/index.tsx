@@ -15,9 +15,12 @@ import {
   ChatIcon,
   ForwardIcon,
   NotebookIcon,
+  SparklesIcon,
+  LoaderIcon,
 } from '../../ui/data-display/Icon';
 import { cn } from '../../../utils/cn';
 import { useSlashCommands } from '../../../hooks/useSlashCommands';
+import { usePromptEnhance } from '../../../hooks/usePromptEnhance';
 
 import type { ChatInputProps } from './types';
 import type { SelectOption } from '../../ui/data-entry/Select/types';
@@ -32,6 +35,8 @@ const ICON_NOTEBOOK_18 = <NotebookIcon size={18} />;
 const ICON_CHAT_16 = <ChatIcon size={16} />;
 const ICON_PLUS_20 = <PlusIcon size={20} />;
 const ICON_SEND_20 = <SendIcon size={20} />;
+const ICON_SPARKLES_20 = <SparklesIcon size={20} />;
+const ICON_LOADER_20 = <LoaderIcon size={20} />;
 
 const buildAgentOptions = (t: TFunction): SelectOption[] => [
   { value: 'chat', label: t('chatInput.agentOptions.chat'), icon: ICON_CHAT_18 },
@@ -126,6 +131,26 @@ export const ChatInput = memo(function ChatInput({
     onChange,
     textareaRef,
   });
+
+  // Prompt enhancement
+  const { enhance, isEnhancing, error: enhanceError } = usePromptEnhance();
+
+  const handleEnhancePrompt = useCallback(async () => {
+    if (isEnhancing || !trimmedValue) return;
+    const result = await enhance(trimmedValue);
+    if (result) {
+      onChange(result);
+    }
+  }, [isEnhancing, trimmedValue, enhance, onChange]);
+
+  // Show error as a transient alert (simple implementation)
+  // In production, you might want to use a toast or notice system
+  useMemo(() => {
+    if (enhanceError) {
+      // eslint-disable-next-line no-console
+      console.error('[prompt-enhance] Error:', enhanceError);
+    }
+  }, [enhanceError]);
 
   const trySend = useCallback(() => {
     if (disabled) return;
@@ -336,6 +361,19 @@ export const ChatInput = memo(function ChatInput({
             size="sm"
             variant="ghost"
             disabled={disabled || !onAddClick}
+          />
+          <IconButton
+            icon={isEnhancing ? ICON_LOADER_20 : ICON_SPARKLES_20}
+            onClick={handleEnhancePrompt}
+            aria-label={t('chatInput.enhancePrompt')}
+            size="sm"
+            variant="ghost"
+            disabled={disabled || isEnhancing || !hasContent}
+            className={cn(
+              'chat-input__enhance-button',
+              isEnhancing && 'chat-input__enhance-button--loading'
+            )}
+            title={enhanceError || t('chatInput.enhancePrompt')}
           />
           <Select
             options={resolvedAgentOptions}

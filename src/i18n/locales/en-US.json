@@ -27,6 +27,7 @@
     "selectAgent": "Select agent",
     "selectModel": "Select model",
     "switchMode": "Switch mode",
+    "enhancePrompt": "Enhance prompt",
     "agentOptions": {
       "chat": "Chat",
       "agent": "Agent",

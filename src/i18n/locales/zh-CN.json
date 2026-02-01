@@ -27,6 +27,7 @@
     "selectAgent": "选择智能体",
     "selectModel": "选择模型",
     "switchMode": "切换模式",
+    "enhancePrompt": "优化提示词",
     "agentOptions": {
       "chat": "对话",
       "agent": "智能体",

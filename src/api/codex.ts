@@ -12,8 +12,27 @@ export async function initCodex(): Promise<InitializeResult> {
   return invoke<InitializeResult>('codex_init');
 }
 
-export async function createSession(cwd: string): Promise<NewSessionResult> {
-  return invoke<NewSessionResult>('codex_new_session', { cwd });
+/**
+ * Create a new Codex session.
+ * @param cwd - Working directory for the session
+ * @param ephemeral - If true, session won't persist rollout file (for one-off tasks like prompt enhance)
+ */
+export async function createSession(
+  cwd: string,
+  ephemeral?: boolean
+): Promise<NewSessionResult> {
+  return invoke<NewSessionResult>('codex_new_session', { cwd, ephemeral });
+}
+
+/**
+ * Kill and remove a session completely.
+ * Use this to clean up ephemeral sessions after one-off tasks.
+ */
+export async function killSession(sessionId: string): Promise<void> {
+  await invoke<void>('codex_kill_session', {
+    sessionId,
+    session_id: sessionId,
+  });
 }
 
 /**
