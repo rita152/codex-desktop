@@ -1,0 +1,3 @@
+[submodule "codex-upstream"]
+	path = codex-upstream
+	url = https://github.com/rita152/codex.git

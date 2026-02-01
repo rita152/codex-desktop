@@ -27,5 +27,4 @@ coverage
 *storybook.log
 storybook-static
 
-# Upstream codex source (symlinked from src-tauri)
-codex-upstream/
+# Upstream codex source is now a git submodule (tracked)
