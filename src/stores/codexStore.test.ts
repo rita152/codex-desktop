@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { useCodexStore } from './codexStore';
 import { resetCodexStore } from './testUtils';
 
@@ -68,6 +69,87 @@ describe('CodexStore', () => {
     });
   });
 
+  describe('session mapping', () => {
+    it('should register and resolve chat/codex session ids', () => {
+      useCodexStore.getState().registerCodexSession('chat-1', 'codex-1');
+
+      expect(useCodexStore.getState().getCodexSessionId('chat-1')).toBe('codex-1');
+      expect(useCodexStore.getState().resolveChatSessionId('codex-1')).toBe('chat-1');
+    });
+
+    it('should clear session mapping and pending init', () => {
+      useCodexStore.getState().registerCodexSession('chat-1', 'codex-1');
+      useCodexStore.getState().setPendingSessionInit('chat-1', true);
+
+      useCodexStore.getState().clearCodexSession('chat-1');
+
+      expect(useCodexStore.getState().getCodexSessionId('chat-1')).toBeUndefined();
+      expect(useCodexStore.getState().resolveChatSessionId('codex-1')).toBeUndefined();
+      expect(useCodexStore.getState().isPendingSessionInit('chat-1')).toBe(false);
+    });
+
+    it('should set and clear pending session init', () => {
+      expect(useCodexStore.getState().isPendingSessionInit('chat-1')).toBe(false);
+
+      useCodexStore.getState().setPendingSessionInit('chat-1', true);
+      expect(useCodexStore.getState().isPendingSessionInit('chat-1')).toBe(true);
+
+      useCodexStore.getState().setPendingSessionInit('chat-1', false);
+      expect(useCodexStore.getState().isPendingSessionInit('chat-1')).toBe(false);
+    });
+  });
+
+  describe('user input and tool call requests', () => {
+    it('should register and clear user input requests', () => {
+      const request = {
+        callId: 'call-1',
+        sessionId: 'session-1',
+        message: 'Please provide input',
+      };
+      useCodexStore.getState().registerUserInputRequest(request as any);
+      expect(useCodexStore.getState().pendingUserInputRequests['call-1']).toEqual(request);
+
+      useCodexStore.getState().clearUserInputRequest('call-1');
+      expect(useCodexStore.getState().pendingUserInputRequests['call-1']).toBeUndefined();
+    });
+
+    it('should register and clear dynamic tool calls', () => {
+      const request = {
+        callId: 'call-1',
+        sessionId: 'session-1',
+        name: 'tool',
+        arguments: {},
+      };
+      useCodexStore.getState().registerDynamicToolCall(request as any);
+      expect(useCodexStore.getState().pendingDynamicToolCalls['call-1']).toEqual(request);
+
+      useCodexStore.getState().clearDynamicToolCall('call-1');
+      expect(useCodexStore.getState().pendingDynamicToolCalls['call-1']).toBeUndefined();
+    });
+
+    it('should register and clear elicitation requests', () => {
+      const request = {
+        requestId: 'req-1',
+        sessionId: 'session-1',
+        prompt: 'Need data',
+      };
+      useCodexStore.getState().registerElicitationRequest(request as any);
+      expect(useCodexStore.getState().pendingElicitationRequests['req-1']).toEqual(request);
+
+      useCodexStore.getState().clearElicitationRequest('req-1');
+      expect(useCodexStore.getState().pendingElicitationRequests['req-1']).toBeUndefined();
+    });
+  });
+
+  describe('undo state', () => {
+    it('should track undo-in-progress per session', () => {
+      expect(useCodexStore.getState().isUndoInProgress('session-1')).toBe(false);
+
+      useCodexStore.getState().setUndoInProgress('session-1', true);
+      expect(useCodexStore.getState().isUndoInProgress('session-1')).toBe(true);
+    });
+  });
+
   describe('message queue', () => {
     const sessionId = 'session-1';
 
@@ -127,6 +209,19 @@ describe('CodexStore', () => {
       expect(newQueue[2].content).toBe('Second');
     });
 
+    it('should no-op moveToTop when message is already first or missing', () => {
+      useCodexStore.getState().enqueueMessage(sessionId, 'Only');
+      const firstId = useCodexStore.getState().messageQueues[sessionId][0].id;
+
+      // already first
+      useCodexStore.getState().moveToTop(sessionId, firstId);
+      expect(useCodexStore.getState().messageQueues[sessionId][0].id).toBe(firstId);
+
+      // missing
+      useCodexStore.getState().moveToTop(sessionId, 'missing');
+      expect(useCodexStore.getState().messageQueues[sessionId][0].id).toBe(firstId);
+    });
+
     it('should clear queue for session', () => {
       useCodexStore.getState().enqueueMessage(sessionId, 'Message');
       useCodexStore.getState().clearQueue(sessionId);
@@ -139,6 +234,12 @@ describe('CodexStore', () => {
 
       useCodexStore.getState().enqueueMessage(sessionId, 'Message');
       expect(useCodexStore.getState().hasQueuedMessages(sessionId)).toBe(true);
+    });
+
+    it('should return queue via getQueue', () => {
+      expect(useCodexStore.getState().getQueue(sessionId)).toEqual([]);
+      useCodexStore.getState().enqueueMessage(sessionId, 'Message');
+      expect(useCodexStore.getState().getQueue(sessionId).length).toBe(1);
     });
   });
 
@@ -202,6 +303,10 @@ describe('CodexStore', () => {
 
       expect(useCodexStore.getState().historyIndex).toBe(-1);
       expect(useCodexStore.getState().tempDraft).toBeNull();
+    });
+
+    it('goToNext should return null when already at draft', () => {
+      expect(useCodexStore.getState().goToNext()).toBeNull();
     });
   });
 });

@@ -1,5 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, beforeEach } from 'vitest';
+
 import { useUIStore } from './uiStore';
 import { resetUIStore } from './testUtils';
 
@@ -98,5 +99,16 @@ describe('UIStore', () => {
       useUIStore.getState().closeSettings();
       expect(useUIStore.getState().settingsOpen).toBe(false);
     });
+
+    it('should open settings with an initial section', () => {
+      useUIStore.getState().openSettings('shortcuts');
+      expect(useUIStore.getState().settingsOpen).toBe(true);
+      expect(useUIStore.getState().settingsInitialSection).toBe('shortcuts');
+    });
+  });
+
+  it('should handle side panel tab change', () => {
+    useUIStore.getState().handleSidePanelTabChange('terminal');
+    expect(useUIStore.getState().activeSidePanelTab).toBe('terminal');
   });
 });
